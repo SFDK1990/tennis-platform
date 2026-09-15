@@ -1,0 +1,47 @@
+name: tennis-platform
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tennis-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-tennis_platform}
+      POSTGRES_USER: ${DB_USER:-tennis_platform}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-tennis_platform}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-tennis_platform} -d ${DB_NAME:-tennis_platform}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: tennis-backend
+    # Liquibase runs at startup, so the database must already accept connections.
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-tennis_platform}
+      DB_USER: ${DB_USER:-tennis_platform}
+      DB_PASSWORD: ${DB_PASSWORD:-tennis_platform}
+      SERVER_PORT: 8080
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+volumes:
+  postgres-data:

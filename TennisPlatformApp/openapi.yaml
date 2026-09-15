@@ -1,0 +1,925 @@
+openapi: 3.0.3
+info:
+  title: Tennis Platform API
+  version: "0.1.0-draft"
+  description: >
+    Contrato de API del MVP de Tennis Platform. Borrador de diseño (ver
+    Documentos/_arquitectura/11-contrato-api.md para las convenciones generales
+    y el mapeo de códigos de negocio a HTTP).
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+  - name: me
+  - name: teacher
+  - name: students
+  - name: availability
+  - name: calendar
+  - name: lessons
+  - name: bookings
+  - name: administration
+
+paths:
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Registro público de alumno
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201":
+          description: Usuario creado, pendiente de verificación de email
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserSummary" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Email ya registrado (respuesta genérica para no confirmar existencia de cuenta)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Login correcto. El refresh token se fija en una cookie HttpOnly (`Set-Cookie`).
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Cuenta no verificada o desactivada
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Logout (revoca el refresh token actual)
+      responses:
+        "204": { description: Sesión cerrada }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Rota el access token usando el refresh token de la cookie
+      security: []
+      responses:
+        "200":
+          description: Nuevo access token emitido; refresh token rotado (nueva cookie)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccessTokenResponse" }
+        "401":
+          description: Refresh token ausente, expirado, revocado o reusado (familia revocada)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /auth/verify-email:
+    post:
+      tags: [auth]
+      summary: Verifica el email con el token recibido por correo
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VerifyEmailRequest" }
+      responses:
+        "204": { description: Email verificado }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Token inválido, expirado o ya usado
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /auth/forgot-password:
+    post:
+      tags: [auth]
+      summary: Solicita un email de recuperación de contraseña
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ForgotPasswordRequest" }
+      responses:
+        "202":
+          description: >
+            Siempre 202, exista o no la cuenta, para no permitir enumeración
+            de usuarios (ver 08-security-engineer.md).
+
+  /auth/reset-password:
+    post:
+      tags: [auth]
+      summary: Restablece la contraseña con el token recibido por correo
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
+      responses:
+        "204": { description: Contraseña actualizada }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Token inválido, expirado o ya usado
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /me:
+    get:
+      tags: [me]
+      summary: Perfil del usuario autenticado
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    patch:
+      tags: [me]
+      summary: Actualiza campos de perfil propios (solo los aplicables al rol del usuario)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateMeRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /teacher/profile:
+    get:
+      tags: [teacher]
+      summary: Perfil público/operativo del profesor único
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherProfile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    patch:
+      tags: [teacher]
+      summary: Actualiza el perfil del profesor (solo el propio TEACHER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateTeacherProfileRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherProfile" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/students:
+    get:
+      tags: [students]
+      summary: Lista de alumnos gestionados por el profesor
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+        - name: query
+          in: query
+          description: Búsqueda por nombre o email (para localizar un alumno registrado)
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentSummaryPage" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/students/{userId}/manage:
+    post:
+      tags: [students]
+      summary: Asocia un alumno registrado como gestionado (búsqueda previa por email)
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Alumno gestionado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentSummary" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: El alumno ya está gestionado
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [students]
+      summary: Desactiva la gestión de un alumno (cancela sus reservas futuras activas)
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "204": { description: Alumno desactivado }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /teacher/availability:
+    get:
+      tags: [availability]
+      summary: Reglas semanales y excepciones vigentes
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AvailabilityResponse" }
+
+  /teacher/availability/weekly:
+    put:
+      tags: [availability]
+      summary: Reemplaza el conjunto completo de reglas semanales
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WeeklyAvailabilityRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WeeklyAvailabilityResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/availability/exceptions:
+    post:
+      tags: [availability]
+      summary: Crea un bloqueo o disponibilidad extraordinaria para una fecha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateAvailabilityExceptionRequest" }
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AvailabilityException" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/availability/exceptions/{id}:
+    delete:
+      tags: [availability]
+      summary: Elimina una excepción de disponibilidad
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204": { description: Eliminada }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /calendar:
+    get:
+      tags: [calendar]
+      summary: Vista agregada de disponibilidad, clases y reservas en un rango de fechas
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CalendarEntry" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+
+  /teacher/lessons:
+    post:
+      tags: [lessons]
+      summary: Crea una clase individual o grupal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateLessonRequest" }
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: LESSON_OVERLAP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /lessons/{id}:
+    get:
+      tags: [lessons]
+      summary: Detalle de una clase
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /lessons/{id}/bookings:
+    post:
+      tags: [bookings]
+      summary: Reserva la clase para el alumno autenticado
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "201":
+          description: Reserva confirmada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Booking" }
+        "403":
+          description: STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: LESSON_FULL | BOOKING_ALREADY_EXISTS | STUDENT_SCHEDULE_OVERLAP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /bookings:
+    get:
+      tags: [bookings]
+      summary: Reservas del alumno autenticado (o de todos los alumnos si lo consulta el profesor)
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/BookingStatus" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BookingPage" }
+
+  /bookings/{id}/cancel:
+    post:
+      tags: [bookings]
+      summary: Cancela una reserva propia (alumno), o cualquiera (profesor/admin)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Cancelada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Booking" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: >
+            CANCELLATION_WINDOW_EXPIRED. No aplica si quien cancela es ADMIN
+            (puede cancelar sin ventana de 24h, decisión ya cerrada).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/lessons/{id}/cancel:
+    post:
+      tags: [lessons]
+      summary: Cancela una clase completa (cancela en cascada sus reservas activas)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Cancelada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: CANCELLATION_WINDOW_EXPIRED (no aplica si quien cancela es ADMIN)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/lessons/{id}/attendance:
+    post:
+      tags: [lessons]
+      summary: Marca asistencia de los participantes de una clase
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarkAttendanceRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Booking" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /admin/configuration:
+    get:
+      tags: [administration]
+      summary: Configuración global de la plataforma
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformConfiguration" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/configuration/student-limit:
+    patch:
+      tags: [administration]
+      summary: Actualiza el límite global de alumnos gestionables
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateStudentLimitRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PlatformConfiguration" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/users:
+    get:
+      tags: [administration]
+      summary: Lista de usuarios de la plataforma
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+        - name: role
+          in: query
+          schema: { $ref: "#/components/schemas/Role" }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/UserStatus" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUserSummaryPage" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/users/{id}/status:
+    patch:
+      tags: [administration]
+      summary: Activa o desactiva un usuario
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateUserStatusRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUserSummary" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+
+  responses:
+    Unauthorized:
+      description: No autenticado o token expirado
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    Forbidden:
+      description: Autenticado pero sin permiso o relación sobre el recurso
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    ValidationError:
+      description: Formato o validación de campos incorrecta
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  schemas:
+    ProblemDetails:
+      type: object
+      required: [title, status]
+      properties:
+        type: { type: string, format: uri, default: "about:blank" }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code:
+          type: string
+          description: Código de negocio, ver 11-contrato-api.md
+          example: LESSON_FULL
+        instance: { type: string }
+
+    Role:
+      type: string
+      enum: [ADMIN, TEACHER, STUDENT]
+    UserStatus:
+      type: string
+      enum: [PENDING_VERIFICATION, ACTIVE, DISABLED]
+    LessonType:
+      type: string
+      enum: [INDIVIDUAL, GROUP]
+    LessonStatus:
+      type: string
+      enum: [OPEN, FULL, CANCELLED, COMPLETED]
+    BookingStatus:
+      type: string
+      enum: [CONFIRMED, CANCELLED_BY_STUDENT, CANCELLED_BY_TEACHER, CANCELLED_BY_ADMIN, ATTENDED, NO_SHOW]
+    ManagedStatus:
+      type: string
+      enum: [MANAGED, INACTIVE]
+
+    UserSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/Role" }
+        status: { $ref: "#/components/schemas/UserStatus" }
+
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 10 }
+        fullName: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        accessTokenExpiresAt: { type: string, format: date-time }
+        user: { $ref: "#/components/schemas/UserSummary" }
+
+    AccessTokenResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        accessTokenExpiresAt: { type: string, format: date-time }
+
+    VerifyEmailRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string }
+        newPassword: { type: string, format: password, minLength: 10 }
+
+    MeResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/Role" }
+        status: { $ref: "#/components/schemas/UserStatus" }
+        emailVerifiedAt: { type: string, format: date-time, nullable: true }
+        fullName: { type: string }
+        phone: { type: string, nullable: true }
+        nationalId: { type: string, nullable: true, description: "Solo visible para el propio usuario, el profesor que lo gestiona o un ADMIN" }
+        address: { type: string, nullable: true }
+
+    UpdateMeRequest:
+      type: object
+      description: Solo se aceptan los campos aplicables al rol del usuario autenticado
+      properties:
+        fullName: { type: string }
+        phone: { type: string }
+        nationalId: { type: string }
+        address: { type: string }
+
+    TeacherProfile:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        displayName: { type: string }
+        phone: { type: string, nullable: true }
+        timezone: { type: string, example: "Europe/Madrid" }
+
+    UpdateTeacherProfileRequest:
+      type: object
+      properties:
+        displayName: { type: string }
+        phone: { type: string }
+        timezone: { type: string }
+
+    StudentSummary:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        managedStatus: { $ref: "#/components/schemas/ManagedStatus" }
+        managedAt: { type: string, format: date-time, nullable: true }
+
+    StudentSummaryPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/StudentSummary" }
+
+    WeeklyAvailabilityRule:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        dayOfWeek: { type: integer, minimum: 0, maximum: 6, description: "0 = lunes" }
+        startTime: { type: string, example: "09:00" }
+        endTime: { type: string, example: "13:00" }
+        activeFrom: { type: string, format: date, nullable: true }
+        activeUntil: { type: string, format: date, nullable: true }
+
+    WeeklyAvailabilityRequest:
+      type: object
+      required: [rules]
+      properties:
+        rules:
+          type: array
+          items:
+            type: object
+            required: [dayOfWeek, startTime, endTime]
+            properties:
+              dayOfWeek: { type: integer, minimum: 0, maximum: 6 }
+              startTime: { type: string }
+              endTime: { type: string }
+              activeFrom: { type: string, format: date, nullable: true }
+              activeUntil: { type: string, format: date, nullable: true }
+
+    WeeklyAvailabilityResponse:
+      type: object
+      properties:
+        rules:
+          type: array
+          items: { $ref: "#/components/schemas/WeeklyAvailabilityRule" }
+
+    AvailabilityException:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        date: { type: string, format: date }
+        startTime: { type: string, nullable: true }
+        endTime: { type: string, nullable: true }
+        type: { type: string, enum: [BLOCK, EXTRA] }
+
+    CreateAvailabilityExceptionRequest:
+      type: object
+      required: [date, type]
+      properties:
+        date: { type: string, format: date }
+        startTime: { type: string, nullable: true }
+        endTime: { type: string, nullable: true }
+        type: { type: string, enum: [BLOCK, EXTRA] }
+
+    AvailabilityResponse:
+      type: object
+      properties:
+        weeklyRules:
+          type: array
+          items: { $ref: "#/components/schemas/WeeklyAvailabilityRule" }
+        exceptions:
+          type: array
+          items: { $ref: "#/components/schemas/AvailabilityException" }
+
+    CalendarEntry:
+      type: object
+      description: Unión discriminada por `kind`
+      required: [kind, startsAt, endsAt]
+      properties:
+        kind: { type: string, enum: [AVAILABILITY, LESSON] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        lesson:
+          $ref: "#/components/schemas/Lesson"
+          description: Presente solo si kind = LESSON
+
+    CreateLessonRequest:
+      type: object
+      required: [type, startsAt, endsAt, capacity]
+      properties:
+        type: { $ref: "#/components/schemas/LessonType" }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1 }
+        notes: { type: string, nullable: true }
+        overrideAvailability:
+          type: boolean
+          default: false
+          description: Permite crear la clase fuera de la disponibilidad configurada
+
+    Lesson:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        teacherUserId: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/LessonType" }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        capacity: { type: integer }
+        bookedCount: { type: integer }
+        status: { $ref: "#/components/schemas/LessonStatus" }
+        notes: { type: string, nullable: true }
+        createdOutsideAvailability: { type: boolean }
+
+    Booking:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        lessonId: { type: string, format: uuid }
+        studentUserId: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/BookingStatus" }
+        bookedAt: { type: string, format: date-time }
+        cancelledAt: { type: string, format: date-time, nullable: true }
+        lesson: { $ref: "#/components/schemas/Lesson" }
+
+    BookingPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/Booking" }
+
+    MarkAttendanceRequest:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items:
+            type: object
+            required: [bookingId, status]
+            properties:
+              bookingId: { type: string, format: uuid }
+              status: { type: string, enum: [ATTENDED, NO_SHOW] }
+
+    PlatformConfiguration:
+      type: object
+      properties:
+        studentLimit: { type: integer }
+        updatedAt: { type: string, format: date-time }
+        updatedBy: { type: string, format: uuid, nullable: true }
+
+    UpdateStudentLimitRequest:
+      type: object
+      required: [studentLimit]
+      properties:
+        studentLimit: { type: integer, minimum: 1 }
+
+    AdminUserSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/Role" }
+        status: { $ref: "#/components/schemas/UserStatus" }
+        createdAt: { type: string, format: date-time }
+
+    AdminUserSummaryPage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/AdminUserSummary" }
+
+    UpdateUserStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ACTIVE, DISABLED] }
+
+    Page:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalItems: { type: integer }

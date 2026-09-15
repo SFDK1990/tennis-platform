@@ -1,0 +1,26 @@
+# Build output
+target/
+build/
+out/
+
+# Secrets and local environment (.env.example IS tracked, as the documented template)
+.env
+.env.local
+*.env
+!.env.example
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# OS noise
+Thumbs.db
+Desktop.ini
+.DS_Store

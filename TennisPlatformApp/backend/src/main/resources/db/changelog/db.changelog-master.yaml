@@ -1,0 +1,5 @@
+# Master changelog. Append-only: never edit an executed changeset, add a new one instead.
+# Changelogs are split per module/context as described in 05-database-engineer.md.
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/v0-scaffold.yaml

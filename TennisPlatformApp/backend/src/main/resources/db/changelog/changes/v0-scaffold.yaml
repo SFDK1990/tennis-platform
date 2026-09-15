@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: v0-scaffold-extensions
+      author: tennis-platform
+      comment: >-
+        Infrastructure only. pgcrypto provides gen_random_uuid() for public identifiers;
+        btree_gist is required by the EXCLUDE USING gist no-overlap constraints on lessons
+        and bookings (see 10-diagrama-er.md). Business tables arrive in Fase 1.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto
+        - sql:
+            dbms: postgresql
+            sql: CREATE EXTENSION IF NOT EXISTS btree_gist
+      rollback:
+        - empty

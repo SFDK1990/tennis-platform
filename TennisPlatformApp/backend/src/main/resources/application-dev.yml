@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tennis_platform}
+    username: ${DB_USER:tennis_platform}
+    password: ${DB_PASSWORD:tennis_platform}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+
+logging:
+  level:
+    com.tennisplatform: DEBUG

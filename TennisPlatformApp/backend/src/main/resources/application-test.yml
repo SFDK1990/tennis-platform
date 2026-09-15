@@ -1,0 +1,16 @@
+# Test profile. The datasource URL is intentionally absent: the Testcontainers-backed
+# integration test injects a throwaway PostgreSQL connection at runtime.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  liquibase:
+    enabled: true
+
+logging:
+  level:
+    root: WARN
+    com.tennisplatform: DEBUG
+    liquibase: WARN
+    org.testcontainers: WARN
