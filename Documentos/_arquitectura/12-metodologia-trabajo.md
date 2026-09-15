@@ -72,6 +72,7 @@ Al finalizar cada fase se entrega:
 | 3 | Modelo de datos | Entidades, relaciones, restricciones, índices, diagrama ER y borrador de DDL. | Completada |
 | 4 | Skeleton del backend | Proyecto Maven compilable, estructura modular, perfiles, Docker, health endpoint, manejo de errores, logging y tests mínimos. Sin lógica de negocio. | Completada |
 | 5 | Seguridad y autenticación | Registro, verificación por email, login, JWT, refresh tokens rotativos, autorización por rol y por pertenencia. | Siguiente |
+| 5.1 | Integración continua | Pipeline de GitHub Actions: build, tests unitarios, tests de integración, análisis estático, comprobación de dependencias y construcción de imagen. Adelantada desde la fase 15. | Pendiente |
 | 6 | Perfiles y gestión de usuarios | Perfiles de profesor y alumno, alta y asociación de alumnos, activación y desactivación. | Pendiente |
 | 7 | Disponibilidad | Reglas semanales de disponibilidad del profesor y excepciones. | Pendiente |
 | 8 | Clases | Creación, consulta, modificación y cancelación de clases, con validación de solapamientos. | Pendiente |
@@ -81,12 +82,12 @@ Al finalizar cada fase se entrega:
 | 12 | Cobertura y E2E | Pirámide de testing completa y flujos E2E críticos. | Pendiente |
 | 13 | Auditoría de seguridad | OWASP Top 10, escalada de privilegios, acceso a recursos ajenos, secretos, dependencias. | Pendiente |
 | 14 | Observabilidad | Logs estructurados, métricas, trazas y correlation IDs, ejecutables en local. | Pendiente |
-| 15 | Docker y CI/CD | Imágenes, Docker Compose y pipeline de GitHub Actions. | Pendiente |
+| 15 | Empaquetado de despliegue | Imágenes de producción y ajustes finales de Docker. El pipeline de integración continua se adelantó a la fase 5.1. | Pendiente |
 | 16 | Revisión final de arquitectura | Informe con severidades CRITICAL / HIGH / MEDIUM / LOW y preguntas de escalabilidad. Sin aplicar cambios sin aprobación. | Pendiente |
 
-## Propuestas de ajuste
+## Reglas adicionales
 
-Pendientes de aprobación. Surgen de ejecutar la Fase 4 y de trabajar con un agente que dispone de terminal, no solo de chat.
+Aprobadas el 16 de septiembre de 2026. Surgen de ejecutar la Fase 4 y de trabajar con un agente que dispone de terminal, no solo de chat. Tienen el mismo rango que las reglas de las secciones anteriores.
 
 ### 1. La evidencia se pega, no se afirma
 
@@ -98,9 +99,9 @@ Motivo: durante la Fase 4 la suite reportó `BUILD SUCCESS` mientras cinco de lo
 
 La metodología original no menciona el control de versiones en ningún punto. Las cuatro primeras fases se completaron sin un solo commit. Cada fase debe terminar con su propio commit, cuyo mensaje describa la fase y su verificación.
 
-### 3. Adelantar CI/CD
+### 3. La integración continua se adelanta
 
-La integración continua está en la fase 15. Situarla al final implica descubrir al final si el proyecto es reproducible fuera de la máquina de desarrollo. Se propone moverla justo después de la Fase 5, de forma que todo el trabajo posterior nazca ya cubierto por el pipeline.
+La integración continua estaba en la fase 15. Situarla al final implica descubrir tarde si el proyecto es reproducible fuera de la máquina de desarrollo. Pasa a ser la fase 5.1, justo después de autenticación, de forma que todo el trabajo posterior nazca ya cubierto por el pipeline.
 
 ### 4. El testing no es una fase
 
@@ -110,10 +111,10 @@ Las fases 6 a 9 ya exigen tests unitarios y de integración en cada módulo, lo 
 
 Cada fase debe declarar su criterio de salida en términos verificables. Por ejemplo, para la Fase 9: *"existe un test que demuestra que dos reservas simultáneas del último hueco libre no producen sobreventa"*, en lugar de *"implementa el sistema de reservas"*.
 
-## Cuestiones abiertas
+## Decisiones resueltas
 
 ### Número de roles
 
-El documento de origen define **dos roles** (`TEACHER` y `STUDENT`). El resto de la documentación de arquitectura, el modelo de datos y el contrato de API trabajan con **tres** (`ADMIN`, `TEACHER`, `STUDENT`), y existen reglas de negocio que dependen del tercero —como que `ADMIN` puede cancelar fuera de la ventana de 24 horas—.
+El documento de origen definía **dos roles** (`TEACHER` y `STUDENT`), mientras que el resto de la documentación de arquitectura, el modelo de datos y el contrato de API trabajaban con **tres** (`ADMIN`, `TEACHER`, `STUDENT`).
 
-Ambas fuentes se contradicen. Debe resolverse antes de implementar la Fase 5, ya que condiciona el modelo de identidad y las reglas de autorización.
+Resuelto el 16 de septiembre de 2026 a favor de **tres roles**. `ADMIN` se mantiene porque ya está incorporado al modelo de datos, al diagrama ER y al contrato de API, y porque hay reglas de negocio que dependen de él —cancelar fuera de la ventana de 24 horas y desactivar alumnos—. Donde el documento de origen mencione dos roles, prevalece esta decisión.
