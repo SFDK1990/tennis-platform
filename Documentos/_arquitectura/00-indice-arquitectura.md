@@ -40,10 +40,11 @@ Este directorio contiene la definición del MVP de Tennis Platform separada por 
 9. [Roadmap de implementación](09-roadmap-implementacion.md)
 10. [Diagrama ER y borrador de DDL](10-diagrama-er.md)
 11. [Contrato de API](11-contrato-api.md) (el spec OpenAPI vive en `../../TennisPlatformApp/openapi.yaml`)
+12. [Metodología de trabajo](12-metodologia-trabajo.md) — fases, reglas de avance y criterios de cierre
 
 ## Estructura de carpetas
 
-`Documentos/` (esta carpeta, solo `.md`) y `TennisPlatformApp/` (el proyecto de código: `backend/`, futuramente `frontend/`, `openapi.yaml`, `CLAUDE.md`, `docker-compose.yml`) son carpetas hermanas dentro de `Tennis Platform/`. Ningún artefacto de código o de herramienta (specs, YAML, Dockerfiles) debe añadirse dentro de `Documentos/`.
+`Documentos/` (esta carpeta, solo `.md`) y `TennisPlatformApp/` (el proyecto de código: `backend/`, futuramente `frontend/`, `openapi.yaml`, `CLAUDE.md`, `compose.yaml`) son carpetas hermanas dentro de `Tennis Platform/`. Ningún artefacto de código o de herramienta (specs, YAML, Dockerfiles) debe añadirse dentro de `Documentos/`.
 
 ## Estado
 

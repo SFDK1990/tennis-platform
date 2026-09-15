@@ -1,0 +1,119 @@
+# Tennis Platform — Metodología de trabajo
+
+## Propósito
+
+Este documento define **cómo** se construye Tennis Platform: el orden de las fases, qué se puede hacer en cada una y qué debe entregarse antes de pasar a la siguiente. El resto de documentos de esta carpeta definen *qué* se construye; este define el proceso.
+
+Va dirigido tanto a Daniel como a cualquier agente de programación que trabaje sobre el repositorio.
+
+## Origen
+
+La metodología procede de una sesión de diseño previa, conservada como exportación en PDF (`tenisAPP.pdf`, 27 páginas). Este documento la recoge en texto para que quede versionada junto al código y sea consultable sin depender de un PDF de capturas de pantalla.
+
+La sección "Propuestas de ajuste" son añadidos posteriores, surgidos de la experiencia real de ejecutar la Fase 4, y están marcados como propuestas: **no son decisiones tomadas** hasta que Daniel las apruebe.
+
+## Regla central
+
+> **No avanzar de fase hasta haber validado la anterior.**
+
+El agente no encadena fases por iniciativa propia. Al terminar una fase se detiene, entrega el informe de cierre y espera revisión.
+
+## Principios
+
+Se aplican SOLID, Clean Code, separación de responsabilidades, modularización por dominio cuando aporte valor, inversión de dependencias, diseño API-first, seguridad por defecto, testabilidad, observabilidad y mantenibilidad.
+
+Tres restricciones que acotan lo anterior:
+
+- No introducir complejidad innecesaria.
+- No usar patrones simplemente por usarlos.
+- Cada decisión arquitectónica debe tener una razón explicable.
+
+Kafka y la IA quedan fuera del MVP. Kafka se incorporará cuando exista una necesidad arquitectónica real (por ejemplo, eventos de dominio que alimenten email, calendario o analítica), nunca por aparentar madurez técnica.
+
+## Reglas de trabajo
+
+Antes de escribir código en cualquier fase:
+
+1. Analizar los requisitos.
+2. Identificar ambigüedades.
+3. Proponer la arquitectura.
+4. Explicar las decisiones importantes.
+5. Definir la estructura de carpetas.
+6. Definir el modelo de datos.
+7. Definir los contratos de API.
+8. Definir la estrategia de testing.
+9. Definir los criterios de aceptación.
+
+Después implementar.
+
+Si se detecta una mala decisión arquitectónica previa, **no debe mantenerse por compatibilidad**: hay que señalarla y proponer una alternativa.
+
+Durante la implementación, los archivos que se van creando se explican paso a paso —qué hacen y por qué— en lugar de entregarse como un volcado de código terminado.
+
+## Informe de cierre de fase
+
+Al finalizar cada fase se entrega:
+
+- Cambios realizados.
+- Archivos creados o modificados.
+- Decisiones tomadas.
+- Tests ejecutados.
+- Problemas encontrados.
+- Riesgos pendientes.
+- Cómo ejecutar el proyecto.
+- Qué debería revisarse antes de continuar.
+
+## Secuencia de fases
+
+| # | Fase | Contenido | Estado |
+|---|------|-----------|--------|
+| 1 | Análisis funcional | User stories, requisitos funcionales y no funcionales, roles, casos de uso, reglas de negocio, casos límite. Sin código. | Completada |
+| 2 | Arquitectura | Módulos, responsabilidades, dependencias permitidas, capas, estructura de paquetes, ADRs. Sin código. | Completada |
+| 3 | Modelo de datos | Entidades, relaciones, restricciones, índices, diagrama ER y borrador de DDL. | Completada |
+| 4 | Skeleton del backend | Proyecto Maven compilable, estructura modular, perfiles, Docker, health endpoint, manejo de errores, logging y tests mínimos. Sin lógica de negocio. | Completada |
+| 5 | Seguridad y autenticación | Registro, verificación por email, login, JWT, refresh tokens rotativos, autorización por rol y por pertenencia. | Siguiente |
+| 6 | Perfiles y gestión de usuarios | Perfiles de profesor y alumno, alta y asociación de alumnos, activación y desactivación. | Pendiente |
+| 7 | Disponibilidad | Reglas semanales de disponibilidad del profesor y excepciones. | Pendiente |
+| 8 | Clases | Creación, consulta, modificación y cancelación de clases, con validación de solapamientos. | Pendiente |
+| 9 | Reservas | Reserva y cancelación, capacidad, duplicados, solapamientos del alumno y concurrencia. | Pendiente |
+| 10 | Revisión de API | Revisión REST completa: naming, verbos, códigos, paginación, errores, idempotencia, versionado. OpenAPI. | Pendiente |
+| 11 | Frontend | Next.js, React, TypeScript, Tailwind. Estados de carga, vacío y error. | Pendiente |
+| 12 | Cobertura y E2E | Pirámide de testing completa y flujos E2E críticos. | Pendiente |
+| 13 | Auditoría de seguridad | OWASP Top 10, escalada de privilegios, acceso a recursos ajenos, secretos, dependencias. | Pendiente |
+| 14 | Observabilidad | Logs estructurados, métricas, trazas y correlation IDs, ejecutables en local. | Pendiente |
+| 15 | Docker y CI/CD | Imágenes, Docker Compose y pipeline de GitHub Actions. | Pendiente |
+| 16 | Revisión final de arquitectura | Informe con severidades CRITICAL / HIGH / MEDIUM / LOW y preguntas de escalabilidad. Sin aplicar cambios sin aprobación. | Pendiente |
+
+## Propuestas de ajuste
+
+Pendientes de aprobación. Surgen de ejecutar la Fase 4 y de trabajar con un agente que dispone de terminal, no solo de chat.
+
+### 1. La evidencia se pega, no se afirma
+
+Una fase no se da por terminada sin la salida real del comando. Un build en verde no es evidencia suficiente: debe mostrarse el recuento de tests ejecutados, fallados y **saltados**.
+
+Motivo: durante la Fase 4 la suite reportó `BUILD SUCCESS` mientras cinco de los ocho tests se saltaban en silencio, porque Testcontainers no lograba conectar con Docker. El resultado parecía correcto y no lo era.
+
+### 2. Cada fase cierra con un commit
+
+La metodología original no menciona el control de versiones en ningún punto. Las cuatro primeras fases se completaron sin un solo commit. Cada fase debe terminar con su propio commit, cuyo mensaje describa la fase y su verificación.
+
+### 3. Adelantar CI/CD
+
+La integración continua está en la fase 15. Situarla al final implica descubrir al final si el proyecto es reproducible fuera de la máquina de desarrollo. Se propone moverla justo después de la Fase 5, de forma que todo el trabajo posterior nazca ya cubierto por el pipeline.
+
+### 4. El testing no es una fase
+
+Las fases 6 a 9 ya exigen tests unitarios y de integración en cada módulo, lo que contradice que el testing sea una fase propia al final. La fase 12 se reinterpreta como *cobertura y E2E* —cerrar huecos y cubrir los flujos completos—, no como el momento en que empiezan a escribirse tests.
+
+### 5. Criterios de aceptación medibles
+
+Cada fase debe declarar su criterio de salida en términos verificables. Por ejemplo, para la Fase 9: *"existe un test que demuestra que dos reservas simultáneas del último hueco libre no producen sobreventa"*, en lugar de *"implementa el sistema de reservas"*.
+
+## Cuestiones abiertas
+
+### Número de roles
+
+El documento de origen define **dos roles** (`TEACHER` y `STUDENT`). El resto de la documentación de arquitectura, el modelo de datos y el contrato de API trabajan con **tres** (`ADMIN`, `TEACHER`, `STUDENT`), y existen reglas de negocio que dependen del tercero —como que `ADMIN` puede cancelar fuera de la ventana de 24 horas—.
+
+Ambas fuentes se contradicen. Debe resolverse antes de implementar la Fase 5, ya que condiciona el modelo de identidad y las reglas de autorización.
