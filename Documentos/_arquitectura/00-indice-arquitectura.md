@@ -41,6 +41,7 @@ Este directorio contiene la definición del MVP de Tennis Platform separada por 
 10. [Diagrama ER y borrador de DDL](10-diagrama-er.md)
 11. [Contrato de API](11-contrato-api.md) (el spec OpenAPI vive en `../../TennisPlatformApp/openapi.yaml`)
 12. [Metodología de trabajo](12-metodologia-trabajo.md) — fases, reglas de avance y criterios de cierre
+13. [Fase 5 — Análisis de seguridad y autenticación](13-fase5-analisis-identity.md) — decisiones abiertas pendientes de resolver
 
 ## Estructura de carpetas
 
