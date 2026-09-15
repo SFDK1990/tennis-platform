@@ -1,0 +1,104 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v1-identity-users
+      author: tennis-platform
+      comment: >-
+        Accounts and their lifecycle. ux_users_single_teacher is a partial unique index
+        that enforces the "one teacher in the MVP" business invariant at schema level,
+        so no application bug can create a second one.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE users (
+                  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  email              VARCHAR(255) NOT NULL,
+                  password_hash      VARCHAR(255) NOT NULL,
+                  role               VARCHAR(20)  NOT NULL CHECK (role IN ('ADMIN','TEACHER','STUDENT')),
+                  status             VARCHAR(20)  NOT NULL DEFAULT 'PENDING_VERIFICATION'
+                                     CHECK (status IN ('PENDING_VERIFICATION','ACTIVE','DISABLED')),
+                  email_verified_at  TIMESTAMPTZ,
+                  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX ux_users_email ON users (email);
+              CREATE UNIQUE INDEX ux_users_single_teacher ON users ((role)) WHERE role = 'TEACHER';
+              CREATE INDEX ix_users_status ON users (status);
+      rollback:
+        - sql:
+            sql: DROP TABLE users
+
+  - changeSet:
+      id: v1-identity-email-verifications
+      author: tennis-platform
+      comment: Single-use, expiring email verification tokens. Only the hash is stored.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE email_verifications (
+                  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  user_id     UUID NOT NULL REFERENCES users(id),
+                  token_hash  VARCHAR(255) NOT NULL,
+                  expires_at  TIMESTAMPTZ NOT NULL,
+                  used_at     TIMESTAMPTZ,
+                  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX ux_email_verifications_token_hash ON email_verifications (token_hash);
+              CREATE INDEX ix_email_verifications_expires_at ON email_verifications (expires_at);
+              CREATE INDEX ix_email_verifications_user ON email_verifications (user_id);
+      rollback:
+        - sql:
+            sql: DROP TABLE email_verifications
+
+  - changeSet:
+      id: v1-identity-password-reset-tokens
+      author: tennis-platform
+      comment: Single-use, expiring password reset tokens. Only the hash is stored.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE password_reset_tokens (
+                  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  user_id     UUID NOT NULL REFERENCES users(id),
+                  token_hash  VARCHAR(255) NOT NULL,
+                  expires_at  TIMESTAMPTZ NOT NULL,
+                  used_at     TIMESTAMPTZ,
+                  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX ux_password_reset_tokens_token_hash ON password_reset_tokens (token_hash);
+              CREATE INDEX ix_password_reset_tokens_expires_at ON password_reset_tokens (expires_at);
+              CREATE INDEX ix_password_reset_tokens_user ON password_reset_tokens (user_id);
+      rollback:
+        - sql:
+            sql: DROP TABLE password_reset_tokens
+
+  - changeSet:
+      id: v1-identity-refresh-tokens
+      author: tennis-platform
+      comment: >-
+        Rotating refresh tokens. family_id groups one login's whole rotation chain and
+        replaced_by_token_id links each token to its successor, so presenting an already
+        rotated token can be detected as theft and revoke the entire family.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE refresh_tokens (
+                  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  user_id              UUID NOT NULL REFERENCES users(id),
+                  token_hash           VARCHAR(255) NOT NULL,
+                  family_id            UUID NOT NULL,
+                  issued_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  expires_at           TIMESTAMPTZ NOT NULL,
+                  revoked_at           TIMESTAMPTZ,
+                  replaced_by_token_id UUID REFERENCES refresh_tokens(id)
+              );
+              CREATE UNIQUE INDEX ux_refresh_tokens_token_hash ON refresh_tokens (token_hash);
+              CREATE INDEX ix_refresh_tokens_user_id ON refresh_tokens (user_id);
+              CREATE INDEX ix_refresh_tokens_family_id ON refresh_tokens (family_id);
+      rollback:
+        - sql:
+            sql: DROP TABLE refresh_tokens

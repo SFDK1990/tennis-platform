@@ -12,6 +12,21 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+tennis:
+  identity:
+    # No default: a missing secret must stop the application, never fall back to a known one.
+    jwt-secret: ${JWT_SECRET}
+    frontend-base-url: ${FRONTEND_BASE_URL}
+
 management:
   endpoint:
     health:

@@ -26,6 +26,8 @@
             test silently skips. Staying on the 1.x line avoids the 2.x breaking changes.
         -->
         <testcontainers.version>1.21.4</testcontainers.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <bucket4j.version>8.14.0</bucket4j.version>
     </properties>
 
     <dependencies>
@@ -48,6 +50,38 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- JWT. jjwt-impl and jjwt-jackson are runtime-only by design: only the api
+             module should be visible to application code. -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- In-memory rate limiting; no Redis while there is a single instance. -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j_jdk17-core</artifactId>
+            <version>${bucket4j.version}</version>
         </dependency>
 
         <dependency>

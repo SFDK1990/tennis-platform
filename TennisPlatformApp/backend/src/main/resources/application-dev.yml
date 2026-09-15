@@ -7,6 +7,15 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+
+tennis:
+  identity:
+    # Development-only key. Production has no default and refuses to start without one,
+    # so this value can never silently leak into a real deployment.
+    jwt-secret: ${JWT_SECRET:dev-only-insecure-secret-change-me-32-bytes-min}
 
 logging:
   level:

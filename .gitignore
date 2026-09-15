@@ -1,7 +1,12 @@
-# Build output
+# Build output.
+# "out" and "build" are anchored to the repository root on purpose: in hexagonal
+# architecture "out" is a source package (application/port/out, adapters/out), so an
+# unanchored out/ rule silently excludes real code from every commit.
 target/
-build/
-out/
+/out/
+/build/
+TennisPlatformApp/out/
+TennisPlatformApp/build/
 
 # Secrets and local environment (.env.example IS tracked, as the documented template)
 .env

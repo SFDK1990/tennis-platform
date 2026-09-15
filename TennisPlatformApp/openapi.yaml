@@ -34,14 +34,15 @@ paths:
           application/json:
             schema: { $ref: "#/components/schemas/RegisterRequest" }
       responses:
-        "201":
-          description: Usuario creado, pendiente de verificación de email
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/UserSummary" }
+        "202":
+          description: >
+            Siempre 202 y sin cuerpo, exista o no una cuenta con ese email. Devolver 201
+            cuando se crea y 409 cuando ya existe permitiría enumerar usuarios, que es
+            precisamente lo que prohíbe 08-security-engineer.md. Si el email ya estaba
+            registrado no se crea nada y se avisa por correo al titular real de la dirección.
         "400": { $ref: "#/components/responses/ValidationError" }
-        "409":
-          description: Email ya registrado (respuesta genérica para no confirmar existencia de cuenta)
+        "429":
+          description: Demasiados intentos desde la misma IP
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -67,9 +68,17 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LoginResponse" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403":
-          description: Cuenta no verificada o desactivada
+        "401":
+          description: >
+            Único resultado de cualquier fallo: email inexistente, contraseña incorrecta o
+            cuenta desactivada. Distinguirlos revelaría qué direcciones tienen cuenta.
+            Una cuenta pendiente de verificación SÍ puede iniciar sesión: la verificación
+            condiciona reservar, no acceder (ver 13-fase5-analisis-identity.md, decisión 8.5).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "429":
+          description: Demasiados intentos desde la misma IP
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -646,11 +655,14 @@ components:
 
     RegisterRequest:
       type: object
-      required: [email, password, fullName]
+      required: [email, password]
       properties:
         email: { type: string, format: email }
         password: { type: string, format: password, minLength: 10 }
-        fullName: { type: string }
+      description: >
+        fullName se retira hasta la Fase 6: el nombre vive en student_profiles, tabla que
+        todavía no existe. Aceptar el campo y descartarlo haría creer al cliente que se ha
+        guardado. Volverá cuando el módulo student pueda persistirlo.
 
     LoginRequest:
       type: object

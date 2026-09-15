@@ -7,6 +7,15 @@ spring:
     show-sql: false
   liquibase:
     enabled: true
+  mail:
+    # Nothing listens here during tests. The mailer swallows delivery failures on purpose,
+    # so this exercises that path too.
+    host: localhost
+    port: 1025
+
+tennis:
+  identity:
+    jwt-secret: test-only-secret-value-at-least-32-bytes-long
 
 logging:
   level:

@@ -18,6 +18,15 @@ services:
       timeout: 5s
       retries: 10
 
+  # Catches every outgoing email in development and shows it in a web inbox, so the
+  # verification and password-reset flows can be exercised without a real mail provider.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: tennis-mailpit
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
   backend:
     build:
       context: ./backend
@@ -34,6 +43,9 @@ services:
       DB_USER: ${DB_USER:-tennis_platform}
       DB_PASSWORD: ${DB_PASSWORD:-tennis_platform}
       SERVER_PORT: 8080
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me-32-bytes-min}
     ports:
       - "${SERVER_PORT:-8080}:8080"
     healthcheck:
