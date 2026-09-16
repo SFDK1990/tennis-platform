@@ -13,6 +13,16 @@ spring:
     host: localhost
     port: 1025
 
+management:
+  health:
+    mail:
+      # Because nothing listens on the port above, the mail indicator drags /actuator/health
+      # down to DOWN and the endpoint answers 503. On a developer machine running Mailpit the
+      # port happens to be open and the suite passes; on a clean runner it does not. The test
+      # profile therefore stops asking about SMTP - HealthEndpointTest is about the endpoint
+      # being public and reporting UP, not about mail delivery.
+      enabled: false
+
 tennis:
   identity:
     jwt-secret: test-only-secret-value-at-least-32-bytes-long

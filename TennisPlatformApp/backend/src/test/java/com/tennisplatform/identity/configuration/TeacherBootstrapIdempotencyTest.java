@@ -1,6 +1,8 @@
 package com.tennisplatform.identity.configuration;
 
 import com.tennisplatform.AbstractIntegrationTest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -33,9 +35,21 @@ class TeacherBootstrapIdempotencyTest extends AbstractIntegrationTest {
     @Autowired
     private JdbcTemplate jdbc;
 
+    /**
+     * The integration tests share one database (a singleton container), so a class that leaves
+     * a teacher behind breaks whichever class runs next - and surefire does not order classes
+     * the same way on Windows and on Linux. Cleaning both before and after keeps this class
+     * independent of the order and of what the others left.
+     */
+    @BeforeEach
+    @AfterEach
+    void removeAnyTeacher() {
+        jdbc.update("DELETE FROM users WHERE role = 'TEACHER'");
+    }
+
     @Test
     void runningTheBootstrapAgainNeverCreatesASecondTeacher() {
-        // Starting the context already ran it once: that is the first execution.
+        bootstrap.run(null);
         assertThat(teacherCount()).isEqualTo(1);
 
         bootstrap.run(null);

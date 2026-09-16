@@ -136,6 +136,11 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
     /** Criterion 4: the schema itself refuses a second teacher. */
     @Test
     void theSchemaAllowsOnlyOneTeacher() {
+        // Cleaning up afterwards is not enough: the database is shared with the other
+        // integration tests and surefire does not run the classes in the same order on every
+        // platform, so this test must not assume it starts with no teacher.
+        jdbc.update("DELETE FROM users WHERE role = 'TEACHER'");
+
         jdbc.update("INSERT INTO users (email, password_hash, role, status) VALUES (?, ?, 'TEACHER', 'ACTIVE')",
                 uniqueEmail(), "hash");
 
