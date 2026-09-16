@@ -16,6 +16,9 @@ spring:
 tennis:
   identity:
     jwt-secret: test-only-secret-value-at-least-32-bytes-long
+    # Every test hits the API from 127.0.0.1, so the production limit would throttle the
+    # suite itself. The limit is exercised on purpose in AuthRateLimitTest, which lowers it.
+    auth-rate-limit-per-minute: 100000
 
 logging:
   level:

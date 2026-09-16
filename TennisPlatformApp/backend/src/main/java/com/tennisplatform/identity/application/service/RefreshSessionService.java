@@ -45,8 +45,13 @@ public class RefreshSessionService implements RefreshSession {
         this.refreshTokenTtl = refreshTokenTtl;
     }
 
+    /**
+     * {@code noRollbackFor} is load bearing, not a detail. Both failure paths below revoke a
+     * token family and then throw; without this, the rollback triggered by that exception
+     * would undo the revocation, and detecting a stolen token would have no effect whatsoever.
+     */
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {TokenReuseDetectedException.class, InvalidTokenException.class})
     public AuthenticationResult refresh(Command command) {
         Instant now = clock.instant();
 

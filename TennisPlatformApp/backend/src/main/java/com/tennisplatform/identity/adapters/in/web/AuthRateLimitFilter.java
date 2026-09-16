@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -28,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Known limit: per-IP counting does not stop a distributed attack against one account.
  * Account lockout is explicitly out of the MVP (08-security-engineer.md).
  */
-@Component
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final String PROTECTED_PREFIX = "/api/v1/auth/";
@@ -39,7 +37,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
     private final int requestsPerMinute;
 
-    AuthRateLimitFilter(IdentityProperties properties) {
+    public AuthRateLimitFilter(IdentityProperties properties) {
         this.requestsPerMinute = properties.getAuthRateLimitPerMinute();
     }
 
@@ -70,9 +68,12 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             buckets.clear();
         }
         return buckets.computeIfAbsent(clientIp, ip -> Bucket.builder()
+                // Intervally, not greedy: "20 per minute" must mean the allowance is
+                // restored as a block once the minute is up, not trickled back one token at a
+                // time - otherwise a slow, patient attacker is never actually throttled.
                 .addLimit(Bandwidth.builder()
                         .capacity(requestsPerMinute)
-                        .refillGreedy(requestsPerMinute, Duration.ofMinutes(1))
+                        .refillIntervally(requestsPerMinute, Duration.ofMinutes(1))
                         .build())
                 .build());
     }

@@ -25,7 +25,10 @@ import com.tennisplatform.identity.application.service.RegisterUserService;
 import com.tennisplatform.identity.application.service.RequestPasswordResetService;
 import com.tennisplatform.identity.application.service.ResetPasswordService;
 import com.tennisplatform.identity.application.service.VerifyEmailService;
+import com.tennisplatform.identity.adapters.in.web.AuthRateLimitFilter;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -74,6 +77,20 @@ public class IdentityConfiguration {
     @Bean
     public GetCurrentUser getCurrentUser(UserRepository users) {
         return new GetCurrentUserService(users);
+    }
+
+    /**
+     * Registered explicitly rather than component-scanned so its order is deliberate: the
+     * limiter runs ahead of the security chain, and a flood of requests is rejected before
+     * any authentication work - password hashing above all - is performed.
+     */
+    @Bean
+    public FilterRegistrationBean<AuthRateLimitFilter> authRateLimitFilter(IdentityProperties properties) {
+        FilterRegistrationBean<AuthRateLimitFilter> registration =
+                new FilterRegistrationBean<>(new AuthRateLimitFilter(properties));
+        registration.addUrlPatterns("/api/v1/auth/*");
+        registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER - 10);
+        return registration;
     }
 
     @Bean
