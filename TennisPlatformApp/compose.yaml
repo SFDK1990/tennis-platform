@@ -2,7 +2,7 @@ name: tennis-platform
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: tennis-postgres
     environment:
       POSTGRES_DB: ${DB_NAME:-tennis_platform}
