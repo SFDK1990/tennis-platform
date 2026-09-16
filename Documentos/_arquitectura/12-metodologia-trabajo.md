@@ -10,7 +10,7 @@ Va dirigido tanto a Daniel como a cualquier agente de programación que trabaje 
 
 La metodología procede de una sesión de diseño previa, conservada como exportación en PDF (`tenisAPP.pdf`, 27 páginas). Este documento la recoge en texto para que quede versionada junto al código y sea consultable sin depender de un PDF de capturas de pantalla.
 
-La sección "Propuestas de ajuste" son añadidos posteriores, surgidos de la experiencia real de ejecutar la Fase 4, y están marcados como propuestas: **no son decisiones tomadas** hasta que Daniel las apruebe.
+La sección "Reglas adicionales" recoge añadidos posteriores, surgidos de la experiencia real de ejecutar la Fase 4 y de trabajar con un agente que dispone de terminal. Fueron aprobados el 16 de septiembre de 2026 y tienen el mismo rango que el resto.
 
 ## Regla central
 
@@ -48,7 +48,7 @@ Después implementar.
 
 Si se detecta una mala decisión arquitectónica previa, **no debe mantenerse por compatibilidad**: hay que señalarla y proponer una alternativa.
 
-Durante la implementación, los archivos que se van creando se explican paso a paso —qué hacen y por qué— en lugar de entregarse como un volcado de código terminado.
+Sobre el nivel de detalle: al cerrar cada bloque grande de implementación se entrega un **resumen de las decisiones tomadas y su porqué**, no un volcado de código sin explicar, pero tampoco una narración de cada archivo mientras se trabaja.
 
 ## Informe de cierre de fase
 
@@ -71,8 +71,8 @@ Al finalizar cada fase se entrega:
 | 2 | Arquitectura | Módulos, responsabilidades, dependencias permitidas, capas, estructura de paquetes, ADRs. Sin código. | Completada |
 | 3 | Modelo de datos | Entidades, relaciones, restricciones, índices, diagrama ER y borrador de DDL. | Completada |
 | 4 | Skeleton del backend | Proyecto Maven compilable, estructura modular, perfiles, Docker, health endpoint, manejo de errores, logging y tests mínimos. Sin lógica de negocio. | Completada |
-| 5 | Seguridad y autenticación | Registro, verificación por email, login, JWT, refresh tokens rotativos, autorización por rol y por pertenencia. | Siguiente |
-| 5.1 | Integración continua | Pipeline de GitHub Actions: build, tests unitarios, tests de integración, análisis estático, comprobación de dependencias y construcción de imagen. Adelantada desde la fase 15. | Pendiente |
+| 5 | Seguridad y autenticación | Registro, verificación por email, login, JWT, refresh tokens rotativos, autorización por rol y por pertenencia. | Completada (dos criterios abiertos, ver CLAUDE.md en la raíz) |
+| 5.1 | Integración continua | Pipeline de GitHub Actions: build, tests unitarios, tests de integración, análisis estático, comprobación de dependencias y construcción de imagen. Adelantada desde la fase 15. | Siguiente |
 | 6 | Perfiles y gestión de usuarios | Perfiles de profesor y alumno, alta y asociación de alumnos, activación y desactivación. | Pendiente |
 | 7 | Disponibilidad | Reglas semanales de disponibilidad del profesor y excepciones. | Pendiente |
 | 8 | Clases | Creación, consulta, modificación y cancelación de clases, con validación de solapamientos. | Pendiente |
