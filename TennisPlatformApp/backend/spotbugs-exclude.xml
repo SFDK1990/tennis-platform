@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    SpotBugs exclusions. Every entry must carry the reason it is here: an exclusion without a
+    justification is indistinguishable from a bug someone decided to stop seeing.
+-->
+<FindBugsFilter xmlns="https://github.com/spotbugs/filter/3.1.0">
+
+    <!--
+        Spring configuration properties are mutable by contract: the framework instantiates the
+        class and calls the setters. EI_EXPOSE_REP on a String getter is a false positive here,
+        and immutable @ConfigurationProperties would break the relaxed binding used elsewhere.
+    -->
+    <Match>
+        <Class name="com.tennisplatform.identity.configuration.IdentityProperties"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
+        The detector flags any request value reaching a response header and cannot see the
+        regex that guards it. The finding was real and was fixed, not silenced: the incoming
+        correlation id is now discarded unless it matches [A-Za-z0-9._:-]{1,64}, so control
+        characters and overlong values never reach the header or the logs.
+
+        Demonstrated by CorrelationIdFilterTest:
+        replacesAnIncomingCorrelationIdThatCouldForgeLogLinesOrSplitTheResponse and
+        replacesAnOverlongCorrelationId. Delete this exclusion if that guard ever goes away.
+    -->
+    <Match>
+        <Class name="com.tennisplatform.web.CorrelationIdFilter"/>
+        <Bug pattern="HRS_REQUEST_PARAMETER_TO_HTTP_HEADER"/>
+    </Match>
+
+</FindBugsFilter>

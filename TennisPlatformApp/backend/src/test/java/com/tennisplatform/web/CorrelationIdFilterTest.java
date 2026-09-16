@@ -36,6 +36,35 @@ class CorrelationIdFilterTest {
         assertThat(response.getHeader(CorrelationIdFilter.HEADER_NAME)).isNotBlank();
     }
 
+    /**
+     * The value reaches a response header and every log line of the request, so a client must
+     * not be able to put control characters - or an arbitrarily long string - into either.
+     */
+    @Test
+    void replacesAnIncomingCorrelationIdThatCouldForgeLogLinesOrSplitTheResponse() throws Exception {
+        String forged = "abc\r\nSet-Cookie: session=stolen";
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(CorrelationIdFilter.HEADER_NAME, forged);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertThat(response.getHeader(CorrelationIdFilter.HEADER_NAME))
+                .isNotEqualTo(forged)
+                .doesNotContain("\r", "\n");
+    }
+
+    @Test
+    void replacesAnOverlongCorrelationId() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(CorrelationIdFilter.HEADER_NAME, "x".repeat(65));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertThat(response.getHeader(CorrelationIdFilter.HEADER_NAME)).hasSize(36);
+    }
+
     @Test
     void clearsTheMdcSoThePooledThreadDoesNotLeakIntoTheNextRequest() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();

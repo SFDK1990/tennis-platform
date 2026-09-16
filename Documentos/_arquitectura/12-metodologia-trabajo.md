@@ -71,9 +71,9 @@ Al finalizar cada fase se entrega:
 | 2 | Arquitectura | Módulos, responsabilidades, dependencias permitidas, capas, estructura de paquetes, ADRs. Sin código. | Completada |
 | 3 | Modelo de datos | Entidades, relaciones, restricciones, índices, diagrama ER y borrador de DDL. | Completada |
 | 4 | Skeleton del backend | Proyecto Maven compilable, estructura modular, perfiles, Docker, health endpoint, manejo de errores, logging y tests mínimos. Sin lógica de negocio. | Completada |
-| 5 | Seguridad y autenticación | Registro, verificación por email, login, JWT, refresh tokens rotativos, autorización por rol y por pertenencia. | Completada (dos criterios abiertos, ver CLAUDE.md en la raíz) |
-| 5.1 | Integración continua | Pipeline de GitHub Actions: build, tests unitarios, tests de integración, análisis estático, comprobación de dependencias y construcción de imagen. Adelantada desde la fase 15. | Siguiente |
-| 6 | Perfiles y gestión de usuarios | Perfiles de profesor y alumno, alta y asociación de alumnos, activación y desactivación. | Pendiente |
+| 5 | Seguridad y autenticación | Registro, verificación por email, login, JWT, refresh tokens rotativos, autorización por rol y por pertenencia. | Completada (los dos criterios abiertos se cerraron en la 5.1) |
+| 5.1 | Integración continua | Pipeline de GitHub Actions: build, tests unitarios, tests de integración, análisis estático, comprobación de dependencias y construcción de imagen. Adelantada desde la fase 15. | Completada (ver `14-fase5.1-integracion-continua.md`) |
+| 6 | Perfiles y gestión de usuarios | Perfiles de profesor y alumno, alta y asociación de alumnos, activación y desactivación. | Siguiente |
 | 7 | Disponibilidad | Reglas semanales de disponibilidad del profesor y excepciones. | Pendiente |
 | 8 | Clases | Creación, consulta, modificación y cancelación de clases, con validación de solapamientos. | Pendiente |
 | 9 | Reservas | Reserva y cancelación, capacidad, duplicados, solapamientos del alumno y concurrencia. | Pendiente |

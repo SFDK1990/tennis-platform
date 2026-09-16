@@ -28,6 +28,11 @@
         <testcontainers.version>1.21.4</testcontainers.version>
         <jjwt.version>0.12.6</jjwt.version>
         <bucket4j.version>8.14.0</bucket4j.version>
+
+        <!-- Build-quality tooling, introduced in Fase 5.1 together with the CI pipeline. -->
+        <spotless.version>3.10.2</spotless.version>
+        <spotbugs.version>4.10.4.1</spotbugs.version>
+        <jacoco.version>0.8.15</jacoco.version>
     </properties>
 
     <dependencies>
@@ -137,6 +142,82 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!--
+                Deliberately NOT a full formatter (google-java-format, palantir...). Adopting
+                one now would reformat every existing file in a single commit and bury the
+                history of Fases 4 and 5 under a cosmetic diff. These rules only catch what is
+                objectively wrong - dead imports, trailing whitespace, a missing final newline.
+            -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <java>
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <!-- validate, not verify: failing on formatting after running the
+                             whole test suite wastes the slowest part of the build. -->
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <!-- Low would flood the build with style noise on a codebase this young. -->
+                    <threshold>Medium</threshold>
+                    <includeTests>false</includeTests>
+                    <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Report only, no coverage threshold. With a single module implemented any
+                percentage would be an arbitrary number that later phases would have to
+                fight; the gate arrives in Fase 12, which is where coverage is the subject.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -24,9 +24,13 @@ import java.util.UUID;
  * service both issues and verifies, so an asymmetric key pair would add key management
  * without adding a guarantee. Switching to RS256 becomes worthwhile only once a third party
  * needs to verify tokens it cannot mint.
+ *
+ * <p>Final because the constructor validates the secret and can therefore throw: a subclass
+ * with a finalizer could otherwise get hold of a partially built instance. There is no reason
+ * to extend an outbound adapter anyway - collaborators depend on {@link AccessTokenIssuer}.
  */
 @Component
-public class JwtAccessTokens implements AccessTokenIssuer {
+public final class JwtAccessTokens implements AccessTokenIssuer {
 
     static final String ROLE_CLAIM = "role";
     static final String EMAIL_VERIFIED_CLAIM = "email_verified";

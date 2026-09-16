@@ -1,0 +1,40 @@
+version: 2
+
+# Dependency checking is deliberately Dependabot rather than OWASP Dependency-Check: the
+# latter needs an NVD API key and adds minutes to every build, while this reports the same
+# vulnerable dependencies out of band without slowing the pipeline down.
+updates:
+
+  - package-ecosystem: maven
+    directory: /TennisPlatformApp/backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # One PR per week for routine bumps; anything that breaks compilation is caught by CI
+    # before it is merged. Major versions stay separate because they need to be read.
+    groups:
+      backend-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        update-types: [minor, patch, major]
+
+  - package-ecosystem: docker
+    directory: /TennisPlatformApp/backend
+    schedule:
+      interval: weekly
+      day: monday
+
+  # postgres and mailpit images.
+  - package-ecosystem: docker-compose
+    directory: /TennisPlatformApp
+    schedule:
+      interval: weekly
+      day: monday

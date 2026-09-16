@@ -22,15 +22,25 @@ The docs are the source of truth for design decisions; treat them as binding req
 - `09-roadmap-implementacion.md` — phase-by-phase build order following the module dependency graph, with exit criteria per phase
 - `10-diagrama-er.md` — ER diagram (Mermaid) and draft PostgreSQL DDL per Liquibase changelog group
 - `11-contrato-api.md` — API contract conventions and business-code → HTTP status mapping; the actual OpenAPI spec is `openapi.yaml` at this project's root
+- `12-metodologia-trabajo.md` — the agreed working process and phase status table; read it before starting anything
+- `13-fase5-analisis-identity.md` — Fase 5 analysis (identity module)
+- `14-fase5.1-integracion-continua.md` — Fase 5.1 decisions (CI pipeline, static analysis, dependency checking)
 
 ## Backend commands
 
 ```
 cd backend
-mvn test                  # run tests (integration tests auto-skip if Docker isn't available)
+mvn verify                # what CI runs: Spotless, tests, SpotBugs, JaCoCo
+mvn test                  # tests only (integration tests auto-skip if Docker isn't available)
+mvn spotless:apply        # fix what Spotless rejects
 mvn clean package         # build the jar
 mvn spring-boot:run       # run locally (defaults to the "dev" profile)
 ```
+
+CI (`../.github/workflows/ci.yml`) runs `mvn verify` and then **fails the build if any test
+skipped**, so the Fase 4 failure mode — green build, silently skipped integration tests —
+cannot come back unnoticed. SpotBugs exclusions live in `backend/spotbugs-exclude.xml` and
+each one must carry its justification.
 
 From `TennisPlatformApp/`:
 

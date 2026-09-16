@@ -34,27 +34,34 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 2. Arquitectura | Completada |
 | 3. Modelo de datos | Completada |
 | 4. Skeleton del backend | Completada y verificada |
-| 5. Seguridad y autenticación (`identity`) | Completada — ver salvedades |
-| **5.1 Integración continua** | **Siguiente** |
-| 6 en adelante | Pendientes |
+| 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
+| 5.1 Integración continua | Completada y verificada |
+| **6. Perfiles y gestión de usuarios** | **Siguiente** |
+| 7 en adelante | Pendientes |
 
-### Salvedades abiertas de la Fase 5
+Las dos salvedades que arrastraba la Fase 5 están cerradas: `TeacherBootstrapIdempotencyTest`
+demuestra que ejecutar el bootstrap dos veces no crea una segunda cuenta, y el stack se
+reconstruyó y arrancó contra el código actual. Las decisiones de la 5.1 están en
+`Documentos/_arquitectura/14-fase5.1-integracion-continua.md`.
 
-Dos criterios de aceptación no quedaron cerrados del todo:
+### Pendiente de configurar en GitHub (no versionable)
 
-1. **El bootstrap del profesor no tiene test de idempotencia.** Está implementado en
-   `TeacherBootstrap` y funciona, pero nada demuestra que ejecutarlo dos veces no cree una
-   segunda cuenta.
-2. **El arranque con `docker compose` se verificó antes de los últimos commits.** Conviene
-   repetirlo antes de dar la fase por cerrada.
+- **Proteger `main`** exigiendo el check de CI en verde para fusionar. Sin esto el pipeline
+  informa pero no impide nada.
+- **Habilitar Dependabot** en la configuración de seguridad del repositorio.
 
 ## Comandos
 
 ```
 cd TennisPlatformApp/backend
-mvn test                  # suite completa; revisa el contador de "Skipped"
+mvn verify                # lo mismo que ejecuta CI: Spotless, tests, SpotBugs y JaCoCo
+mvn test                  # solo la suite; revisa el contador de "Skipped"
+mvn spotless:apply        # corrige el formato que Spotless rechaza
 mvn clean package
 ```
+
+El pipeline (`.github/workflows/ci.yml`) **falla si algún test se salta**, no solo si alguno
+rompe: un test de integración saltado parece verde y no prueba nada.
 
 ```
 cd TennisPlatformApp
