@@ -35,7 +35,7 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 3. Modelo de datos | Completada |
 | 4. Skeleton del backend | Completada y verificada |
 | 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
-| 5.1 Integración continua | Completada y verificada |
+| 5.1 Integración continua | Verificada en local; falta la primera ejecución verde en GitHub Actions |
 | **6. Perfiles y gestión de usuarios** | **Siguiente** |
 | 7 en adelante | Pendientes |
 
