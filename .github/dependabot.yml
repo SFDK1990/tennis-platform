@@ -47,6 +47,17 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # The maven image slips through the rule above, and PR #10 proved it: its tag is
+      # 3.9-eclipse-temurin-21, so Dependabot reads the version as 3.9 -> 3 - not a major -
+      # while the JDK it carries travels in the suffix, 21 -> 24. Ignoring the image by name
+      # is the only thing that holds. It costs little: this image only builds the jar and is
+      # never shipped, so its own patches never reach a running system, and the JDK is changed
+      # by hand the day we decide to change it.
+      #
+      # eclipse-temurin, the runtime image, is NOT listed here: its tag is 21-jre-alpine, the
+      # version reads as 21 -> 24, the rule above classifies that as a major and stops it,
+      # while patch updates of the JDK that does run in production still arrive.
+      - dependency-name: "maven"
 
   # postgres and mailpit images. A major means a new PostgreSQL engine, with its own upgrade
   # path for the data - never an automatic bump.
