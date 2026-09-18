@@ -34,6 +34,11 @@ class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findTheTeacher() {
+        return jpa.findFirstByRole(Role.TEACHER).map(UserEntity::toDomain);
+    }
+
+    @Override
     public User save(User user) {
         return jpa.save(UserEntity.fromDomain(user)).toDomain();
     }

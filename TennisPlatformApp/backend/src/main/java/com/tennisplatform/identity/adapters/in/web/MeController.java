@@ -1,7 +1,7 @@
 package com.tennisplatform.identity.adapters.in.web;
 
 import com.tennisplatform.identity.adapters.in.web.AuthDtos.UserSummaryResponse;
-import com.tennisplatform.identity.adapters.out.security.AuthenticatedUser;
+import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;

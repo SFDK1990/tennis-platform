@@ -3,6 +3,7 @@ package com.tennisplatform.identity.configuration;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.Login;
 import com.tennisplatform.identity.application.port.in.Logout;
+import com.tennisplatform.identity.application.port.in.ProvisionTeacherAccount;
 import com.tennisplatform.identity.application.port.in.RefreshSession;
 import com.tennisplatform.identity.application.port.in.RegisterUser;
 import com.tennisplatform.identity.application.port.in.RequestPasswordReset;
@@ -20,6 +21,7 @@ import com.tennisplatform.identity.application.port.out.UserRepository;
 import com.tennisplatform.identity.application.service.GetCurrentUserService;
 import com.tennisplatform.identity.application.service.LoginService;
 import com.tennisplatform.identity.application.service.LogoutService;
+import com.tennisplatform.identity.application.service.ProvisionTeacherAccountService;
 import com.tennisplatform.identity.application.service.RefreshSessionService;
 import com.tennisplatform.identity.application.service.RegisterUserService;
 import com.tennisplatform.identity.application.service.RequestPasswordResetService;
@@ -77,6 +79,17 @@ public class IdentityConfiguration {
     @Bean
     public GetCurrentUser getCurrentUser(UserRepository users) {
         return new GetCurrentUserService(users);
+    }
+
+    /**
+     * Offered to the teacher module, which owns the bootstrap: the account belongs to identity
+     * and the profile to teacher, and only teacher is allowed to know about both.
+     */
+    @Bean
+    public ProvisionTeacherAccount provisionTeacherAccount(UserRepository users,
+                                                           PasswordHasher passwordHasher,
+                                                           Clock clock) {
+        return new ProvisionTeacherAccountService(users, passwordHasher, clock);
     }
 
     /**

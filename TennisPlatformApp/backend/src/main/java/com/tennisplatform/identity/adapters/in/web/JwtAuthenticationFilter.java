@@ -1,6 +1,6 @@
 package com.tennisplatform.identity.adapters.in.web;
 
-import com.tennisplatform.identity.adapters.out.security.AuthenticatedUser;
+import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.identity.adapters.out.security.JwtAccessTokens;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

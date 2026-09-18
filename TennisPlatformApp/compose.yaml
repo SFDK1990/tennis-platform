@@ -46,6 +46,11 @@ services:
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
       JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me-32-bytes-min}
+      # Blank by default: no teacher is created unless these are set in .env.
+      TEACHER_EMAIL: ${TEACHER_EMAIL:-}
+      TEACHER_PASSWORD: ${TEACHER_PASSWORD:-}
+      TEACHER_DISPLAY_NAME: ${TEACHER_DISPLAY_NAME:-}
+      TEACHER_TIMEZONE: ${TEACHER_TIMEZONE:-Europe/Madrid}
     ports:
       - "${SERVER_PORT:-8080}:8080"
     healthcheck:

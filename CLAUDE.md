@@ -44,8 +44,12 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 4. Skeleton del backend | Completada y verificada |
 | 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
 | 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
-| **6. Perfiles y gestión de usuarios** | **Siguiente** |
+| **6. Perfiles y gestión de usuarios** | **En curso**: `teacher` hecho, `student` pendiente |
 | 7 en adelante | Pendientes |
+
+El análisis de la Fase 6 y sus decisiones están en
+`Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entrega en dos PRs, `teacher`
+primero y `student` después, porque `student` depende de `teacher`.
 
 Las dos salvedades que arrastraba la Fase 5 están cerradas: `TeacherBootstrapIdempotencyTest`
 demuestra que ejecutar el bootstrap dos veces no crea una segunda cuenta, y el stack se
@@ -121,6 +125,13 @@ Cosas que ya han costado tiempo y que fallan **en silencio**:
   el 429 cuando el margen ya se ha repuesto.
 - **Revocar y lanzar excepción en el mismo método transaccional deshace la revocación.** Pasó
   con la detección de reutilización de refresh tokens: hace falta `noRollbackFor`.
+- **`AbstractIntegrationTest` vacía la base antes de cada test** (`TRUNCATE ... CASCADE`).
+  Una tabla nueva hay que añadirla a esa lista, o sus filas sobrevivirán entre tests y el
+  resultado volverá a depender del orden. Y un test que necesite al profesor debe sembrarlo:
+  lo que creó el bootstrap al arrancar el contexto ya no está.
+- **El perfil del profesor lo crea el bootstrap, no un endpoint.** `display_name` y `timezone`
+  son `NOT NULL` y no hay alta pública de profesor: sin `TEACHER_EMAIL` y `TEACHER_PASSWORD`
+  en el entorno no existe profesor, y `GET /teacher/profile` responde 404.
 
 ## Repositorio
 

@@ -1,5 +1,6 @@
 package com.tennisplatform.identity.adapters.out.security;
 
+import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.identity.application.port.out.AccessTokenIssuer;
 import com.tennisplatform.identity.configuration.IdentityProperties;
 import com.tennisplatform.identity.domain.Role;

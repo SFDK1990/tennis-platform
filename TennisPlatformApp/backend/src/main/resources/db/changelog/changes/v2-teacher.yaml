@@ -1,0 +1,24 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v2-teacher-profiles
+      author: tennis-platform
+      comment: >-
+        Operational profile of the single teacher. The primary key is the user id itself, not
+        a surrogate: a user has at most one teacher profile, so a separate id would allow a
+        second row per user that nothing in the schema would reject.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE teacher_profiles (
+                  user_id       UUID PRIMARY KEY REFERENCES users(id),
+                  display_name  VARCHAR(255) NOT NULL,
+                  phone         VARCHAR(30),
+                  timezone      VARCHAR(60)  NOT NULL,
+                  created_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
+                  updated_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
+              );
+      rollback:
+        - sql:
+            sql: DROP TABLE teacher_profiles

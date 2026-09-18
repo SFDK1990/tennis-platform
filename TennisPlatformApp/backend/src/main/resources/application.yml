@@ -26,6 +26,13 @@ tennis:
     password-reset-ttl: 1h
     frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
     mail-from: ${MAIL_FROM:no-reply@tennis-platform.local}
+  teacher:
+    # The single teacher is created at startup from these values. Blank credentials mean no
+    # teacher is created, which is the default: nothing is seeded by accident.
+    bootstrap-email: ${TEACHER_EMAIL:}
+    bootstrap-password: ${TEACHER_PASSWORD:}
+    bootstrap-display-name: ${TEACHER_DISPLAY_NAME:}
+    bootstrap-timezone: ${TEACHER_TIMEZONE:Europe/Madrid}
 
 management:
   endpoints:

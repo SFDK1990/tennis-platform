@@ -21,6 +21,9 @@ TennisPlatformApp/build/
 *.ipr
 .vscode/
 
+# Claude Code: the shared config and hooks ARE tracked, personal overrides are not
+.claude/settings.local.json
+
 # Logs
 *.log
 logs/

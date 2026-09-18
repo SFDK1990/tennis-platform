@@ -30,6 +30,7 @@
         <bucket4j.version>8.14.0</bucket4j.version>
 
         <!-- Build-quality tooling, introduced in Fase 5.1 together with the CI pipeline. -->
+        <archunit.version>1.5.0</archunit.version>
         <spotless.version>3.10.2</spotless.version>
         <spotbugs.version>4.10.4.1</spotbugs.version>
         <jacoco.version>0.8.15</jacoco.version>
@@ -133,6 +134,16 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--
+            Enforces the module boundaries of 02-arquitectura.md. Introduced in Fase 6, which is
+            when the second module appeared and there was finally a boundary to break.
+        -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
