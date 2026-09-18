@@ -306,3 +306,27 @@ Variables sensibles fuera de Git:
 - Disponibilidad como restricción con override del profesor.
 - Calendar como consulta agregada.
 - Sin microservicios ni Kafka en el MVP.
+
+## Cómo se hacen cumplir estos límites (18/09/2026)
+
+Los límites de este documento dejan de ser una convención y pasan a estar verificados por 21
+reglas de ArchUnit en `ModuleBoundariesTest`, que corren en cada `mvn test`. Cuatro decisiones
+los hacen comprobables; el razonamiento completo está en
+`17-analisis-archunit-limites-modulares.md`:
+
+1. **`config`, `error` y `web` no son módulos**: son núcleo técnico exento, fuera del grafo.
+   Cualquier módulo puede usarlos, y el *composition root* puede ver cualquier módulo porque
+   ensamblar implementaciones concretas es su función. No se absorben en `shared`, que queda
+   reservado a primitivas reutilizables.
+2. **Las reglas cubren los nueve módulos**, también los que aún están vacíos: el grafo ya está
+   decidido y así cada módulo nace vigilado.
+3. **`calendar` solo puede usar puertos `Get`, `Find` o `Query`.** Esto convierte "solo
+   interfaces públicas de consulta" en algo mecánico, y fija la convención de nombres de los
+   puertos de todos los módulos.
+4. **Un módulo solo puede importar de otro lo que cuelgue de `application/port/in`.** Su
+   dominio, sus servicios, sus puertos de salida, sus adaptadores y su configuración son su
+   interior.
+
+La excepción declarada es `@Transactional` en `application/service`, porque este documento sitúa
+ahí las fronteras transaccionales. Está escrita en el propio test con su motivo al lado, no como
+una exclusión muda.

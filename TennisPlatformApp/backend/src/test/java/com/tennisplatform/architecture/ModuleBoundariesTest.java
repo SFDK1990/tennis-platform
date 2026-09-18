@@ -1,9 +1,17 @@
 package com.tennisplatform.architecture;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
@@ -12,13 +20,71 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
  * The module boundaries of 02-arquitectura.md, as executable rules.
  *
  * <p>They arrive in Fase 6 because until then there was a single module and nothing to keep
- * apart. Two rules here already caught real violations while the module was being written: the
- * teacher bootstrap wanted to live in {@code identity} and write into the teacher's table, and
+ * apart. Two of them already caught real violations while the teacher module was being written:
+ * the bootstrap wanted to live in {@code identity} and write into the teacher's table, and
  * {@code AuthenticatedUser} sat among identity's adapters where the first controller of another
  * module could only have reached it by importing an adapter.
+ *
+ * <p>The rules cover all nine modules, including the six that are still empty. The graph is
+ * already decided and does not depend on the code existing: every module then starts its life
+ * under the rules, instead of the rules having to negotiate with code that already breaks them.
+ *
+ * <p>{@code config}, {@code error} and {@code web} are not modules and stay outside the graph by
+ * decision: {@code config} is the composition root, {@code error} the global error mapping and
+ * {@code web} the correlation-id filter. They are exempt simply by not being listed in
+ * {@link #MODULES} - any module may use them, and the composition root may see any module, since
+ * assembling concrete implementations is precisely its job. Folding them into {@code shared}
+ * instead would blur what shared means: technical primitives, not application wiring.
  */
 @AnalyzeClasses(packages = "com.tennisplatform", importOptions = ImportOption.DoNotIncludeTests.class)
 class ModuleBoundariesTest {
+
+    private static final String ROOT = "com.tennisplatform";
+
+    private static final List<String> MODULES = List.of(
+            "identity", "teacher", "student", "availability", "lesson", "booking",
+            "administration", "calendar", "shared");
+
+    // --- A. The dependency graph -----------------------------------------------
+
+    @ArchTest
+    static final ArchRule identityDependsOnNoModule = mayOnlyDependOn("identity");
+
+    @ArchTest
+    static final ArchRule sharedDependsOnNoModule = mayOnlyDependOn("shared");
+
+    @ArchTest
+    static final ArchRule teacherDependsOnIdentity = mayOnlyDependOn("teacher", "identity");
+
+    @ArchTest
+    static final ArchRule studentDependsOnIdentityAndTeacher =
+            mayOnlyDependOn("student", "identity", "teacher");
+
+    @ArchTest
+    static final ArchRule availabilityDependsOnTeacher = mayOnlyDependOn("availability", "teacher");
+
+    @ArchTest
+    static final ArchRule lessonDependsOnTeacherAndAvailability =
+            mayOnlyDependOn("lesson", "teacher", "availability");
+
+    @ArchTest
+    static final ArchRule bookingDependsOnStudentAndLesson =
+            mayOnlyDependOn("booking", "student", "lesson");
+
+    @ArchTest
+    static final ArchRule administrationDependsOnIdentityTeacherAndStudent =
+            mayOnlyDependOn("administration", "identity", "teacher", "student");
+
+    /**
+     * A cycle between modules means they can no longer be understood, tested or replaced
+     * separately - which is the only thing a modular monolith buys over a single package.
+     */
+    @ArchTest
+    static final ArchRule modulesAreFreeOfCycles = slices()
+            .matching(ROOT + ".(*)..")
+            .should().beFreeOfCycles();
+
+    // --- B. Hexagonal layers inside each module --------------------------------
 
     /**
      * The domain is where the business rules live, and it must be testable without a framework
@@ -33,10 +99,23 @@ class ModuleBoundariesTest {
                     "org.hibernate..")
             .because("the domain must be testable and survive replacing the framework");
 
+    /** The innermost layer knows nothing about the ones that use it. */
+    @ArchTest
+    static final ArchRule theDomainDependsOnNoOuterLayer = noClasses()
+            .that().resideInAPackage("..domain..")
+            .should().dependOnClassesThat().resideInAnyPackage(
+                    "..application..", "..adapters..", "..configuration..")
+            .because("the domain is the innermost layer");
+
     /**
      * The application layer defines the ports; the adapters implement them. If the layer that
-     * declares the contract also reaches for the implementation, the dependency inversion that
-     * the whole hexagon rests on has been undone.
+     * declares the contract also reaches for the implementation, the dependency inversion the
+     * whole hexagon rests on has been undone.
+     *
+     * <p>Spring itself is <em>not</em> banned here, on purpose: 02-arquitectura.md places the
+     * transaction boundaries in {@code application/service}, so {@code @Transactional} belongs
+     * there. A rule forbidding it would fail on day one and end up relaxed with silent
+     * exclusions, which is worse than saying out loud what is allowed.
      */
     @ArchTest
     static final ArchRule theApplicationLayerDoesNotUseAdapters = noClasses()
@@ -44,62 +123,121 @@ class ModuleBoundariesTest {
             .should().dependOnClassesThat().resideInAPackage("..adapters..")
             .because("ports are implemented by adapters, not the other way round");
 
+    // --- C. Cross-module access goes through inbound ports ---------------------
+
     /**
-     * Cross-module access goes through public ports. An adapter is the inside of a module: its
-     * JPA entities, its repositories, its controllers. Reaching one from outside turns two
-     * modules into one, silently.
+     * What one module may see of another: only {@code application/port/in}. Its domain, its
+     * services, its outbound ports, its adapters and its wiring are the inside of that module,
+     * and reaching any of them turns two modules into one, silently.
      *
-     * <p>{@code com.tennisplatform.config} is exempt, and it is the only exemption. It is the
-     * composition root: the one place whose entire job is to assemble concrete implementations,
-     * which is why {@code SecurityConfig} builds the filter chain out of identity's JWT filter.
-     * Forbidding it there would not improve the design, it would only move the wiring somewhere
-     * less obvious. The rule protects the modules from each other, not the root from the modules.
+     * <p>One rule per module because the check needs both ends: a module reaching into its own
+     * internals is not a violation, it is the point of having internals.
      */
     @ArchTest
-    static final ArchRule noModuleReachesIntoIdentityAdapters = noClasses()
-            .that().resideOutsideOfPackages("com.tennisplatform.identity..",
-                    "com.tennisplatform.config..")
-            .should().dependOnClassesThat().resideInAPackage("com.tennisplatform.identity.adapters..")
-            .because("other modules must use identity's public ports");
+    static final ArchRule identityCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("identity");
 
     @ArchTest
-    static final ArchRule noModuleReachesIntoTeacherAdapters = noClasses()
-            .that().resideOutsideOfPackages("com.tennisplatform.teacher..",
-                    "com.tennisplatform.config..")
-            .should().dependOnClassesThat().resideInAPackage("com.tennisplatform.teacher.adapters..")
-            .because("other modules must use teacher's public ports");
+    static final ArchRule teacherCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("teacher");
+
+    @ArchTest
+    static final ArchRule studentCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("student");
+
+    @ArchTest
+    static final ArchRule availabilityCrossesOnlyThroughPorts =
+            crossesOnlyThroughInboundPorts("availability");
+
+    @ArchTest
+    static final ArchRule lessonCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("lesson");
+
+    @ArchTest
+    static final ArchRule bookingCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("booking");
+
+    @ArchTest
+    static final ArchRule administrationCrossesOnlyThroughPorts =
+            crossesOnlyThroughInboundPorts("administration");
+
+    @ArchTest
+    static final ArchRule calendarCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("calendar");
+
+    // --- D. calendar only reads -------------------------------------------------
 
     /**
-     * The direction of the graph: identity is the root and depends on nobody. It is the rule the
-     * teacher bootstrap broke, which is why the bootstrap moved to the teacher module and asks
-     * identity for the account through a port.
+     * {@code calendar} aggregates availability, lessons and bookings, and must never write into
+     * another module's domain. "Public query interfaces" is not checkable as prose, so the
+     * agreed mechanical criterion is the port's name: it may use {@code Get}, {@code Find} and
+     * {@code Query} ports, and no other. Data types returned by those ports - views and records -
+     * are not interfaces and stay out of the rule.
      */
     @ArchTest
-    static final ArchRule identityDependsOnNoOtherModule = noClasses()
-            .that().resideInAPackage("com.tennisplatform.identity..")
-            .should().dependOnClassesThat().resideInAnyPackage(
-                    "com.tennisplatform.teacher..", "com.tennisplatform.student..",
-                    "com.tennisplatform.availability..", "com.tennisplatform.lesson..",
-                    "com.tennisplatform.booking..", "com.tennisplatform.administration..",
-                    "com.tennisplatform.calendar..")
-            .because("identity is the root of the dependency graph");
+    static final ArchRule calendarOnlyUsesQueryPorts = noClasses()
+            .that().resideInAPackage(packageOf("calendar"))
+            .should().dependOnClassesThat(writePortsOfAnotherModule())
+            .because("calendar reads other modules, it never changes them");
 
-    /** teacher may know identity and shared, and nothing else (02-arquitectura.md). */
-    @ArchTest
-    static final ArchRule teacherOnlyDependsOnIdentity = noClasses()
-            .that().resideInAPackage("com.tennisplatform.teacher..")
-            .should().dependOnClassesThat().resideInAnyPackage(
-                    "com.tennisplatform.student..", "com.tennisplatform.availability..",
-                    "com.tennisplatform.lesson..", "com.tennisplatform.booking..",
-                    "com.tennisplatform.administration..", "com.tennisplatform.calendar..")
-            .because("teacher depends on identity only");
+    // --- helpers ---------------------------------------------------------------
+
+    private static String packageOf(String module) {
+        return ROOT + "." + module + "..";
+    }
 
     /**
-     * A cycle between modules means they can no longer be understood, tested or replaced
-     * separately - which is the only thing a modular monolith buys over a single package.
+     * Builds the rule for one module out of the graph: everything not explicitly allowed is
+     * forbidden. Stating the permitted edges rather than the forbidden ones is what keeps the
+     * rules correct when a module is added - a new module is denied by default.
      */
-    @ArchTest
-    static final ArchRule modulesAreFreeOfCycles = slices()
-            .matching("com.tennisplatform.(*)..")
-            .should().beFreeOfCycles();
+    private static ArchRule mayOnlyDependOn(String module, String... allowed) {
+        Set<String> permitted = Stream.concat(Stream.of(module), Arrays.stream(allowed))
+                .collect(Collectors.toSet());
+        String[] forbidden = MODULES.stream()
+                .filter(other -> !permitted.contains(other))
+                .map(ModuleBoundariesTest::packageOf)
+                .toArray(String[]::new);
+
+        return noClasses()
+                .that().resideInAPackage(packageOf(module))
+                .should().dependOnClassesThat().resideInAnyPackage(forbidden)
+                .because(module + " may only depend on " + String.join(", ", permitted)
+                        + " (02-arquitectura.md)");
+    }
+
+    private static ArchRule crossesOnlyThroughInboundPorts(String module) {
+        return noClasses()
+                .that().resideInAPackage(packageOf(module))
+                .should().dependOnClassesThat(insidesOfModulesOtherThan(module))
+                .because("a module's public API is its inbound ports, nothing else");
+    }
+
+    private static DescribedPredicate<JavaClass> insidesOfModulesOtherThan(String module) {
+        return new DescribedPredicate<>("the insides of a module other than " + module) {
+            @Override
+            public boolean test(JavaClass target) {
+                String owner = moduleOf(target);
+                return owner != null
+                        && !owner.equals(module)
+                        && !target.getPackageName().contains(".application.port.in");
+            }
+        };
+    }
+
+    private static DescribedPredicate<JavaClass> writePortsOfAnotherModule() {
+        return new DescribedPredicate<>("a write port of another module") {
+            @Override
+            public boolean test(JavaClass target) {
+                String owner = moduleOf(target);
+                return owner != null
+                        && !"calendar".equals(owner)
+                        && target.getPackageName().contains(".application.port.in")
+                        && target.isInterface()
+                        && !target.getSimpleName().matches("^(Get|Find|Query).*");
+            }
+        };
+    }
+
+    /** The module a class belongs to, or null when it is not inside one. */
+    private static String moduleOf(JavaClass type) {
+        return MODULES.stream()
+                .filter(module -> type.getPackageName().startsWith(ROOT + "." + module + "."))
+                .findFirst()
+                .orElse(null);
+    }
 }

@@ -96,7 +96,11 @@ Modules: `identity`, `teacher`, `student`, `availability`, `lesson`, `booking`, 
 - `calendar` → only public query interfaces of other modules (never writes to another module's domain)
 - `shared` → nothing (technical primitives only: IDs, common errors, clock; no business logic)
 
-Cross-module access must go through a module's public ports — never reach into another module's JPA entities, repositories, or internal adapters directly. This boundary is meant to be enforced with ArchUnit tests once code exists.
+Cross-module access must go through a module's public ports — never reach into another module's JPA entities, repositories, or internal adapters directly.
+
+**This is enforced, not just documented.** `src/test/java/com/tennisplatform/architecture/ModuleBoundariesTest.java` holds 21 ArchUnit rules covering the dependency graph of all nine modules (including the six still empty), the hexagonal layers, cross-module access through `application/port/in` only, and `calendar` being read-only. They run inside `mvn test` — no profile, no tag, no Docker — so they cannot be skipped. `config`, `error` and `web` are not modules and stay outside the graph by decision: they are the composition root, the global error mapping and the correlation-id filter. Rationale and the four decisions behind the rules: `../Documentos/_arquitectura/17-analisis-archunit-limites-modulares.md`.
+
+A practical consequence: to check a caller's role from another module, use `AuthenticatedUser.isTeacher()` rather than comparing against `identity.domain.Role` — the comparison imports identity's domain and the rules reject it.
 
 **Frontend style:** feature-based folders (`authentication`, `profile`, `students`, `availability`, `calendar`, `lessons`, `bookings`, `administration`), not a global controllers/services soup. A single centralized HTTP client owns auth headers, session refresh, error normalization, and typed responses — components never call the API ad hoc. Backend is the single source of truth for lessons/bookings/availability state; the frontend must treat local calendar state as potentially stale and handle `409` conflicts on booking rather than trusting cached availability.
 
