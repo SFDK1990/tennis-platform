@@ -35,7 +35,7 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 3. Modelo de datos | Completada |
 | 4. Skeleton del backend | Completada y verificada |
 | 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
-| 5.1 Integración continua | Verificada en local; falta la primera ejecución verde en GitHub Actions |
+| 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
 | **6. Perfiles y gestión de usuarios** | **Siguiente** |
 | 7 en adelante | Pendientes |
 
@@ -46,9 +46,25 @@ reconstruyó y arrancó contra el código actual. Las decisiones de la 5.1 está
 
 ### Pendiente de configurar en GitHub (no versionable)
 
-- **Proteger `main`** exigiendo el check de CI en verde para fusionar. Sin esto el pipeline
-  informa pero no impide nada.
-- **Habilitar Dependabot** en la configuración de seguridad del repositorio.
+- **Proteger `main`** exigiendo los checks `Backend build, tests and static analysis` e
+  `Image builds and the stack starts` para poder fusionar. Sin esto el pipeline informa pero
+  no impide nada. Dependabot ya quedó activo con solo añadir `.github/dependabot.yml`.
+
+### PRs de Dependabot abiertos y sin revisar
+
+Los abrió la primera ejecución. **Ninguno está fusionado y dos ya fallan el CI**, que es
+exactamente para lo que está el pipeline:
+
+| PR | Propuesta | CI |
+|---|---|---|
+| #5 | Spring Boot 3.3.5 → **4.1.1** (versión mayor) | Falla |
+| #4 | Grupo de 4 actualizaciones menores/parche del backend | Falla |
+| #3 | postgres 16-alpine → 18-alpine | Sin evaluar |
+| #2 | eclipse-temurin 21-jre-alpine → 25-jre-alpine | Sin evaluar |
+| #1 | maven 3.9-temurin-21 → 3-temurin-26 | Sin evaluar |
+
+Los tres últimos cambian la versión de PostgreSQL y del JDK del contenedor: no son
+actualizaciones rutinarias y hay que decidirlas, no fusionarlas por estar en verde.
 
 ## Comandos
 

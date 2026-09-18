@@ -91,6 +91,28 @@ Ninguno de los dos se silenció con una exclusión.
    quedarse con una instancia a medio construir. La clase pasa a ser `final`: no hay razón para
    extender un adaptador de salida, ya que los colaboradores dependen de `AccessTokenIssuer`.
 
+## Lo que encontró la primera ejecución
+
+El pipeline falló en su primer intento, con dos fallos que la máquina de desarrollo ocultaba.
+Merece quedar escrito, porque es el argumento entero a favor de haber adelantado esta fase.
+
+1. **`/actuator/health` devolvía 503.** El perfil de test apunta `spring.mail` a
+   `localhost:1025` y ahí no escucha nadie, así que el indicador de salud del correo arrastraba
+   todo el endpoint a `DOWN`. En local pasaba porque la máquina de desarrollo tiene Mailpit
+   atado a ese puerto: la suite dependía en silencio de un servicio que nadie había declarado.
+   El perfil de test ya no pregunta por SMTP.
+2. **Colisión con `ux_users_single_teacher`.** Los tests de integración comparten una única base
+   de datos y `theSchemaAllowsOnlyOneTeacher` solo limpiaba al terminar, de modo que asumía que
+   nadie había dejado un profesor. `TeacherBootstrapIdempotencyTest`, añadido en esta misma
+   fase, hacía exactamente eso. Surefire no ordena las clases igual en Windows que en Linux, y
+   por eso el orden que rompe apareció solo en el runner. Ambas clases limpian ahora antes y
+   después.
+
+Queda un riesgo estructural apuntado para las fases siguientes: **los tests de integración
+comparten una base de datos mutable y sin aislamiento**, así que el resultado depende del orden
+de ejecución. Con un módulo se sostiene limpiando a mano; a partir de la Fase 6, con varios
+módulos escribiendo en las mismas tablas, habrá que decidir una estrategia de aislamiento.
+
 ## Lo que queda fuera del repositorio
 
 Dos cosas no pueden versionarse y hay que configurarlas en GitHub:
