@@ -3,6 +3,12 @@ version: 2
 # Dependency checking is deliberately Dependabot rather than OWASP Dependency-Check: the
 # latter needs an NVD API key and adds minutes to every build, while this reports the same
 # vulnerable dependencies out of band without slowing the pipeline down.
+#
+# Major upgrades are NOT proposed automatically. On 18/09/2026 an automatic PR raised Spring
+# Boot from 3.3.5 to 4.1.1; it brought Spring Security 7, removed APIs the security
+# configuration depends on, and broke main. Branch protection cannot prevent a red merge on a
+# private repository under the Free plan, so the defence has to be not to open that PR in the
+# first place. A major upgrade is a decision with its own branch and analysis, never a merge.
 updates:
 
   - package-ecosystem: maven
@@ -11,12 +17,17 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
-    # One PR per week for routine bumps; anything that breaks compilation is caught by CI
-    # before it is merged. Major versions stay separate because they need to be read.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # One PR per week with the routine bumps, which CI can validate on its own.
     groups:
       backend-minor-and-patch:
         update-types: [minor, patch]
 
+  # Majors are allowed here on purpose, unlike everywhere else: an action's major version is
+  # how GitHub retires runner images, the blast radius is the pipeline itself, and the PR's
+  # own CI run is a complete test of the change.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -26,15 +37,24 @@ updates:
       actions:
         update-types: [minor, patch, major]
 
+  # The build and runtime images. A major here means a new JDK: it changes what the
+  # application runs on, so it is decided, not merged.
   - package-ecosystem: docker
     directory: /TennisPlatformApp/backend
     schedule:
       interval: weekly
       day: monday
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
-  # postgres and mailpit images.
+  # postgres and mailpit images. A major means a new PostgreSQL engine, with its own upgrade
+  # path for the data - never an automatic bump.
   - package-ecosystem: docker-compose
     directory: /TennisPlatformApp
     schedule:
       interval: weekly
       day: monday
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
