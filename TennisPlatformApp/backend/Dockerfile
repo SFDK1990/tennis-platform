@@ -13,7 +13,7 @@ COPY src ./src
 RUN mvn -B clean package -DskipTests
 
 # ---- runtime stage -----------------------------------------------------------
-FROM eclipse-temurin:21-jre-alpine AS runtime
+FROM eclipse-temurin:24-jre-alpine AS runtime
 
 # Never run the application as root.
 RUN addgroup -S app && adduser -S -G app app
