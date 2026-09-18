@@ -20,6 +20,12 @@ import java.util.UUID;
  */
 public record AuthenticatedUser(UUID id, Role role, boolean emailVerified) {
 
+    /**
+     * Asking here instead of comparing against {@link Role} outside is what keeps the role check
+     * inside this module. A caller writing {@code caller.role() == Role.TEACHER} would import
+     * identity's domain, which the module boundary rules reject - verified by deliberately
+     * introducing that comparison and watching the rule fail.
+     */
     public boolean isTeacher() {
         return role == Role.TEACHER;
     }
