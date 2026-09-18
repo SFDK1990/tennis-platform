@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# Refuses a direct push to main.
+#
+# Branch protection is not available on a private repository under GitHub's Free plan, so
+# nothing on the server side stops a push - or a merge - that skips review and CI. This covers
+# the half that happens from this machine: work goes to a branch and reaches main through a
+# Pull Request, as agreed in Documentos/_arquitectura/15-convenciones-de-codigo.md.
+#
+# Enable it once per clone:
+#     git config core.hooksPath .githooks
+#
+# A genuinely necessary direct push is still possible with --no-verify. That is deliberate: the
+# hook is there to catch the slip, not to lock anyone out.
+
+protected_branch=main
+
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+    case "$remote_ref" in
+        "refs/heads/$protected_branch")
+            echo >&2
+            echo "  Direct push to '$protected_branch' refused." >&2
+            echo >&2
+            echo "  Open a branch and a Pull Request so CI validates the change first:" >&2
+            echo "      git switch -c fase-<n>-<tema>   (or docs/<tema>, fix/<tema>)" >&2
+            echo "      git push -u origin <branch>" >&2
+            echo "      gh pr create" >&2
+            echo >&2
+            echo "  If this push really has to happen now: git push --no-verify" >&2
+            echo >&2
+            exit 1
+            ;;
+    esac
+done
+
+exit 0
