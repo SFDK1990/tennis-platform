@@ -14,5 +14,12 @@ public interface UserRepository {
 
     boolean teacherExists();
 
+    /**
+     * The single teacher account. Meaningful because a partial unique index on {@code users}
+     * guarantees there is at most one; the day there are several, this is one of the places
+     * that has to change rather than silently return an arbitrary row.
+     */
+    Optional<User> findTheTeacher();
+
     User save(User user);
 }

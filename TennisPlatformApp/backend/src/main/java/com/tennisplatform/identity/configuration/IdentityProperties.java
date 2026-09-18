@@ -51,15 +51,6 @@ public class IdentityProperties {
      */
     private boolean cookieSecure = true;
 
-    /**
-     * Teacher bootstrap credentials, read from the environment. Deliberately not seeded from a
-     * Liquibase changeset: changelogs are versioned files in a published repository, and a
-     * password - or its hash - would stay in the Git history forever.
-     */
-    private String bootstrapTeacherEmail;
-
-    private String bootstrapTeacherPassword;
-
     /** Requests per minute per client IP allowed on the authentication endpoints. */
     private int authRateLimitPerMinute = 20;
 
@@ -133,22 +124,6 @@ public class IdentityProperties {
 
     public void setCookieSecure(boolean cookieSecure) {
         this.cookieSecure = cookieSecure;
-    }
-
-    public String getBootstrapTeacherEmail() {
-        return bootstrapTeacherEmail;
-    }
-
-    public void setBootstrapTeacherEmail(String bootstrapTeacherEmail) {
-        this.bootstrapTeacherEmail = bootstrapTeacherEmail;
-    }
-
-    public String getBootstrapTeacherPassword() {
-        return bootstrapTeacherPassword;
-    }
-
-    public void setBootstrapTeacherPassword(String bootstrapTeacherPassword) {
-        this.bootstrapTeacherPassword = bootstrapTeacherPassword;
     }
 
     public int getAuthRateLimitPerMinute() {

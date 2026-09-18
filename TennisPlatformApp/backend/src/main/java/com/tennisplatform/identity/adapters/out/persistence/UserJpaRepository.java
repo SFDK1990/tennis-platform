@@ -11,4 +11,6 @@ interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
 
     boolean existsByRole(Role role);
+
+    Optional<UserEntity> findFirstByRole(Role role);
 }

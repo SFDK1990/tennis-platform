@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/v0-scaffold.yaml
   - include:
       file: db/changelog/changes/v1-identity.yaml
+  - include:
+      file: db/changelog/changes/v2-teacher.yaml
