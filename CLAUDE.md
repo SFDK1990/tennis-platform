@@ -13,7 +13,15 @@ reservas. MVP con un único profesor y una única pista. Roles: `ADMIN`, `TEACHE
 **Lee `Documentos/_arquitectura/12-metodologia-trabajo.md` antes de tocar nada.** Define el
 proceso acordado y no es opcional. Lo esencial:
 
+**Y lee `Documentos/_arquitectura/15-convenciones-de-codigo.md`**, que fija idioma, estilo de
+comentarios, nombres de tests, ramas, commits y uso del utillaje. También es vinculante.
+
 - **No se avanza de fase sin validación explícita del usuario.** No encadenes fases.
+- **Código, comentarios y commits en inglés; documentación de arquitectura en español.**
+- **Cada fase se desarrolla en su rama y entra por Pull Request** con el CI en verde.
+- **Los mensajes de commit siguen Conventional Commits** (`feat`, `fix`, `docs`, `ci`...), con
+  un cuerpo que explica el porqué. Los anteriores al 18/09/2026 usan el estilo viejo y no se
+  reescriben.
 - En las fases de análisis y diseño **no se escribe código**: primero requisitos,
   ambigüedades, decisiones explicadas, contratos y criterios de aceptación.
 - **La evidencia se pega, no se afirma.** Una fase no se da por terminada sin la salida real

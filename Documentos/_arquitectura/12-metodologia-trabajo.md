@@ -99,6 +99,8 @@ Motivo: durante la Fase 4 la suite reportó `BUILD SUCCESS` mientras cinco de lo
 
 La metodología original no menciona el control de versiones en ningún punto. Las cuatro primeras fases se completaron sin un solo commit. Cada fase debe terminar con su propio commit, cuyo mensaje describa la fase y su verificación.
 
+Matizado el 18 de septiembre de 2026 en `15-convenciones-de-codigo.md`: lo que se exige es que la fase **cierre** con ese commit, no que sea el único. Una fase puede tener varios commits, siempre que cada uno deje el proyecto compilando y con los tests en verde. Desde la Fase 6, además, cada fase se desarrolla en su propia rama y entra en `main` mediante Pull Request con el pipeline en verde.
+
 ### 3. La integración continua se adelanta
 
 La integración continua estaba en la fase 15. Situarla al final implica descubrir tarde si el proyecto es reproducible fuera de la máquina de desarrollo. Pasa a ser la fase 5.1, justo después de autenticación, de forma que todo el trabajo posterior nazca ya cubierto por el pipeline.
