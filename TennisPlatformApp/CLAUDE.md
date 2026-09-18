@@ -25,6 +25,7 @@ The docs are the source of truth for design decisions; treat them as binding req
 - `12-metodologia-trabajo.md` — the agreed working process and phase status table; read it before starting anything
 - `13-fase5-analisis-identity.md` — Fase 5 analysis (identity module)
 - `14-fase5.1-integracion-continua.md` — Fase 5.1 decisions (CI pipeline, static analysis, dependency checking)
+- `15-convenciones-de-codigo.md` — **binding conventions**: language (code, comments and commits in English; narrative docs in Spanish), comment style, test naming, branching and PR flow, commit rules, and how the quality tooling is used
 
 ## Backend commands
 
