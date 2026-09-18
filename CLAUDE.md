@@ -52,11 +52,24 @@ demuestra que ejecutar el bootstrap dos veces no crea una segunda cuenta, y el s
 reconstruyó y arrancó contra el código actual. Las decisiones de la 5.1 están en
 `Documentos/_arquitectura/14-fase5.1-integracion-continua.md`.
 
-### Pendiente de configurar en GitHub (no versionable)
+### `main` no se puede proteger, y hay que trabajar con ello
 
-- **Proteger `main`** exigiendo los checks `Backend build, tests and static analysis` e
-  `Image builds and the stack starts` para poder fusionar. Sin esto el pipeline informa pero
-  no impide nada. Dependabot ya quedó activo con solo añadir `.github/dependabot.yml`.
+La API de GitHub responde `403: Upgrade to GitHub Pro or make this repository public` a
+cualquier intento de proteger la rama: **la protección de ramas no existe en repositorios
+privados con el plan Free**. Nada impide fusionar un PR con el CI en rojo, y el 18/09/2026 pasó
+exactamente eso: los PRs automáticos #5 (Spring Boot 4.1.1) y #1 (JDK 26) se fusionaron en rojo
+y dejaron `main` sin compilar.
+
+Mientras el repositorio siga privado en Free, la defensa es doble y ninguna de las dos bloquea
+de verdad:
+
+- **Dependabot ya no propone versiones mayores** (salvo en GitHub Actions, donde el propio
+  pipeline es la prueba completa del cambio). Las mayores se deciden con su rama y su análisis.
+- **Hay un hook `pre-push`** en `.githooks/` que rechaza el push directo a `main`. Hay que
+  activarlo una vez por clon: `git config core.hooksPath .githooks`.
+
+**Antes de fusionar cualquier PR, mira el check.** Es lo único que queda entre un merge y un
+`main` roto.
 
 ### PRs de Dependabot abiertos y sin revisar
 
