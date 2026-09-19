@@ -212,3 +212,32 @@ No se repiten aquí porque ya están escritas, pero forman parte de las convenci
   correcciones son changesets nuevos (`05-database-engineer.md`).
 - Nunca se registran en el log contraseñas, tokens, documentos de identidad completos ni
   direcciones (`08-security-engineer.md`).
+
+## Revisiones automáticas y límites de iniciativa
+
+Acordado el 19 de septiembre de 2026. Define qué revisiones se ejecutan sin que Daniel las pida y
+cuáles esperan a que las pida, para que ni se le olvide lo importante ni se gaste tiempo en lo
+accesorio.
+
+### Se ejecutan por iniciativa propia
+
+- **Revisión de seguridad** (`/security-review`) en las entregas que tocan autenticación,
+  autorización, datos personales o SQL. En las de documentación o utillaje no se lanza. Las fases
+  9 (reservas) y 13 (auditoría de seguridad) la llevan siempre.
+- **Revisión de simplificación** (`/simplify`) al cerrar una fase completa, nunca en una entrega
+  parcial: busca duplicación y reuso, y para eso necesita ver el módulo entero.
+- **Verificación del esquema contra la base real** después de cada migración de Liquibase,
+  comprobando que los índices y restricciones existen de verdad y pegando la salida. Es la
+  diferencia entre afirmar que el índice único parcial del `TEACHER` está y demostrarlo, y es la
+  regla de «la evidencia se pega» aplicada a la base de datos.
+- **Corrección de documentos desfasados**: si al trabajar se descubre que un documento vinculante
+  ya no describe la realidad, se corrige en esa misma entrega y se señala en el resumen, en lugar
+  de dejar el desfase pendiente.
+
+### Esperan a que se pidan
+
+- **Revisión de código** (`/code-review`). Se descartó ejecutarla en cada Pull Request: es cara y
+  Daniel prefiere decidir cuándo merece la pena. Tampoco se lanza «porque toca» al terminar un
+  bloque.
+- **Tareas recurrentes y agentes programados** (`/loop`, `/schedule`). Dejan trabajo corriendo en
+  el tiempo, así que ponerlos en marcha es siempre decisión suya y explícita.
