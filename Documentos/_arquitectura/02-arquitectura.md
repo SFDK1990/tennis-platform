@@ -51,7 +51,28 @@ Reservas, capacidad, duplicados, solapamientos y cancelaciones.
 
 ### administration
 
-Consola administrativa, usuarios y configuración global, incluido el límite de alumnos.
+Consola administrativa y usuarios. **Edita** la configuración global a través del módulo
+`platform`, pero no es su dueño: ver más abajo.
+
+### platform
+
+Configuración global de la instalación: hoy, el límite de alumnos gestionados
+(`platform_configuration`).
+
+Este módulo no estaba en la versión original de este documento, que asignaba
+`platform_configuration` a `administration`. **Era un error de propiedad**, no un problema de
+ciclos: `student` necesita leer el límite para validarlo al asociar un alumno, y `student` no
+puede depender de `administration`. El dueño de una tabla es el módulo dueño del dato, no el
+que tiene la pantalla más bonita para editarlo.
+
+Se corrige creando `platform`, que no depende de nadie y puede por tanto ser leído por todos.
+En la Fase 6 se implementa **solo el lado de lectura** (la tabla, el puerto `GetStudentLimit`,
+su servicio y su adaptador); la consola que cambia el valor sigue siendo la Fase 7, y vivirá en
+`administration` llamando a un puerto de escritura de `platform`.
+
+`platform_configuration.updated_by` se mantiene como clave ajena a `users`. En código
+`platform` no depende de `identity` —solo guarda un UUID—, pero en el esquema la referencia
+existe: la integridad referencial de un campo de auditoría vale más que la pureza del diagrama.
 
 ### calendar
 
@@ -65,11 +86,12 @@ Primitivas técnicas mínimas: identificadores, errores comunes, reloj e infraes
 
 - `identity` no depende de módulos de negocio.
 - `teacher` puede consultar identity.
-- `student` puede consultar identity y teacher.
+- `student` puede consultar identity, teacher y platform.
 - `availability` puede consultar teacher.
 - `lesson` puede consultar teacher y availability.
 - `booking` puede consultar student y lesson.
-- `administration` puede consultar identity, teacher y student.
+- `administration` puede consultar identity, teacher, student y platform.
+- `platform` no depende de ningún módulo: es la configuración global y la lee todo el mundo.
 - `calendar` solo usa interfaces públicas de consulta.
 
 No se permiten accesos directos a repositorios, entidades JPA o adaptadores internos de otro módulo.
@@ -98,6 +120,7 @@ backend/
 - `booking/`
 - `administration/`
 - `calendar/`
+- `platform/`
 - `shared/`
 
 Dentro de cada módulo:
@@ -150,8 +173,26 @@ Los casos de uso principales son:
 - `GET /api/v1/teacher/profile`
 - `PATCH /api/v1/teacher/profile`
 - `GET /api/v1/teacher/students`
+- `GET /api/v1/teacher/students/lookup`
+- `GET /api/v1/teacher/students/{userId}`
 - `POST /api/v1/teacher/students/{userId}/manage`
 - `DELETE /api/v1/teacher/students/{userId}/manage`
+
+Las dos rutas nuevas aparecen en la Fase 6 y no estaban en la lista original. No son alcance
+añadido: son lo que hacen falta para cumplir los criterios de aceptación acordados en
+`16-fase6-analisis-perfiles.md`.
+
+- `GET /teacher/students/lookup?email=` busca por **email exacto y completo** al alumno que se
+  va a asociar. Antes ese trabajo se lo repartía el parámetro `?query=` de la lista, que servía
+  a la vez para filtrar entre los alumnos propios y para localizar a cualquiera del sistema.
+  Con búsqueda parcial sobre todas las cuentas, un profesor podía **enumerar quién está
+  registrado** y leer nombres de personas con las que no tiene ninguna relación, que es
+  justamente lo que prohíbe `08-security-engineer.md`. Separadas, `?query=` solo filtra entre
+  los alumnos ya gestionados, donde la coincidencia parcial no expone nada nuevo.
+- `GET /teacher/students/{userId}` devuelve la ficha completa —con `national_id` y `address`—
+  de **un alumno que ese profesor gestiona**. Sin ella no había forma de cumplir los criterios
+  1 y 2: no existía ningún endpoint que devolviese datos restringidos y, por tanto, ninguno al
+  que exigirle que los negara a quien no tiene relación con el alumno.
 
 ### Availability
 

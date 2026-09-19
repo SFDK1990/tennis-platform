@@ -51,11 +51,20 @@ public abstract class AbstractIntegrationTest {
      * keys do not force the list to be kept in dependency order. New tables must be added here
      * as their modules arrive - the alternative, each class cleaning up after itself, is exactly
      * the arrangement that already failed once.
+     *
+     * <p>{@code platform_configuration} is not in the list and is emptied anyway: CASCADE
+     * follows its {@code updated_by} foreign key to {@code users}. Leaving it out is therefore
+     * not enough - the row has to be put back, or every test after the first would silently run
+     * against the fallback limit instead of the configured one, which would surface as a
+     * puzzling number in some unrelated assertion rather than as a failure here. It is seeded
+     * with the same value as the {@code v4-platform} changeset.
      */
     @BeforeEach
     void emptyTheDatabase() {
-        jdbc.execute("TRUNCATE TABLE teacher_profiles, refresh_tokens, password_reset_tokens, "
-                + "email_verifications, users CASCADE");
+        jdbc.execute("TRUNCATE TABLE teacher_students, student_profiles, teacher_profiles, "
+                + "refresh_tokens, password_reset_tokens, email_verifications, users CASCADE");
+        jdbc.update("INSERT INTO platform_configuration (id, student_limit) VALUES (1, 50) "
+                + "ON CONFLICT (id) DO NOTHING");
     }
 
     static boolean dockerAvailable() {

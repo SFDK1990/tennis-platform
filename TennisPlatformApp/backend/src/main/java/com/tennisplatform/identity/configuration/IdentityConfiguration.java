@@ -1,5 +1,6 @@
 package com.tennisplatform.identity.configuration;
 
+import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.Login;
 import com.tennisplatform.identity.application.port.in.Logout;
@@ -18,6 +19,7 @@ import com.tennisplatform.identity.application.port.out.RefreshTokens;
 import com.tennisplatform.identity.application.port.out.SecureTokenGenerator;
 import com.tennisplatform.identity.application.port.out.TokenHasher;
 import com.tennisplatform.identity.application.port.out.UserRepository;
+import com.tennisplatform.identity.application.service.FindUserAccountsService;
 import com.tennisplatform.identity.application.service.GetCurrentUserService;
 import com.tennisplatform.identity.application.service.LoginService;
 import com.tennisplatform.identity.application.service.LogoutService;
@@ -79,6 +81,16 @@ public class IdentityConfiguration {
     @Bean
     public GetCurrentUser getCurrentUser(UserRepository users) {
         return new GetCurrentUserService(users);
+    }
+
+    /**
+     * Offered to the modules that own something attached to an account - today {@code student},
+     * which holds the managed-student relationship but not the email address that identifies
+     * the student to their teacher.
+     */
+    @Bean
+    public FindUserAccounts findUserAccounts(UserRepository users) {
+        return new FindUserAccountsService(users);
     }
 
     /**

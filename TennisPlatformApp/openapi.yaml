@@ -187,7 +187,14 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MeResponse" }
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: >-
+            Validación de campos, o un campo que no corresponde al rol del usuario
+            (`FIELD_NOT_APPLICABLE_TO_ROLE`). El rol, el email y el estado de la cuenta no son
+            campos de este endpoint: si llegan en el cuerpo se ignoran, nunca se aplican.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
   /teacher/profile:
@@ -227,7 +234,11 @@ paths:
         - $ref: "#/components/parameters/Size"
         - name: query
           in: query
-          description: Búsqueda por nombre o email (para localizar un alumno registrado)
+          description: >-
+            Filtro parcial por nombre o email, **restringido a los alumnos que este profesor ya
+            gestiona**. Para localizar a un alumno cualquiera del sistema se usa
+            `/teacher/students/lookup`, que exige el email exacto: una búsqueda parcial sobre
+            todas las cuentas permitiría enumerar quién está registrado en la plataforma.
           schema: { type: string }
       responses:
         "200":
@@ -237,10 +248,65 @@ paths:
               schema: { $ref: "#/components/schemas/StudentSummaryPage" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /teacher/students/lookup:
+    get:
+      tags: [students]
+      summary: Localiza un alumno por email exacto, antes de asociarlo
+      description: >-
+        Solo acepta la dirección completa: ni prefijos, ni comodines, ni coincidencias
+        parciales. Quien va a asociar a un alumno conoce su email y no necesita explorar. La
+        respuesta no incluye DNI ni dirección.
+      parameters:
+        - name: email
+          in: query
+          required: true
+          description: Dirección completa, sin distinguir mayúsculas
+          schema: { type: string, format: email }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentLookup" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: Ninguna cuenta de alumno tiene esa dirección
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/students/{userId}:
+    get:
+      tags: [students]
+      summary: Ficha completa de un alumno gestionado
+      description: >-
+        Incluye `nationalId` y `address`, que son datos personales de acceso restringido. Solo
+        responde al profesor que gestiona a ese alumno: conocer el UUID no basta.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentDetail" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: >-
+            El llamante no es el profesor (`TEACHER_FORBIDDEN`), o no gestiona a ese alumno
+            (`STUDENT_NOT_MANAGED`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
   /teacher/students/{userId}/manage:
     post:
       tags: [students]
       summary: Asocia un alumno registrado como gestionado (búsqueda previa por email)
+      description: >-
+        Si el alumno estaba desactivado, lo reactiva reutilizando la misma relación. El límite
+        de alumnos de `platform_configuration` se aplica también en ese caso.
       parameters:
         - $ref: "#/components/parameters/UserId"
       responses:
@@ -249,22 +315,53 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StudentSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "404":
+          description: No existe una cuenta de alumno con ese id (`STUDENT_NOT_FOUND`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
-          description: El alumno ya está gestionado
+          description: El alumno ya está gestionado (`STUDENT_ALREADY_MANAGED`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: >-
+            El alumno todavía no ha rellenado sus datos personales
+            (`STUDENT_PROFILE_INCOMPLETE`), o se alcanzó el límite de alumnos
+            (`STUDENT_LIMIT_REACHED`)
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
     delete:
       tags: [students]
-      summary: Desactiva la gestión de un alumno (cancela sus reservas futuras activas)
+      summary: Desactiva la gestión de un alumno
+      description: >-
+        Marca la relación como `INACTIVE` y registra `deactivatedAt`; la fila no se borra, para
+        que volver a asociarlo reutilice la relación en vez de crear una segunda.
+
+        **Todavía no cancela las reservas futuras del alumno**, como exige la regla de
+        `01-product-architect.md`: el módulo `booking` no existe hasta la Fase 9, que es la que
+        debe cerrar esa deuda y demostrarlo con un test.
       parameters:
         - $ref: "#/components/parameters/UserId"
       responses:
         "204": { description: Alumno desactivado }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: >-
+            El llamante no es el profesor (`TEACHER_FORBIDDEN`), o nunca gestionó a ese alumno
+            (`STUDENT_NOT_MANAGED`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: El alumno ya estaba desactivado (`STUDENT_ALREADY_INACTIVE`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /teacher/availability:
     get:
@@ -705,25 +802,40 @@ components:
 
     MeResponse:
       type: object
+      description: >-
+        Forma única para todos los roles: los campos que no aplican llegan a `null`. Un alumno
+        recién verificado que aún no ha rellenado sus datos recibe `fullName`, `phone`,
+        `nationalId` y `address` a `null`, y esa ausencia es la señal de que el frontend debe
+        pedírselos.
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email }
         role: { $ref: "#/components/schemas/Role" }
         status: { $ref: "#/components/schemas/UserStatus" }
         emailVerifiedAt: { type: string, format: date-time, nullable: true }
-        fullName: { type: string }
+        fullName: { type: string, nullable: true, description: "Solo STUDENT" }
         phone: { type: string, nullable: true }
-        nationalId: { type: string, nullable: true, description: "Solo visible para el propio usuario, el profesor que lo gestiona o un ADMIN" }
-        address: { type: string, nullable: true }
+        nationalId: { type: string, nullable: true, description: "Solo STUDENT. Dato restringido: solo visible para el propio usuario, el profesor que lo gestiona o un ADMIN" }
+        address: { type: string, nullable: true, description: "Solo STUDENT. Dato restringido, igual que nationalId" }
+        displayName: { type: string, nullable: true, description: "Solo TEACHER" }
+        timezone: { type: string, nullable: true, description: "Solo TEACHER. Id IANA, p.ej. Europe/Madrid" }
 
     UpdateMeRequest:
       type: object
-      description: Solo se aceptan los campos aplicables al rol del usuario autenticado
+      description: >-
+        Solo se aceptan los campos aplicables al rol del usuario autenticado. Enviar uno de
+        otro rol responde `400` con código `FIELD_NOT_APPLICABLE_TO_ROLE`, en lugar de
+        ignorarlo: un cambio descartado en silencio hace creer al cliente que guardó.
+
+        El primer `PATCH` de un alumno debe llevar `fullName`, porque es cuando nace su perfil.
+        Los siguientes pueden ser parciales; una cadena vacía borra un campo opcional.
       properties:
-        fullName: { type: string }
+        fullName: { type: string, description: "Solo STUDENT" }
         phone: { type: string }
-        nationalId: { type: string }
-        address: { type: string }
+        nationalId: { type: string, description: "Solo STUDENT" }
+        address: { type: string, description: "Solo STUDENT" }
+        displayName: { type: string, description: "Solo TEACHER" }
+        timezone: { type: string, description: "Solo TEACHER" }
 
     TeacherProfile:
       type: object
@@ -748,6 +860,36 @@ components:
         email: { type: string, format: email }
         managedStatus: { $ref: "#/components/schemas/ManagedStatus" }
         managedAt: { type: string, format: date-time, nullable: true }
+
+    StudentLookup:
+      type: object
+      description: >-
+        Lo mínimo para confirmar a quién se va a asociar. Sin teléfono, DNI ni dirección.
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        fullName: { type: string, nullable: true, description: "null si el alumno aún no ha rellenado sus datos" }
+        managedStatus:
+          nullable: true
+          description: "null cuando todavía no existe relación con este profesor"
+          allOf:
+            - $ref: "#/components/schemas/ManagedStatus"
+
+    StudentDetail:
+      type: object
+      description: >-
+        Ficha completa de un alumno gestionado, con los datos restringidos. Nunca se devuelve
+        en listados ni búsquedas.
+      properties:
+        userId: { type: string, format: uuid }
+        email: { type: string, format: email }
+        fullName: { type: string }
+        phone: { type: string, nullable: true }
+        nationalId: { type: string, nullable: true }
+        address: { type: string, nullable: true }
+        managedStatus: { $ref: "#/components/schemas/ManagedStatus" }
+        managedAt: { type: string, format: date-time }
+        deactivatedAt: { type: string, format: date-time, nullable: true }
 
     StudentSummaryPage:
       allOf:

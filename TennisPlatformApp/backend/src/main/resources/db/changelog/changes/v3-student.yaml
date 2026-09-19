@@ -1,0 +1,74 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v3-student-profiles
+      author: tennis-platform
+      comment: >-
+        Personal data of a student. Like teacher_profiles, the primary key is the user id
+        itself: a user has at most one student profile, and a surrogate key would allow a
+        second row that nothing in the schema would reject.
+
+        The row is created when the student fills their data in (PATCH /me), not at
+        registration - which is why full_name can be NOT NULL without blocking sign-up.
+
+        national_id and address are restricted personal data (08-security-engineer.md): they
+        are only ever returned to the student themselves, the teacher managing them or an
+        ADMIN, and never appear in listings, searches or logs.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE student_profiles (
+                  user_id      UUID PRIMARY KEY REFERENCES users(id),
+                  full_name    VARCHAR(255) NOT NULL,
+                  phone        VARCHAR(30),
+                  national_id  VARCHAR(30),
+                  address      VARCHAR(255),
+                  created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+                  updated_at   TIMESTAMPTZ  NOT NULL DEFAULT now()
+              );
+      rollback:
+        - sql:
+            sql: DROP TABLE student_profiles
+
+  - changeSet:
+      id: v3-teacher-students
+      author: tennis-platform
+      comment: >-
+        The "managed student" relationship. It references student_profiles rather than users
+        on the student side, following 10-diagrama-er.md: a student can only be taken under
+        management once they have filled their personal data in, and the foreign key is what
+        makes that order impossible to skip.
+
+        Deactivating keeps the row and flips status to INACTIVE instead of deleting it, so the
+        history survives and a reactivation cannot silently become a second relationship.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE teacher_students (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+                  status           VARCHAR(20) NOT NULL DEFAULT 'MANAGED'
+                                   CHECK (status IN ('MANAGED','INACTIVE')),
+                  managed_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  deactivated_at   TIMESTAMPTZ
+              );
+        - sql:
+            dbms: postgresql
+            comment: >-
+              "Una relacion alumno-profesor unica" (05-database-engineer.md). The pair is
+              unique regardless of status, which is what turns "reactivate" into an update of
+              the existing row and makes a duplicate relationship impossible at the schema
+              level, not only in the use case.
+            sql: |
+              CREATE UNIQUE INDEX ux_teacher_students_pair
+                  ON teacher_students (teacher_user_id, student_user_id);
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE INDEX ix_teacher_students_student ON teacher_students (student_user_id);
+      rollback:
+        - sql:
+            sql: DROP TABLE teacher_students

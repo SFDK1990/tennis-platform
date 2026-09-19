@@ -44,12 +44,18 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 4. Skeleton del backend | Completada y verificada |
 | 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
 | 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
-| **6. Perfiles y gestión de usuarios** | **En curso**: `teacher` hecho, `student` pendiente |
+| **6. Perfiles y gestión de usuarios** | **En curso**: `teacher` en `main`, `student` en PR |
 | 7 en adelante | Pendientes |
 
 El análisis de la Fase 6 y sus decisiones están en
 `Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entrega en dos PRs, `teacher`
-primero y `student` después, porque `student` depende de `teacher`.
+primero y `student` después, porque `student` depende de `teacher`. Ese documento recoge además
+las decisiones que hubo que cerrar al implementar la segunda entrega.
+
+La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
+`02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
+propiedad: `student` tiene que leer el límite de alumnos y no puede depender de
+`administration`. De momento solo existe el lado de lectura; la consola sigue siendo la Fase 7.
 
 Las dos salvedades que arrastraba la Fase 5 están cerradas: `TeacherBootstrapIdempotencyTest`
 demuestra que ejecutar el bootstrap dos veces no crea una segunda cuenta, y el stack se
@@ -145,6 +151,15 @@ Cosas que ya han costado tiempo y que fallan **en silencio**:
 - **El perfil del profesor lo crea el bootstrap, no un endpoint.** `display_name` y `timezone`
   son `NOT NULL` y no hay alta pública de profesor: sin `TEACHER_EMAIL` y `TEACHER_PASSWORD`
   en el entorno no existe profesor, y `GET /teacher/profile` responde 404.
+- **`TRUNCATE ... CASCADE` vacía `platform_configuration` aunque no esté en la lista.** Llega
+  hasta ella por la clave ajena `updated_by` → `users`. Por eso la limpieza de
+  `AbstractIntegrationTest` vuelve a sembrar la fila: sin eso, a partir del segundo test el
+  límite de alumnos sería el de reserva del código en vez del configurado, y el síntoma sería
+  un número raro en una aserción que no tiene nada que ver.
+- **El perfil del alumno nace en `PATCH /me`, no en el registro.** Un alumno recién verificado
+  tiene los campos personales a `null` en `GET /me`, y eso es correcto: es la señal de que el
+  frontend debe pedírselos. Además, un alumno sin perfil **no puede ser asociado** por el
+  profesor: `teacher_students` referencia a `student_profiles`, y la respuesta es un 422.
 
 ## Repositorio
 

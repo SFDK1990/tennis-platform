@@ -155,3 +155,64 @@ Dos cuidados que la implementación debe respetar:
 - Las limpiezas manuales que añadimos en la Fase 5.1 —en `TeacherBootstrapIdempotencyTest` y en
   `theSchemaAllowsOnlyOneTeacher`— quedan redundantes y deben retirarse, para que no haya dos
   mecanismos compitiendo.
+
+## Decisiones tomadas al implementar la entrega `student`
+
+El análisis de arriba se validó antes de escribir código. Estas son las decisiones que hubo que
+cerrar durante la implementación, con su porqué, para que el documento siga describiendo lo que
+existe.
+
+### El orquestador de `/me` vive en `web`, fuera del grafo
+
+La respuesta mezcla campos de tres módulos y ninguno puede ser dueño de los tres: en `identity`
+obligaría a depender de módulos que tiene prohibidos, y en `student` haría que el módulo del
+alumno sirviera el perfil del profesor. Se queda en `web`, que las reglas de ArchUnit ya tratan
+como no-módulo junto a `config` y `error`.
+
+Una exención sin nada que la sujete es una invitación, así que `web` recibe **su propia regla**:
+solo puede usar `application/port/in`; ni dominios, ni servicios, ni adaptadores. Esa regla es
+también la razón de que `UserSummary` lleve el rol y el estado como texto en vez de como los
+enums de `identity`.
+
+### Buscar y ver la ficha: dos rutas nuevas
+
+`GET /teacher/students/lookup?email=` (email exacto) y `GET /teacher/students/{userId}` (ficha
+completa del alumno gestionado). Están justificadas en `02-arquitectura.md` §8: sin la segunda
+no había ningún endpoint que devolviera datos restringidos y, por tanto, ninguno al que exigirle
+los criterios 1 y 2.
+
+### `PATCH /me` rechaza los campos de otro rol
+
+Responde `400` (`FIELD_NOT_APPLICABLE_TO_ROLE`) en vez de descartarlos en silencio. Un cambio
+ignorado sin avisar es el que acaba en un informe de error: el cliente cree que guardó y no
+guardó. El rol, el email y el estado siguen siendo otra cosa — no existen como campos del DTO,
+así que no hay nada que rechazar ni aplicar.
+
+### Los advices de excepciones pasan a seleccionar por tipo
+
+`TeacherExceptionHandler` e `IdentityExceptionHandler` nombraban sus controladores. Como `/me`
+se compone en el borde y puede lanzar excepciones de dos módulos, eso dejaba dos opciones malas:
+un `500` desde el orquestador, o copiar el mapa de errores en él. Ahora cada advice selecciona
+por tipo de excepción, de modo que el mapeo sigue viviendo en el módulo dueño del fallo, venga
+la llamada por donde venga.
+
+### Los listados se componen en memoria, y el límite es lo que lo hace aceptable
+
+Un listado necesita la relación (`student`), el nombre (`student_profiles`) y el email
+(`users`), y las fronteras prohíben unirlos en SQL. Se resuelven por lotes —nunca una consulta
+por fila— y se cruzan en memoria. Lo que lo mantiene acotado es el propio límite de alumnos de
+la plataforma. Si ese límite llegara a ser de miles, `GetManagedStudentsService` es el único
+sitio que habría que cambiar.
+
+### Hallazgo: `TRUNCATE ... CASCADE` se llevaba la configuración
+
+`platform_configuration` no está en la lista de tablas que limpia `AbstractIntegrationTest`,
+pero `CASCADE` llegaba hasta ella siguiendo la clave ajena `updated_by` → `users`. El síntoma
+habría sido que, a partir del segundo test, el límite leído fuera el de reserva del código en
+vez del configurado. La limpieza vuelve a sembrar la fila.
+
+### Deuda que la Fase 9 debe cerrar
+
+Desactivar un alumno no cancela sus reservas futuras, porque `booking` no existe todavía. Está
+escrito en el javadoc de `ManagedStudent`, en el puerto `ManageStudent` y en `openapi.yaml`, y
+el criterio de salida de la Fase 9 tiene que incluir un test que lo demuestre.

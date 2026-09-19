@@ -19,9 +19,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * wrong - unknown email, wrong password, disabled account, expired token, reused token - and
  * none of that reaches the client, because the difference between those answers is precisely
  * what an attacker needs to map accounts and tokens.
+ *
+ * <p>It used to name its controllers, one of which was {@code MeController}. That endpoint is
+ * now composed at the web edge out of three modules, so naming controllers here would mean
+ * either reaching across a boundary to name one or letting identity's failures fall through to
+ * a generic 500. Selecting by exception type keeps the mapping with the module that owns the
+ * failure, wherever the call came in.
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@RestControllerAdvice(assignableTypes = {AuthController.class, MeController.class})
+@RestControllerAdvice
 class IdentityExceptionHandler {
 
     @ExceptionHandler(InvalidCredentialsException.class)
