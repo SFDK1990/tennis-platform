@@ -43,7 +43,7 @@ reservas activas».
 Ninguna de las cuatro la puede implementar `lesson`. No es un problema de esta fase: es que el
 contrato se escribió de una vez, antes de que existiera el grafo por el que ahora pasa.
 
-### Lo que propongo
+### Lo que se decidió
 
 **Asistencia y cascada de cancelación se aplazan a la Fase 9 (`booking`)**, que es el módulo que
 puede escribirlas. Sus rutas siguen colgando de `/teacher/lessons/{id}/...` —una ruta no implica
@@ -70,7 +70,7 @@ agotadas, o `FULL` con una plaza libre, y ninguna de las dos cosas falla: simple
 Es el mismo razonamiento que llevó en la Fase 7 a que la disponibilidad se resolviera en un solo
 sitio en vez de copiarse.
 
-La alternativa que propongo: **la columna guarda solo lo que decide una persona** —`OPEN` o
+La alternativa, que es la acordada: **la columna guarda solo lo que decide una persona** —`OPEN` o
 `CANCELLED`— y la API expone un estado efectivo que se calcula al leer:
 
 - `CANCELLED` si la columna lo dice.
@@ -88,9 +88,9 @@ del esquema previsto se queda en dos valores, y que un informe que quiera contar
 completadas tiene que filtrar por fecha en vez de por estado. Me parece un precio bajo frente a
 tener dos fuentes para el mismo hecho.
 
-**Si prefieres lo contrario** —estado almacenado y un puerto de entrada que `booking` llame—, es
-una decisión defendible y cambia poco de esta fase: cambia la Fase 9. Pero hay que elegir ahora,
-porque el changeset de `lessons` se escribe en esta.
+La alternativa —estado almacenado y un puerto de entrada que `booking` llame— se consideró y se
+descartó. Era defendible, y habría cambiado poco de esta fase y bastante de la Fase 9; se eligió
+antes de escribir el changeset precisamente porque después habría costado una migración.
 
 ## Decisiones
 
@@ -184,14 +184,15 @@ ya no puede llenar. Aplicada al profesor sobre su propia clase no protege a nadi
 sistema sin la operación que la realidad va a pedir, y el resultado práctico será una clase
 fantasma en el calendario a la que no va nadie.
 
-**Propuesta**: el profesor puede cancelar su clase en cualquier momento, y la cancelación dentro
-de la ventana queda registrada como tal para que la Fase 9 pueda avisar a los alumnos afectados.
-La ventana de 24 horas se mantiene intacta **para el alumno que cancela su reserva**, que es
-donde el producto la justificó.
+**Decidido: se levanta para el profesor.** El profesor puede cancelar su clase en cualquier
+momento, y la cancelación dentro de la ventana **queda registrada como tal** —`cancelled_at` más
+el hecho de si se hizo con menos de 24 horas— para que la Fase 9 pueda avisar a los alumnos
+afectados sin tener que recalcularlo después.
 
-**Esto necesita tu validación explícita**, porque cambia una regla de negocio escrita, no un
-detalle de implementación. Si decides mantenerla tal cual, se implementa tal cual y lo anoto como
-riesgo operativo conocido.
+La ventana de 24 horas se mantiene **intacta para el alumno que cancela su reserva**, que es
+donde el producto la justificó: protege al profesor de un hueco que ya no puede llenar.
+
+`01-product-architect.md` hay que corregirlo, porque hoy dice lo contrario.
 
 ### Qué pasa con una clase cancelada
 
@@ -208,36 +209,35 @@ crea otra.
 El esquema dice `capacity > 0` y el contrato `minimum: 1`. No hay máximo. Nada impide hoy crear
 una clase grupal de 10.000 plazas, y la única pista es una pista.
 
-No hay ningún número acordado en los documentos, así que **no me lo invento**: es una de las
-preguntas abiertas de más abajo. Lo que sí propongo es que exista un tope, y que viva en
+**Decidido**: existe un tope, es **configurable con 8 por defecto**, y vive en
 `platform_configuration` —que ya es la dueña de la configuración global y ya tiene el límite de
 alumnos— en vez de ser una constante en el código.
 
-## Lo que necesito que decidas
+Ocho es un número razonable para una pista de tenis, pero lo que importa es que se pueda cambiar
+sin desplegar: el día que el número esté mal, estará mal para todas las clases a la vez.
 
-Son las tres cosas que no puedo resolver leyendo los documentos, porque no están en ellos o
-porque contradicen algo escrito.
+Esto tiene una consecuencia en el grafo: `lesson` necesita leer `platform`, igual que `student`
+lee de ahí el límite de alumnos. `platform` no depende de nada por diseño, precisamente para que
+cualquiera pueda leerlo sin crear un ciclo, así que la arista es legítima — pero hay que añadirla
+a `ModuleBoundariesTest` junto con `lesson → identity`.
 
-1. **La ventana de 24 horas aplicada al profesor** (apartado de cancelación). ¿Se levanta para el
-   profesor sobre su propia clase, o se mantiene tal como está escrita?
-2. **El tope de capacidad de una clase grupal.** ¿Qué número, y va en `platform_configuration` o
-   se queda sin tope en el MVP?
-3. **`FULL` derivado o almacenado.** Propongo derivado, por lo explicado arriba. Cambia poco esta
-   fase y bastante la siguiente, así que conviene cerrarlo ahora.
+## Decisiones cerradas antes de implementar
 
-Y dos que puedo decidir yo, pero que prefiero que veas porque amplían el contrato:
+Las cinco preguntas que este análisis dejó abiertas están respondidas. Se recogen aquí con su
+respuesta para que el documento se lea como lo que es: lo acordado, no lo propuesto.
 
-4. **Falta un listado de clases.** `openapi.yaml` tiene `POST /teacher/lessons` y
-   `GET /lessons/{id}`, pero no hay forma de listar. El profesor no puede ver lo que ha creado
-   sin guardar los identificadores, y el calendario que resolvería esto es la Fase 10. Propongo
-   añadir `GET /teacher/lessons` con rango de fechas obligatorio y el mismo tope de 62 días que
-   usa la disponibilidad, por coherencia.
-5. **La modificación de clases.** El roadmap dice «creación, consulta, modificación y
-   cancelación», pero el contrato no tiene ningún `PATCH`. Propongo **dejar la modificación
-   fuera** de esta fase: cambiar la hora de una clase con reservas es una operación que afecta a
-   `booking`, y hacerla antes de que `booking` exista significa escribirla dos veces. Cancelar y
-   crear de nuevo cubre el caso mientras tanto. Si estás de acuerdo, corrijo el roadmap para que
-   deje de prometerlo en esta fase.
+1. **La ventana de 24 horas no ata al profesor.** Se levanta para el profesor sobre su propia
+   clase y se mantiene para el alumno sobre su reserva.
+2. **El tope de capacidad de grupo es configurable, con 8 por defecto**, en
+   `platform_configuration`.
+3. **`FULL` y `COMPLETED` se derivan al leer.** La columna guarda solo `OPEN` y `CANCELLED`.
+4. **Se añade `GET /teacher/lessons`**, con rango de fechas obligatorio y el mismo tope de 62
+   días que usa la disponibilidad. Sin él, el profesor no puede ver lo que ha creado hasta que
+   exista el calendario de la Fase 10.
+5. **La modificación de clases queda fuera de esta fase.** Cambiar la hora de una clase que ya
+   tiene reservas es una operación que afecta a `booking`; escribirla antes de que `booking`
+   exista significa escribirla dos veces. Cancelar y volver a crear cubre el caso mientras tanto,
+   y `09-roadmap-implementacion.md` se corrige para que deje de prometerla aquí.
 
 ## Códigos de error nuevos
 
@@ -305,17 +305,18 @@ Igual que en las dos fases anteriores, y por las mismas razones:
 
 ## Documentos que esta fase corrige
 
-- **`10-diagrama-er.md`**: `lessons.status` pasa de cuatro valores a dos, si se aprueba.
+- **`10-diagrama-er.md`**: `lessons.status` pasa de cuatro valores a dos.
 - **`openapi.yaml`**: `bookedCount` se retira hasta la Fase 9; el `summary` de la cancelación
   promete una cascada que esta fase no puede hacer; `attendance` se sirve desde `booking`.
-- **`09-roadmap-implementacion.md`**: promete «modificación» en esta fase; propongo quitarla.
-- **`01-product-architect.md`**: la ventana de 24 horas aplicada al profesor, si se aprueba
-  levantarla.
+- **`09-roadmap-implementacion.md`**: promete «modificación» en esta fase; se quita.
+- **`01-product-architect.md`**: la ventana de 24 horas deja de aplicarse al profesor sobre su
+  propia clase.
+- **`10-diagrama-er.md`** otra vez: `platform_configuration` gana el tope de capacidad de grupo.
 
 ## Entrega
 
 Un solo PR desde `fase-8-lesson`, con el análisis primero —este documento, validado antes de
 escribir una línea— y la implementación después, como en la Fase 7.
 
-**No se escribe código hasta que valides este documento**, y en particular las tres preguntas
-abiertas: la ventana de cancelación, el tope de capacidad y si `FULL` se deriva o se almacena.
+Este documento se validó antes de escribir código, con las cinco decisiones del apartado
+"Decisiones cerradas antes de implementar" acordadas explícitamente.
