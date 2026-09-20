@@ -46,7 +46,7 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
 | 6. Perfiles y gestión de usuarios | Completada — `teacher` (PR #13) y `student` (PR #15) en `main` |
 | 7. Disponibilidad del profesor (`availability`) | Completada — PR #17 en `main` |
-| **8. Clases (`lesson`)** | **Siguiente**: empieza por su documento de análisis, sin escribir código |
+| **8. Clases (`lesson`)** | **En curso**: análisis validado, implementación en `fase-8-lesson` |
 | 9 en adelante | Pendientes |
 
 El análisis de la Fase 6 y sus decisiones están en
@@ -65,10 +65,13 @@ en cada clase. **Una excepción de dominio nueva se mapea llamando a `Problems.o
 de API nuevo hereda `rest`, `bearer`, `jsonBearer`, `tokenOf` y `tokenOfANewStudent` en lugar de
 copiarlos.
 
-**Queda pendiente de decidir** si la exclusión de `EI_EXPOSE_REP2` de `spotbugs-exclude.xml` se
-ensancha al paquete `application.service` cuando un tercer módulo tropiece con ella. Hoy está
-acotada a las cuatro clases de `availability`, y su justificación explica la medición que hay
-detrás.
+La exclusión de `EI_EXPOSE_REP2` de `spotbugs-exclude.xml` sigue acotada a las cuatro clases de
+`availability`, y su justificación explica la medición que hay detrás. **La Fase 8 confirmó que
+acotarla era lo correcto**: los cuatro servicios de `lesson` guardan sus puertos igual y SpotBugs
+no los marca, así que el disparador iba con aquellos dos tipos concretos y no con el patrón.
+
+El análisis de la Fase 8 está en `Documentos/_arquitectura/19-fase8-analisis-lesson.md`, con las
+cinco decisiones que hubo que cerrar antes de escribir código.
 
 La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
 `02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
@@ -193,6 +196,20 @@ Cosas que ya han costado tiempo y que fallan **en silencio**:
   `QueryAvailability` en vez de leer reglas, para que no haya tres implementaciones de una
   misma regla. Las fechas de cambio de hora están escritas literales en los tests: un test que
   le pregunta a `java.time` cuándo cambia la hora se da la razón a sí mismo.
+- **El estado de una clase no se guarda entero.** La columna `lessons.status` sólo tiene `OPEN`
+  y `CANCELLED`; `COMPLETED` se deduce del reloj al leer y `FULL` del número de reservas, que
+  sólo `booking` puede contar. Añadir `FULL` a la columna obligaría a que `booking` lo escribiera
+  y lo mantuviera en paz con el recuento real: el día que discrepen, la clase no falla, miente.
+  Por lo mismo no hay `cancelled_within_window` — es `cancelled_at` restado de `starts_at`.
+- **La duración de una clase se mide en instantes, no en el reloj del profesor.** Los dos días
+  del año en que cambia la hora, una clase que en su reloj va de 01:30 a 03:30 dura una hora de
+  verdad. Manda el instante, y es el frontend quien debe enseñar la duración resultante antes de
+  confirmar. «No cruza medianoche», en cambio, **sí** se evalúa en hora local: medianoche es una
+  idea local, y por eso esa regla no puede ser un `CHECK` de la base.
+- **La restricción de solapamiento de clases necesita `btree_gist`**, que crea el changeset
+  `v6-lesson`. Sin la extensión, la restricción no se puede ni crear. Y se comprueba dos veces a
+  propósito: antes en la aplicación para poder responder un 409 con sentido, y en la base porque
+  entre la comprobación y el `INSERT` cabe otra petición.
 - **El perfil del alumno nace en `PATCH /me`, no en el registro.** Un alumno recién verificado
   tiene los campos personales a `null` en `GET /me`, y eso es correcto: es la señal de que el
   frontend debe pedírselos. Además, un alumno sin perfil **no puede ser asociado** por el

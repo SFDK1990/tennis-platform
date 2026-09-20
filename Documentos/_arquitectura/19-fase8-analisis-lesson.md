@@ -320,3 +320,89 @@ escribir una línea— y la implementación después, como en la Fase 7.
 
 Este documento se validó antes de escribir código, con las cinco decisiones del apartado
 "Decisiones cerradas antes de implementar" acordadas explícitamente.
+
+
+## Decisiones tomadas al implementar
+
+Lo que no se podía saber hasta escribir el código. Va aquí y no sólo en el informe de cierre,
+porque es la clase de detalle que la siguiente fase necesita y un informe fechado no se relee.
+
+### Un código de error que el análisis no había previsto: `LESSON_ALREADY_FINISHED`
+
+El análisis decidió qué pasa al cancelar dos veces, pero no qué pasa al cancelar una clase que
+ya ocurrió. Sin una regla, se podía cancelar una clase del año pasado, que es reescribir el
+pasado: los alumnos vinieron o no vinieron, y la Fase 9 registrará cuál de las dos. Se rechaza
+con `422 LESSON_ALREADY_FINISHED`, un 422 y no un 409 porque releer no cambia nada — el tiempo
+sólo va en una dirección.
+
+### La marca de "fuera de disponibilidad" registra el hecho, no la intención
+
+`created_outside_availability` se escribe a partir de si la clase **estaba** fuera del horario,
+no de si el llamante pidió forzarlo. Una clase que cae dentro de las horas no es "fuera de
+horario" porque quien la creó viniera preparado para que lo fuera. Como efecto secundario, sólo
+hace falta una llamada a `QueryAvailability.covers` por petición en vez de dos.
+
+### La clase de otro profesor responde 404, no 403
+
+Con un único profesor el caso es inalcanzable. El día que no lo sea, decirle a alguien que un id
+existe pero no es suyo es decirle algo que no tenía forma de saber. Es el mismo criterio que la
+Fase 7 aplicó al borrar una excepción de disponibilidad ajena.
+
+### `version` existe en la tabla y no se mapea
+
+La columna está, con su `DEFAULT 0`, porque `10-diagrama-er.md` la preveía y añadirla después
+sería otra migración. Pero la entidad JPA **no** la mapea: el bloqueo optimista que le da sentido
+llega con la Fase 9, junto al `SELECT ... FOR UPDATE` que protege la última plaza, y mapear
+`@Version` ahora sólo significaría arrastrar un número que nadie lee y que complica escribir una
+entidad reconstruida desde el dominio.
+
+Por eso mismo el adaptador **carga la fila y la modifica** en lugar de guardar una copia
+separada: así las columnas que este módulo no mapea —`version`, `created_at`— conservan lo que
+les dio la base.
+
+### La violación de la restricción se traduce por el nombre de la restricción, y con `flush`
+
+Dos detalles que no se ven hasta que fallan. El primero: `saveAndFlush` y no `save`, porque sin
+el flush la violación aparece al confirmar la transacción, que es después de que el controlador
+haya respondido — llegaría como un 500 imposible de mapear. El segundo: se compara el **nombre**
+`ex_lessons_no_teacher_overlap` y no el texto del mensaje, porque una clase también puede
+romper el `CHECK` de duración o la clave ajena, y ésos no son un solapamiento en absoluto.
+
+### `platform` pasó a tener un solo servicio para sus dos límites
+
+Añadir el tope de capacidad iba a duplicar el servicio existente entero: el fallback, el aviso
+en el log y la lectura de la fila son idénticos, y sólo cambia qué campo se devuelve.
+`GetStudentLimitService` se sustituyó por `PlatformLimitsService`, que implementa los dos
+puertos. Los puertos siguen separados, de modo que `student` continúa dependiendo sólo del
+límite que lee.
+
+Al cablearlo se cometió —y se corrigió— un error que merece quedar escrito: registrarlo **a la
+vez** como bean de su clase concreta y como bean de cada puerto crea tres beans del mismo objeto
+y hace ambigua cualquier inyección. El contexto no arranca, con
+`NoUniqueBeanDefinitionException`. Se declara un único bean por su tipo concreto, y la inyección
+por cualquiera de las dos interfaces encuentra exactamente un candidato.
+
+### `LessonDateRange` duplica `AvailabilityDateRange`, y era inevitable
+
+Misma forma y mismo tope de 62 días. Las reglas de frontera impiden compartir un tipo de dominio
+entre módulos, así que la duplicación es forzada, igual que la de
+`TeacherRoleRequiredException` — que con esta fase va ya por la cuarta copia. Lo que sí se
+comparte a propósito es el número: un profesor que pudiera leer dos meses de disponibilidad y
+sólo uno de clases habría encontrado una diferencia que nadie decidió.
+
+### La exclusión de SpotBugs no hizo falta aquí, y eso confirma la medición de la Fase 7
+
+Los cuatro servicios de `lesson` guardan sus puertos exactamente igual que los de
+`availability`, y **SpotBugs no marca ninguno**: `mvn verify` da `BugInstance size is 0` sin
+tocar `spotbugs-exclude.xml`. Es la confirmación práctica de lo que la sonda de la Fase 7 había
+medido — el detector se disparaba por aquellos dos tipos concretos, no por el patrón de
+constructor — y la razón por la que ensanchar la exclusión al paquete habría sido taparse los
+ojos.
+
+### Lo que queda sin decidir
+
+**Nada impide crear una clase en el pasado.** Se puede, forzando la disponibilidad, y nace
+`COMPLETED`. No se ha prohibido porque ninguna regla del producto lo pide y el análisis no lo
+planteó, así que rechazarlo habría sido inventar una regla. Puede ser útil —registrar una clase
+que ya se dio— o puede ser un error de tecleo que nadie detiene. Merece una decisión explícita
+en la Fase 9, cuando el marcado de asistencia le dé un sentido u otro.

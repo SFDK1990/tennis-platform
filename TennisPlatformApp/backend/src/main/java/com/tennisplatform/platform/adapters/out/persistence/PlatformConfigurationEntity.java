@@ -20,6 +20,9 @@ class PlatformConfigurationEntity {
     @Column(name = "student_limit", nullable = false)
     private Integer studentLimit;
 
+    @Column(name = "max_group_capacity", nullable = false)
+    private Integer maxGroupCapacity;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
@@ -36,6 +39,6 @@ class PlatformConfigurationEntity {
     }
 
     PlatformSettings toDomain() {
-        return PlatformSettings.of(studentLimit);
+        return PlatformSettings.of(studentLimit, maxGroupCapacity);
     }
 }

@@ -95,8 +95,31 @@ Códigos añadidos en la Fase 7:
 | `AVAILABILITY_RANGE_TOO_WIDE`    | 400  | `GET /teacher/availability`                        | El rango pedido supera los 62 días                                      |
 | `AVAILABILITY_EXCEPTION_NOT_FOUND` | 404 | `DELETE /teacher/availability/exceptions/{id}`     | No existe; un id de otro profesor responde lo mismo                     |
 
-Ninguno es un `422`: todos son errores de forma o de referencia, no violaciones de una regla de
-negocio sobre datos por lo demás válidos. `PUT /teacher/availability/weekly` y las dos rutas de
+Códigos añadidos en la Fase 8:
+
+| Código                        | HTTP | Endpoint típico                        | Motivo                                                                      |
+|--------------------------------|------|-----------------------------------------|------------------------------------------------------------------------------|
+| `LESSON_OVERLAP`               | 409  | `POST /teacher/lessons`                 | Choca con otra clase no cancelada. Es un 409 porque la otra puede cancelarse un segundo después |
+| `LESSON_OUTSIDE_AVAILABILITY`  | 422  | `POST /teacher/lessons`                 | Fuera del horario y sin pedir forzarlo. Releer no cambia nada: o se mueve la clase o se fuerza  |
+| `LESSON_INVALID`               | 400  | `POST /teacher/lessons`                 | Duración que no es múltiplo de 30, fin antes del inicio, o cruza medianoche en la zona del profesor |
+| `LESSON_RANGE_TOO_WIDE`        | 400  | `GET /teacher/lessons`                  | El rango pedido supera los 62 días, el mismo tope que la disponibilidad      |
+| `LESSON_ALREADY_CANCELLED`     | 409  | `POST /teacher/lessons/{id}/cancel`     | Ya estaba cancelada; casi siempre una pantalla obsoleta                      |
+| `LESSON_ALREADY_FINISHED`      | 422  | `POST /teacher/lessons/{id}/cancel`     | La clase ya terminó. Cancelar lo que ya ocurrió es reescribir el pasado      |
+| `LESSON_NOT_FOUND`             | 404  | `/lessons/{id}`                         | No existe; la clase de otro profesor responde lo mismo                       |
+
+`CANCELLATION_WINDOW_EXPIRED` **no** aparece en `POST /teacher/lessons/{id}/cancel`, y es un
+cambio deliberado respecto a lo que este documento decía. La ventana de 24 horas protege al
+profesor de un hueco que ya no puede llenar, lo que justifica atar al alumno que cancela su
+reserva y no justifica atar al profesor sobre su propia clase: tal como estaba escrito, un
+profesor que enfermara la noche antes no podía cancelar. El código sigue reservado para
+`POST /bookings/{id}/cancel` en la Fase 9.
+
+Los códigos de la Fase 7 son todos de forma o de referencia; los de la Fase 8 incluyen dos
+`422` porque aquí sí hay reglas de negocio sobre datos por lo demás válidos: una clase fuera
+del horario está perfectamente bien formada, y una clase que ya terminó también.
+
+Ninguno de los de la Fase 7 es un `422`: todos son errores de forma o de referencia, no
+violaciones de una regla de negocio sobre datos por lo demás válidos. `PUT /teacher/availability/weekly` y las dos rutas de
 excepciones responden además `403 TEACHER_FORBIDDEN` a quien no sea el profesor, mientras que
 `GET /teacher/availability` lo puede leer cualquier autenticado, igual que el perfil del profesor.
 

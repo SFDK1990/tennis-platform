@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/changes/v4-platform.yaml
   - include:
       file: db/changelog/changes/v5-availability.yaml
+  - include:
+      file: db/changelog/changes/v6-lesson.yaml
