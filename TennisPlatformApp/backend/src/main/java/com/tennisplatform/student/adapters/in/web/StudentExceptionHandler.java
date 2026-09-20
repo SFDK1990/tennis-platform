@@ -1,5 +1,6 @@
 package com.tennisplatform.student.adapters.in.web;
 
+import com.tennisplatform.error.Problems;
 import com.tennisplatform.student.domain.InvalidStudentProfileException;
 import com.tennisplatform.student.domain.StudentAlreadyInactiveException;
 import com.tennisplatform.student.domain.StudentAlreadyManagedException;
@@ -29,7 +30,7 @@ class StudentExceptionHandler {
 
     @ExceptionHandler(StudentProfileNotFoundException.class)
     ProblemDetail handleNotFound(StudentProfileNotFoundException e) {
-        return problem(HttpStatus.NOT_FOUND, "Student not found", e.getMessage(),
+        return Problems.of(HttpStatus.NOT_FOUND, "Student not found", e.getMessage(),
                 "STUDENT_NOT_FOUND");
     }
 
@@ -40,51 +41,43 @@ class StudentExceptionHandler {
      */
     @ExceptionHandler(StudentNotManagedException.class)
     ProblemDetail handleNotManaged(StudentNotManagedException e) {
-        return problem(HttpStatus.FORBIDDEN, "Not allowed",
+        return Problems.of(HttpStatus.FORBIDDEN, "Not allowed",
                 "This student is not managed by you.", "STUDENT_NOT_MANAGED");
     }
 
     @ExceptionHandler(TeacherRoleRequiredException.class)
     ProblemDetail handleNotTheTeacher(TeacherRoleRequiredException e) {
-        return problem(HttpStatus.FORBIDDEN, "Not allowed",
+        return Problems.of(HttpStatus.FORBIDDEN, "Not allowed",
                 "Only the teacher can manage students.", "TEACHER_FORBIDDEN");
     }
 
     @ExceptionHandler(StudentAlreadyManagedException.class)
     ProblemDetail handleAlreadyManaged(StudentAlreadyManagedException e) {
-        return problem(HttpStatus.CONFLICT, "Already managed",
+        return Problems.of(HttpStatus.CONFLICT, "Already managed",
                 "This student is already managed.", "STUDENT_ALREADY_MANAGED");
     }
 
     @ExceptionHandler(StudentAlreadyInactiveException.class)
     ProblemDetail handleAlreadyInactive(StudentAlreadyInactiveException e) {
-        return problem(HttpStatus.CONFLICT, "Already deactivated",
+        return Problems.of(HttpStatus.CONFLICT, "Already deactivated",
                 "This student is already deactivated.", "STUDENT_ALREADY_INACTIVE");
     }
 
     @ExceptionHandler(StudentLimitReachedException.class)
     ProblemDetail handleLimitReached(StudentLimitReachedException e) {
-        return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Student limit reached", e.getMessage(),
+        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Student limit reached", e.getMessage(),
                 "STUDENT_LIMIT_REACHED");
     }
 
     @ExceptionHandler(StudentProfileIncompleteException.class)
     ProblemDetail handleIncompleteProfile(StudentProfileIncompleteException e) {
-        return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Student profile incomplete",
+        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Student profile incomplete",
                 e.getMessage(), "STUDENT_PROFILE_INCOMPLETE");
     }
 
     @ExceptionHandler(InvalidStudentProfileException.class)
     ProblemDetail handleInvalidProfile(InvalidStudentProfileException e) {
-        return problem(HttpStatus.BAD_REQUEST, "Invalid student profile", e.getMessage(),
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid student profile", e.getMessage(),
                 "STUDENT_PROFILE_INVALID");
-    }
-
-    private ProblemDetail problem(HttpStatus status, String title, String detail, String code) {
-        ProblemDetail problem = ProblemDetail.forStatus(status);
-        problem.setTitle(title);
-        problem.setDetail(detail);
-        problem.setProperty("code", code);
-        return problem;
     }
 }

@@ -45,15 +45,17 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
 | 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
 | 6. Perfiles y gestión de usuarios | Completada — `teacher` (PR #13) y `student` (PR #15) en `main` |
-| 7 en adelante | Pendientes |
+| **7. Disponibilidad del profesor (`availability`)** | **En curso**: análisis validado, implementación en `fase-7-availability` |
+| 8 en adelante | Pendientes |
 
 El análisis de la Fase 6 y sus decisiones están en
 `Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entregó en dos PRs, `teacher`
 primero y `student` después, porque `student` depende de `teacher`. Ese documento recoge además
 las decisiones que hubo que cerrar al implementar la segunda entrega.
 
-**Lo siguiente es la Fase 7, `availability`** (la Fase 3 de `09-roadmap-implementacion.md`: ese
-documento numera distinto que esta tabla).
+El análisis de la Fase 7 está en `Documentos/_arquitectura/18-fase7-analisis-availability.md`
+(es la Fase 3 de `09-roadmap-implementacion.md`: ese documento numera distinto que esta tabla).
+Recoge también las decisiones que hubo que cerrar al implementarla.
 
 La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
 `02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
@@ -167,6 +169,16 @@ Cosas que ya han costado tiempo y que fallan **en silencio**:
   ese 403 se le escapa y cae en la página de error del contenedor. Hay que ponerle el handler
   al propio `CsrfFilter` con un `ObjectPostProcessor`, y así lo hace `SecurityConfig`. El
   síntoma de deshacerlo no es un fallo, es un 403 con otro formato que parece un bug arreglado.
+- **`day_of_week` es ISO-8601 (1 = lunes … 7 = domingo)**, no 0-6 como decía
+  `10-diagrama-er.md`. Hay tres convenciones cruzadas —`java.time` numera el lunes 1,
+  `EXTRACT(DOW)` de PostgreSQL numera el domingo 0, el borrador de la API decía 0 = lunes— y
+  elegir mal no falla: mueve el horario un día. La API expone el **nombre**, y el número no
+  sale del adaptador de persistencia.
+- **La disponibilidad es hora de pared, no instantes.** Solo la resuelve
+  `AvailabilitySchedule`, con la zona del profesor. `lesson` y `calendar` preguntan por
+  `QueryAvailability` en vez de leer reglas, para que no haya tres implementaciones de una
+  misma regla. Las fechas de cambio de hora están escritas literales en los tests: un test que
+  le pregunta a `java.time` cuándo cambia la hora se da la razón a sí mismo.
 - **El perfil del alumno nace en `PATCH /me`, no en el registro.** Un alumno recién verificado
   tiene los campos personales a `null` en `GET /me`, y eso es correcto: es la señal de que el
   frontend debe pedírselos. Además, un alumno sin perfil **no puede ser asociado** por el

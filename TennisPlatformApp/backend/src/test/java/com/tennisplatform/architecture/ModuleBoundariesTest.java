@@ -73,8 +73,29 @@ class ModuleBoundariesTest {
     static final ArchRule studentDependsOnIdentityTeacherAndPlatform =
             mayOnlyDependOn("student", "identity", "teacher", "platform");
 
+    /**
+     * 02-arquitectura.md lists only {@code availability -> teacher}, and that turns out to be
+     * incomplete for every module that has a web adapter: a controller has to know who is
+     * calling, and that is {@code identity}'s {@code AuthenticatedUser}. {@code teacher} and
+     * {@code student} already depend on identity for exactly this reason; the graph in the
+     * document simply never said so, because those two had other reasons to depend on it.
+     *
+     * <p>The edge is added rather than worked around - putting the controller in {@code web},
+     * or copying the role check, would hide the dependency instead of removing it. The same
+     * will apply to {@code lesson} and {@code booking} when they arrive, and saying it here is
+     * what keeps that from looking like a new concession each time.
+     *
+     * <p>It is still widened one module at a time, and deliberately so. A general rule - every
+     * module may depend on {@code identity} - would quietly punch a hole through
+     * {@code platformDependsOnNoModule} and {@code sharedDependsOnNoModule}, whose whole job is
+     * to forbid exactly that so everybody else can read them without a cycle. It would also
+     * pre-authorise an edge for four modules whose own phase has not been analysed yet. The
+     * repetition is the point: each module states the graph it was designed with, and a new one
+     * is denied by default.
+     */
     @ArchTest
-    static final ArchRule availabilityDependsOnTeacher = mayOnlyDependOn("availability", "teacher");
+    static final ArchRule availabilityDependsOnTeacherAndIdentity =
+            mayOnlyDependOn("availability", "teacher", "identity");
 
     @ArchTest
     static final ArchRule lessonDependsOnTeacherAndAvailability =

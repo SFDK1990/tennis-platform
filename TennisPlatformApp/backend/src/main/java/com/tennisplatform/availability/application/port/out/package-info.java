@@ -1,4 +1,4 @@
 /**
- * Outbound ports required by the availability module's use cases, implemented by adapters/out.
+ * Outbound ports of the availability module. Implemented by the adapters, never used from outside this module.
  */
 package com.tennisplatform.availability.application.port.out;

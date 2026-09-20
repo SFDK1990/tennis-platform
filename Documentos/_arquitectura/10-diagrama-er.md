@@ -210,7 +210,7 @@ CREATE INDEX ix_teacher_students_student ON teacher_students (student_user_id);
 CREATE TABLE weekly_availability_rules (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
-    day_of_week      SMALLINT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    day_of_week      SMALLINT NOT NULL CHECK (day_of_week BETWEEN 1 AND 7),
     start_time       TIME NOT NULL,
     end_time         TIME NOT NULL,
     active_from      DATE,
@@ -233,7 +233,11 @@ CREATE TABLE availability_exceptions (
 CREATE INDEX ix_availability_exceptions_teacher_date ON availability_exceptions (teacher_user_id, date);
 ```
 
-`start_time`/`end_time` nulos en una excepción `BLOCK` significan "todo el día bloqueado"; en `EXTRA` son obligatorios (validado en la aplicación, no en el esquema, para no acoplar la regla a NULLs).
+`start_time`/`end_time` nulos en una excepción `BLOCK` significan "todo el día bloqueado"; en `EXTRA` son obligatorios (validado en la aplicación, no en el esquema, para no acoplar la regla a NULLs). Lo que el esquema sí rechaza es **media hora suelta** —una de las dos columnas sin la otra—, porque eso no describe nada bajo ninguno de los dos tipos.
+
+**Corrección de la Fase 7 — `day_of_week` es ISO-8601 (1 = lunes … 7 = domingo).** Este documento decía `BETWEEN 0 AND 6` y `openapi.yaml` anotaba "0 = lunes". Son tres convenciones cruzadas: `java.time.DayOfWeek` numera el lunes 1, y `EXTRACT(DOW)` de PostgreSQL numera el **domingo** 0. Equivocarse entre ellas no rompe nada — mueve el horario un día y deja un sistema que funciona y miente. Se fija ISO en la base, que es lo que devuelve `DayOfWeek.getValue()` sin conversión, y la API expone el **nombre** (`MONDAY`…`SUNDAY`), de modo que el número no sale nunca del adaptador de persistencia. Razonamiento completo en `18-fase7-analisis-availability.md`.
+
+**No hay restricción de exclusión contra reglas semanales solapadas**, a diferencia de `lessons`. Es deliberado: el solapamiento de clases nace de una carrera que dos reservantes pueden correr a la vez, mientras que el conjunto semanal pertenece a un único profesor y llega entero en una petición, así que la aplicación lo valida antes de escribir. Además, una restricción GiST aquí tendría que abarcar también el periodo de vigencia (`active_from`/`active_until`), que no cabe en el esquema sin desnormalizar.
 
 ## Changelog 5 — lesson
 

@@ -7,7 +7,6 @@ import com.tennisplatform.teacher.domain.TeacherProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -28,9 +27,6 @@ class TeacherProfileApiTest extends AbstractIntegrationTest {
 
     private static final String TEACHER_EMAIL = "teacher@tennis-platform.local";
     private static final String STUDENT_PASSWORD = "a-valid-password";
-
-    @Autowired
-    private TestRestTemplate rest;
 
     @Autowired
     private ProvisionTeacherAccount accounts;
@@ -56,7 +52,7 @@ class TeacherProfileApiTest extends AbstractIntegrationTest {
 
     @Test
     void anyAuthenticatedUserCanReadTheTeacherProfile() {
-        String studentToken = tokenOfANewStudent();
+        String studentToken = tokenOfANewStudent(STUDENT_PASSWORD);
 
         ResponseEntity<Map> response = rest.exchange("/api/v1/teacher/profile", HttpMethod.GET,
                 new HttpEntity<>(bearer(studentToken)), Map.class);
@@ -74,7 +70,7 @@ class TeacherProfileApiTest extends AbstractIntegrationTest {
 
     @Test
     void theTeacherCanUpdateTheirOwnProfile() {
-        String teacherToken = tokenOf(TEACHER_EMAIL);
+        String teacherToken = tokenOf(TEACHER_EMAIL, STUDENT_PASSWORD);
 
         ResponseEntity<Map> response = patchProfile(teacherToken,
                 Map.of("displayName", "Ana S.", "phone", "600123123"));
@@ -89,7 +85,7 @@ class TeacherProfileApiTest extends AbstractIntegrationTest {
     /** Criterion of Fase 6: a student cannot edit the teacher, even with a valid token. */
     @Test
     void aStudentCannotUpdateTheTeacherProfile() {
-        String studentToken = tokenOfANewStudent();
+        String studentToken = tokenOfANewStudent(STUDENT_PASSWORD);
 
         ResponseEntity<Map> response = patchProfile(studentToken,
                 Map.of("displayName", "Impostor"));
@@ -101,7 +97,7 @@ class TeacherProfileApiTest extends AbstractIntegrationTest {
 
     @Test
     void rejectsATimeZoneThatIsNotReal() {
-        ResponseEntity<Map> response = patchProfile(tokenOf(TEACHER_EMAIL),
+        ResponseEntity<Map> response = patchProfile(tokenOf(TEACHER_EMAIL, STUDENT_PASSWORD),
                 Map.of("timezone", "Madrid/Spain"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -117,26 +113,5 @@ class TeacherProfileApiTest extends AbstractIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return rest.exchange("/api/v1/teacher/profile", HttpMethod.PATCH,
                 new HttpEntity<>(body, headers), Map.class);
-    }
-
-    private HttpHeaders bearer(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        return headers;
-    }
-
-    private String tokenOfANewStudent() {
-        String email = "student-" + UUID.randomUUID() + "@example.com";
-        rest.postForEntity("/api/v1/auth/register",
-                Map.of("email", email, "password", STUDENT_PASSWORD), String.class);
-        return tokenOf(email);
-    }
-
-    @SuppressWarnings("unchecked")
-    private String tokenOf(String email) {
-        ResponseEntity<Map> login = rest.postForEntity("/api/v1/auth/login",
-                Map.of("email", email, "password", STUDENT_PASSWORD), Map.class);
-        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return (String) login.getBody().get("accessToken");
     }
 }

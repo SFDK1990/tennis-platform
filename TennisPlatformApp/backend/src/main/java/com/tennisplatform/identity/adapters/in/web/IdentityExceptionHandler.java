@@ -1,5 +1,6 @@
 package com.tennisplatform.identity.adapters.in.web;
 
+import com.tennisplatform.error.Problems;
 import com.tennisplatform.identity.domain.AccountNotActiveException;
 import com.tennisplatform.identity.domain.InvalidCredentialsException;
 import com.tennisplatform.identity.domain.InvalidTokenException;
@@ -32,7 +33,7 @@ class IdentityExceptionHandler {
 
     @ExceptionHandler(InvalidCredentialsException.class)
     ProblemDetail handleInvalidCredentials(InvalidCredentialsException e) {
-        return problem(HttpStatus.UNAUTHORIZED, "Authentication failed",
+        return Problems.of(HttpStatus.UNAUTHORIZED, "Authentication failed",
                 "Email or password is incorrect.", "AUTH_INVALID_CREDENTIALS");
     }
 
@@ -42,34 +43,26 @@ class IdentityExceptionHandler {
      */
     @ExceptionHandler(TokenReuseDetectedException.class)
     ProblemDetail handleTokenReuse(TokenReuseDetectedException e) {
-        return problem(HttpStatus.UNAUTHORIZED, "Session expired",
+        return Problems.of(HttpStatus.UNAUTHORIZED, "Session expired",
                 "Please sign in again.", "AUTH_SESSION_EXPIRED");
     }
 
     @ExceptionHandler(InvalidTokenException.class)
     ProblemDetail handleInvalidToken(InvalidTokenException e) {
-        return problem(HttpStatus.CONFLICT, "Invalid token",
+        return Problems.of(HttpStatus.CONFLICT, "Invalid token",
                 "The link is invalid, has expired or has already been used.", "AUTH_INVALID_TOKEN");
     }
 
     @ExceptionHandler(AccountNotActiveException.class)
     ProblemDetail handleAccountNotActive(AccountNotActiveException e) {
-        return problem(HttpStatus.FORBIDDEN, "Account not active",
+        return Problems.of(HttpStatus.FORBIDDEN, "Account not active",
                 "This account cannot perform that action.", "AUTH_ACCOUNT_NOT_ACTIVE");
     }
 
     /** The only one that may be specific: the user needs to know what to fix. */
     @ExceptionHandler(WeakPasswordException.class)
     ProblemDetail handleWeakPassword(WeakPasswordException e) {
-        return problem(HttpStatus.BAD_REQUEST, "Password does not meet the policy",
+        return Problems.of(HttpStatus.BAD_REQUEST, "Password does not meet the policy",
                 e.getMessage(), "AUTH_WEAK_PASSWORD");
-    }
-
-    private ProblemDetail problem(HttpStatus status, String title, String detail, String code) {
-        ProblemDetail problem = ProblemDetail.forStatus(status);
-        problem.setTitle(title);
-        problem.setDetail(detail);
-        problem.setProperty("code", code);
-        return problem;
     }
 }

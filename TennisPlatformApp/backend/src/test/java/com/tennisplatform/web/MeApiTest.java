@@ -7,7 +7,6 @@ import com.tennisplatform.teacher.domain.TeacherProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -35,9 +34,6 @@ class MeApiTest extends AbstractIntegrationTest {
     private static final String PASSWORD = "a-valid-password";
 
     @Autowired
-    private TestRestTemplate rest;
-
-    @Autowired
     private ProvisionTeacherAccount accounts;
 
     @Autowired
@@ -62,7 +58,7 @@ class MeApiTest extends AbstractIntegrationTest {
      */
     @Test
     void aStudentWithoutAProfileGetsTheAccountAndNullPersonalFields() {
-        String token = tokenOfANewStudent();
+        String token = tokenOfANewStudent(PASSWORD);
 
         ResponseEntity<Map> me = get(token);
 
@@ -76,7 +72,7 @@ class MeApiTest extends AbstractIntegrationTest {
 
     @Test
     void aStudentFillsTheirDataInAndReadsItBack() {
-        String token = tokenOfANewStudent();
+        String token = tokenOfANewStudent(PASSWORD);
 
         ResponseEntity<Map> saved = patch(token, Map.of("fullName", "Lucia Prieto",
                 "phone", "600123123", "nationalId", "12345678Z", "address", "Calle Mayor 1"));
@@ -88,7 +84,7 @@ class MeApiTest extends AbstractIntegrationTest {
 
     @Test
     void theFirstSaveNeedsTheName() {
-        String token = tokenOfANewStudent();
+        String token = tokenOfANewStudent(PASSWORD);
 
         ResponseEntity<Map> response = patch(token, Map.of("phone", "600123123"));
 
@@ -103,7 +99,7 @@ class MeApiTest extends AbstractIntegrationTest {
      */
     @Test
     void theAccountItselfCannotBeEditedThroughTheProfile() {
-        String token = tokenOfANewStudent();
+        String token = tokenOfANewStudent(PASSWORD);
         patch(token, Map.of("fullName", "Lucia Prieto"));
         String emailBefore = (String) get(token).getBody().get("email");
 
@@ -122,7 +118,7 @@ class MeApiTest extends AbstractIntegrationTest {
 
     @Test
     void aStudentCannotSendFieldsThatBelongToTheTeacher() {
-        String token = tokenOfANewStudent();
+        String token = tokenOfANewStudent(PASSWORD);
 
         ResponseEntity<Map> response = patch(token,
                 Map.of("fullName", "Lucia Prieto", "timezone", "America/Bogota"));
@@ -133,7 +129,7 @@ class MeApiTest extends AbstractIntegrationTest {
 
     @Test
     void theTeacherSeesTheirOwnProfileFields() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
 
         ResponseEntity<Map> me = get(token);
 
@@ -145,7 +141,7 @@ class MeApiTest extends AbstractIntegrationTest {
 
     @Test
     void theTeacherUpdatesTheirProfileThroughMe() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
 
         ResponseEntity<Map> response = patch(token,
                 Map.of("displayName", "Ana S.", "timezone", "America/Bogota"));
@@ -157,7 +153,7 @@ class MeApiTest extends AbstractIntegrationTest {
 
     @Test
     void theTeacherCannotSendFieldsThatBelongToAStudent() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
 
         ResponseEntity<Map> response = patch(token, Map.of("nationalId", "12345678Z"));
 
@@ -174,8 +170,8 @@ class MeApiTest extends AbstractIntegrationTest {
     /** Two students never see each other: the id comes from the token, not from the request. */
     @Test
     void everyCallerSeesOnlyTheirOwnData() {
-        String first = tokenOfANewStudent();
-        String second = tokenOfANewStudent();
+        String first = tokenOfANewStudent(PASSWORD);
+        String second = tokenOfANewStudent(PASSWORD);
         patch(first, Map.of("fullName", "Lucia Prieto"));
         patch(second, Map.of("fullName", "Mario Gil"));
 
@@ -197,26 +193,5 @@ class MeApiTest extends AbstractIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return rest.exchange("/api/v1/me", HttpMethod.PATCH, new HttpEntity<>(body, headers),
                 Map.class);
-    }
-
-    private HttpHeaders bearer(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        return headers;
-    }
-
-    private String tokenOfANewStudent() {
-        String email = "student-" + UUID.randomUUID() + "@example.com";
-        rest.postForEntity("/api/v1/auth/register",
-                Map.of("email", email, "password", PASSWORD), String.class);
-        return tokenOf(email);
-    }
-
-    @SuppressWarnings("unchecked")
-    private String tokenOf(String email) {
-        ResponseEntity<Map> login = rest.postForEntity("/api/v1/auth/login",
-                Map.of("email", email, "password", PASSWORD), Map.class);
-        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return (String) login.getBody().get("accessToken");
     }
 }

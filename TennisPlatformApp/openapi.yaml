@@ -380,18 +380,47 @@ paths:
   /teacher/availability:
     get:
       tags: [availability]
-      summary: Reglas semanales y excepciones vigentes
+      summary: Reglas semanales y excepciones de un rango de fechas
+      description: >
+        Legible por cualquier usuario autenticado, igual que el perfil del profesor: un alumno
+        necesita saber cuándo trabaja su profesor. El rango es obligatorio y acota **solo las
+        excepciones** —las reglas semanales se devuelven enteras, porque son un conjunto
+        pequeño—. Sin tope, la respuesta crecería cada temporada sin límite.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: true
+          description: Como máximo 62 días después de `from`, ambos incluidos.
+          schema: { type: string, format: date }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AvailabilityResponse" }
+        "400":
+          description: >-
+            Rango inválido o más ancho de 62 días (`AVAILABILITY_RANGE_TOO_WIDE`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /teacher/availability/weekly:
     put:
       tags: [availability]
       summary: Reemplaza el conjunto completo de reglas semanales
+      description: >
+        **No fusiona: reemplaza.** Una regla que el cliente no envíe deja de existir, incluida
+        una cuyo `activeFrom` todavía esté en el futuro. Por eso el `GET` devuelve `activeFrom`
+        y `activeUntil`: el ciclo leer-editar-escribir tiene que poder reenviar todo lo que
+        leyó. Una lista vacía es válida y significa "no tengo horario semanal fijo".
+
+        El conjunto se valida entero antes de escribir nada, así que una petición rechazada
+        deja la configuración anterior intacta.
       requestBody:
         required: true
         content:
@@ -403,13 +432,25 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WeeklyAvailabilityResponse" }
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: >-
+            Dos reglas del mismo día se pisan (`AVAILABILITY_RULES_OVERLAP`), o una regla es
+            inválida: día desconocido, fin no posterior al inicio (`AVAILABILITY_INVALID`).
+            Tocarse no es solaparse: 09:00-11:00 y 11:00-13:00 son válidas.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /teacher/availability/exceptions:
     post:
       tags: [availability]
       summary: Crea un bloqueo o disponibilidad extraordinaria para una fecha
+      description: >
+        Las excepciones solapadas se aceptan: dos bloqueos que cubren las mismas horas bloquean
+        lo mismo, y dos extras suman lo mismo. Cuando una fecha tiene a la vez un `BLOCK` y un
+        `EXTRA`, **manda el bloqueo**: equivocarse hacia "no disponible" cuesta un hueco,
+        equivocarse al revés pone al profesor a dar clase el día que dijo que no podía.
       requestBody:
         required: true
         content:
@@ -421,7 +462,13 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AvailabilityException" }
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: >-
+            `EXTRA` sin horas, media hora suelta, fin no posterior al inicio o tipo
+            desconocido (`AVAILABILITY_INVALID`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /teacher/availability/exceptions/{id}:
@@ -433,7 +480,13 @@ paths:
       responses:
         "204": { description: Eliminada }
         "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "404":
+          description: >-
+            No existe (`AVAILABILITY_EXCEPTION_NOT_FOUND`). Un id de otro profesor responde lo
+            mismo: un 403 confirmaría que el id existe.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /calendar:
     get:
@@ -934,14 +987,36 @@ components:
               type: array
               items: { $ref: "#/components/schemas/StudentSummary" }
 
+    LocalTime:
+      type: string
+      description: >
+        Hora de pared en la zona del profesor, sin fecha y sin desplazamiento. **Se devuelve
+        siempre como `HH:mm:ss`**; a la entrada se acepta también `HH:mm`. No es un instante:
+        a qué momento corresponde depende de la fecha y de la zona horaria del profesor.
+      example: "09:00:00"
+
+    DayOfWeek:
+      type: string
+      description: >
+        Nombre ISO-8601 del día. Es un nombre y no un número a propósito: alrededor de este
+        campo se cruzan tres convenciones —el borrador de este contrato decía 0 = lunes,
+        `java.time.DayOfWeek` numera el lunes 1 y `EXTRACT(DOW)` de PostgreSQL numera el
+        domingo 0— y un número equivocado no falla en ninguna capa: mueve el horario un día.
+        Un nombre equivocado no se puede interpretar.
+      enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
+
     WeeklyAvailabilityRule:
       type: object
       properties:
         id: { type: string, format: uuid }
-        dayOfWeek: { type: integer, minimum: 0, maximum: 6, description: "0 = lunes" }
-        startTime: { type: string, example: "09:00" }
-        endTime: { type: string, example: "13:00" }
-        activeFrom: { type: string, format: date, nullable: true }
+        dayOfWeek: { $ref: "#/components/schemas/DayOfWeek" }
+        startTime: { $ref: "#/components/schemas/LocalTime" }
+        endTime: { $ref: "#/components/schemas/LocalTime" }
+        activeFrom:
+          type: string
+          format: date
+          nullable: true
+          description: Null = aplica desde siempre. Ambos extremos son inclusivos.
         activeUntil: { type: string, format: date, nullable: true }
 
     WeeklyAvailabilityRequest:
@@ -950,13 +1025,16 @@ components:
       properties:
         rules:
           type: array
+          description: >
+            El conjunto completo. Una lista vacía es válida: significa que no hay horario
+            semanal fijo.
           items:
             type: object
             required: [dayOfWeek, startTime, endTime]
             properties:
-              dayOfWeek: { type: integer, minimum: 0, maximum: 6 }
-              startTime: { type: string }
-              endTime: { type: string }
+              dayOfWeek: { $ref: "#/components/schemas/DayOfWeek" }
+              startTime: { $ref: "#/components/schemas/LocalTime" }
+              endTime: { $ref: "#/components/schemas/LocalTime" }
               activeFrom: { type: string, format: date, nullable: true }
               activeUntil: { type: string, format: date, nullable: true }
 
@@ -972,7 +1050,10 @@ components:
       properties:
         id: { type: string, format: uuid }
         date: { type: string, format: date }
-        startTime: { type: string, nullable: true }
+        startTime:
+          type: string
+          nullable: true
+          description: Null en un `BLOCK` significa el día entero. En un `EXTRA` nunca es null.
         endTime: { type: string, nullable: true }
         type: { type: string, enum: [BLOCK, EXTRA] }
 
@@ -981,7 +1062,12 @@ components:
       required: [date, type]
       properties:
         date: { type: string, format: date }
-        startTime: { type: string, nullable: true }
+        startTime:
+          type: string
+          nullable: true
+          description: >
+            Obligatoria en un `EXTRA`. En un `BLOCK`, omitir las dos horas bloquea el día
+            entero; enviar una sola de las dos se rechaza, porque no describe nada.
         endTime: { type: string, nullable: true }
         type: { type: string, enum: [BLOCK, EXTRA] }
 

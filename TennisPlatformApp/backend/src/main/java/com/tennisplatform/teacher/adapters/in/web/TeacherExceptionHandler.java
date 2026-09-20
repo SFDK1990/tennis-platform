@@ -1,5 +1,6 @@
 package com.tennisplatform.teacher.adapters.in.web;
 
+import com.tennisplatform.error.Problems;
 import com.tennisplatform.teacher.domain.InvalidTeacherProfileException;
 import com.tennisplatform.teacher.domain.NotTheTeacherException;
 import com.tennisplatform.teacher.domain.TeacherProfileNotFoundException;
@@ -29,27 +30,19 @@ class TeacherExceptionHandler {
 
     @ExceptionHandler(TeacherProfileNotFoundException.class)
     ProblemDetail handleNotFound(TeacherProfileNotFoundException e) {
-        return problem(HttpStatus.NOT_FOUND, "Teacher profile not found",
+        return Problems.of(HttpStatus.NOT_FOUND, "Teacher profile not found",
                 "There is no teacher profile yet.", "TEACHER_PROFILE_NOT_FOUND");
     }
 
     @ExceptionHandler(NotTheTeacherException.class)
     ProblemDetail handleNotTheTeacher(NotTheTeacherException e) {
-        return problem(HttpStatus.FORBIDDEN, "Not allowed",
+        return Problems.of(HttpStatus.FORBIDDEN, "Not allowed",
                 "Only the teacher can change this profile.", "TEACHER_FORBIDDEN");
     }
 
     @ExceptionHandler(InvalidTeacherProfileException.class)
     ProblemDetail handleInvalidProfile(InvalidTeacherProfileException e) {
-        return problem(HttpStatus.BAD_REQUEST, "Invalid teacher profile", e.getMessage(),
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid teacher profile", e.getMessage(),
                 "TEACHER_PROFILE_INVALID");
-    }
-
-    private ProblemDetail problem(HttpStatus status, String title, String detail, String code) {
-        ProblemDetail problem = ProblemDetail.forStatus(status);
-        problem.setTitle(title);
-        problem.setDetail(detail);
-        problem.setProperty("code", code);
-        return problem;
     }
 }
