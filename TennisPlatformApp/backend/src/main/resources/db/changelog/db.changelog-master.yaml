@@ -7,3 +7,7 @@ databaseChangeLog:
       file: db/changelog/changes/v1-identity.yaml
   - include:
       file: db/changelog/changes/v2-teacher.yaml
+  - include:
+      file: db/changelog/changes/v3-student.yaml
+  - include:
+      file: db/changelog/changes/v4-platform.yaml

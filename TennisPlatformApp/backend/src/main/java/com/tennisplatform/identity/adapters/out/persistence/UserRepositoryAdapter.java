@@ -6,6 +6,8 @@ import com.tennisplatform.identity.domain.Role;
 import com.tennisplatform.identity.domain.User;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +28,11 @@ class UserRepositoryAdapter implements UserRepository {
     @Override
     public Optional<User> findById(UUID id) {
         return jpa.findById(id).map(UserEntity::toDomain);
+    }
+
+    @Override
+    public List<User> findAllById(Collection<UUID> ids) {
+        return jpa.findAllById(ids).stream().map(UserEntity::toDomain).toList();
     }
 
     @Override

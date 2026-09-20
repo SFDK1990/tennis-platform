@@ -26,6 +26,8 @@ The docs are the source of truth for design decisions; treat them as binding req
 - `13-fase5-analisis-identity.md` — Fase 5 analysis (identity module)
 - `14-fase5.1-integracion-continua.md` — Fase 5.1 decisions (CI pipeline, static analysis, dependency checking)
 - `15-convenciones-de-codigo.md` — **binding conventions**: language (code, comments and commits in English; narrative docs in Spanish), comment style, test naming, branching and PR flow, commit rules, and how the quality tooling is used
+- `16-fase6-analisis-perfiles.md` — Fase 6 analysis (`teacher` and `student` profiles, managed students), plus the decisions taken while implementing it
+- `17-analisis-archunit-limites-modulares.md` — why the module boundary rules look the way they do
 
 ## Backend commands
 
@@ -83,24 +85,29 @@ backend/<module>/
   configuration/             # Spring wiring
 ```
 
-Modules: `identity`, `teacher`, `student`, `availability`, `lesson`, `booking`, `administration`, `calendar`, `shared`.
+Modules: `identity`, `teacher`, `student`, `availability`, `lesson`, `booking`, `administration`, `calendar`, `platform`, `shared`.
 
 **Allowed module dependencies** (one-directional, no cycles):
 - `identity` depends on nothing else
 - `teacher` → `identity`
-- `student` → `identity`, `teacher`
+- `student` → `identity`, `teacher`, `platform`
 - `availability` → `teacher`
 - `lesson` → `teacher`, `availability`
 - `booking` → `student`, `lesson`
-- `administration` → `identity`, `teacher`, `student`
+- `administration` → `identity`, `teacher`, `student`, `platform`
 - `calendar` → only public query interfaces of other modules (never writes to another module's domain)
+- `platform` → nothing (global installation configuration, so everybody can read it)
 - `shared` → nothing (technical primitives only: IDs, common errors, clock; no business logic)
+
+`platform` owns `platform_configuration`, which `02-arquitectura.md` originally filed under `administration`. That was a mistake about ownership: `student` must read the student limit and may not depend on `administration`. Fase 6 implements only the read side (`GetStudentLimit`); the console that writes it is still Fase 7.
 
 Cross-module access must go through a module's public ports — never reach into another module's JPA entities, repositories, or internal adapters directly.
 
-**This is enforced, not just documented.** `src/test/java/com/tennisplatform/architecture/ModuleBoundariesTest.java` holds 21 ArchUnit rules covering the dependency graph of all nine modules (including the six still empty), the hexagonal layers, cross-module access through `application/port/in` only, and `calendar` being read-only. They run inside `mvn test` — no profile, no tag, no Docker — so they cannot be skipped. `config`, `error` and `web` are not modules and stay outside the graph by decision: they are the composition root, the global error mapping and the correlation-id filter. Rationale and the four decisions behind the rules: `../Documentos/_arquitectura/17-analisis-archunit-limites-modulares.md`.
+**This is enforced, not just documented.** `src/test/java/com/tennisplatform/architecture/ModuleBoundariesTest.java` holds 24 ArchUnit rules covering the dependency graph of all ten modules (including the five still empty), the hexagonal layers, cross-module access through `application/port/in` only, `calendar` being read-only, and the web edge. They run inside `mvn test` — no profile, no tag, no Docker — so they cannot be skipped. `config`, `error` and `web` are not modules and stay outside the graph by decision: the composition root, the global error mapping, and the edge that carries the correlation-id filter and `/me`. Rationale and decisions: `../Documentos/_arquitectura/17-analisis-archunit-limites-modulares.md`.
 
-A practical consequence: to check a caller's role from another module, use `AuthenticatedUser.isTeacher()` rather than comparing against `identity.domain.Role` — the comparison imports identity's domain and the rules reject it.
+`web` is exempt from the graph but not unguarded: `theWebEdgeOnlyUsesInboundPorts` lets it call any module's `application/port/in` and nothing else. That is what allows `/me` — which mixes account data from `identity` with the profile owned by `student` or `teacher` — to be composed at the edge instead of forcing one module to reach into another.
+
+A practical consequence: to check a caller's role from another module, use `AuthenticatedUser.isTeacher()` rather than comparing against `identity.domain.Role` — the comparison imports identity's domain and the rules reject it. The same reasoning is why views carry wire values, not domain types: `UserSummary` reports the role and status as strings, and `TeacherProfileView` reports the time zone as its IANA id.
 
 **Frontend style:** feature-based folders (`authentication`, `profile`, `students`, `availability`, `calendar`, `lessons`, `bookings`, `administration`), not a global controllers/services soup. A single centralized HTTP client owns auth headers, session refresh, error normalization, and typed responses — components never call the API ad hoc. Backend is the single source of truth for lessons/bookings/availability state; the frontend must treat local calendar state as potentially stale and handle `409` conflicts on booking rather than trusting cached availability.
 

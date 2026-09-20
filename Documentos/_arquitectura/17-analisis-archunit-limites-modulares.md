@@ -206,3 +206,21 @@ public API is its inbound ports, nothing else' was violated (1 times):
 
 Esa violación es también la razón de que `AuthenticatedUser` ofrezca `isTeacher()`: sin él,
 cualquier módulo que necesite comprobar el rol tendría que importar el dominio de `identity`.
+
+## Actualización de la Fase 6 (entrega `student`)
+
+Las reglas pasan de 21 a 24, por tres motivos:
+
+1. **Módulo `platform`.** Entra en `MODULES` y recibe sus dos reglas: no depende de ningún
+   módulo (`platformDependsOnNoModule`) y solo se le accede por sus puertos de entrada
+   (`platformCrossesOnlyThroughPorts`). `student` pasa a poder depender de él.
+2. **`web` deja de ser una exención sin vigilancia.** `theWebEdgeOnlyUsesInboundPorts` permite
+   al borde de composición llamar a `application/port/in` de cualquier módulo y nada más: ni
+   dominios, ni servicios, ni adaptadores, ni entidades. Es lo que hace que `/me` pueda componer
+   tres módulos sin que `web` se convierta en la puerta trasera por la que dejan de aplicarse
+   las fronteras.
+
+La regla de `web` tuvo un efecto de diseño inmediato: `UserSummary` devolvía `Role` y
+`UserStatus`, los enums del dominio de `identity`. Cualquiera que leyera esa vista desde fuera
+dependía de ese dominio. Ahora viajan como texto, igual que `TeacherProfileView` convierte el
+`ZoneId` en su id IANA. Una vista lleva valores de cable, no tipos de dominio.

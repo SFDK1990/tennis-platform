@@ -122,6 +122,8 @@ class LoginServiceTest {
 
         var result = service.login(new Login.Command("new@example.com", "secret"));
 
-        assertThat(result.user().status()).isEqualTo(UserStatus.PENDING_VERIFICATION);
+        // The summary carries the status as a string, so that a module outside identity can
+        // read it without importing identity's domain enum.
+        assertThat(result.user().status()).isEqualTo(UserStatus.PENDING_VERIFICATION.name());
     }
 }

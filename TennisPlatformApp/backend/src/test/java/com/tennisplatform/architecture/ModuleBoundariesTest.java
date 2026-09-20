@@ -43,7 +43,7 @@ class ModuleBoundariesTest {
 
     private static final List<String> MODULES = List.of(
             "identity", "teacher", "student", "availability", "lesson", "booking",
-            "administration", "calendar", "shared");
+            "administration", "calendar", "platform", "shared");
 
     // --- A. The dependency graph -----------------------------------------------
 
@@ -53,12 +53,25 @@ class ModuleBoundariesTest {
     @ArchTest
     static final ArchRule sharedDependsOnNoModule = mayOnlyDependOn("shared");
 
+    /**
+     * {@code platform} owns the global configuration of the installation and depends on nobody,
+     * which is what lets every other module read it.
+     *
+     * <p>02-arquitectura.md filed {@code platform_configuration} under {@code administration}.
+     * That was a mistake about ownership, not about cycles: {@code student} has to read the
+     * student limit, {@code student} may not depend on {@code administration}, and no amount of
+     * reordering fixes a table living in the module that merely edits it. The read side arrives
+     * in Fase 6 with the student module that needs it; the console stays Fase 7.
+     */
+    @ArchTest
+    static final ArchRule platformDependsOnNoModule = mayOnlyDependOn("platform");
+
     @ArchTest
     static final ArchRule teacherDependsOnIdentity = mayOnlyDependOn("teacher", "identity");
 
     @ArchTest
-    static final ArchRule studentDependsOnIdentityAndTeacher =
-            mayOnlyDependOn("student", "identity", "teacher");
+    static final ArchRule studentDependsOnIdentityTeacherAndPlatform =
+            mayOnlyDependOn("student", "identity", "teacher", "platform");
 
     @ArchTest
     static final ArchRule availabilityDependsOnTeacher = mayOnlyDependOn("availability", "teacher");
@@ -159,6 +172,9 @@ class ModuleBoundariesTest {
     @ArchTest
     static final ArchRule calendarCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("calendar");
 
+    @ArchTest
+    static final ArchRule platformCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("platform");
+
     // --- D. calendar only reads -------------------------------------------------
 
     /**
@@ -173,6 +189,25 @@ class ModuleBoundariesTest {
             .that().resideInAPackage(packageOf("calendar"))
             .should().dependOnClassesThat(writePortsOfAnotherModule())
             .because("calendar reads other modules, it never changes them");
+
+    // --- E. The web edge is not a back door ------------------------------------
+
+    /**
+     * {@code web} is not a module and is therefore exempt from the graph, which is what lets
+     * {@code /me} compose an answer out of {@code identity}, {@code teacher} and
+     * {@code student} at once - something no single module may do. An exemption with nothing
+     * holding it is an invitation, so it gets its own rule: the edge may call inbound ports and
+     * nothing else. No domain types, no services, no adapters, no entities.
+     *
+     * <p>This is what keeps "orchestrator" from drifting into "the place where the boundaries
+     * do not apply". It also shows up in the design of the ports themselves: it is why
+     * {@code UserSummary} carries the role as a string rather than identity's {@code Role}.
+     */
+    @ArchTest
+    static final ArchRule theWebEdgeOnlyUsesInboundPorts = noClasses()
+            .that().resideInAPackage(ROOT + ".web..")
+            .should().dependOnClassesThat(insidesOfAnyModule())
+            .because("the composition edge may only call a module's inbound ports");
 
     // --- helpers ---------------------------------------------------------------
 
@@ -214,6 +249,16 @@ class ModuleBoundariesTest {
                 String owner = moduleOf(target);
                 return owner != null
                         && !owner.equals(module)
+                        && !target.getPackageName().contains(".application.port.in");
+            }
+        };
+    }
+
+    private static DescribedPredicate<JavaClass> insidesOfAnyModule() {
+        return new DescribedPredicate<>("the insides of any module") {
+            @Override
+            public boolean test(JavaClass target) {
+                return moduleOf(target) != null
                         && !target.getPackageName().contains(".application.port.in");
             }
         };

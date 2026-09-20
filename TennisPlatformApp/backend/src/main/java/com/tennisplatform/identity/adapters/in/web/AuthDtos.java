@@ -45,8 +45,8 @@ final class AuthDtos {
     record UserSummaryResponse(UUID id, String email, String role, String status) {
 
         static UserSummaryResponse from(UserSummary summary) {
-            return new UserSummaryResponse(summary.id(), summary.email(),
-                    summary.role().name(), summary.status().name());
+            return new UserSummaryResponse(summary.id(), summary.email(), summary.role(),
+                    summary.status());
         }
     }
 

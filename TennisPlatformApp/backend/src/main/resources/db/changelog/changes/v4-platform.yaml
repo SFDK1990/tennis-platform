@@ -1,0 +1,46 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v4-platform-configuration
+      author: tennis-platform
+      comment: >-
+        Global platform configuration, owned by the platform module.
+
+        10-diagrama-er.md filed this table under the administration changelog because the
+        administration console is what edits it. That is the wrong owner: student has to read
+        student_limit to validate the managed-student limit, and student may not depend on
+        administration. The module that owns a table is the one that owns the data, not the
+        one with the nicest screen for it - so the table moves to platform, whose read side
+        arrives in Fase 6 and whose write side is still the Fase 7 console.
+
+        The CHECK (id = 1) together with the primary key makes a second row impossible: the
+        configuration is a singleton, and a schema that allows two rows eventually gets two.
+
+        updated_by stays a foreign key to users even though platform does not depend on
+        identity in code - it only stores a UUID. Referential integrity of an audit field is
+        worth more than the purity of the diagram, and this is the place that says so out loud.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE platform_configuration (
+                  id             SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+                  student_limit  INT NOT NULL CHECK (student_limit > 0),
+                  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  updated_by     UUID REFERENCES users(id)
+              );
+        - sql:
+            dbms: postgresql
+            comment: >-
+              The singleton row is seeded here rather than defaulted in code, so that the
+              configuration exists from the first startup and the Fase 7 console only ever has
+              to update it. 50 is a starting value for a single-teacher MVP, not a rule: it is
+              configurable precisely because nobody knows the right number yet. updated_by is
+              null because no human set it.
+            sql: |
+              INSERT INTO platform_configuration (id, student_limit)
+                  VALUES (1, 50)
+                  ON CONFLICT (id) DO NOTHING;
+      rollback:
+        - sql:
+            sql: DROP TABLE platform_configuration

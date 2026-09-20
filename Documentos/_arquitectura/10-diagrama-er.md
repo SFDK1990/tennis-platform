@@ -315,7 +315,18 @@ El campo `attendance` que mencionaba `05-database-engineer.md` como posible tabl
 
 "No superar capacidad" (`LESSON_FULL`) **no** se expresa como constraint declarativa porque requeriría contar filas de otra tabla; se protege combinando el `SELECT ... FOR UPDATE` sobre `lessons` descrito en `02-arquitectura.md` §11 con, opcionalmente, un trigger `AFTER INSERT OR UPDATE ON bookings` que recuente reservas `CONFIRMED` de `lesson_id` y lance una excepción si supera `lessons.capacity`, como último cinturón de seguridad ante un bug en la capa de aplicación.
 
-## Changelog 7 — administration
+## Changelog 7 — platform (configuración global)
+
+> **Corregido en la Fase 6.** Esta tabla estaba agrupada aquí como "administration" porque la
+> consola de administración es lo que la edita. El dueño de una tabla es el módulo dueño del
+> dato: `student` tiene que leer `student_limit` para validar el límite al asociar un alumno, y
+> `student` no puede depender de `administration`. La tabla pasa al módulo `platform`, que no
+> depende de nadie, y su changeset se ejecuta como `v4-platform` —antes de lo que sugiere el
+> número 7 de este documento— precisamente porque `student` ya la necesita.
+>
+> `updated_by` sigue siendo clave ajena a `users`: en código `platform` no depende de
+> `identity`, solo guarda un UUID, pero la integridad referencial de un campo de auditoría vale
+> más que la pureza del diagrama.
 
 ```sql
 CREATE TABLE platform_configuration (
@@ -326,7 +337,7 @@ CREATE TABLE platform_configuration (
 );
 ```
 
-El `CHECK (id = 1)` junto con la clave primaria impide insertar una segunda fila, garantizando que la configuración global sea siempre singleton. El límite de alumnos gestionados en sí (contar `teacher_students` con `status = 'MANAGED'` y compararlo con `student_limit`) se valida en la aplicación, no en el esquema.
+El `CHECK (id = 1)` junto con la clave primaria impide insertar una segunda fila, garantizando que la configuración global sea siempre singleton. La fila se siembra en el propio changeset con `student_limit = 50`, para que la configuración exista desde el primer arranque y la Fase 7 solo tenga que actualizarla. El límite de alumnos gestionados en sí (contar `teacher_students` con `status = 'MANAGED'` y compararlo con `student_limit`) se valida en la aplicación, no en el esquema.
 
 ## Changelog 8 — índices y constraints adicionales
 
