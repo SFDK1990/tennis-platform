@@ -38,17 +38,21 @@ public class QueryAvailabilityService implements QueryAvailability {
     @Override
     @Transactional(readOnly = true)
     public boolean covers(UUID teacherUserId, Instant from, Instant to) {
-        return scheduleAround(teacherUserId, from, to).covers(from, to);
+        return zoneOf(teacherUserId)
+                .map(zone -> scheduleAround(teacherUserId, zone, from, to).covers(from, to))
+                .orElse(false);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<AvailabilityIntervalView> intervals(UUID teacherUserId, Instant from, Instant to) {
-        ZoneId zone = zoneOf(teacherUserId);
-        return scheduleAround(teacherUserId, from, to)
-                .resolve(from.atZone(zone).toLocalDate(), to.atZone(zone).toLocalDate()).stream()
-                .map(AvailabilityIntervalView::from)
-                .toList();
+        return zoneOf(teacherUserId)
+                .map(zone -> scheduleAround(teacherUserId, zone, from, to)
+                        .resolve(from.atZone(zone).toLocalDate(), to.atZone(zone).toLocalDate())
+                        .stream()
+                        .map(AvailabilityIntervalView::from)
+                        .toList())
+                .orElseGet(List::of);
     }
 
     /**
@@ -56,8 +60,8 @@ public class QueryAvailabilityService implements QueryAvailability {
      * local date an instant falls on depends on the offset in force, and the interval that
      * covers an early morning can be the one stored under the previous date.
      */
-    private AvailabilitySchedule scheduleAround(UUID teacherUserId, Instant from, Instant to) {
-        ZoneId zone = zoneOf(teacherUserId);
+    private AvailabilitySchedule scheduleAround(UUID teacherUserId, ZoneId zone,
+                                                Instant from, Instant to) {
         LocalDate firstDay = from.atZone(zone).toLocalDate().minusDays(1);
         LocalDate lastDay = to.atZone(zone).toLocalDate().plusDays(1);
 
@@ -65,9 +69,18 @@ public class QueryAvailabilityService implements QueryAvailability {
                 exceptions.findByTeacherBetween(teacherUserId, firstDay, lastDay), zone);
     }
 
-    private ZoneId zoneOf(UUID teacherUserId) {
-        TeacherProfileView profile = teacherProfile.byUserId(teacherUserId)
-                .orElseGet(teacherProfile::get);
-        return ZoneId.of(profile.timezone());
+    /**
+     * Empty when the id belongs to no teacher, which is the honest answer: an account with no
+     * schedule is available for nothing.
+     *
+     * <p>This used to fall back to the single teacher's zone. With one teacher the fallback was
+     * unreachable, and the day there are two it would have resolved one teacher's rules against
+     * another's clock - a wrong answer rather than a failure, arriving long after the line that
+     * caused it was written.
+     */
+    private java.util.Optional<ZoneId> zoneOf(UUID teacherUserId) {
+        return teacherProfile.byUserId(teacherUserId)
+                .map(TeacherProfileView::timezone)
+                .map(ZoneId::of);
     }
 }
