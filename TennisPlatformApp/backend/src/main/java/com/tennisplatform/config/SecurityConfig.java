@@ -1,5 +1,7 @@
 package com.tennisplatform.config;
 
+import com.tennisplatform.error.ProblemDetailAccessDeniedHandler;
+import com.tennisplatform.error.ProblemDetailAuthenticationEntryPoint;
 import com.tennisplatform.identity.adapters.in.web.JwtAuthenticationFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,16 +9,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -41,25 +43,54 @@ public class SecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
+                                           ProblemDetailAuthenticationEntryPoint entryPoint,
+                                           ProblemDetailAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
             // CSRF only where a cookie alone can authenticate the request. Everything else is
             // authorized by a bearer token, which a cross-site form cannot attach.
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                .requireCsrfProtectionMatcher(new OrRequestMatcher(
-                        new AntPathRequestMatcher("/api/v1/auth/refresh", "POST"),
-                        new AntPathRequestMatcher("/api/v1/auth/logout", "POST"))))
+            .csrf(csrf -> {
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                    .requireCsrfProtectionMatcher(new OrRequestMatcher(
+                            new AntPathRequestMatcher("/api/v1/auth/refresh", "POST"),
+                            new AntPathRequestMatcher("/api/v1/auth/logout", "POST")));
+                csrf.addObjectPostProcessor(csrfErrorsFollowTheErrorContract(accessDeniedHandler));
+            })
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_PATHS).permitAll()
                 .requestMatchers(PUBLIC_AUTH_PATHS).permitAll()
                 .anyRequest().authenticated())
-            .exceptionHandling(handling -> handling.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+            .exceptionHandling(handling -> handling
+                .authenticationEntryPoint(entryPoint)
+                .accessDeniedHandler(accessDeniedHandler))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(new CsrfCookieFilter(), JwtAuthenticationFilter.class);
         return http.build();
+    }
+
+    /**
+     * Gives the CSRF filter the same error handler as the rest of the chain.
+     *
+     * <p>Configuring {@code exceptionHandling().accessDeniedHandler(…)} is not enough: it wires
+     * {@code ExceptionTranslationFilter}, which sits <em>after</em> {@link CsrfFilter} and so
+     * never sees what that filter rejects. The CSRF 403 would keep falling through to the
+     * container's error page while every other 403 followed the contract - the worst outcome,
+     * because the inconsistency would look like a fixed bug.
+     *
+     * <p>{@code CsrfConfigurer} exposes no setter for it, hence the post processor; Spring
+     * Security only applies it to objects of the declared type.
+     */
+    private static ObjectPostProcessor<CsrfFilter> csrfErrorsFollowTheErrorContract(
+            ProblemDetailAccessDeniedHandler accessDeniedHandler) {
+        return new ObjectPostProcessor<>() {
+            @Override
+            public <O extends CsrfFilter> O postProcess(O filter) {
+                filter.setAccessDeniedHandler(accessDeniedHandler);
+                return filter;
+            }
+        };
     }
 
     /**

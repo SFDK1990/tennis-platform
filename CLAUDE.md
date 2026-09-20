@@ -44,13 +44,16 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 4. Skeleton del backend | Completada y verificada |
 | 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
 | 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
-| **6. Perfiles y gestión de usuarios** | **En curso**: `teacher` en `main`, `student` en PR |
+| 6. Perfiles y gestión de usuarios | Completada — `teacher` (PR #13) y `student` (PR #15) en `main` |
 | 7 en adelante | Pendientes |
 
 El análisis de la Fase 6 y sus decisiones están en
-`Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entrega en dos PRs, `teacher`
+`Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entregó en dos PRs, `teacher`
 primero y `student` después, porque `student` depende de `teacher`. Ese documento recoge además
 las decisiones que hubo que cerrar al implementar la segunda entrega.
+
+**Lo siguiente es la Fase 7, `availability`** (la Fase 3 de `09-roadmap-implementacion.md`: ese
+documento numera distinto que esta tabla).
 
 La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
 `02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
@@ -81,21 +84,24 @@ de verdad:
 **Antes de fusionar cualquier PR, mira el check.** Es lo único que queda entre un merge y un
 `main` roto.
 
-### PRs de Dependabot abiertos y sin revisar
+### Dependabot: qué pasó con los primeros PRs
 
-Los abrió la primera ejecución. **Ninguno está fusionado y dos ya fallan el CI**, que es
-exactamente para lo que está el pipeline:
+**Ya no queda ninguno abierto.** La tabla que había aquí describía la situación del 18/09/2026 y
+llevaba desde entonces sin corresponderse con la realidad. Resumen de cómo acabó, que es lo
+único que sigue siendo útil:
 
-| PR | Propuesta | CI |
-|---|---|---|
-| #5 | Spring Boot 3.3.5 → **4.1.1** (versión mayor) | Falla |
-| #4 | Grupo de 4 actualizaciones menores/parche del backend | Falla |
-| #3 | postgres 16-alpine → 18-alpine | Sin evaluar |
-| #2 | eclipse-temurin 21-jre-alpine → 25-jre-alpine | Sin evaluar |
-| #1 | maven 3.9-temurin-21 → 3-temurin-26 | Sin evaluar |
+- Los dos que subían versión mayor —Spring Boot a 4.1.1 y la imagen de maven a temurin-26— se
+  fusionaron en rojo y rompieron `main`. Los revirtió el PR #7.
+- Los que cambiaban PostgreSQL y el JDK del contenedor se cerraron sin fusionar: cambian el
+  motor de datos o el runtime, y eso se decide con su rama, no se fusiona por estar en verde.
+- El PR #8 configuró `dependabot.yml` para que no vuelva a proponer versiones mayores, y el #12
+  ancló por nombre la imagen de maven, cuyo tag (`3.9-eclipse-temurin-21`) esconde el JDK en el
+  sufijo y se colaba por la regla general.
+- Las actualizaciones menores y de parche sí entraron (PR #11). El backend está hoy en Spring
+  Boot 3.5.16 sobre JDK 21.
 
-Los tres últimos cambian la versión de PostgreSQL y del JDK del contenedor: no son
-actualizaciones rutinarias y hay que decidirlas, no fusionarlas por estar en verde.
+El criterio queda en pie: **una versión mayor es una decisión con su rama y su análisis, nunca
+un merge**, y antes de fusionar cualquier PR hay que mirar el check.
 
 ## Comandos
 
@@ -156,6 +162,11 @@ Cosas que ya han costado tiempo y que fallan **en silencio**:
   `AbstractIntegrationTest` vuelve a sembrar la fila: sin eso, a partir del segundo test el
   límite de alumnos sería el de reserva del código en vez del configurado, y el síntoma sería
   un número raro en una aserción que no tiene nada que ver.
+- **El `CsrfFilter` va *antes* del `ExceptionTranslationFilter`.** Configurar
+  `exceptionHandling().accessDeniedHandler(...)` no alcanza a lo que rechaza el filtro de CSRF:
+  ese 403 se le escapa y cae en la página de error del contenedor. Hay que ponerle el handler
+  al propio `CsrfFilter` con un `ObjectPostProcessor`, y así lo hace `SecurityConfig`. El
+  síntoma de deshacerlo no es un fallo, es un 403 con otro formato que parece un bug arreglado.
 - **El perfil del alumno nace en `PATCH /me`, no en el registro.** Un alumno recién verificado
   tiene los campos personales a `null` en `GET /me`, y eso es correcto: es la señal de que el
   frontend debe pedírselos. Además, un alumno sin perfil **no puede ser asociado** por el

@@ -9,10 +9,56 @@ Durante la implementación, este archivo puede moverse a `docs/openapi.yaml` den
 - Todas las rutas van bajo `/api/v1`.
 - Autenticación: `Authorization: Bearer <accessToken>` en cada petición autenticada. El `accessToken` es de corta duración (ver `08-security-engineer.md`).
 - El `refreshToken` viaja en una cookie `HttpOnly`, `Secure`, `SameSite` (decisión ya cerrada); nunca aparece en el cuerpo de ninguna respuesta ni request, salvo el propio `Set-Cookie` que hace el backend en `/auth/login` y `/auth/refresh`.
+- **`POST /auth/refresh` y `POST /auth/logout` exigen además la cabecera `X-XSRF-TOKEN`.** Son los dos únicos endpoints que se autentican con la cookie sola, y una cookie la envía el navegador aunque la petición la origine otro sitio. Ver "Protección CSRF" más abajo.
 - Paginación en listados (`/teacher/students`, `/bookings`, `/admin/users`): query params `page` (0-index, por defecto 0) y `size` (por defecto 20), respuesta envuelta en `{ items: [...], page, size, totalItems }`.
 - `/calendar` no pagina: se filtra por rango de fechas obligatorio (`from`, `to`), acotado a un máximo razonable (p. ej. 62 días) para no exponer una consulta ilimitada.
 - Todas las fechas/horas son ISO 8601 (`date-time` en UTC, sufijo `Z`); el frontend convierte a hora local del usuario, incluyendo la zona horaria del profesor cuando aplica (decisión ya cerrada en `00-indice-arquitectura.md`).
 - Los errores siempre usan `application/problem+json` (RFC 7807) con el schema `ProblemDetails`, que añade un campo `code` con los códigos de negocio ya definidos en `02-arquitectura.md`.
+
+## Protección CSRF
+
+CSRF está activo **solo** en `POST /auth/refresh` y `POST /auth/logout`. El resto de la API se
+autoriza con `Authorization: Bearer`, y una petición cross-site no puede adjuntar esa cabecera:
+exigir allí un token CSRF sería ceremonia sin amenaza que cubrir. Esos dos endpoints son la
+excepción porque se autentican con la cookie `refresh_token` y nada más, y las cookies las envía
+el navegador venga la petición de donde venga.
+
+El mecanismo es el de doble envío:
+
+1. El backend fija una cookie `XSRF-TOKEN` **legible por JavaScript** (no `HttpOnly`, a
+   propósito: el cliente tiene que poder leerla) en **toda** respuesta, no solo en las de esos
+   dos endpoints. Si solo se fijara donde hace falta, el cliente no tendría nada que enviar en
+   su primer `refresh`.
+2. El cliente copia ese valor en la cabecera `X-XSRF-TOKEN` de la petición.
+3. El backend compara cookie y cabecera. Un formulario de otro sitio consigue que el navegador
+   mande la cookie, pero no puede leerla para rellenar la cabecera.
+
+Sin la cabecera, o con un valor que no coincide, la respuesta es `403` con
+`code: AUTH_CSRF_TOKEN_INVALID`. **No es un problema de permisos**: el cliente no tiene que
+volver a autenticarse, tiene que reenviar la petición con la cabecera puesta. Se documenta aquí
+y en `openapi.yaml` (esquema de seguridad `csrfToken`) porque no estarlo ya costó una tarde de
+depuración durante las pruebas manuales del 19/09/2026.
+
+## Errores que no los produce un controlador
+
+Tres respuestas nacen en la cadena de filtros de Spring Security, antes de que la petición llegue
+a ningún controlador, y por tanto fuera del alcance de cualquier `@RestControllerAdvice`. Por
+omisión salían con el formato por defecto del contenedor —o con el cuerpo vacío— incumpliendo la
+regla de que *todos* los errores son `application/problem+json`. Desde la corrección siguen el
+contrato como el resto:
+
+| Código                     | HTTP | Cuándo                                                        |
+|-----------------------------|------|----------------------------------------------------------------|
+| `AUTH_UNAUTHENTICATED`      | 401  | No hay bearer token, o no es válido, en un endpoint que lo exige |
+| `AUTH_CSRF_TOKEN_INVALID`   | 403  | Falta `X-XSRF-TOKEN` o no coincide con la cookie                |
+| `AUTH_FORBIDDEN`            | 403  | Denegación de autorización genérica de la cadena de filtros      |
+
+`AUTH_UNAUTHENTICATED` es deliberadamente vago: no distingue token ausente de expirado, mal
+formado o firmado por otro. Esa diferencia es justo lo que un atacante necesita para saber cuál
+de sus intentos se acerca.
+
+`AUTH_FORBIDDEN` no lo produce hoy ningún endpoint —los 403 de negocio los lanzan los módulos y
+los mapea su propio advice—, pero es el valor por defecto de la cadena y tiene su prueba.
 
 ## Mapeo código de negocio → HTTP
 
@@ -38,6 +84,7 @@ Códigos añadidos en la Fase 6, con el mismo criterio:
 | `STUDENT_NOT_FOUND`            | 404  | `POST /teacher/students/{userId}/manage`          | No hay cuenta de alumno con ese id                                    |
 | `TEACHER_FORBIDDEN`            | 403  | `/teacher/**`                                     | El llamante no es el profesor                                         |
 | `FIELD_NOT_APPLICABLE_TO_ROLE` | 400  | `PATCH /me`                                       | El cuerpo trae un campo de otro rol; se rechaza en vez de ignorarlo   |
+| `AUTH_SESSION_EXPIRED`         | 401  | `POST /auth/refresh`                              | Refresh token ausente, expirado, revocado o reusado: los cuatro casos responden idénticamente |
 
 `STUDENT_NOT_MANAGED` (403), que ya existía para reservas, se usa también cuando el profesor
 pide datos de un alumno con el que no tiene relación: la falta de relación es lo que se niega,
