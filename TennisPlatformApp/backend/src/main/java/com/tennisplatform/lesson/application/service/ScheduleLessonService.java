@@ -57,10 +57,14 @@ public class ScheduleLessonService implements ScheduleLesson {
             throw new LessonOverlapException("Another lesson already runs at that time");
         }
 
+        // The cap only constrains group lessons, so an individual one does not pay for a read
+        // of a configuration value it cannot use. One is what an individual lesson holds anyway.
+        int maxGroupCapacity = type == LessonType.GROUP ? groupCapacity.maxGroupCapacity() : 1;
+
         // Recorded as what happened, not as what was asked for: a lesson is outside the hours
         // when it is outside them, whether or not the caller expected it to be.
         Lesson lesson = Lesson.create(teacherUserId, type, period, request.capacity(),
-                request.notes(), !covered, zone, groupCapacity.maxGroupCapacity());
+                request.notes(), !covered, zone, maxGroupCapacity);
 
         return LessonView.from(lessons.save(lesson), clock.instant());
     }

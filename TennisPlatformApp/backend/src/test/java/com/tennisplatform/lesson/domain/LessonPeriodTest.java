@@ -108,13 +108,6 @@ class LessonPeriodTest {
         assertThat(new LessonPeriod(start, end).duration().toMinutes()).isEqualTo(180);
     }
 
-    @Test
-    void twoLessonsThatMerelyTouchDoNotOverlap() {
-        assertThat(period(10, 0, 11, 0).overlaps(period(11, 0, 12, 0))).isFalse();
-        assertThat(period(10, 0, 11, 0).overlaps(period(10, 30, 11, 30))).isTrue();
-        assertThat(period(10, 0, 12, 0).overlaps(period(10, 30, 11, 0))).isTrue();
-    }
-
     private static LessonPeriod period(int startHour, int startMinute, int endHour, int endMinute) {
         LocalDate day = LocalDate.of(2026, 6, 1);
         return new LessonPeriod(at(day, startHour, startMinute), at(day, endHour, endMinute));

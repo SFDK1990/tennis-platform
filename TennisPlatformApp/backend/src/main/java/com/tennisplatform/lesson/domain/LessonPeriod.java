@@ -59,9 +59,4 @@ public record LessonPeriod(Instant startsAt, Instant endsAt) {
                 : end.toLocalDate();
         return !lastDay.equals(start.toLocalDate());
     }
-
-    /** Half-open on both sides: two lessons that merely touch do not overlap. */
-    public boolean overlaps(LessonPeriod other) {
-        return startsAt.isBefore(other.endsAt) && other.startsAt.isBefore(endsAt);
-    }
 }

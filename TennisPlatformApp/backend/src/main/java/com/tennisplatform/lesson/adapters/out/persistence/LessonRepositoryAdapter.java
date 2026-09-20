@@ -6,9 +6,9 @@ import com.tennisplatform.lesson.domain.LessonOverlapException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,10 +16,24 @@ import java.util.UUID;
 class LessonRepositoryAdapter implements LessonRepository {
 
     /**
-     * The exclusion constraint's own name, as the v6-lesson changeset declares it. Matching on
-     * the name rather than on the message text is what keeps this from turning every integrity
-     * violation into an overlap: a lesson can also break the duration CHECK or the foreign key,
-     * and those are not the same answer at all.
+     * PostgreSQL's SQLState for a violated exclusion constraint. A standard code, not a message,
+     * so it survives a change of wording, locale or driver version.
+     */
+    private static final String EXCLUSION_VIOLATION = "23P01";
+
+    /**
+     * The exclusion constraint's own name, as the v6-lesson changeset declares it.
+     *
+     * <p>Checked in the message on top of the SQLState, and it has to be the message because
+     * Hibernate does not fill in the constraint name for this kind of violation: it recognises
+     * primary keys, foreign keys, unique and check constraints, and reports
+     * {@code constraint [null]} for an exclusion one. That was measured, not assumed - see
+     * {@code TeacherLessonsApiTest.theDatabaseRefusesAnOverlapThatSkippedTheApplicationCheck},
+     * which fails if this translation stops working.
+     *
+     * <p>The SQLState alone would already be right today, since this table has exactly one
+     * exclusion constraint. The name is kept so that adding a second one does not silently turn
+     * its violations into "another lesson runs at that time".
      */
     private static final String OVERLAP_CONSTRAINT = "ex_lessons_no_teacher_overlap";
 
@@ -67,8 +81,9 @@ class LessonRepositoryAdapter implements LessonRepository {
     }
 
     private boolean violatesOverlap(DataIntegrityViolationException e) {
-        String message = e.getMostSpecificCause().getMessage();
-        return message != null && message.toLowerCase(Locale.ROOT).contains(OVERLAP_CONSTRAINT);
+        return e.getMostSpecificCause() instanceof SQLException cause
+                && EXCLUSION_VIOLATION.equals(cause.getSQLState())
+                && String.valueOf(cause.getMessage()).contains(OVERLAP_CONSTRAINT);
     }
 
     @Override

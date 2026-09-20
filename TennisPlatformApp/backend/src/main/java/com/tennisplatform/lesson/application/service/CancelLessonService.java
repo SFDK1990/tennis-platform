@@ -29,17 +29,20 @@ public class CancelLessonService implements CancelLesson {
     public LessonView cancel(UUID teacherUserId, UUID lessonId) {
         teacher.requireTheTeacher(teacherUserId);
 
-        Lesson lesson = lessons.findById(lessonId)
-                .orElseThrow(() -> new LessonNotFoundException("No lesson with id " + lessonId));
+        Lesson lesson = lessons.findById(lessonId).orElseThrow(() -> notFound(lessonId));
 
         // Somebody else's lesson answers 404 rather than 403: with a single teacher the case is
         // unreachable, and the day it is not, telling a caller that an id exists but is not
         // theirs is telling them something they had no way to know.
         if (!lesson.teacherUserId().equals(teacherUserId)) {
-            throw new LessonNotFoundException("No lesson with id " + lessonId);
+            throw notFound(lessonId);
         }
 
         Instant now = clock.instant();
         return LessonView.from(lessons.save(lesson.cancel(now)), now);
+    }
+
+    private static LessonNotFoundException notFound(UUID lessonId) {
+        return new LessonNotFoundException("No lesson with id " + lessonId);
     }
 }

@@ -2,6 +2,11 @@ package com.tennisplatform.lesson;
 
 import com.tennisplatform.AbstractIntegrationTest;
 import com.tennisplatform.identity.application.port.in.ProvisionTeacherAccount;
+import com.tennisplatform.lesson.application.port.out.LessonRepository;
+import com.tennisplatform.lesson.domain.Lesson;
+import com.tennisplatform.lesson.domain.LessonOverlapException;
+import com.tennisplatform.lesson.domain.LessonPeriod;
+import com.tennisplatform.lesson.domain.LessonType;
 import com.tennisplatform.teacher.application.port.out.TeacherProfileRepository;
 import com.tennisplatform.teacher.domain.TeacherProfile;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +27,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * The lesson endpoints over real HTTP, against a real PostgreSQL.
@@ -50,6 +57,9 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
 
     @Autowired
     private TeacherProfileRepository profiles;
+
+    @Autowired
+    private LessonRepository lessons;
 
     @Autowired
     private Clock clock;
@@ -245,6 +255,39 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
         ResponseEntity<Map> tooWide = list(token, workingDay, workingDay.plusDays(62));
         assertThat(tooWide.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(tooWide.getBody().get("code")).isEqualTo("LESSON_RANGE_TOO_WIDE");
+    }
+
+    /**
+     * The database's own guarantee, exercised on its own.
+     *
+     * <p>Every other overlap test is answered by the check the service makes before writing, so
+     * none of them proves the constraint exists - they would all still pass if it had never been
+     * created. Going straight to the repository skips that check and leaves only the schema
+     * between the two lessons, which is the arrangement a second request racing the first would
+     * find. It also covers the translation of the violation, which is otherwise unreachable.
+     */
+    @Test
+    void theDatabaseRefusesAnOverlapThatSkippedTheApplicationCheck() {
+        LocalDate day = workingDay;
+        lessons.save(lesson(day, 10, 11));
+
+        assertThatThrownBy(() -> lessons.save(lesson(day, 10, 12)))
+                .isInstanceOf(LessonOverlapException.class);
+    }
+
+    /** And it lets through the one the application would also accept, so the filter is not simply "always no". */
+    @Test
+    void theDatabaseAcceptsAdjacentLessonsThroughTheSamePath() {
+        LocalDate day = workingDay;
+        lessons.save(lesson(day, 10, 11));
+
+        assertThatCode(() -> lessons.save(lesson(day, 11, 12))).doesNotThrowAnyException();
+    }
+
+    private Lesson lesson(LocalDate day, int fromHour, int toHour) {
+        return Lesson.create(teacherId, LessonType.INDIVIDUAL,
+                new LessonPeriod(at(day, LocalTime.of(fromHour, 0)), at(day, LocalTime.of(toHour, 0))),
+                1, null, true, MADRID, 8);
     }
 
     @Test

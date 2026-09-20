@@ -3,6 +3,7 @@ package com.tennisplatform.lesson.adapters.in.web;
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.LessonResponse;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
+import com.tennisplatform.lesson.application.port.in.LessonView;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +32,20 @@ class LessonController {
 
     @GetMapping("/{id}")
     LessonResponse byId(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id) {
-        boolean forTheTeacher = caller != null && caller.isTeacher();
-        return LessonResponse.from(getLesson.byId(id), forTheTeacher);
+        LessonView lesson = getLesson.byId(id);
+        return LessonResponse.from(lesson, ownsIt(caller, lesson));
+    }
+
+    /**
+     * Role and ownership, not only role.
+     *
+     * <p>Everywhere else in this module the two are checked together, and the reason is written
+     * out in {@code TeacherLessons}: the role says what kind of account is calling, ownership
+     * says it is the account whose lesson this is. With a single teacher the two coincide, so a
+     * role check alone would pass every test; the day there is a second teacher it would not
+     * fail either - it would hand one teacher the other's notes.
+     */
+    private static boolean ownsIt(AuthenticatedUser caller, LessonView lesson) {
+        return caller != null && caller.isTeacher() && caller.id().equals(lesson.teacherUserId());
     }
 }

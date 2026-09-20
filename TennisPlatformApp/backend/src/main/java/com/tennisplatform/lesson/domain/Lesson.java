@@ -175,10 +175,6 @@ public class Lesson {
         return type;
     }
 
-    public LessonPeriod period() {
-        return period;
-    }
-
     public Instant startsAt() {
         return period.startsAt();
     }
