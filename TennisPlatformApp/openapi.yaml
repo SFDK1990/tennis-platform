@@ -87,15 +87,25 @@ paths:
     post:
       tags: [auth]
       summary: Logout (revoca el refresh token actual)
+      description: >
+        Se autentica con la cookie `refresh_token`, no con el bearer token, y por eso exige el
+        token CSRF. Responde 204 aunque no hubiera sesión: limpia la cookie en cualquier caso,
+        para que el navegador no siga presentando una muerta.
+      security:
+        - csrfToken: []
       responses:
         "204": { description: Sesión cerrada }
-        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/CsrfTokenMissing" }
 
   /auth/refresh:
     post:
       tags: [auth]
       summary: Rota el access token usando el refresh token de la cookie
-      security: []
+      description: >
+        No lleva bearer token: se autentica con la cookie `refresh_token`. Por eso exige el
+        token CSRF.
+      security:
+        - csrfToken: []
       responses:
         "200":
           description: Nuevo access token emitido; refresh token rotado (nueva cookie)
@@ -103,10 +113,14 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AccessTokenResponse" }
         "401":
-          description: Refresh token ausente, expirado, revocado o reusado (familia revocada)
+          description: >
+            Refresh token ausente, expirado, revocado o reusado (familia revocada). Los cuatro
+            casos responden exactamente lo mismo —`AUTH_SESSION_EXPIRED`, con la cookie
+            limpiada— para no revelar cuál de ellos ocurrió.
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "403": { $ref: "#/components/responses/CsrfTokenMissing" }
 
   /auth/verify-email:
     post:
@@ -665,6 +679,18 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+      description: >
+        Token CSRF de doble envío, obligatorio en los dos endpoints que se autentican solo con
+        la cookie `refresh_token`. El servidor fija una cookie `XSRF-TOKEN` (legible por
+        JavaScript) en toda respuesta; el cliente debe devolver ese mismo valor en la cabecera
+        `X-XSRF-TOKEN`. Un formulario de otro sitio puede hacer que el navegador envíe la
+        cookie, pero no puede leerla para rellenar la cabecera. Sin ella la respuesta es
+        `403 AUTH_CSRF_TOKEN_INVALID`. El resto de la API se autoriza con el bearer token, que
+        una petición cross-site no puede adjuntar, y por eso no lleva CSRF.
 
   parameters:
     Id:
@@ -694,6 +720,14 @@ components:
           schema: { $ref: "#/components/schemas/ProblemDetails" }
     Forbidden:
       description: Autenticado pero sin permiso o relación sobre el recurso
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    CsrfTokenMissing:
+      description: >
+        Falta la cabecera `X-XSRF-TOKEN` o su valor no coincide con la cookie `XSRF-TOKEN`
+        (`code`: `AUTH_CSRF_TOKEN_INVALID`). No es un problema de permisos: el cliente debe
+        reenviar la petición con la cabecera puesta.
       content:
         application/problem+json:
           schema: { $ref: "#/components/schemas/ProblemDetails" }

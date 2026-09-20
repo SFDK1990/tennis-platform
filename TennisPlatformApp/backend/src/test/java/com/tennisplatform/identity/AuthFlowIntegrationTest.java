@@ -146,6 +146,35 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
                 .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
     }
 
+    /**
+     * The javadoc of {@code POST /auth/refresh} promises that a missing session and a dead one
+     * are indistinguishable. That was true of the status and false of the body until the error
+     * contract was fixed: one path answered with a Problem Detail carrying no {@code code}, the
+     * other with an empty 401.
+     */
+    @Test
+    void aMissingSessionAndADeadOneAreIndistinguishable() {
+        String email = uniqueEmail();
+        register(email);
+        verifyEmail(mailer.lastVerificationToken());
+        login(email);
+
+        String stolen = jar.get("refresh_token");
+        refresh();
+        jar.put("refresh_token", stolen);
+
+        ResponseEntity<Map> dead = refresh();
+        assertThat(dead.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(dead.getBody()).containsEntry("code", "AUTH_SESSION_EXPIRED");
+
+        // Rejecting the cookie also clears it, so the next call is the "no session at all" path.
+        assertThat(jar.has("refresh_token")).isFalse();
+        ResponseEntity<Map> absent = refresh();
+
+        assertThat(absent.getStatusCode()).isEqualTo(dead.getStatusCode());
+        assertThat(absent.getBody()).isEqualTo(dead.getBody());
+    }
+
     @Test
     void anUnverifiedAccountCanSignInButIsReportedAsPending() {
         String email = uniqueEmail();

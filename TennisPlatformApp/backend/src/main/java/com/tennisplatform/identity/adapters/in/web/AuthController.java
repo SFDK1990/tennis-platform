@@ -22,8 +22,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -86,25 +87,41 @@ class AuthController {
      * Failures here are 401, not the 409 that token failures get elsewhere: for the client
      * this is "your session ended, sign in again". Missing cookie, expired, revoked and reused
      * all look identical from outside - only the server knows which it was.
+     *
+     * <p>"Identical" has to include the body. The two failure paths used to answer differently -
+     * one a Problem Detail with no {@code code}, the other an empty 401 - which both broke the
+     * error contract and told a caller which of the two had happened.
      */
     @PostMapping("/refresh")
-    ResponseEntity<AccessTokenResponse> refresh(HttpServletRequest httpRequest) {
-        String presented = refreshCookie.readFrom(httpRequest)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session expired"));
+    ResponseEntity<Object> refresh(HttpServletRequest httpRequest) {
+        String presented = refreshCookie.readFrom(httpRequest).orElse(null);
+        if (presented == null) {
+            return sessionExpired();
+        }
 
         AuthenticationResult result;
         try {
             result = refreshSession.refresh(new RefreshSession.Command(presented));
         } catch (InvalidTokenException | TokenReuseDetectedException e) {
-            // The cookie is dead; clear it so the browser stops presenting it.
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie.clear())
-                    .build();
+            return sessionExpired();
         }
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieFor(result))
                 .body(new AccessTokenResponse(result.accessToken(), result.accessTokenExpiresAt()));
+    }
+
+    /** Clears the dead cookie so the browser stops presenting it, and says why in the contract. */
+    private ResponseEntity<Object> sessionExpired() {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problem.setTitle("Session expired");
+        problem.setDetail("Please sign in again.");
+        problem.setProperty("code", "AUTH_SESSION_EXPIRED");
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.clear())
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
     }
 
     /** Clears the cookie even when the token was unknown, so the browser never keeps a dead one. */
