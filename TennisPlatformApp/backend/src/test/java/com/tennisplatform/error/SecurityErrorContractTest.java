@@ -2,8 +2,6 @@ package com.tennisplatform.error;
 
 import com.tennisplatform.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -24,9 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * response said {@code application/problem+json}.
  */
 class SecurityErrorContractTest extends AbstractIntegrationTest {
-
-    @Autowired
-    private TestRestTemplate rest;
 
     @Test
     @SuppressWarnings("rawtypes")

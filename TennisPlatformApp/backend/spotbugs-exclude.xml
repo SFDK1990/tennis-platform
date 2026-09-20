@@ -42,6 +42,17 @@
         GetStudentLimitService store their own ports exactly the same way - private final
         fields of an interface type, assigned in a public constructor - and are not flagged.
 
+        Measured rather than assumed, because "the detector is inconsistent" is the kind of
+        claim that hides a real defect. A throwaway class in this same package, holding
+        AvailabilityRuleRepository, AvailabilityOverrideRepository and teacher's
+        GetTeacherProfile side by side in one constructor, was reported on the first two fields
+        and not on the third. With the shape of the class held constant, what decides it is the
+        type of the field, so there is no arrangement of these services that would satisfy the
+        detector - which is what makes an exclusion the honest answer rather than a shortcut.
+        Do not widen it to the whole application layer on the strength of that: GetTeacherProfile
+        proves the pattern does not flag every port, so a package-wide exclusion would hide more
+        than it explains.
+
         Scoped to these four classes on purpose, so the exclusion cannot quietly cover a real
         EI_EXPOSE_REP elsewhere in the module. A field holding a mutable value - a Date, an
         array, a collection - would still be reported, and would be a genuine finding: see

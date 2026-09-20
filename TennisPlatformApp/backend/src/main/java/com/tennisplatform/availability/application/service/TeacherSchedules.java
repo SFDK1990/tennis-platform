@@ -2,9 +2,7 @@ package com.tennisplatform.availability.application.service;
 
 import com.tennisplatform.availability.domain.TeacherRoleRequiredException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
-import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 
-import java.time.ZoneId;
 import java.util.UUID;
 
 /**
@@ -12,9 +10,9 @@ import java.util.UUID;
  * schedule being changed.
  *
  * <p>It reads through {@code teacher}'s inbound port, the only thing the boundary rules let this
- * module see of it. The time zone comes back with it rather than being copied into this module's
- * tables: two copies of a time zone drift, and the day they disagree the whole schedule moves by
- * an hour without anything failing.
+ * module see of it. The time zone is read from that same profile wherever it is needed rather
+ * than being copied into this module's tables: two copies of a time zone drift, and the day they
+ * disagree the whole schedule moves by an hour without anything failing.
  */
 class TeacherSchedules {
 
@@ -31,10 +29,9 @@ class TeacherSchedules {
      * token says what kind of account it is, this says it is the account that owns what is being
      * changed. 08-security-engineer.md requires both, and neither replaces the other.
      */
-    ZoneId requireTheTeacher(UUID callerId) {
-        TeacherProfileView profile = teacherProfile.byUserId(callerId)
-                .orElseThrow(() -> new TeacherRoleRequiredException(
-                        "Only the teacher can change the availability"));
-        return ZoneId.of(profile.timezone());
+    void requireTheTeacher(UUID callerId) {
+        if (teacherProfile.byUserId(callerId).isEmpty()) {
+            throw new TeacherRoleRequiredException("Only the teacher can change the availability");
+        }
     }
 }

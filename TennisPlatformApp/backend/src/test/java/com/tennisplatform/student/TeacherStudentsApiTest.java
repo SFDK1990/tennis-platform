@@ -7,7 +7,6 @@ import com.tennisplatform.teacher.domain.TeacherProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -32,9 +31,6 @@ class TeacherStudentsApiTest extends AbstractIntegrationTest {
     private static final String PASSWORD = "a-valid-password";
 
     @Autowired
-    private TestRestTemplate rest;
-
-    @Autowired
     private ProvisionTeacherAccount accounts;
 
     @Autowired
@@ -51,7 +47,7 @@ class TeacherStudentsApiTest extends AbstractIntegrationTest {
         UUID teacherId = accounts.provision(TEACHER_EMAIL, PASSWORD);
         teacherProfiles.save(TeacherProfile.create(teacherId, "Ana Serrano", null,
                 "Europe/Madrid", clock.instant()));
-        teacherToken = tokenOf(TEACHER_EMAIL);
+        teacherToken = tokenOf(TEACHER_EMAIL, PASSWORD);
     }
 
     @Test
@@ -238,7 +234,7 @@ class TeacherStudentsApiTest extends AbstractIntegrationTest {
                 Map.of("email", email, "password", PASSWORD), Map.class);
         assertThat(registered.getStatusCode().is2xxSuccessful()).isTrue();
 
-        String token = tokenOf(email);
+        String token = tokenOf(email, PASSWORD);
         ResponseEntity<Map> me = rest.exchange("/api/v1/me", HttpMethod.GET,
                 new HttpEntity<>(bearer(token)), Map.class);
         return new Student(UUID.fromString((String) me.getBody().get("id")), email, token);
@@ -283,19 +279,5 @@ class TeacherStudentsApiTest extends AbstractIntegrationTest {
         List<Map<String, Object>> items = (List<Map<String, Object>>) response.getBody()
                 .get("items");
         return items.stream().map(item -> (String) item.get("fullName")).toList();
-    }
-
-    private HttpHeaders bearer(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        return headers;
-    }
-
-    @SuppressWarnings("unchecked")
-    private String tokenOf(String email) {
-        ResponseEntity<Map> login = rest.postForEntity("/api/v1/auth/login",
-                Map.of("email", email, "password", PASSWORD), Map.class);
-        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return (String) login.getBody().get("accessToken");
     }
 }

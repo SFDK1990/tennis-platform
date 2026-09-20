@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Turns weekly rules and date exceptions into concrete intervals of real time.
@@ -47,6 +49,12 @@ public final class AvailabilitySchedule {
      *
      * <p>Intervals that meet across a date boundary are merged, so a caller never has to know
      * that the schedule is stored a day at a time.
+     *
+     * <p>Each day rescans the whole exception list rather than reading from a map built once,
+     * which is quadratic on paper. It is left that way on purpose: {@link AvailabilityDateRange}
+     * caps a range at {@code MAX_DAYS} and callers hand over only the exceptions of those same
+     * days, so both sides of the product are bounded by the same two months. The scan it saves
+     * is worth far less than the round trips that loaded the data.
      */
     public List<AvailabilityInterval> resolve(LocalDate from, LocalDate to) {
         List<AvailabilityInterval> intervals = new ArrayList<>();
@@ -63,12 +71,27 @@ public final class AvailabilitySchedule {
         if (!from.isBefore(to)) {
             return false;
         }
-        // One day of padding on each side: the local date of an instant depends on the offset,
-        // and an interval that starts late on one day can be the one that covers early the next.
-        LocalDate firstDay = from.atZone(zone).toLocalDate().minusDays(1);
-        LocalDate lastDay = to.atZone(zone).toLocalDate().plusDays(1);
+        return resolve(firstDayAround(from, zone), lastDayAround(to, zone)).stream()
+                .anyMatch(interval -> interval.covers(from, to));
+    }
 
-        return resolve(firstDay, lastDay).stream().anyMatch(interval -> interval.covers(from, to));
+    /**
+     * The first local date whose rules can reach an instant, and the last one, with a day of
+     * padding on each side.
+     *
+     * <p>Which local date an instant falls on depends on the offset in force, and an interval
+     * that starts late on one day can be the one that covers early the next. Both the caller
+     * choosing what to load and {@link #covers} deciding what to resolve need the same answer:
+     * stated twice they would drift, and the schedule would be read over a window narrower than
+     * the one it was resolved against.
+     */
+    public static LocalDate firstDayAround(Instant from, ZoneId zone) {
+        return from.atZone(zone).toLocalDate().minusDays(1);
+    }
+
+    /** The far end of {@link #firstDayAround}. */
+    public static LocalDate lastDayAround(Instant to, ZoneId zone) {
+        return to.atZone(zone).toLocalDate().plusDays(1);
     }
 
     /** The wall-clock hours left on a date once the exceptions have had their say. */
@@ -90,7 +113,7 @@ public final class AvailabilitySchedule {
         List<LocalTimeRange> blocks = forDate.stream()
                 .filter(exception -> exception.type() == AvailabilityOverrideType.BLOCK)
                 .map(AvailabilityOverride::hours)
-                .flatMap(java.util.Optional::stream)
+                .flatMap(Optional::stream)
                 .toList();
 
         return LocalTimeRange.subtract(LocalTimeRange.union(available), blocks);
@@ -105,7 +128,7 @@ public final class AvailabilitySchedule {
      * on an interval that genuinely has no duration - a read must not answer 500 because of the
      * calendar.
      */
-    private java.util.Optional<AvailabilityInterval> toInterval(LocalDate date, LocalTimeRange range) {
+    private Optional<AvailabilityInterval> toInterval(LocalDate date, LocalTimeRange range) {
         // LocalDateTime#atZone resolves the two ambiguous days for us: a time in a gap moves
         // forward by the length of the gap, and a time that happens twice takes the earlier
         // offset. That behaviour is the decision recorded in 18-fase7-analisis-availability.md,
@@ -113,13 +136,13 @@ public final class AvailabilitySchedule {
         Instant start = date.atTime(range.start()).atZone(zone).toInstant();
         Instant end = date.atTime(range.end()).atZone(zone).toInstant();
         return start.isBefore(end)
-                ? java.util.Optional.of(new AvailabilityInterval(start, end))
-                : java.util.Optional.empty();
+                ? Optional.of(new AvailabilityInterval(start, end))
+                : Optional.empty();
     }
 
     private static List<AvailabilityInterval> merge(List<AvailabilityInterval> intervals) {
         List<AvailabilityInterval> sorted = new ArrayList<>(intervals);
-        sorted.sort(java.util.Comparator.comparing(AvailabilityInterval::startsAt)
+        sorted.sort(Comparator.comparing(AvailabilityInterval::startsAt)
                 .thenComparing(AvailabilityInterval::endsAt));
 
         List<AvailabilityInterval> merged = new ArrayList<>();

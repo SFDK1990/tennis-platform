@@ -3,6 +3,7 @@ package com.tennisplatform.availability.domain;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -60,12 +61,12 @@ public class WeeklyAvailabilityRule {
      * <p>Accepting a number here would reopen the collision the type exists to close: 0, 1 and 7
      * all mean something to somebody, and picking one silently shifts the schedule.
      */
-    public static java.time.DayOfWeek parseDayOfWeek(String value) {
+    public static DayOfWeek parseDayOfWeek(String value) {
         if (value == null) {
             throw new InvalidAvailabilityException("A rule must name a day of the week");
         }
         try {
-            return DayOfWeek.valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return DayOfWeek.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw new InvalidAvailabilityException(
                     "Unknown day of the week: " + value + ". Expected MONDAY to SUNDAY");

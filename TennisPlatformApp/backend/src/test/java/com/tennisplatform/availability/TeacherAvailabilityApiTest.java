@@ -9,12 +9,9 @@ import com.tennisplatform.teacher.domain.TeacherProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.time.Clock;
@@ -38,9 +35,6 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     private static final String TEACHER_EMAIL = "teacher@tennis-platform.local";
     private static final String PASSWORD = "a-valid-password";
     private static final String AVAILABILITY = "/api/v1/teacher/availability";
-
-    @Autowired
-    private TestRestTemplate rest;
 
     @Autowired
     private ProvisionTeacherAccount accounts;
@@ -70,7 +64,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void theTeacherConfiguresAWeekAndReadsItBack() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
 
         ResponseEntity<Map> put = putWeekly(token, List.of(
                 weeklyRule("MONDAY", "09:00", "13:00"),
@@ -93,7 +87,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
      */
     @Test
     void replacingTheWeeklySetRemovesWhatWasThereBefore() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
         putWeekly(token, List.of(weeklyRule("MONDAY", "09:00", "13:00"),
                 weeklyRule("TUESDAY", "09:00", "13:00")));
 
@@ -107,7 +101,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void overlappingRulesAreRejectedAndTheOldConfigurationSurvives() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
         putWeekly(token, List.of(weeklyRule("MONDAY", "09:00", "13:00")));
 
         ResponseEntity<Map> response = putWeekly(token, List.of(
@@ -122,7 +116,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     /** Criterion 5, over HTTP. */
     @Test
     void adjacentRulesAreAccepted() {
-        ResponseEntity<Map> response = putWeekly(tokenOf(TEACHER_EMAIL), List.of(
+        ResponseEntity<Map> response = putWeekly(tokenOf(TEACHER_EMAIL, PASSWORD), List.of(
                 weeklyRule("MONDAY", "09:00", "11:00"),
                 weeklyRule("MONDAY", "11:00", "13:00")));
 
@@ -133,8 +127,8 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void aStudentCanReadTheAvailabilityButNotChangeIt() {
-        putWeekly(tokenOf(TEACHER_EMAIL), List.of(weeklyRule("MONDAY", "09:00", "13:00")));
-        String studentToken = tokenOfANewStudent();
+        putWeekly(tokenOf(TEACHER_EMAIL, PASSWORD), List.of(weeklyRule("MONDAY", "09:00", "13:00")));
+        String studentToken = tokenOfANewStudent(PASSWORD);
 
         ResponseEntity<Map> read = get(studentToken, "2026-01-01", "2026-01-31");
         assertThat(read.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -157,7 +151,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void aRangeWiderThanTheCapIsRejected() {
-        ResponseEntity<Map> response = get(tokenOf(TEACHER_EMAIL), "2026-01-01", "2026-12-31");
+        ResponseEntity<Map> response = get(tokenOf(TEACHER_EMAIL, PASSWORD), "2026-01-01", "2026-12-31");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).containsEntry("code", "AVAILABILITY_RANGE_TOO_WIDE");
@@ -166,7 +160,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void exceptionsAreCreatedListedAndDeleted() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
         putWeekly(token, List.of(weeklyRule("MONDAY", "09:00", "13:00")));
 
         ResponseEntity<Map> created = postException(token,
@@ -191,7 +185,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void anExceptionOutsideTheRangeIsNotReturned() {
-        String token = tokenOf(TEACHER_EMAIL);
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
         postException(token, Map.of("date", "2026-03-10", "type", "BLOCK"));
 
         ResponseEntity<Map> response = get(token, "2026-01-01", "2026-01-31");
@@ -204,7 +198,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     void deletingSomethingThatIsNotThereIsANotFound() {
         ResponseEntity<Map> response = rest.exchange(
                 AVAILABILITY + "/exceptions/" + UUID.randomUUID(), HttpMethod.DELETE,
-                new HttpEntity<>(bearer(tokenOf(TEACHER_EMAIL))), Map.class);
+                new HttpEntity<>(bearer(tokenOf(TEACHER_EMAIL, PASSWORD))), Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).containsEntry("code", "AVAILABILITY_EXCEPTION_NOT_FOUND");
@@ -213,7 +207,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void aWeekdayGivenAsANumberIsRejected() {
-        ResponseEntity<Map> response = putWeekly(tokenOf(TEACHER_EMAIL),
+        ResponseEntity<Map> response = putWeekly(tokenOf(TEACHER_EMAIL, PASSWORD),
                 List.of(Map.of("dayOfWeek", "0", "startTime", "09:00", "endTime", "13:00")));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -226,7 +220,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
      */
     @Test
     void theQueryPortResolvesWhatWasConfiguredOverHttp() {
-        putWeekly(tokenOf(TEACHER_EMAIL), List.of(weeklyRule("MONDAY", "09:00", "13:00")));
+        putWeekly(tokenOf(TEACHER_EMAIL, PASSWORD), List.of(weeklyRule("MONDAY", "09:00", "13:00")));
 
         assertThat(queryAvailability.covers(teacherId, Instant.parse("2026-01-05T09:00:00Z"),
                 Instant.parse("2026-01-05T10:00:00Z"))).isTrue();
@@ -245,45 +239,18 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
     @SuppressWarnings("rawtypes")
     private ResponseEntity<Map> putWeekly(String token, List<? extends Map<String, String>> rules) {
         return rest.exchange(AVAILABILITY + "/weekly", HttpMethod.PUT,
-                new HttpEntity<>(Map.of("rules", rules), json(token)), Map.class);
+                new HttpEntity<>(Map.of("rules", rules), jsonBearer(token)), Map.class);
     }
 
     @SuppressWarnings("rawtypes")
     private ResponseEntity<Map> postException(String token, Map<String, String> body) {
         return rest.exchange(AVAILABILITY + "/exceptions", HttpMethod.POST,
-                new HttpEntity<>(body, json(token)), Map.class);
+                new HttpEntity<>(body, jsonBearer(token)), Map.class);
     }
 
     @SuppressWarnings("rawtypes")
     private ResponseEntity<Map> get(String token, String from, String to) {
         return rest.exchange(AVAILABILITY + "?from=" + from + "&to=" + to, HttpMethod.GET,
                 new HttpEntity<>(bearer(token)), Map.class);
-    }
-
-    private HttpHeaders json(String token) {
-        HttpHeaders headers = bearer(token);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
-    }
-
-    private HttpHeaders bearer(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        return headers;
-    }
-
-    private String tokenOfANewStudent() {
-        String email = "student-" + UUID.randomUUID() + "@example.com";
-        rest.postForEntity("/api/v1/auth/register",
-                Map.of("email", email, "password", PASSWORD), String.class);
-        return tokenOf(email);
-    }
-
-    @SuppressWarnings("rawtypes")
-    private String tokenOf(String email) {
-        ResponseEntity<Map> login = rest.postForEntity("/api/v1/auth/login",
-                Map.of("email", email, "password", PASSWORD), Map.class);
-        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return (String) login.getBody().get("accessToken");
     }
 }

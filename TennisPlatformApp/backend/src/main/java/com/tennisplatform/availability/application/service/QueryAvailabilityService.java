@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -56,14 +57,14 @@ public class QueryAvailabilityService implements QueryAvailability {
     }
 
     /**
-     * Loads the exceptions of the days the range touches, with a day of slack at each end: which
-     * local date an instant falls on depends on the offset in force, and the interval that
-     * covers an early morning can be the one stored under the previous date.
+     * Loads the exceptions of the days the range touches, over the same padded window the
+     * schedule resolves against - the padding rule lives in {@link AvailabilitySchedule} so that
+     * what is loaded and what is resolved cannot drift apart.
      */
     private AvailabilitySchedule scheduleAround(UUID teacherUserId, ZoneId zone,
                                                 Instant from, Instant to) {
-        LocalDate firstDay = from.atZone(zone).toLocalDate().minusDays(1);
-        LocalDate lastDay = to.atZone(zone).toLocalDate().plusDays(1);
+        LocalDate firstDay = AvailabilitySchedule.firstDayAround(from, zone);
+        LocalDate lastDay = AvailabilitySchedule.lastDayAround(to, zone);
 
         return AvailabilitySchedule.of(rules.findByTeacher(teacherUserId),
                 exceptions.findByTeacherBetween(teacherUserId, firstDay, lastDay), zone);
@@ -78,7 +79,7 @@ public class QueryAvailabilityService implements QueryAvailability {
      * another's clock - a wrong answer rather than a failure, arriving long after the line that
      * caused it was written.
      */
-    private java.util.Optional<ZoneId> zoneOf(UUID teacherUserId) {
+    private Optional<ZoneId> zoneOf(UUID teacherUserId) {
         return teacherProfile.byUserId(teacherUserId)
                 .map(TeacherProfileView::timezone)
                 .map(ZoneId::of);

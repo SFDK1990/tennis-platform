@@ -84,6 +84,14 @@ class ModuleBoundariesTest {
      * or copying the role check, would hide the dependency instead of removing it. The same
      * will apply to {@code lesson} and {@code booking} when they arrive, and saying it here is
      * what keeps that from looking like a new concession each time.
+     *
+     * <p>It is still widened one module at a time, and deliberately so. A general rule - every
+     * module may depend on {@code identity} - would quietly punch a hole through
+     * {@code platformDependsOnNoModule} and {@code sharedDependsOnNoModule}, whose whole job is
+     * to forbid exactly that so everybody else can read them without a cycle. It would also
+     * pre-authorise an edge for four modules whose own phase has not been analysed yet. The
+     * repetition is the point: each module states the graph it was designed with, and a new one
+     * is denied by default.
      */
     @ArchTest
     static final ArchRule availabilityDependsOnTeacherAndIdentity =

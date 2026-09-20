@@ -5,6 +5,7 @@ import com.tennisplatform.availability.domain.AvailabilityRangeTooWideException;
 import com.tennisplatform.availability.domain.InvalidAvailabilityException;
 import com.tennisplatform.availability.domain.OverlappingAvailabilityRulesException;
 import com.tennisplatform.availability.domain.TeacherRoleRequiredException;
+import com.tennisplatform.error.Problems;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -28,25 +29,25 @@ class AvailabilityExceptionHandler {
 
     @ExceptionHandler(OverlappingAvailabilityRulesException.class)
     ProblemDetail handleOverlap(OverlappingAvailabilityRulesException e) {
-        return problem(HttpStatus.BAD_REQUEST, "Overlapping availability rules", e.getMessage(),
+        return Problems.of(HttpStatus.BAD_REQUEST, "Overlapping availability rules", e.getMessage(),
                 "AVAILABILITY_RULES_OVERLAP");
     }
 
     @ExceptionHandler(InvalidAvailabilityException.class)
     ProblemDetail handleInvalid(InvalidAvailabilityException e) {
-        return problem(HttpStatus.BAD_REQUEST, "Invalid availability", e.getMessage(),
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid availability", e.getMessage(),
                 "AVAILABILITY_INVALID");
     }
 
     @ExceptionHandler(AvailabilityRangeTooWideException.class)
     ProblemDetail handleRangeTooWide(AvailabilityRangeTooWideException e) {
-        return problem(HttpStatus.BAD_REQUEST, "Range too wide", e.getMessage(),
+        return Problems.of(HttpStatus.BAD_REQUEST, "Range too wide", e.getMessage(),
                 "AVAILABILITY_RANGE_TOO_WIDE");
     }
 
     @ExceptionHandler(AvailabilityOverrideNotFoundException.class)
     ProblemDetail handleNotFound(AvailabilityOverrideNotFoundException e) {
-        return problem(HttpStatus.NOT_FOUND, "Availability exception not found",
+        return Problems.of(HttpStatus.NOT_FOUND, "Availability exception not found",
                 "There is no availability exception with that id.",
                 "AVAILABILITY_EXCEPTION_NOT_FOUND");
     }
@@ -57,15 +58,7 @@ class AvailabilityExceptionHandler {
      */
     @ExceptionHandler(TeacherRoleRequiredException.class)
     ProblemDetail handleNotTheTeacher(TeacherRoleRequiredException e) {
-        return problem(HttpStatus.FORBIDDEN, "Not allowed",
+        return Problems.of(HttpStatus.FORBIDDEN, "Not allowed",
                 "Only the teacher can change the availability.", "TEACHER_FORBIDDEN");
-    }
-
-    private ProblemDetail problem(HttpStatus status, String title, String detail, String code) {
-        ProblemDetail problem = ProblemDetail.forStatus(status);
-        problem.setTitle(title);
-        problem.setDetail(detail);
-        problem.setProperty("code", code);
-        return problem;
     }
 }

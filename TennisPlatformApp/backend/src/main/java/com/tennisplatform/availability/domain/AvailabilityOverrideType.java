@@ -1,5 +1,7 @@
 package com.tennisplatform.availability.domain;
 
+import java.util.Locale;
+
 /**
  * What a date exception does to the weekly schedule.
  *
@@ -18,7 +20,7 @@ public enum AvailabilityOverrideType {
             throw new InvalidAvailabilityException("An exception must be either BLOCK or EXTRA");
         }
         try {
-            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw new InvalidAvailabilityException(
                     "Unknown exception type: " + value + ". Expected BLOCK or EXTRA");
