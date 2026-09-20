@@ -86,6 +86,30 @@ Códigos añadidos en la Fase 6, con el mismo criterio:
 | `FIELD_NOT_APPLICABLE_TO_ROLE` | 400  | `PATCH /me`                                       | El cuerpo trae un campo de otro rol; se rechaza en vez de ignorarlo   |
 | `AUTH_SESSION_EXPIRED`         | 401  | `POST /auth/refresh`                              | Refresh token ausente, expirado, revocado o reusado: los cuatro casos responden idénticamente |
 
+Códigos añadidos en la Fase 7:
+
+| Código                          | HTTP | Endpoint típico                                   | Motivo                                                                 |
+|----------------------------------|------|----------------------------------------------------|-------------------------------------------------------------------------|
+| `AVAILABILITY_RULES_OVERLAP`     | 400  | `PUT /teacher/availability/weekly`                 | Dos reglas del mismo día se pisan en el conjunto enviado                |
+| `AVAILABILITY_INVALID`           | 400  | `PUT /teacher/availability/weekly`, `POST .../exceptions` | Día desconocido, fin no posterior al inicio, `EXTRA` sin horas   |
+| `AVAILABILITY_RANGE_TOO_WIDE`    | 400  | `GET /teacher/availability`                        | El rango pedido supera los 62 días                                      |
+| `AVAILABILITY_EXCEPTION_NOT_FOUND` | 404 | `DELETE /teacher/availability/exceptions/{id}`     | No existe; un id de otro profesor responde lo mismo                     |
+
+Ninguno es un `422`: todos son errores de forma o de referencia, no violaciones de una regla de
+negocio sobre datos por lo demás válidos. `PUT /teacher/availability/weekly` y las dos rutas de
+excepciones responden además `403 TEACHER_FORBIDDEN` a quien no sea el profesor, mientras que
+`GET /teacher/availability` lo puede leer cualquier autenticado, igual que el perfil del profesor.
+
+### El rango de `GET /teacher/availability`
+
+`from` y `to` son obligatorios, de tipo `date`, y no pueden abarcar más de **62 días** contando
+ambos extremos. El rango filtra **solo las excepciones**; las reglas semanales se devuelven
+enteras porque son un conjunto pequeño y acotado.
+
+El número es el que este documento sugería para `/calendar` ("p. ej. 62 días"). La Fase 7
+convierte esa sugerencia en una decisión, y `/calendar` heredará el mismo tope en su fase: dos
+topes distintos para la misma clase de consulta serían peor que cualquiera de los dos.
+
 `STUDENT_NOT_MANAGED` (403), que ya existía para reservas, se usa también cuando el profesor
 pide datos de un alumno con el que no tiene relación: la falta de relación es lo que se niega,
 tanto al reservar como al leer.

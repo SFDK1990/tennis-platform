@@ -30,4 +30,26 @@
         <Bug pattern="HRS_REQUEST_PARAMETER_TO_HTTP_HEADER"/>
     </Match>
 
+    <!--
+        The availability services store the outbound ports they are constructed with, which is
+        what constructor injection is. There is no internal representation to protect: a
+        repository port is a shared collaborator by design, it holds no value of this object,
+        and "copying" it is not a thing that can be done.
+
+        It is excluded rather than fixed because there is nothing to fix. What makes it worth
+        writing down is that the detector is being inconsistent, not that this module is doing
+        something unusual: ManageStudentService, GetTeacherProfileService and
+        GetStudentLimitService store their own ports exactly the same way - private final
+        fields of an interface type, assigned in a public constructor - and are not flagged.
+
+        Scoped to these four classes on purpose, so the exclusion cannot quietly cover a real
+        EI_EXPOSE_REP elsewhere in the module. A field holding a mutable value - a Date, an
+        array, a collection - would still be reported, and would be a genuine finding: see
+        AvailabilityView, which copies both of its lists instead of being excluded here.
+    -->
+    <Match>
+        <Class name="~com\.tennisplatform\.availability\.application\.service\.(ConfigureWeeklyAvailability|GetAvailability|ManageAvailabilityExceptions|QueryAvailability)Service"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
 </FindBugsFilter>

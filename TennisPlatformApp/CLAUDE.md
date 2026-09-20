@@ -28,6 +28,7 @@ The docs are the source of truth for design decisions; treat them as binding req
 - `15-convenciones-de-codigo.md` — **binding conventions**: language (code, comments and commits in English; narrative docs in Spanish), comment style, test naming, branching and PR flow, commit rules, and how the quality tooling is used
 - `16-fase6-analisis-perfiles.md` — Fase 6 analysis (`teacher` and `student` profiles, managed students), plus the decisions taken while implementing it
 - `17-analisis-archunit-limites-modulares.md` — why the module boundary rules look the way they do
+- `18-fase7-analisis-availability.md` — Fase 7 analysis (`availability`), plus the decisions taken while implementing it
 
 ## Backend commands
 
@@ -91,7 +92,7 @@ Modules: `identity`, `teacher`, `student`, `availability`, `lesson`, `booking`, 
 - `identity` depends on nothing else
 - `teacher` → `identity`
 - `student` → `identity`, `teacher`, `platform`
-- `availability` → `teacher`
+- `availability` → `teacher`, `identity`
 - `lesson` → `teacher`, `availability`
 - `booking` → `student`, `lesson`
 - `administration` → `identity`, `teacher`, `student`, `platform`
@@ -106,6 +107,8 @@ Cross-module access must go through a module's public ports — never reach into
 **This is enforced, not just documented.** `src/test/java/com/tennisplatform/architecture/ModuleBoundariesTest.java` holds 24 ArchUnit rules covering the dependency graph of all ten modules (including the five still empty), the hexagonal layers, cross-module access through `application/port/in` only, `calendar` being read-only, and the web edge. They run inside `mvn test` — no profile, no tag, no Docker — so they cannot be skipped. `config`, `error` and `web` are not modules and stay outside the graph by decision: the composition root, the global error mapping, and the edge that carries the correlation-id filter and `/me`. Rationale and decisions: `../Documentos/_arquitectura/17-analisis-archunit-limites-modulares.md`.
 
 `web` is exempt from the graph but not unguarded: `theWebEdgeOnlyUsesInboundPorts` lets it call any module's `application/port/in` and nothing else. That is what allows `/me` — which mixes account data from `identity` with the profile owned by `student` or `teacher` — to be composed at the edge instead of forcing one module to reach into another.
+
+`availability` depends on `identity` although `02-arquitectura.md` lists only `teacher`. That document's graph is incomplete rather than wrong: any module with a web adapter has to know who is calling, and that is `identity`'s `AuthenticatedUser`. `teacher` and `student` already depend on identity for exactly this, they just had other reasons too. `lesson` and `booking` will need the same edge when they arrive.
 
 A practical consequence: to check a caller's role from another module, use `AuthenticatedUser.isTeacher()` rather than comparing against `identity.domain.Role` — the comparison imports identity's domain and the rules reject it. The same reasoning is why views carry wire values, not domain types: `UserSummary` reports the role and status as strings, and `TeacherProfileView` reports the time zone as its IANA id.
 
@@ -133,6 +136,8 @@ REST is versioned under `/api/v1`. The full contract — all 24 MVP endpoints wi
 
 CSRF protection is on for `POST /auth/refresh` and `POST /auth/logout` only — the two endpoints authenticated by the `refresh_token` cookie alone — and both require the `X-XSRF-TOKEN` header echoing the `XSRF-TOKEN` cookie. Everything else is authorized by a bearer token, which a cross-site request cannot attach. Missing or mismatched header is `403 AUTH_CSRF_TOKEN_INVALID`, documented in `openapi.yaml` under the `csrfToken` security scheme.
 
+Availability times are **wall clock in the teacher's zone**, not instants: `weekly_availability_rules` stores `TIME` plus a weekday, and what that means in real time depends on the date. Resolving it is `AvailabilitySchedule`'s job and nobody else's — `lesson` and `calendar` ask `QueryAvailability` rather than reading rules, so there is one implementation of the rule instead of three. The two daylight-saving days are pinned by tests with the transition dates written out literally, because a test that asks `java.time` when the clocks change agrees with itself by construction.
+
 Errors raised inside the Spring Security filter chain never reach a `@RestControllerAdvice`, so `com.tennisplatform.error` carries an `AuthenticationEntryPoint` and an `AccessDeniedHandler` that write Problem Details by hand (`AUTH_UNAUTHENTICATED`, `AUTH_CSRF_TOKEN_INVALID`, `AUTH_FORBIDDEN`). The CSRF one has to be wired onto `CsrfFilter` itself — that filter runs before `ExceptionTranslationFilter` and `exceptionHandling()` never sees what it rejects.
 
 ## Security constraints
@@ -147,7 +152,9 @@ Errors raised inside the Spring Security filter chain never reach a `@RestContro
 
 ## Data model notes
 
-PostgreSQL with UUID public identifiers (`gen_random_uuid()`, `pgcrypto`), UTC timestamps, IANA timezone strings stored as configuration data. Full diagram and draft DDL: `../Documentos/_arquitectura/10-diagrama-er.md`. Key tables: `users`, `teacher_profiles`, `student_profiles`, `teacher_students`, `email_verifications`, `password_reset_tokens`, `refresh_tokens`, `weekly_availability_rules`, `availability_exceptions`, `lessons`, `bookings`, `platform_configuration`. There is no separate `attendance` table — attendance is modeled as `ATTENDED`/`NO_SHOW` values on `bookings.status`.
+PostgreSQL with UUID public identifiers (`gen_random_uuid()`, `pgcrypto`), UTC timestamps, IANA timezone strings stored as configuration data. Full diagram and draft DDL: `../Documentos/_arquitectura/10-diagrama-er.md`. Key tables: `users`, `teacher_profiles`, `student_profiles`, `teacher_students`, `email_verifications`, `password_reset_tokens`, `refresh_tokens`, `weekly_availability_rules`, `availability_exceptions`, `lessons`, `bookings`, `platform_configuration`.
+
+`weekly_availability_rules.day_of_week` is **ISO-8601: 1 is Monday, 7 is Sunday**, which is `java.time.DayOfWeek#getValue`. `10-diagrama-er.md` originally specified 0-6 and the API draft annotated "0 = lunes", while PostgreSQL's own `EXTRACT(DOW)` numbers Sunday 0 — three conventions for one field, in the three layers that touch it, where the wrong choice does not fail but shifts the schedule by a day. The number never leaves the persistence adapter: the domain holds a `DayOfWeek` and the wire carries the name. There is no separate `attendance` table — attendance is modeled as `ATTENDED`/`NO_SHOW` values on `bookings.status`.
 
 Overlap/capacity/uniqueness invariants are backed by PostgreSQL constraints, not application logic alone: a partial unique index on `users` enforces the single-`TEACHER` invariant at the schema level; `EXCLUDE USING gist` constraints (requires the `btree_gist` extension) enforce no-overlap for both the teacher's lessons and a student's confirmed bookings — the latter requires denormalizing the lesson's `starts_at`/`ends_at` onto the `bookings` row at booking time, since exclusion constraints can't join across tables. Lesson capacity is still primarily protected by the transactional `SELECT ... FOR UPDATE` on `lessons` described in `02-arquitectura.md` §11, optionally backed by a trigger as a last-resort check. Liquibase changelogs are organized by module/context and are append-only — once executed, a changeset is never edited; fixes are new changesets.
 

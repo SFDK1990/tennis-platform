@@ -263,3 +263,106 @@ Una sola entrega, `fase-7-availability`, con su Pull Request. A diferencia de la
 razón para partirla: es un módulo con una dependencia ya satisfecha.
 
 La fase **no empieza a escribir código hasta que este documento esté validado**.
+
+## Decisiones tomadas al implementar
+
+Lo que el análisis no podía saber, y hubo que cerrar con el código delante.
+
+### El grafo de módulos estaba incompleto: `availability` necesita `identity`
+
+`02-arquitectura.md` solo lista `availability → teacher`, y `ModuleBoundariesTest` lo hacía
+cumplir. Con el controlador escrito, la regla falla: **cualquier módulo con adaptador web
+necesita saber quién llama**, y eso es `AuthenticatedUser`, que vive en los puertos de entrada
+de `identity`.
+
+No es una excepción de este módulo, es un agujero del documento. `teacher` y `student` ya
+dependen de `identity` por esto mismo; lo que pasa es que además tenían otras razones, así que
+nadie lo notó. `lesson` y `booking` necesitarán la misma arista.
+
+Se consideraron dos alternativas y se descartaron por la misma razón: poner el controlador en
+`web` —que está exento del grafo— o duplicar la comprobación de rol escondería la dependencia
+en vez de eliminarla. Se añade la arista y se dice por qué, en la propia regla, para que la
+próxima vez no parezca una concesión nueva.
+
+### El puerto de consulta se partió en dos
+
+El análisis hablaba de "el puerto de consulta". Son dos, y mezclarlos habría obligado a cada
+llamante a elegir:
+
+- `GetAvailability` devuelve la configuración **tal como está guardada** —reglas y
+  excepciones—, que es lo que necesita la pantalla que la edita y reenvía.
+- `QueryAvailability` devuelve **instantes ya resueltos**, que es lo que necesitan `lesson`
+  para validar una clase y `calendar` para pintarla. Nunca ve una regla.
+
+Los dos nombres pasan la regla `calendarOnlyUsesQueryPorts`, que era el riesgo señalado.
+
+### La "excepción" de fecha se llama `AvailabilityOverride` en el código
+
+El nombre del contrato —*exception*— se lee como una excepción de Java en todos los sitios
+donde aparece: en un `catch`, en una traza, en una lista de imports junto a las excepciones
+reales del paquete. Y es una pieza del horario, no un fallo.
+
+El primer intento fue `DateAvailabilityException`, y **SpotBugs lo rechazó**
+(`NM_CLASS_NOT_EXCEPTION`: una clase que se llama así debería heredar de `Exception`). Tenía
+razón, y era exactamente la ambigüedad que el renombrado quería quitar. El dominio y los
+puertos usan `AvailabilityOverride`; el repositorio pasa a `AvailabilityOverrideRepository`,
+sustituyendo al `AvailabilityExceptionRepository` que proponía `02-arquitectura.md`.
+
+**El contrato de la API no cambia**: los campos siguen siendo `exceptions`, el schema sigue
+siendo `AvailabilityException` y el código de error sigue siendo
+`AVAILABILITY_EXCEPTION_NOT_FOUND`. Los DTOs de la capa web conservan también el nombre del
+contrato, porque su trabajo es parecerse a él. La frontera del renombrado es la que separa el
+lenguaje del cliente del lenguaje del código.
+
+### Un intervalo puede resolverse a duración cero, y eso es un caso normal
+
+No estaba previsto. Una regla de 02:00 a 03:00 el día que los relojes se adelantan tiene **los
+dos extremos en el mismo instante**: las 02:00 no existen y se desplazan a las 03:00, que es
+justo donde termina. Construir un intervalo con eso lanzaría, y una lectura del calendario
+respondería 500 por cómo está hecho el año.
+
+La resolución descarta esos intervalos en vez de fallar, y tiene su test
+(`aRuleThatFallsEntirelyInsideTheSpringGapSimplyDisappears`).
+
+### La zona horaria no se copia a las tablas de este módulo
+
+Se leyó la tentación de guardarla junto a las reglas para ahorrar una llamada a `teacher`. Dos
+copias de una zona horaria acaban discrepando, y el día que lo hagan el horario entero se mueve
+una hora sin que nada falle. Se lee siempre por el puerto.
+
+### El reemplazo semanal necesita un `flush` explícito
+
+`replaceAllForTeacher` borra y luego inserta. Sin un `flush` entre las dos operaciones,
+Hibernate es libre de ordenar el `INSERT` antes del `DELETE`, y el borrado se llevaría por
+delante las filas recién escritas. La transacción del servicio hace el par atómico; el `flush`
+solo hace determinista el orden dentro de ella.
+
+### Una exclusión de SpotBugs, con su porqué
+
+Los cuatro servicios guardan los puertos de salida con los que se construyen, y SpotBugs lo
+denuncia como `EI_EXPOSE_REP2`. No hay nada que arreglar: un puerto de repositorio es un
+colaborador compartido por diseño, no guarda ningún valor del objeto, y "copiarlo" no es una
+operación que exista.
+
+Lo que merece quedar escrito es que **el detector está siendo inconsistente**, no que este
+módulo haga algo raro: `ManageStudentService`, `GetTeacherProfileService` y
+`GetStudentLimitService` guardan sus puertos exactamente igual —campos `private final` de un
+tipo interfaz, asignados en un constructor público— y no se marcan. La exclusión está acotada a
+esas cuatro clases, de modo que no pueda tapar un `EI_EXPOSE_REP` de verdad en el resto del
+módulo: `AvailabilityView`, que sí guardaba listas mutables, se arregló copiándolas en vez de
+excluirse.
+
+### Las horas viajan como `HH:mm:ss`, y el spec decía otra cosa
+
+Lo descubrió la prueba manual contra el stack, no un test: los ejemplos de `openapi.yaml`
+ponían `"09:00"` y la API devuelve `"09:00:00"`, que es la serialización ISO de un `LocalTime`.
+A la entrada se aceptan las dos formas. Se corrige el spec en vez de forzar la serialización,
+y las dos horas pasan a apuntar a un schema `LocalTime` con la explicación de que es **hora de
+pared**, no un instante — que es el malentendido que importa evitar en este módulo.
+
+### La cobertura de intervalos carga un día de margen a cada lado
+
+Qué fecha local le corresponde a un instante depende del desplazamiento vigente, así que el
+intervalo que cubre una mañana temprana puede estar guardado bajo la fecha anterior. Las
+consultas cargan un día extra por cada extremo. Es barato y evita un fallo que solo aparecería
+en la primera hora del día.

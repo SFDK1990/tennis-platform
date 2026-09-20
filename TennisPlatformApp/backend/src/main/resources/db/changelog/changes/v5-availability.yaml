@@ -1,0 +1,95 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v5-weekly-availability-rules
+      author: tennis-platform
+      comment: >-
+        The teacher's recurring weekly schedule. Times are wall clock in the teacher's own
+        zone (teacher_profiles.timezone), not instants: how long "Mondays 09:00 to 13:00"
+        lasts in real time depends on the date, and resolving it is the availability domain's
+        job.
+
+        day_of_week is ISO-8601 - 1 is Monday, 7 is Sunday - which is what
+        java.time.DayOfWeek#getValue returns. 10-diagrama-er.md specified 0 to 6 and
+        openapi.yaml annotated "0 = lunes", while PostgreSQL's own EXTRACT(DOW) numbers Sunday
+        0. Three conventions for one concept, in the three layers that touch it, and picking
+        the wrong one does not fail: it moves the whole schedule by a day. Fase 7 fixes ISO
+        here and exposes the name (MONDAY..SUNDAY) on the wire, so the number never leaves
+        the persistence adapter.
+
+        active_from and active_until make a rule apply only between two dates, which is how a
+        change of schedule is expressed without editing on the exact day it takes effect. Both
+        null means always.
+
+        There is no exclusion constraint against overlapping rules, unlike lessons. That is
+        deliberate, not an omission: overlap between lessons is born of a race two bookers can
+        run at once, while the weekly set belongs to a single teacher and arrives whole in one
+        request, so the application validates it before writing. A GiST constraint here would
+        also have to span the active period, which does not fit the schema without
+        denormalising.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE weekly_availability_rules (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  day_of_week      SMALLINT NOT NULL CHECK (day_of_week BETWEEN 1 AND 7),
+                  start_time       TIME NOT NULL,
+                  end_time         TIME NOT NULL,
+                  active_from      DATE,
+                  active_until     DATE,
+                  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  CONSTRAINT ck_weekly_availability_hours CHECK (start_time < end_time),
+                  CONSTRAINT ck_weekly_availability_active_period
+                      CHECK (active_from IS NULL OR active_until IS NULL OR active_from <= active_until)
+              );
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE INDEX ix_weekly_availability_teacher
+                  ON weekly_availability_rules (teacher_user_id);
+      rollback:
+        - sql:
+            sql: DROP TABLE weekly_availability_rules
+
+  - changeSet:
+      id: v5-availability-exceptions
+      author: tennis-platform
+      comment: >-
+        One-off changes to a single date: BLOCK removes time, EXTRA adds it.
+
+        Null times on a BLOCK mean the whole day. On an EXTRA both are required, and that rule
+        stays in the application as 10-diagrama-er.md decided, so it is not encoded as a
+        combination of NULLs that only a comment explains. What the schema does refuse is half
+        an interval - one time without the other - which describes nothing under either type.
+
+        Overlapping exceptions are allowed on purpose: two blocks covering the same hours block
+        the same hours, and two extras add the same hours. The effect is idempotent, so there is
+        nothing to protect against.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE availability_exceptions (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  date             DATE NOT NULL,
+                  start_time       TIME,
+                  end_time         TIME,
+                  type             VARCHAR(10) NOT NULL CHECK (type IN ('BLOCK','EXTRA')),
+                  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  CONSTRAINT ck_availability_exception_hours
+                      CHECK ((start_time IS NULL AND end_time IS NULL)
+                             OR (start_time IS NOT NULL AND end_time IS NOT NULL
+                                 AND start_time < end_time))
+              );
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE INDEX ix_availability_exceptions_teacher_date
+                  ON availability_exceptions (teacher_user_id, date);
+      rollback:
+        - sql:
+            sql: DROP TABLE availability_exceptions
