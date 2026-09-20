@@ -1,14 +1,16 @@
 # Informe de cierre — Fase 8 (`lesson`)
 
-20/09/2026. Rama `fase-8-lesson`, tres commits. El módulo de clases del profesor: crear,
-consultar, listar y cancelar, validadas contra la disponibilidad que dejó lista la Fase 7.
+20/09/2026. Rama `fase-8-lesson`, cuatro commits: el análisis, el cierre de sus decisiones, la
+implementación y la limpieza de `/simplify`. El módulo de clases del profesor: crear, consultar,
+listar y cancelar, validadas contra la disponibilidad que dejó lista la Fase 7.
 
 El análisis previo, con las decisiones que se cerraron antes de escribir código y las que hubo
 que cerrar al implementarlo, está en `Documentos/_arquitectura/19-fase8-analisis-lesson.md`.
 
 ## Verificación
 
-`mvn verify` desde `TennisPlatformApp/backend`:
+`mvn verify` desde `TennisPlatformApp/backend`, al terminar la implementación. La cifra final,
+después de la limpieza, es 284 y está al pie de este informe.
 
 ```
 [INFO] Tests run: 283, Failures: 0, Errors: 0, Skipped: 0
@@ -22,8 +24,8 @@ que cerrar al implementarlo, está en `Documentos/_arquitectura/19-fase8-analisi
 y no prueba nada. Las 24 reglas de `ModuleBoundariesTest` pasan, incluida la ensanchada en esta
 fase.
 
-56 tests nuevos respecto a los 227 de la Fase 7: 30 de dominio, 12 de aplicación con puertos
-simulados, 13 de integración por HTTP contra PostgreSQL real, y 1 más en `platform`.
+57 tests nuevos respecto a los 227 de la Fase 7: 29 de dominio, 12 de aplicación con puertos
+simulados, 15 de integración contra PostgreSQL real, y 1 más en `platform`.
 
 ### Esquema verificado contra la base real
 
