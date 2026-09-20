@@ -13,6 +13,9 @@ TennisPlatformApp/build/
 .env.local
 *.env
 !.env.example
+# Hand-made backups of a .env, which hold the same credentials the .env does.
+.env.bak*
+*.env.bak*
 
 # IDE
 .idea/
@@ -23,6 +26,12 @@ TennisPlatformApp/build/
 
 # Claude Code: the shared config and hooks ARE tracked, personal overrides are not
 .claude/settings.local.json
+
+# The note one working session leaves the next one: where things stood, what was
+# half done. It is rewritten whole every time and describes a state that is false
+# a day later, so tracking it would put a meaningless diff in every commit. What
+# is meant to last goes in CLAUDE.md or in Documentos/, which are tracked.
+/handoff-siguiente-sesion.md
 
 # Logs
 *.log
