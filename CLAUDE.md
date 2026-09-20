@@ -45,8 +45,9 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
 | 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
 | 6. Perfiles y gestión de usuarios | Completada — `teacher` (PR #13) y `student` (PR #15) en `main` |
-| **7. Disponibilidad del profesor (`availability`)** | **En curso**: análisis validado, implementación en `fase-7-availability` |
-| 8 en adelante | Pendientes |
+| 7. Disponibilidad del profesor (`availability`) | Completada — PR #17 en `main` |
+| **8. Clases (`lesson`)** | **Siguiente**: empieza por su documento de análisis, sin escribir código |
+| 9 en adelante | Pendientes |
 
 El análisis de la Fase 6 y sus decisiones están en
 `Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entregó en dos PRs, `teacher`
@@ -57,10 +58,23 @@ El análisis de la Fase 7 está en `Documentos/_arquitectura/18-fase7-analisis-a
 (es la Fase 3 de `09-roadmap-implementacion.md`: ese documento numera distinto que esta tabla).
 Recoge también las decisiones que hubo que cerrar al implementarla.
 
+La Fase 7 entró con una limpieza que sale de su módulo: el cuerpo del `ProblemDetail` estaba
+copiado en los cuatro `@RestControllerAdvice` y ahora lo construye `error/Problems.java`, y la
+fontanería HTTP de los tests de API vive en `AbstractIntegrationTest` en vez de estar repetida
+en cada clase. **Una excepción de dominio nueva se mapea llamando a `Problems.of`**, y un test
+de API nuevo hereda `rest`, `bearer`, `jsonBearer`, `tokenOf` y `tokenOfANewStudent` en lugar de
+copiarlos.
+
+**Queda pendiente de decidir** si la exclusión de `EI_EXPOSE_REP2` de `spotbugs-exclude.xml` se
+ensancha al paquete `application.service` cuando un tercer módulo tropiece con ella. Hoy está
+acotada a las cuatro clases de `availability`, y su justificación explica la medición que hay
+detrás.
+
 La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
 `02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
 propiedad: `student` tiene que leer el límite de alumnos y no puede depender de
-`administration`. De momento solo existe el lado de lectura; la consola sigue siendo la Fase 7.
+`administration`. De momento solo existe el lado de lectura; la consola que la escribe llega
+con `administration`, bastante más adelante.
 
 Las dos salvedades que arrastraba la Fase 5 están cerradas: `TeacherBootstrapIdempotencyTest`
 demuestra que ejecutar el bootstrap dos veces no crea una segunda cuenta, y el stack se
