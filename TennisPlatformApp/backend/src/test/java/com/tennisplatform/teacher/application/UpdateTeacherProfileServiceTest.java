@@ -4,7 +4,7 @@ import com.tennisplatform.teacher.application.port.in.TeacherProfileUpdate;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 import com.tennisplatform.teacher.application.port.out.TeacherProfileRepository;
 import com.tennisplatform.teacher.application.service.UpdateTeacherProfileService;
-import com.tennisplatform.teacher.domain.NotTheTeacherException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.domain.TeacherProfile;
 import com.tennisplatform.teacher.domain.TeacherProfileNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +63,7 @@ class UpdateTeacherProfileServiceTest {
 
         assertThatThrownBy(() -> service.update(somebodyElse,
                 new TeacherProfileUpdate("Impostor", null, null)))
-                .isInstanceOf(NotTheTeacherException.class);
+                .isInstanceOf(ForbiddenOperationException.class);
 
         verify(profiles, never()).save(any());
     }

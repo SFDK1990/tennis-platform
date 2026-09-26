@@ -1,250 +1,85 @@
 # CLAUDE.md — Tennis Platform
 
-Guía de entrada al repositorio. Si abres el proyecto en esta carpeta, empieza por aquí.
+Plataforma web/PWA para que un profesor de tenis gestione alumnos, disponibilidad, clases y
+reservas. MVP con un profesor y una pista. Roles: `ADMIN`, `TEACHER`, `STUDENT`.
+
 El detalle técnico del backend está en `TennisPlatformApp/CLAUDE.md`.
 
-## Qué es
+## Cómo se trabaja
 
-Plataforma web/PWA para que un profesor de tenis gestione alumnos, disponibilidad, clases y
-reservas. MVP con un único profesor y una única pista. Roles: `ADMIN`, `TEACHER`, `STUDENT`.
+Vinculantes, y hay que leerlos antes de tocar nada:
 
-## Cómo se trabaja aquí
+- `Documentos/_arquitectura/12-metodologia-trabajo.md` — el proceso y **el estado de las fases**
+  (es el único sitio que lo dice).
+- `Documentos/_arquitectura/15-convenciones-de-codigo.md` — idioma, comentarios, tests, commits.
 
-**Lee `Documentos/_arquitectura/12-metodologia-trabajo.md` antes de tocar nada.** Define el
-proceso acordado y no es opcional. Lo esencial:
+Lo esencial: no se avanza de fase sin validación de Daniel; análisis antes de código; una rama y
+un PR por fase con el CI en verde; Conventional Commits; código y commits en inglés,
+documentación en español; la evidencia se pega (mirando los tests **saltados**); una decisión
+vive en un solo sitio. Al terminar un bloque grande, un resumen de decisiones y su porqué.
 
-**Y lee `Documentos/_arquitectura/15-convenciones-de-codigo.md`**, que fija idioma, estilo de
-comentarios, nombres de tests, ramas, commits y uso del utillaje. También es vinculante.
-
-- **No se avanza de fase sin validación explícita del usuario.** No encadenes fases.
-- **Código, comentarios y commits en inglés; documentación de arquitectura en español.**
-- **Cada fase se desarrolla en su rama y entra por Pull Request** con el CI en verde.
-- **Los mensajes de commit siguen Conventional Commits** (`feat`, `fix`, `docs`, `ci`...), con
-  un cuerpo que explica el porqué. Los anteriores al 18/09/2026 usan el estilo viejo y no se
-  reescriben.
-- En las fases de análisis y diseño **no se escribe código**: primero requisitos,
-  ambigüedades, decisiones explicadas, contratos y criterios de aceptación.
-- **La evidencia se pega, no se afirma.** Una fase no se da por terminada sin la salida real
-  del comando, y hay que mirar el contador de tests **saltados**, no solo `BUILD SUCCESS`.
-- **Cada fase cierra con su commit.**
-- Si detectas una mala decisión anterior, **señálala y propón alternativa**; no la mantengas
-  por compatibilidad. Ya ha pasado tres veces y las tres eran correcciones necesarias.
-- Al terminar cada bloque grande de trabajo, entrega un **resumen de las decisiones tomadas y
-  su porqué**. No narres cada archivo mientras trabajas.
-
-Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fondo.
-
-## Estado por fases
-
-| Fase | Estado |
-|---|---|
-| 1. Análisis funcional | Completada |
-| 2. Arquitectura | Completada |
-| 3. Modelo de datos | Completada |
-| 4. Skeleton del backend | Completada y verificada |
-| 5. Seguridad y autenticación (`identity`) | Completada — salvedades cerradas en la 5.1 |
-| 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
-| 6. Perfiles y gestión de usuarios | Completada — `teacher` (PR #13) y `student` (PR #15) en `main` |
-| 7. Disponibilidad del profesor (`availability`) | Completada — PR #17 en `main` |
-| 8. Clases (`lesson`) | Completada — PR #20 en `main` |
-| **9. Reservas (`booking`)** | **En curso**: análisis validado e implementación completa en `fase-9-booking`, pendiente de PR |
-| 10 en adelante | Pendientes |
-
-El análisis de la Fase 6 y sus decisiones están en
-`Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entregó en dos PRs, `teacher`
-primero y `student` después, porque `student` depende de `teacher`. Ese documento recoge además
-las decisiones que hubo que cerrar al implementar la segunda entrega.
-
-El análisis de la Fase 7 está en `Documentos/_arquitectura/18-fase7-analisis-availability.md`
-(es la Fase 3 de `09-roadmap-implementacion.md`: ese documento numera distinto que esta tabla).
-Recoge también las decisiones que hubo que cerrar al implementarla.
-
-La Fase 7 entró con una limpieza que sale de su módulo: el cuerpo del `ProblemDetail` estaba
-copiado en los cuatro `@RestControllerAdvice` y ahora lo construye `error/Problems.java`, y la
-fontanería HTTP de los tests de API vive en `AbstractIntegrationTest` en vez de estar repetida
-en cada clase. **Una excepción de dominio nueva se mapea llamando a `Problems.of`**, y un test
-de API nuevo hereda `rest`, `bearer`, `jsonBearer`, `tokenOf` y `tokenOfANewStudent` en lugar de
-copiarlos.
-
-La exclusión de `EI_EXPOSE_REP2` de `spotbugs-exclude.xml` sigue acotada a las cuatro clases de
-`availability`, y su justificación explica la medición que hay detrás. **La Fase 8 confirmó que
-acotarla era lo correcto**: los cuatro servicios de `lesson` guardan sus puertos igual y SpotBugs
-no los marca, así que el disparador iba con aquellos dos tipos concretos y no con el patrón.
-
-El análisis de la Fase 8 está en `Documentos/_arquitectura/19-fase8-analisis-lesson.md`, con las
-cinco decisiones que hubo que cerrar antes de escribir código.
-Su informe de cierre está en `Documentos/_informes/informe-fase8-lesson-2026-09-20.md`. La Fase 8
-aplazó a la 9 todo lo que depende de contar reservas: `bookedCount`, el estado `FULL`, el marcado
-de asistencia y la cascada al cancelar una clase. `booking` heredó esas cuatro piezas.
-
-El análisis de la Fase 9 está en `Documentos/_arquitectura/20-fase9-analisis-booking.md`, con las
-siete decisiones cerradas antes de escribir código y las que aparecieron al implementar. La que
-da forma a todo: `lesson` y `student` tienen que actuar sobre reservas —contarlas, cancelarlas en
-cascada— sin depender de `booking`. Lo resuelve la **inversión de dependencias**: declaran la
-interfaz en su paquete `application/port/spi` y `booking` la implementa. **Un módulo puede
-implementar el spi de otro, nunca llamarlo**; `ModuleBoundariesTest` lo exige y `PublicPortsTest`
-demuestra que la regla rechaza la llamada.
-
-La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
-`02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
-propiedad: `student` tiene que leer el límite de alumnos y no puede depender de
-`administration`. De momento solo existe el lado de lectura; la consola que la escribe llega
-con `administration`, bastante más adelante.
-
-Las dos salvedades que arrastraba la Fase 5 están cerradas: `TeacherBootstrapIdempotencyTest`
-demuestra que ejecutar el bootstrap dos veces no crea una segunda cuenta, y el stack se
-reconstruyó y arrancó contra el código actual. Las decisiones de la 5.1 están en
-`Documentos/_arquitectura/14-fase5.1-integracion-continua.md`.
-
-### `main` no se puede proteger, y hay que trabajar con ello
-
-La API de GitHub responde `403: Upgrade to GitHub Pro or make this repository public` a
-cualquier intento de proteger la rama: **la protección de ramas no existe en repositorios
-privados con el plan Free**. Nada impide fusionar un PR con el CI en rojo, y el 18/09/2026 pasó
-exactamente eso: los PRs automáticos #5 (Spring Boot 4.1.1) y #1 (JDK 26) se fusionaron en rojo
-y dejaron `main` sin compilar.
-
-Mientras el repositorio siga privado en Free, la defensa es doble y ninguna de las dos bloquea
-de verdad:
-
-- **Dependabot ya no propone versiones mayores** (salvo en GitHub Actions, donde el propio
-  pipeline es la prueba completa del cambio). Las mayores se deciden con su rama y su análisis.
-- **Hay un hook `pre-push`** en `.githooks/` que rechaza el push directo a `main`. Hay que
-  activarlo una vez por clon: `git config core.hooksPath .githooks`.
-
-**Antes de fusionar cualquier PR, mira el check.** Es lo único que queda entre un merge y un
-`main` roto.
-
-### Dependabot: qué pasó con los primeros PRs
-
-**Ya no queda ninguno abierto.** La tabla que había aquí describía la situación del 18/09/2026 y
-llevaba desde entonces sin corresponderse con la realidad. Resumen de cómo acabó, que es lo
-único que sigue siendo útil:
-
-- Los dos que subían versión mayor —Spring Boot a 4.1.1 y la imagen de maven a temurin-26— se
-  fusionaron en rojo y rompieron `main`. Los revirtió el PR #7.
-- Los que cambiaban PostgreSQL y el JDK del contenedor se cerraron sin fusionar: cambian el
-  motor de datos o el runtime, y eso se decide con su rama, no se fusiona por estar en verde.
-- El PR #8 configuró `dependabot.yml` para que no vuelva a proponer versiones mayores, y el #12
-  ancló por nombre la imagen de maven, cuyo tag (`3.9-eclipse-temurin-21`) esconde el JDK en el
-  sufijo y se colaba por la regla general.
-- Las actualizaciones menores y de parche sí entraron (PR #11). El backend está hoy en Spring
-  Boot 3.5.16 sobre JDK 21.
-
-El criterio queda en pie: **una versión mayor es una decisión con su rama y su análisis, nunca
-un merge**, y antes de fusionar cualquier PR hay que mirar el check.
+**`main` no se puede proteger** (repositorio privado en el plan Free). Antes de fusionar, mirar
+el check. Hay un hook `pre-push` que rechaza el push directo a `main`; se activa una vez por
+clon con `git config core.hooksPath .githooks`. Dependabot no propone versiones mayores: una
+mayor se decide con su rama y su análisis.
 
 ## Comandos
 
 ```
 cd TennisPlatformApp/backend
-mvn verify                # lo mismo que ejecuta CI: Spotless, tests, SpotBugs y JaCoCo
-mvn test                  # solo la suite; revisa el contador de "Skipped"
-mvn spotless:apply        # corrige el formato que Spotless rechaza
-mvn clean package
-```
+mvn verify                # lo que ejecuta CI: Spotless, tests, SpotBugs, JaCoCo
+mvn spotless:apply        # corrige el formato
 
-El pipeline (`.github/workflows/ci.yml`) **falla si algún test se salta**, no solo si alguno
-rompe: un test de integración saltado parece verde y no prueba nada.
-
-```
 cd TennisPlatformApp
-docker compose up postgres    # solo la base, para ejecutar el backend desde el IDE
+docker compose up postgres    # sólo la base
 docker compose up -d --build  # stack completo
 ```
 
-## Entorno de la máquina de desarrollo
+CI falla si algún test se salta. Sin Docker en marcha, los de integración se saltan.
 
-- **El backend escucha en el puerto 8081**, no en el 8080: ese está ocupado por un Tomcat 8
-  ajeno al proyecto. Configurado en `TennisPlatformApp/.env`.
-- `JAVA_HOME` apunta al JDK 21; `java` en el PATH también es el 21.
-- Buzón de correo de desarrollo (Mailpit) en **http://localhost:8025**. Ahí aparecen los
-  emails de verificación y recuperación.
+## Entorno de desarrollo
+
+- Backend en el puerto **8081** (el 8080 lo ocupa un Tomcat ajeno). Ver `TennisPlatformApp/.env`.
+- JDK 21. Mailpit (correos de verificación) en http://localhost:8025.
 - PostgreSQL en `localhost:5432`, base/usuario/contraseña `tennis_platform`.
 
-## Trampas conocidas
+## Trampas que fallan en silencio
 
-Cosas que ya han costado tiempo y que fallan **en silencio**:
-
-- **`testcontainers.version` está fijada en `pom.xml`** por encima de la del BOM de Spring
-  Boot. Docker Engine 29 rechaza las versiones antiguas de su API, y el síntoma no es un
-  fallo: los tests de integración se **saltan** mientras el build sigue en verde.
-- **`AbstractIntegrationTest` usa el patrón singleton container** (se arranca una vez y no se
-  para nunca; lo limpia Ryuk). Cambiarlo a `@Container` apaga la base al terminar la primera
-  clase de test y todas las siguientes fallan con `Failed to obtain JDBC Connection`.
-- **`out` es un paquete de código**, no un directorio de compilación: `application/port/out` y
-  `adapters/out`. Por eso `.gitignore` ancla esa regla a la raíz. Una regla `out/` suelta
-  excluye medio módulo de cada commit sin avisar.
-- **El rate limiting está subido en el perfil de test.** Todos los tests llaman desde
-  `127.0.0.1` y se estrangularían entre ellos. `AuthRateLimitTest` lo baja y además desactiva
-  los reintentos del cliente HTTP, porque Apache HttpClient respeta `Retry-After` y reintenta
-  el 429 cuando el margen ya se ha repuesto.
-- **Revocar y lanzar excepción en el mismo método transaccional deshace la revocación.** Pasó
-  con la detección de reutilización de refresh tokens: hace falta `noRollbackFor`.
-- **`AbstractIntegrationTest` vacía la base antes de cada test** (`TRUNCATE ... CASCADE`).
-  Una tabla nueva hay que añadirla a esa lista, o sus filas sobrevivirán entre tests y el
-  resultado volverá a depender del orden. Y un test que necesite al profesor debe sembrarlo:
-  lo que creó el bootstrap al arrancar el contexto ya no está.
-- **El perfil del profesor lo crea el bootstrap, no un endpoint.** `display_name` y `timezone`
-  son `NOT NULL` y no hay alta pública de profesor: sin `TEACHER_EMAIL` y `TEACHER_PASSWORD`
-  en el entorno no existe profesor, y `GET /teacher/profile` responde 404.
-- **`TRUNCATE ... CASCADE` vacía `platform_configuration` aunque no esté en la lista.** Llega
-  hasta ella por la clave ajena `updated_by` → `users`. Por eso la limpieza de
-  `AbstractIntegrationTest` vuelve a sembrar la fila: sin eso, a partir del segundo test el
-  límite de alumnos sería el de reserva del código en vez del configurado, y el síntoma sería
-  un número raro en una aserción que no tiene nada que ver.
-- **El `CsrfFilter` va *antes* del `ExceptionTranslationFilter`.** Configurar
-  `exceptionHandling().accessDeniedHandler(...)` no alcanza a lo que rechaza el filtro de CSRF:
-  ese 403 se le escapa y cae en la página de error del contenedor. Hay que ponerle el handler
-  al propio `CsrfFilter` con un `ObjectPostProcessor`, y así lo hace `SecurityConfig`. El
-  síntoma de deshacerlo no es un fallo, es un 403 con otro formato que parece un bug arreglado.
-- **`day_of_week` es ISO-8601 (1 = lunes … 7 = domingo)**, no 0-6 como decía
-  `10-diagrama-er.md`. Hay tres convenciones cruzadas —`java.time` numera el lunes 1,
-  `EXTRACT(DOW)` de PostgreSQL numera el domingo 0, el borrador de la API decía 0 = lunes— y
-  elegir mal no falla: mueve el horario un día. La API expone el **nombre**, y el número no
-  sale del adaptador de persistencia.
-- **La disponibilidad es hora de pared, no instantes.** Solo la resuelve
-  `AvailabilitySchedule`, con la zona del profesor. `lesson` y `calendar` preguntan por
-  `QueryAvailability` en vez de leer reglas, para que no haya tres implementaciones de una
-  misma regla. Las fechas de cambio de hora están escritas literales en los tests: un test que
-  le pregunta a `java.time` cuándo cambia la hora se da la razón a sí mismo.
-- **El estado de una clase no se guarda entero.** La columna `lessons.status` sólo tiene `OPEN`
-  y `CANCELLED`; `COMPLETED` se deduce del reloj al leer y `FULL` del número de reservas, que
-  sólo `booking` puede contar. Añadir `FULL` a la columna obligaría a que `booking` lo escribiera
-  y lo mantuviera en paz con el recuento real: el día que discrepen, la clase no falla, miente.
-  Por lo mismo no hay `cancelled_within_window` — es `cancelled_at` restado de `starts_at`.
-- **La duración de una clase se mide en instantes, no en el reloj del profesor.** Los dos días
-  del año en que cambia la hora, una clase que en su reloj va de 01:30 a 03:30 dura una hora de
-  verdad. Manda el instante, y es el frontend quien debe enseñar la duración resultante antes de
-  confirmar. «No cruza medianoche», en cambio, **sí** se evalúa en hora local: medianoche es una
-  idea local, y por eso esa regla no puede ser un `CHECK` de la base.
-- **La restricción de solapamiento de clases necesita `btree_gist`**, que crea el changeset
-  `v6-lesson`. Sin la extensión, la restricción no se puede ni crear. Y se comprueba dos veces a
-  propósito: antes en la aplicación para poder responder un 409 con sentido, y en la base porque
-  entre la comprobación y el `INSERT` cabe otra petición.
-- **La última plaza la protege un cerrojo, no una restricción.** `LockLesson.lockForBooking`
-  hace `SELECT ... FOR UPDATE` sobre la clase y cuenta después; exige transacción
-  (`Propagation.MANDATORY`) porque fuera de una el cerrojo se soltaría al volver. Quitar el `@Lock`
-  no rompe ningún test salvo `LastSeatConcurrencyTest`, que es justo el que tiene que romperse:
-  se comprobó quitándolo.
-- **La asistencia no está en `bookings.status`**, al contrario de lo que decía el borrador del ER.
-  Tiene su columna, `attendance`. Si alguien la vuelve a mezclar con el estado, marcar a un alumno
-  como asistido lo saca del índice único, de la restricción de solapamiento y del recuento de
-  plazas, todo a la vez y sin fallar.
-- **El login acepta cuentas sin verificar.** La única comprobación de email verificado está al
-  reservar (`403 EMAIL_NOT_VERIFIED`), y un test que siembre un alumno para reservar tiene que
-  verificarlo y **volver a iniciar sesión**, porque el dato va en el token.
-- **Un parámetro de consulta tipado con un enum de dominio responde 500**, no 400, cuando llega un
-  valor desconocido: la excepción del conversor de Spring no la captura ningún advice. Por eso
-  `GET /bookings` recibe `status` como texto y lo interpreta `BookingStatus.filter`.
-- **Los filtros opcionales en JPQL no pueden ser `:param is null or ...` con un UUID**: PostgreSQL
-  no deduce el tipo de un parámetro nulo y la consulta falla. `BookingRepositoryAdapter` usa
+- **`testcontainers.version` está fijada en `pom.xml`**: con la del BOM, Docker Engine 29 hace
+  que los tests de integración se **salten** con el build en verde.
+- **`AbstractIntegrationTest` usa un contenedor singleton.** Con `@Container` la base se apaga
+  tras la primera clase de test.
+- **`AbstractIntegrationTest` vacía la base antes de cada test.** Una tabla nueva va a la lista
+  del `TRUNCATE`. El `CASCADE` vacía también `platform_configuration`, y por eso se vuelve a
+  sembrar. Un test que necesite al profesor lo siembra él.
+- **`out` es un paquete de código** (`port/out`, `adapters/out`): la regla de `.gitignore` está
+  anclada a la raíz.
+- **El rate limiting está subido en el perfil de test**; `AuthRateLimitTest` lo baja.
+- **Revocar y lanzar excepción en el mismo método transaccional deshace la revocación**: hace
+  falta `noRollbackFor`.
+- **El profesor lo crea el bootstrap** con `TEACHER_EMAIL` y `TEACHER_PASSWORD`; sin ellos,
+  `GET /teacher/profile` da 404.
+- **El `CsrfFilter` va antes del `ExceptionTranslationFilter`**: su handler se pone en el propio
+  filtro (`SecurityConfig`), o el 403 sale con otro formato.
+- **`day_of_week` es ISO-8601 (1 = lunes).** La API expone el nombre; el número no sale del
+  adaptador.
+- **La disponibilidad es hora de pared.** Sólo la resuelve `AvailabilitySchedule`; los demás
+  preguntan a `QueryAvailability`. Las fechas de cambio de hora van literales en los tests.
+- **La duración de una clase se mide en instantes; "no cruza medianoche", en hora local.**
+- **`lessons.status` sólo guarda `OPEN`/`CANCELLED`**; `FULL` y `COMPLETED` se derivan al leer.
+- **Los solapamientos se comprueban dos veces**: en la aplicación, para dar un 409 útil, y con
+  `EXCLUDE USING gist` (necesita `btree_gist`), porque entre la comprobación y el `INSERT` cabe
+  otra petición.
+- **La última plaza la protege `SELECT ... FOR UPDATE`** en `LockLesson`, que exige transacción.
+  `LastSeatConcurrencyTest` falla si se quita el cerrojo; se comprobó quitándolo.
+- **La asistencia tiene su columna**, `bookings.attendance`. Mezclarla con `status` sacaría la
+  reserva de todo filtro `CONFIRMED` sin fallar.
+- **El login acepta cuentas sin verificar**; la verificación se exige al reservar. Un test que
+  verifique a un alumno tiene que volver a iniciar sesión, porque el dato va en el token.
+- **`:param is null or ...` con un UUID falla en PostgreSQL.** Los filtros opcionales, con
   `Specification`.
-- **El perfil del alumno nace en `PATCH /me`, no en el registro.** Un alumno recién verificado
-  tiene los campos personales a `null` en `GET /me`, y eso es correcto: es la señal de que el
-  frontend debe pedírselos. Además, un alumno sin perfil **no puede ser asociado** por el
-  profesor: `teacher_students` referencia a `student_profiles`, y la respuesta es un 422.
+- **El perfil del alumno nace en `PATCH /me`**, y sin perfil el profesor no puede gestionarlo.
 
 ## Repositorio
 
-`https://github.com/SFDK1990/tennis-platform` (privado). La rama de trabajo es `main`.
+`https://github.com/SFDK1990/tennis-platform` (privado). Rama principal: `main`.

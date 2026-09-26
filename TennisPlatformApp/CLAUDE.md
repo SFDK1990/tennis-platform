@@ -1,173 +1,89 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code in `TennisPlatformApp/`, the code project. The working process, the
+phase status and the traps are in `../CLAUDE.md`; the design documents are in
+`../Documentos/_arquitectura/` (Spanish), indexed by `00-indice-arquitectura.md`. They are
+binding, not background reading.
 
-## Project status
+## Layout
 
-This is the **code project root** (`TennisPlatformApp/`). The backend skeleton (Fase 0 of the roadmap) exists: a compilable, runnable Spring Boot app with no business logic yet. `frontend/` does not exist yet.
+- `backend/` — Spring Boot 3.5 on Java 21, the modular monolith below.
+- `frontend/` — Next.js (from Fase 11).
+- `openapi.yaml` — the API contract. It must describe what the backend does, not what it will do.
+- `compose.yaml`, `.env.example` — the local stack. Each service owns its `Dockerfile`.
 
-**Repo layout convention:** the narrative architecture documentation lives one level up, in `../Documentos/_arquitectura/` (a sibling folder, written in Spanish, holding only `.md` files) — it is **not** part of this code project. Non-narrative design artifacts that this project consumes — `openapi.yaml` — live here, at this project's root, alongside `backend/` and (later) `frontend/`. Keep this separation when adding new artifacts: cross-service specs and configs (`openapi.yaml`, `compose.yaml`, `.env.example`) go in `TennisPlatformApp/`, narrative docs go in `../Documentos/_arquitectura/`. Each service owns its own `Dockerfile` inside its folder (`backend/Dockerfile`), since that is also its build context — `compose.yaml` points at it with `build.context: ./backend`.
-
-The docs are the source of truth for design decisions; treat them as binding requirements when implementing code, not just background reading (all paths below are relative to `../Documentos/_arquitectura/`):
-
-- `00-indice-arquitectura.md` — index and consolidated decisions (including resolved product decisions, see below)
-- `01-product-architect.md` — MVP scope, actors, business rules, entity states
-- `02-arquitectura.md` / `02-software-architect.md` — technical architecture, module map, REST API, error model
-- `03-backend-engineer-java-spring.md` — backend layering and rules detail
-- `04-frontend-engineer-next-react.md` — frontend structure and conventions
-- `05-database-engineer.md` — schema, constraints, indexes, Liquibase organization
-- `06-devops-engineer.md` — repo layout, environments, CI expectations
-- `07-qa-test-engineer.md` — test pyramid and critical test cases
-- `08-security-engineer.md` — authn/authz, data protection, rate limiting
-- `09-roadmap-implementacion.md` — phase-by-phase build order following the module dependency graph, with exit criteria per phase
-- `10-diagrama-er.md` — ER diagram (Mermaid) and draft PostgreSQL DDL per Liquibase changelog group
-- `11-contrato-api.md` — API contract conventions and business-code → HTTP status mapping; the actual OpenAPI spec is `openapi.yaml` at this project's root
-- `12-metodologia-trabajo.md` — the agreed working process and phase status table; read it before starting anything
-- `13-fase5-analisis-identity.md` — Fase 5 analysis (identity module)
-- `14-fase5.1-integracion-continua.md` — Fase 5.1 decisions (CI pipeline, static analysis, dependency checking)
-- `15-convenciones-de-codigo.md` — **binding conventions**: language (code, comments and commits in English; narrative docs in Spanish), comment style, test naming, branching and PR flow, commit rules, and how the quality tooling is used
-- `16-fase6-analisis-perfiles.md` — Fase 6 analysis (`teacher` and `student` profiles, managed students), plus the decisions taken while implementing it
-- `17-analisis-archunit-limites-modulares.md` — why the module boundary rules look the way they do
-- `18-fase7-analisis-availability.md` — Fase 7 analysis (`availability`), plus the decisions taken while implementing it
-- `19-fase8-analisis-lesson.md` — Fase 8 analysis (`lesson`), plus the decisions taken while implementing it
-- `20-fase9-analisis-booking.md` — Fase 9 analysis (`booking`), plus the decisions taken while implementing it
-
-## Backend commands
+## Commands
 
 ```
 cd backend
-mvn verify                # what CI runs: Spotless, tests, SpotBugs, JaCoCo
-mvn test                  # tests only (integration tests auto-skip if Docker isn't available)
-mvn spotless:apply        # fix what Spotless rejects
-mvn clean package         # build the jar
-mvn spring-boot:run       # run locally (defaults to the "dev" profile)
+mvn verify           # what CI runs; check the Skipped count, not only BUILD SUCCESS
+mvn spotless:apply
+mvn spring-boot:run  # dev profile; needs `docker compose up postgres`
 ```
 
-CI (`../.github/workflows/ci.yml`) runs `mvn verify` and then **fails the build if any test
-skipped**, so the Fase 4 failure mode — green build, silently skipped integration tests —
-cannot come back unnoticed. SpotBugs exclusions live in `backend/spotbugs-exclude.xml` and
-each one must carry its justification.
+## Backend architecture
 
-From `TennisPlatformApp/`:
+Modular monolith. Each module is hexagonal: `domain/` (no Spring, JPA or REST),
+`application/port/in` (use cases), `application/port/out` (what it needs from adapters),
+`application/port/spi` (what it needs from *another module*, see below), `application/service`
+(use cases and transaction boundaries), `adapters/in/web`, `adapters/out/persistence`,
+`configuration/` (manual wiring).
 
-```
-docker compose up postgres    # just the database, for running the backend from an IDE
-docker compose up -d --build  # whole stack (postgres + backend)
-docker compose down           # stop; add -v to also wipe the postgres volume
-```
+Allowed dependencies, one-directional:
 
-Two things that silently break the integration tests if changed carelessly:
+| Module | May depend on |
+|---|---|
+| `identity`, `platform`, `shared` | nothing |
+| `teacher` | `identity` |
+| `student` | `identity`, `teacher`, `platform` |
+| `availability` | `teacher`, `identity` |
+| `lesson` | `teacher`, `availability`, `identity`, `platform` |
+| `booking` | `student`, `lesson`, `identity` |
+| `administration` | `identity`, `teacher`, `student`, `platform` |
+| `calendar` | query ports only (`Get*`, `Find*`, `Query*`); it never writes |
 
-- `pom.xml` pins `testcontainers.version` above the version managed by the Spring Boot BOM. Docker Engine 29 dropped support for old Docker API versions, and the BOM-managed docker-java still negotiates one of them — the symptom is not a failure but every Testcontainers test *skipping* while the build stays green.
-- `AbstractIntegrationTest` uses the singleton-container pattern (started in a static block, never stopped, reaped by Ryuk). Switching it to `@Container` stops the database after the first test class, and every later class fails with `Failed to obtain JDBC Connection`.
+Every module may also use `shared.domain`: technical primitives only (`DateRange`,
+`ResultPage`, `ForbiddenOperationException`), no business rules. `config`, `error` and `web`
+are not modules; `web` may only call inbound ports.
 
-Always check the `Skipped:` count in the surefire summary, not just `BUILD SUCCESS`.
+Across modules, only `application/port/in` is visible, plus one exception: **a module may
+implement another module's `application/port/spi`, never call it**. That is how `lesson` and
+`student` get bookings counted and cancelled without depending on `booking`: they declare
+`LessonBookings` / `StudentBookings`, and `booking` implements them, inside the caller's
+transaction.
 
-`dev` profile connects to Postgres using `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USER`/`DB_PASSWORD` env vars, all defaulting to sane localhost values so `mvn spring-boot:run` works out of the box against a local Postgres (e.g. `docker compose up postgres` from this directory). `prod` profile requires those env vars explicitly (no defaults, fails fast if missing). See `backend/src/main/resources/application*.yml`.
+All of this is enforced by `ModuleBoundariesTest` (ArchUnit, runs in `mvn test`, cannot be
+skipped). `PublicPortsTest` proves the cross-module rule rejects what it must. Rationale:
+`17-analisis-archunit-limites-modulares.md`.
 
-## Product summary
+To check a role from another module, use `AuthenticatedUser.isTeacher()` / `isStudent()` /
+`isAdmin()`; comparing against identity's `Role` imports its domain and the rules reject it.
+Views carry wire values (strings), not domain enums, for the same reason.
 
-Single-teacher tennis lesson booking platform (MVP). Roles: `ADMIN`, `TEACHER` (exactly one), `STUDENT`. Students self-register publicly but can only book once the teacher has taken them under management. Lessons are individual or group; bookings are automatic and immediately confirmed; cancellations are allowed up to 24 hours before with no penalties (except `ADMIN`, who can cancel anytime). Calendar times are shown in local time but persisted as UTC instants; students also see the teacher's timezone. There is a single physical court/location in the MVP — no court/resource entity is modeled. Explicitly out of scope for the MVP: payments, penalties, external notifications, external calendar sync, multiple teachers, multi-tenancy, Kafka/microservices, automated backups, formal auditing.
+## API and errors
 
-**Resolved product decisions** (previously open questions, now settled — see `00-indice-arquitectura.md` and `01-product-architect.md`): a student becomes "managed" when the teacher looks them up by email and links them explicitly; the teacher account is created via bootstrap (seed/migration), not public registration or an admin console action; production hosting provider is deliberately deferred — develop and test with Docker Compose until real users are onboarded; transactional email (verification, password reset) uses generic SMTP (`spring-boot-starter-mail`), not a proprietary provider.
+REST under `/api/v1`, Problem Details with a `code`. `409` means the client's view is stale and
+re-reading may change the answer; `422` is a business rule re-reading will not change; `403` is
+role or relationship; somebody else's resource answers `404`. Module errors are mapped in each
+module's `@RestControllerAdvice` with `Problems.of`; the shared ones (`ForbiddenOperationException`,
+`DateRange`, malformed requests) in `error/GlobalExceptionHandler`. Codes and conventions:
+`11-contrato-api.md`.
 
-## Target architecture (to build toward)
+Auth: short access token as `Authorization: Bearer`; rotating refresh token in an `HttpOnly`
+cookie; CSRF only on `/auth/refresh` and `/auth/logout` (`X-XSRF-TOKEN` echoing the `XSRF-TOKEN`
+cookie). Security rules: `02-arquitectura.md` §13.
 
-**Stack:** Next.js/React/TypeScript/Tailwind/PWA frontend → REST API → Java 21/Spring Boot/Spring Security backend → PostgreSQL, migrated exclusively via Liquibase.
+## Data
 
-**Backend style:** Modular Monolith — no microservices, no Kafka. Each module implements hexagonal architecture internally:
+PostgreSQL, UUID ids, instants as `timestamptz` in UTC, Liquibase changelogs per module and
+append-only. Invariants are backed by the schema, not only by the application: the single
+teacher (partial unique index), no overlapping lessons and no overlapping bookings of a student
+(`EXCLUDE USING gist`), one confirmed booking per student and lesson (partial unique index). The
+last seat is protected by `SELECT ... FOR UPDATE` on the lesson. DDL: `10-diagrama-er.md`.
 
-```
-backend/<module>/
-  domain/                    # entities, value objects, rules, exceptions — no Spring/JPA/REST deps
-  application/port/in/       # use case interfaces
-  application/port/out/      # repository/service interfaces (ports)
-  application/service/       # use case implementations, transaction boundaries
-  adapters/in/web/           # REST controllers, request/response DTOs
-  adapters/out/persistence/  # JPA repositories/entities implementing the out ports
-  configuration/             # Spring wiring
-```
+## Tests
 
-Modules: `identity`, `teacher`, `student`, `availability`, `lesson`, `booking`, `administration`, `calendar`, `platform`, `shared`.
-
-**Allowed module dependencies** (one-directional, no cycles):
-- `identity` depends on nothing else
-- `teacher` → `identity`
-- `student` → `identity`, `teacher`, `platform`
-- `availability` → `teacher`, `identity`
-- `lesson` → `teacher`, `availability`, `identity`, `platform`
-- `booking` → `student`, `lesson`, `identity` — and it *implements* the interfaces `lesson` and `student` declare in their `application/port/spi` packages (see below)
-- `administration` → `identity`, `teacher`, `student`, `platform`
-- `calendar` → only public query interfaces of other modules (never writes to another module's domain)
-- `platform` → nothing (global installation configuration, so everybody can read it)
-- `shared` → nothing (technical primitives only: IDs, common errors, clock; no business logic)
-
-`platform` owns `platform_configuration`, which `02-arquitectura.md` originally filed under `administration`. That was a mistake about ownership: `student` must read the student limit and may not depend on `administration`. Fase 6 implements only the read side (`GetStudentLimit`); the console that writes it is still Fase 7.
-
-Cross-module access must go through a module's public ports — never reach into another module's JPA entities, repositories, or internal adapters directly.
-
-**This is enforced, not just documented.** `src/test/java/com/tennisplatform/architecture/ModuleBoundariesTest.java` holds 24 ArchUnit rules covering the dependency graph of all ten modules (including the five still empty), the hexagonal layers, cross-module access through `application/port/in` only (plus implementing another module's `application/port/spi`), `calendar` being read-only, and the web edge. They run inside `mvn test` — no profile, no tag, no Docker — so they cannot be skipped. `config`, `error` and `web` are not modules and stay outside the graph by decision: the composition root, the global error mapping, and the edge that carries the correlation-id filter and `/me`. Rationale and decisions: `../Documentos/_arquitectura/17-analisis-archunit-limites-modulares.md`.
-
-`web` is exempt from the graph but not unguarded: `theWebEdgeOnlyUsesInboundPorts` lets it call any module's `application/port/in` and nothing else. That is what allows `/me` — which mixes account data from `identity` with the profile owned by `student` or `teacher` — to be composed at the edge instead of forcing one module to reach into another.
-
-**Dependency inversion across modules (Fase 9).** Cancelling a lesson must cancel its bookings, deactivating a student must cancel their upcoming ones, and reading a lesson must count its seats — yet `booking` depends on `lesson` and `student`, never the reverse. So `lesson` declares `LessonBookings` and `student` declares `StudentBookings` in their `application/port/spi` packages, and `booking` implements them. The compile-time edge stays `booking -> lesson/student`; the call runs the other way, inside the caller's transaction. The boundary rule lets a module depend on another module's spi **only from a class that implements it** — calling it is rejected, which `PublicPortsTest` proves against fixture modules.
-
-`lesson` depends on `identity` for the same reason as `availability` — a web adapter has to know who is calling — and on `platform` because the cap on how large a group lesson may be is configuration, which is what that module owns. `platform` depends on nothing by design, precisely so that anyone may read it without creating a cycle.
-
-`availability` depends on `identity` although `02-arquitectura.md` lists only `teacher`. That document's graph is incomplete rather than wrong: any module with a web adapter has to know who is calling, and that is `identity`'s `AuthenticatedUser`. `teacher` and `student` already depend on identity for exactly this, they just had other reasons too. `lesson` and `booking` took the same edge when they arrived.
-
-A practical consequence: to check a caller's role from another module, use `AuthenticatedUser.isTeacher()` rather than comparing against `identity.domain.Role` — the comparison imports identity's domain and the rules reject it. The same reasoning is why views carry wire values, not domain types: `UserSummary` reports the role and status as strings, and `TeacherProfileView` reports the time zone as its IANA id.
-
-**Frontend style:** feature-based folders (`authentication`, `profile`, `students`, `availability`, `calendar`, `lessons`, `bookings`, `administration`), not a global controllers/services soup. A single centralized HTTP client owns auth headers, session refresh, error normalization, and typed responses — components never call the API ad hoc. Backend is the single source of truth for lessons/bookings/availability state; the frontend must treat local calendar state as potentially stale and handle `409` conflicts on booking rather than trusting cached availability.
-
-## Business rules that must hold regardless of layer
-
-These are enforced primarily in the backend/database (frontend validation is UX-only, never authoritative):
-
-- Lesson duration: minimum 30 minutes, must be a multiple of 30, cannot cross midnight. The first two are measured on real elapsed time (a CHECK in the schema); "cannot cross midnight" is local to the teacher's zone and therefore lives in the application.
-- Individual lesson capacity is always 1; group lesson capacity can start with a single participant and is capped by `platform_configuration.max_group_capacity` (8 by default).
-- No exceeding lesson capacity; no duplicate bookings for the same student+lesson.
-- No overlapping lessons for the teacher; no overlapping bookings for the same student.
-- A student may only book if currently managed by the teacher.
-- Cancellations of a **booking by the student** are only allowed ≥24 hours before the lesson start; no penalties in the MVP. The **teacher may cancel their own lesson at any notice** (corrected in Fase 8): the window protects the teacher from a gap they can no longer fill, which is no reason to bind the teacher themselves, and as written a teacher who fell ill the night before could not cancel. Whether it happened at short notice is recorded.
-- Deactivating a student cancels their active future bookings.
-- The teacher may create lessons outside configured availability only via an explicit override action.
-- Booking the last available slot must be safe under concurrency — this requires transactional locking plus PostgreSQL constraints, not just application-level checks (see "last slot" race in `07-qa-test-engineer.md`).
-
-Booking use case must, within one transaction: lock the lesson, check status/capacity, check for duplicate booking, check the student's schedule for overlaps, then create the booking.
-
-## API and error conventions
-
-REST is versioned under `/api/v1`. The full contract — all 24 MVP endpoints with request/response schemas — is defined in `openapi.yaml` at this project's root; `../Documentos/_arquitectura/11-contrato-api.md` documents the conventions around it (pagination, date format, auth). Errors use Problem Details (`application/problem+json`) with business codes: `LESSON_FULL`, `LESSON_OVERLAP`, `BOOKING_ALREADY_EXISTS`, `STUDENT_SCHEDULE_OVERLAP` → 409 (client should treat as stale calendar state and re-fetch); `STUDENT_NOT_MANAGED` → 403; `CANCELLATION_WINDOW_EXPIRED` → 422 (doesn't apply when the canceller is `ADMIN`). General mapping: 400 validation/format, 401 unauthenticated, 403 unauthorized, 404 not found, 409 conflict, 422 business rule violation, 500 unexpected. DTOs are always separate from domain/JPA entities — never expose JPA entities, password hashes, or full tokens over the wire.
-
-CSRF protection is on for `POST /auth/refresh` and `POST /auth/logout` only — the two endpoints authenticated by the `refresh_token` cookie alone — and both require the `X-XSRF-TOKEN` header echoing the `XSRF-TOKEN` cookie. Everything else is authorized by a bearer token, which a cross-site request cannot attach. Missing or mismatched header is `403 AUTH_CSRF_TOKEN_INVALID`, documented in `openapi.yaml` under the `csrfToken` security scheme.
-
-Availability times are **wall clock in the teacher's zone**, not instants: `weekly_availability_rules` stores `TIME` plus a weekday, and what that means in real time depends on the date. Resolving it is `AvailabilitySchedule`'s job and nobody else's — `lesson` and `calendar` ask `QueryAvailability` rather than reading rules, so there is one implementation of the rule instead of three. The two daylight-saving days are pinned by tests with the transition dates written out literally, because a test that asks `java.time` when the clocks change agrees with itself by construction.
-
-Errors raised inside the Spring Security filter chain never reach a `@RestControllerAdvice`, so `com.tennisplatform.error` carries an `AuthenticationEntryPoint` and an `AccessDeniedHandler` that write Problem Details by hand (`AUTH_UNAUTHENTICATED`, `AUTH_CSRF_TOKEN_INVALID`, `AUTH_FORBIDDEN`). The CSRF one has to be wired onto `CsrfFilter` itself — that filter runs before `ExceptionTranslationFilter` and `exceptionHandling()` never sees what it rejects.
-
-## Security constraints
-
-- Short-lived access tokens (`Authorization: Bearer`) + rotating refresh tokens carried in an `HttpOnly`/`Secure`/`SameSite` cookie — never in `localStorage` or the response body. Refresh tokens are stored hashed with a `family_id` per rotation chain so reuse of an already-rotated token can be detected and the whole family revoked.
-- Passwords hashed with BCrypt or Argon2id.
-- Authorization is always role **and** ownership/relationship based (e.g., a student can only see their own bookings, only the teacher can manage their own students) — hiding a UI control is never treated as authorization.
-- Never trust client-supplied roles or ownership fields in DTOs.
-- Rate limit auth-adjacent endpoints (login, register, email verification, password reset, refresh, admin endpoints).
-- Never log passwords, tokens, full national ID numbers, or full addresses.
-- `ADMIN` accounts cannot be created via public registration.
-
-## Data model notes
-
-PostgreSQL with UUID public identifiers (`gen_random_uuid()`, `pgcrypto`), UTC timestamps, IANA timezone strings stored as configuration data. Full diagram and draft DDL: `../Documentos/_arquitectura/10-diagrama-er.md`. Key tables: `users`, `teacher_profiles`, `student_profiles`, `teacher_students`, `email_verifications`, `password_reset_tokens`, `refresh_tokens`, `weekly_availability_rules`, `availability_exceptions`, `lessons`, `bookings`, `platform_configuration`.
-
-`weekly_availability_rules.day_of_week` is **ISO-8601: 1 is Monday, 7 is Sunday**, which is `java.time.DayOfWeek#getValue`. `10-diagrama-er.md` originally specified 0-6 and the API draft annotated "0 = lunes", while PostgreSQL's own `EXTRACT(DOW)` numbers Sunday 0 — three conventions for one field, in the three layers that touch it, where the wrong choice does not fail but shifts the schedule by a day. The number never leaves the persistence adapter: the domain holds a `DayOfWeek` and the wire carries the name. There is no separate `attendance` table, and attendance is **not** a value of `bookings.status` either (corrected in Fase 9): it has its own `bookings.attendance` column (`PENDING`/`ATTENDED`/`NO_SHOW`). Folding it into the status would take a marked booking out of every `status = 'CONFIRMED'` filter — the unique index, the overlap constraint and the seat count — at once. `bookings` also copies the lesson's `teacher_user_id`, which every teacher-side query filters on.
-
-Overlap/capacity/uniqueness invariants are backed by PostgreSQL constraints, not application logic alone: a partial unique index on `users` enforces the single-`TEACHER` invariant at the schema level; `EXCLUDE USING gist` constraints (requires the `btree_gist` extension) enforce no-overlap for both the teacher's lessons and a student's confirmed bookings — the latter requires denormalizing the lesson's `starts_at`/`ends_at` onto the `bookings` row at booking time, since exclusion constraints can't join across tables. Lesson capacity is protected by the transactional `SELECT ... FOR UPDATE` on `lessons` described in `02-arquitectura.md` §11, taken through `lesson`'s `LockLesson` port. There is deliberately no capacity trigger: `LastSeatConcurrencyTest` proves the lock, and fails if it is removed. Liquibase changelogs are organized by module/context and are append-only — once executed, a changeset is never edited; fixes are new changesets.
-
-## Testing expectations (once code exists)
-
-Full pyramid: domain unit tests (no Spring), application tests against mocked ports, REST tests, integration tests against real PostgreSQL via Testcontainers, concurrency tests (especially "last slot" booking races and teacher/student overlap checks), ArchUnit tests for module boundary and hexagonal-layer enforcement, Liquibase migration tests (must run cleanly from an empty database), and Playwright E2E covering registration → verification → login → student management → availability → booking → cancellation → attendance → administration flows.
-
-## Implementation roadmap
-
-`../Documentos/_arquitectura/09-roadmap-implementacion.md` defines the build order (Phase 0 scaffold → identity → teacher/student → availability → lesson → booking → calendar → administration → pre-launch hardening), each with an explicit exit criterion. Don't start a module's phase before its dependencies (per the module dependency graph above) are already operational — this is what the roadmap sequences.
+Domain tests without Spring, application tests with mocked ports, API and integration tests
+against real PostgreSQL through Testcontainers (`AbstractIntegrationTest`), concurrency tests
+for the last-seat race, ArchUnit for the boundaries. Test names are sentences
+(`twoStudentsRaceForTheLastSeatAndExactlyOneWins`).

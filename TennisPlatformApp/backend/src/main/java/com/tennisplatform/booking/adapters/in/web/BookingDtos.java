@@ -1,6 +1,6 @@
 package com.tennisplatform.booking.adapters.in.web;
 
-import com.tennisplatform.booking.application.port.in.BookingPage;
+import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.booking.application.port.in.BookingView;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import jakarta.validation.Valid;
@@ -51,7 +51,7 @@ final class BookingDtos {
 
     record BookingPageResponse(List<BookingResponse> items, int page, int size, long totalItems) {
 
-        static BookingPageResponse from(BookingPage page) {
+        static BookingPageResponse from(ResultPage<BookingView> page) {
             return new BookingPageResponse(page.items().stream().map(BookingResponse::from).toList(),
                     page.page(), page.size(), page.totalItems());
         }

@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -59,6 +60,10 @@ class LessonEntity {
 
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
     // The "version" column exists in the schema and is deliberately not mapped. Fase 8 expected
     // Fase 9 to bring optimistic locking with it, and Fase 9 decided against it: the last seat is

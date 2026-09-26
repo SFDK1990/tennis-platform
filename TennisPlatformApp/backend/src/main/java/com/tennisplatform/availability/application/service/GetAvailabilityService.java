@@ -6,7 +6,7 @@ import com.tennisplatform.availability.application.port.in.GetAvailability;
 import com.tennisplatform.availability.application.port.in.WeeklyRuleView;
 import com.tennisplatform.availability.application.port.out.AvailabilityOverrideRepository;
 import com.tennisplatform.availability.application.port.out.AvailabilityRuleRepository;
-import com.tennisplatform.availability.domain.AvailabilityDateRange;
+import com.tennisplatform.shared.domain.DateRange;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +35,7 @@ public class GetAvailabilityService implements GetAvailability {
     @Override
     @Transactional(readOnly = true)
     public AvailabilityView get(LocalDate from, LocalDate to) {
-        AvailabilityDateRange range = new AvailabilityDateRange(from, to);
+        DateRange range = new DateRange(from, to);
         UUID teacherUserId = teacherProfile.get().userId();
 
         return new AvailabilityView(

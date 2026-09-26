@@ -1,6 +1,7 @@
 package com.tennisplatform.booking.application.service;
 
-import com.tennisplatform.booking.application.port.in.BookingPage;
+import com.tennisplatform.shared.domain.ResultPage;
+import com.tennisplatform.booking.application.port.in.BookingView;
 import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.application.port.out.BookingRepository.Slice;
@@ -22,9 +23,9 @@ public class GetBookingsService implements GetBookings {
 
     @Override
     @Transactional(readOnly = true)
-    public BookingPage forStudent(UUID studentUserId, String status, int page, int size) {
+    public ResultPage<BookingView> forStudent(UUID studentUserId, String status, int page, int size) {
         Slice slice = bookings.findForStudent(studentUserId, BookingStatus.filter(status), page, size);
-        return new BookingPage(views.of(slice.items()), page, size, slice.total());
+        return new ResultPage<BookingView>(views.of(slice.items()), page, size, slice.total());
     }
 
     /**
@@ -33,9 +34,9 @@ public class GetBookingsService implements GetBookings {
      */
     @Override
     @Transactional(readOnly = true)
-    public BookingPage forTeacher(UUID teacherUserId, UUID lessonId, String status, int page, int size) {
+    public ResultPage<BookingView> forTeacher(UUID teacherUserId, UUID lessonId, String status, int page, int size) {
         Slice slice = bookings.findForTeacher(teacherUserId, lessonId, BookingStatus.filter(status),
                 page, size);
-        return new BookingPage(views.of(slice.items()), page, size, slice.total());
+        return new ResultPage<BookingView>(views.of(slice.items()), page, size, slice.total());
     }
 }

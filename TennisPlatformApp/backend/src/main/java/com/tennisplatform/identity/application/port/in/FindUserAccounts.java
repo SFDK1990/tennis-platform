@@ -20,7 +20,7 @@ public interface FindUserAccounts {
      * <p>Exact and complete, never a partial match: a teacher looking a student up to manage
      * them knows the address, and a partial search would let them enumerate who is registered
      * on the platform and read the names of people they have no relationship with, which
-     * 08-security-engineer.md forbids (16-fase6-analisis-perfiles.md).
+     * 02-arquitectura.md forbids (16-fase6-analisis-perfiles.md).
      *
      * <p>The address is normalized the same way registration normalizes it, so case and
      * padding cannot turn a hit into a miss. A malformed address is a miss, not an error: this

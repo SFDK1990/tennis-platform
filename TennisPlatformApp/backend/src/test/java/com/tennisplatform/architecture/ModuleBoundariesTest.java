@@ -259,11 +259,14 @@ class ModuleBoundariesTest {
 
     /**
      * Builds the rule for one module out of the graph: everything not explicitly allowed is
-     * forbidden. Stating the permitted edges rather than the forbidden ones is what keeps the
+     * forbidden. {@code shared} is always allowed: it holds technical primitives only - a date
+     * range, a page, an error that carries its own code - and depends on nothing, so reading it
+     * can never close a cycle. It used to be forbidden too, and the price was four copies of the
+     * same exception and two of the same date range. Stating the permitted edges rather than the forbidden ones is what keeps the
      * rules correct when a module is added - a new module is denied by default.
      */
     private static ArchRule mayOnlyDependOn(String module, String... allowed) {
-        Set<String> permitted = Stream.concat(Stream.of(module), Arrays.stream(allowed))
+        Set<String> permitted = Stream.concat(Stream.of(module, "shared"), Arrays.stream(allowed))
                 .collect(Collectors.toSet());
         String[] forbidden = MODULES.stream()
                 .filter(other -> !permitted.contains(other))

@@ -5,7 +5,7 @@ import com.tennisplatform.availability.application.port.out.AvailabilityOverride
 import com.tennisplatform.availability.application.service.ManageAvailabilityExceptionsService;
 import com.tennisplatform.availability.domain.AvailabilityOverrideNotFoundException;
 import com.tennisplatform.availability.domain.InvalidAvailabilityException;
-import com.tennisplatform.availability.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,7 +71,7 @@ class ManageAvailabilityExceptionsServiceTest {
 
         assertThatThrownBy(() -> service.add(somebodyElse,
                 new NewAvailabilityOverride(DATE, null, null, "BLOCK")))
-                .isInstanceOf(TeacherRoleRequiredException.class);
+                .isInstanceOf(ForbiddenOperationException.class);
 
         verify(exceptions, never()).save(any());
     }

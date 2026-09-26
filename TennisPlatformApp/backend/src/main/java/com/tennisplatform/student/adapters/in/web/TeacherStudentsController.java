@@ -8,7 +8,7 @@ import com.tennisplatform.student.adapters.in.web.StudentDtos.StudentSummaryResp
 import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.ManageStudent;
 import com.tennisplatform.student.domain.StudentProfileNotFoundException;
-import com.tennisplatform.student.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,7 +27,7 @@ import java.util.UUID;
  *
  * <p>Every endpoint checks the role here and the relationship in the service. Neither check
  * replaces the other: the role says who may ask, the relationship says about whom - and
- * 08-security-engineer.md requires both.
+ * 02-arquitectura.md requires both.
  */
 @RestController
 @RequestMapping("/api/v1/teacher/students")
@@ -98,7 +98,7 @@ class TeacherStudentsController {
 
     private void requireTeacher(AuthenticatedUser caller) {
         if (!caller.isTeacher()) {
-            throw new TeacherRoleRequiredException("Only the teacher can manage students");
+            throw ForbiddenOperationException.teacherOnly("Only the teacher can manage students");
         }
     }
 }

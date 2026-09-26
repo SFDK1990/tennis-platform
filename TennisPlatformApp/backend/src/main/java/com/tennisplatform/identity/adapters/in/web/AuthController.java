@@ -65,7 +65,7 @@ class AuthController {
     /**
      * Always 202, whether or not the address was already registered. Returning 201 for a new
      * account and 409 for an existing one - as openapi.yaml still describes - would let anyone
-     * discover which emails have an account, which 08-security-engineer.md forbids.
+     * discover which emails have an account, which 02-arquitectura.md forbids.
      */
     @PostMapping("/register")
     ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request) {

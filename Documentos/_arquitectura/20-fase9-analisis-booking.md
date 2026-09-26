@@ -1,7 +1,7 @@
 # Fase 9 — Análisis: las reservas (`booking`)
 
 Análisis previo a escribir código, como las fases 6, 7 y 8. Es la Fase 5 de
-`09-roadmap-implementacion.md`, que numera distinto que la tabla de `12-metodologia-trabajo.md`.
+`12-metodologia-trabajo.md`, que numera distinto que la tabla de `12-metodologia-trabajo.md`.
 
 `booking` es la ruta crítica de concurrencia del MVP, y además hereda cuatro piezas que la Fase 8
 no podía escribir porque sólo este módulo sabe contar reservas: `bookedCount`, el estado `FULL`,
@@ -175,7 +175,7 @@ Hay dos modelos escritos y se contradicen:
 
 - `01-analisis-funcional.md` §12 y `03-modelo-de-datos.md`: el estado de la reserva
   (`CONFIRMED` o cancelada) y la asistencia (`PENDING`, `ATTENDED`, `NO_SHOW`) son **dos campos**.
-- `10-diagrama-er.md`, `01-product-architect.md` y `openapi.yaml`: **un solo campo** con
+- `10-diagrama-er.md`, `01-analisis-funcional.md` y `openapi.yaml`: **un solo campo** con
   `ATTENDED` y `NO_SHOW` entre los valores de `bookings.status`.
 
 Propongo el primero, y lo justifico porque cambia el contrato. Si `ATTENDED` es un valor de
@@ -309,7 +309,7 @@ documento se lea como lo que es: lo acordado.
    dependencias, con un paquete nuevo por módulo para las interfaces que otro implementa y la
    regla de ArchUnit ampliada con nombre propio. Alternativas: A (`booking` orquesta) o B
    (eventos).
-2. **Asistencia en columna propia**, corrigiendo `10-diagrama-er.md`, `01-product-architect.md` y
+2. **Asistencia en columna propia**, corrigiendo `10-diagrama-er.md`, `01-analisis-funcional.md` y
    `openapi.yaml`. Acordado: sí.
 3. **Sin trigger de capacidad.** Acordado: sin trigger; el cerrojo y el test de concurrencia
    bastan.
@@ -328,7 +328,7 @@ documento se lea como lo que es: lo acordado.
    `lesson`. Es un cambio en un módulo ya cerrado, y por eso se preguntó en vez de asumirlo.
 7. **El admin en `POST /bookings/{id}/cancel`.** El contrato ya lo incluye y el coste es una rama
    en la autorización. Acordado: **incluirlo**, porque es la única salida documentada para
-   resolver incidencias (`01-product-architect.md`, decisiones resueltas) y dejarlo fuera
+   resolver incidencias (`01-analisis-funcional.md`, decisiones resueltas) y dejarlo fuera
    obligaría a volver sobre el endpoint en la fase de `administration`.
 
 ## Códigos de error
@@ -404,7 +404,7 @@ regla que releer no cambia.
 - `11-contrato-api.md`: la tabla de códigos.
 - `10-diagrama-er.md`: el changeset de `bookings` con la asistencia separada, y sin el trigger.
 - `01-analisis-funcional.md` §10: todavía dice que la ventana de 24 horas ata al profesor. La
-  Fase 8 corrigió `01-product-architect.md` y se dejó éste.
+  Fase 8 corrigió `01-analisis-funcional.md` y se dejó éste.
 - `CLAUDE.md`: la tabla de fases y las trampas nuevas.
 - Cada error nuevo se mapea con `Problems.of`, y los tests de API heredan de
   `AbstractIntegrationTest`.
@@ -413,7 +413,7 @@ regla que releer no cambia.
 
 - **`10-diagrama-er.md`**: la asistencia sale de `bookings.status` a su propia columna, y el
   trigger opcional se descarta.
-- **`01-product-architect.md`**: los estados de la reserva, por lo mismo.
+- **`01-analisis-funcional.md`**: los estados de la reserva, por lo mismo.
 - **`01-analisis-funcional.md`**: la ventana de 24 horas en §10, y las dos pendientes de §17 que
   esta fase cierra (volver a reservar, y el admin y la ventana).
 - **`03-modelo-de-datos.md`**: el solapamiento del alumno pasa de cerrojo sobre el alumno a

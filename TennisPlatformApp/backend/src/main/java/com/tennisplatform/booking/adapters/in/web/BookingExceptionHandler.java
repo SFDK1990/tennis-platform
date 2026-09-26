@@ -10,10 +10,7 @@ import com.tennisplatform.booking.domain.InvalidBookingRequestException;
 import com.tennisplatform.booking.domain.LessonAlreadyStartedException;
 import com.tennisplatform.booking.domain.LessonFullException;
 import com.tennisplatform.booking.domain.LessonNotBookableException;
-import com.tennisplatform.booking.domain.RoleNotAllowedException;
-import com.tennisplatform.booking.domain.StudentNotManagedException;
 import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
-import com.tennisplatform.booking.domain.TeacherRoleRequiredException;
 import com.tennisplatform.error.Problems;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -85,25 +82,9 @@ class BookingExceptionHandler {
         return Problems.of(HttpStatus.NOT_FOUND, "Booking not found", e.getMessage(), "BOOKING_NOT_FOUND");
     }
 
-    @ExceptionHandler(StudentNotManagedException.class)
-    ProblemDetail handleNotManaged(StudentNotManagedException e) {
-        return Problems.of(HttpStatus.FORBIDDEN, "Student not managed", e.getMessage(), "STUDENT_NOT_MANAGED");
-    }
-
     @ExceptionHandler(EmailNotVerifiedException.class)
     ProblemDetail handleNotVerified(EmailNotVerifiedException e) {
         return Problems.of(HttpStatus.FORBIDDEN, "Email not verified", e.getMessage(), "EMAIL_NOT_VERIFIED");
-    }
-
-    @ExceptionHandler(TeacherRoleRequiredException.class)
-    ProblemDetail handleNotTheTeacher(TeacherRoleRequiredException e) {
-        return Problems.of(HttpStatus.FORBIDDEN, "Only the teacher can do this", e.getMessage(),
-                "TEACHER_FORBIDDEN");
-    }
-
-    @ExceptionHandler(RoleNotAllowedException.class)
-    ProblemDetail handleRoleNotAllowed(RoleNotAllowedException e) {
-        return Problems.of(HttpStatus.FORBIDDEN, "Not allowed", e.getMessage(), "AUTH_FORBIDDEN");
     }
 
     @ExceptionHandler(InvalidBookingRequestException.class)

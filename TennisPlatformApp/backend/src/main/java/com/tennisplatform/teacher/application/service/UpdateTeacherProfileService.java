@@ -4,7 +4,7 @@ import com.tennisplatform.teacher.application.port.in.TeacherProfileUpdate;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 import com.tennisplatform.teacher.application.port.in.UpdateTeacherProfile;
 import com.tennisplatform.teacher.application.port.out.TeacherProfileRepository;
-import com.tennisplatform.teacher.domain.NotTheTeacherException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.domain.TeacherProfile;
 import com.tennisplatform.teacher.domain.TeacherProfileNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +29,7 @@ public class UpdateTeacherProfileService implements UpdateTeacherProfile {
     public TeacherProfileView update(UUID callerId, TeacherProfileUpdate update) {
         TeacherProfile profile = profiles.findByUserId(callerId)
                 .orElseThrow(() -> hasTeacher()
-                        ? new NotTheTeacherException("This account does not own a teacher profile")
+                        ? ForbiddenOperationException.teacherOnly("This account does not own a teacher profile")
                         : new TeacherProfileNotFoundException(
                                 "No teacher profile exists yet: the bootstrap has not run"));
 

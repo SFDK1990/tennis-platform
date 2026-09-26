@@ -7,7 +7,7 @@ import java.util.UUID;
  * The relationship that lets a student book: the teacher took them under management.
  *
  * <p>A student may only book while this exists and is {@link ManagedStatus#MANAGED}
- * (01-product-architect.md), so this object - not a role, not a flag on the account - is what
+ * (01-analisis-funcional.md), so this object - not a role, not a flag on the account - is what
  * gates booking.
  *
  * <p>Deactivating never deletes the row. Two reasons: the history of who was managed when is
@@ -16,7 +16,7 @@ import java.util.UUID;
  * reconcile.
  *
  * <p>Deactivating also cancels the student's upcoming bookings with this teacher, as
- * 01-product-architect.md requires. That happens in {@code ManageStudentService} through {@code
+ * 01-analisis-funcional.md requires. That happens in {@code ManageStudentService} through {@code
  * StudentBookings}, not here: this object knows nothing about bookings, and should not.
  */
 public class ManagedStudent {

@@ -92,7 +92,7 @@ public class Booking {
         return cancelled(BookingStatus.CANCELLED_BY_TEACHER, now);
     }
 
-    /** An admin resolves an incident. No window, as 01-product-architect.md settled. */
+    /** An admin resolves an incident. No window, as 01-analisis-funcional.md settled. */
     public Booking cancelByAdmin(Instant now) {
         requireCancellable(now);
         return cancelled(BookingStatus.CANCELLED_BY_ADMIN, now);

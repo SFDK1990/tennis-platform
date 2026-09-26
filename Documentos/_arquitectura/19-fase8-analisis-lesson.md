@@ -1,7 +1,7 @@
 # Fase 8 — Análisis: las clases del profesor (`lesson`)
 
 Análisis previo a escribir código, como las fases 6 y 7. Es la Fase 4 de
-`09-roadmap-implementacion.md`, que numera distinto que la tabla de `12-metodologia-trabajo.md`.
+`12-metodologia-trabajo.md`, que numera distinto que la tabla de `12-metodologia-trabajo.md`.
 
 `lesson` es la primera consumidora de `QueryAvailability`, el puerto que la Fase 7 dejó
 preparado y que hasta hoy no tiene ningún llamador.
@@ -171,7 +171,7 @@ comprobación que falta no falla, acierta con la clase equivocada.
 Aquí hay una regla del producto que **creo que está mal** y prefiero señalarla antes de
 implementarla.
 
-`01-product-architect.md` dice «las cancelaciones se permiten hasta 24 horas antes» y «el ADMIN
+`01-analisis-funcional.md` dice «las cancelaciones se permiten hasta 24 horas antes» y «el ADMIN
 puede cancelar clases o reservas sin respetar la ventana». `openapi.yaml` lo traduce a un `422
 CANCELLATION_WINDOW_EXPIRED` en `/teacher/lessons/{id}/cancel`.
 
@@ -192,7 +192,7 @@ afectados sin tener que recalcularlo después.
 La ventana de 24 horas se mantiene **intacta para el alumno que cancela su reserva**, que es
 donde el producto la justificó: protege al profesor de un hueco que ya no puede llenar.
 
-`01-product-architect.md` hay que corregirlo, porque hoy dice lo contrario.
+`01-analisis-funcional.md` hay que corregirlo, porque hoy dice lo contrario.
 
 ### Qué pasa con una clase cancelada
 
@@ -237,7 +237,7 @@ respuesta para que el documento se lea como lo que es: lo acordado, no lo propue
 5. **La modificación de clases queda fuera de esta fase.** Cambiar la hora de una clase que ya
    tiene reservas es una operación que afecta a `booking`; escribirla antes de que `booking`
    exista significa escribirla dos veces. Cancelar y volver a crear cubre el caso mientras tanto,
-   y `09-roadmap-implementacion.md` se corrige para que deje de prometerla aquí.
+   y `12-metodologia-trabajo.md` se corrige para que deje de prometerla aquí.
 
 ## Códigos de error nuevos
 
@@ -308,8 +308,8 @@ Igual que en las dos fases anteriores, y por las mismas razones:
 - **`10-diagrama-er.md`**: `lessons.status` pasa de cuatro valores a dos.
 - **`openapi.yaml`**: `bookedCount` se retira hasta la Fase 9; el `summary` de la cancelación
   promete una cascada que esta fase no puede hacer; `attendance` se sirve desde `booking`.
-- **`09-roadmap-implementacion.md`**: promete «modificación» en esta fase; se quita.
-- **`01-product-architect.md`**: la ventana de 24 horas deja de aplicarse al profesor sobre su
+- **`12-metodologia-trabajo.md`**: promete «modificación» en esta fase; se quita.
+- **`01-analisis-funcional.md`**: la ventana de 24 horas deja de aplicarse al profesor sobre su
   propia clase.
 - **`10-diagrama-er.md`** otra vez: `platform_configuration` gana el tope de capacidad de grupo.
 

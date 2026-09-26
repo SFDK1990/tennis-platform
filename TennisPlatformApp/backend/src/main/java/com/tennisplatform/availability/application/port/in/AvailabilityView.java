@@ -14,7 +14,7 @@ public record AvailabilityView(List<WeeklyRuleView> weeklyRules,
                                List<AvailabilityOverrideView> exceptions) {
 
     /**
-     * Copies both lists on the way in, like {@code ManagedStudentPage} does. A record gives
+     * Copies both lists on the way in, like {@code ResultPage} does. A record gives
      * away its components by reference, which makes "immutable" true of the reference and not
      * of what it points at.
      */

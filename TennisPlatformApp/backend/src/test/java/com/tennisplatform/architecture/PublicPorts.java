@@ -31,6 +31,9 @@ final class PublicPorts {
     static final String INBOUND = ".application.port.in";
     static final String PROVIDED = ".application.port.spi";
 
+    /** {@code shared}'s technical primitives, which every module may use directly. */
+    static final String SHARED_PRIMITIVES = ".shared.domain";
+
     private PublicPorts() {
     }
 
@@ -53,7 +56,7 @@ final class PublicPorts {
 
     private static boolean isAllowed(JavaClass origin, JavaClass target) {
         String targetPackage = target.getPackageName();
-        if (targetPackage.contains(INBOUND)) {
+        if (targetPackage.contains(INBOUND) || targetPackage.contains(SHARED_PRIMITIVES)) {
             return true;
         }
         return targetPackage.contains(PROVIDED)

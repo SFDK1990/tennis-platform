@@ -102,20 +102,14 @@ verde.** Desde la Fase 5.1 existe un pipeline, y un pipeline que solo informa de
 código ya está dentro no protege nada.
 
 Nombre de rama: `fase-<n>-<tema>` para las fases, por ejemplo `fase-6-perfiles-usuarios`. Para
-lo que no es una fase —documentación, correcciones sueltas— se usa `docs/<tema>` o
-`fix/<tema>`.
-
-Esto sustituye a la práctica de las fases 1 a 5.1, que se empujaron directamente a `main`. El
-cambio exige, además, proteger `main` en GitHub exigiendo los dos checks del pipeline.
+lo que no es una fase se usa `docs/<tema>`, `fix/<tema>` o `chore/<tema>`. `main` no se puede
+proteger en el plan actual de GitHub: antes de fusionar hay que mirar el check.
 
 ### Commits
 
 Una fase puede —y suele— necesitar **varios commits**, con una condición: **cada commit debe
 dejar el proyecto compilando y con los tests en verde**. Un commit no es un punto de guardado; es
 una unidad que alguien puede revisar o revertir por separado.
-
-Esto matiza la regla 2 de `12-metodologia-trabajo.md` ("cada fase cierra con un commit"): lo que
-se exige es que la fase **cierre** con su commit de cierre, no que sea el único.
 
 ### Formato del mensaje: Conventional Commits
 
@@ -209,9 +203,9 @@ No se repiten aquí porque ya están escritas, pero forman parte de las convenci
 - El acceso entre módulos pasa por los puertos públicos, nunca por las entidades o repositorios
   de otro módulo (`TennisPlatformApp/CLAUDE.md`).
 - Los changelogs de Liquibase son *append-only*: un changeset ejecutado no se edita nunca; las
-  correcciones son changesets nuevos (`05-database-engineer.md`).
+  correcciones son changesets nuevos (`03-modelo-de-datos.md`).
 - Nunca se registran en el log contraseñas, tokens, documentos de identidad completos ni
-  direcciones (`08-security-engineer.md`).
+  direcciones (`02-arquitectura.md`).
 
 ## Revisiones automáticas y límites de iniciativa
 

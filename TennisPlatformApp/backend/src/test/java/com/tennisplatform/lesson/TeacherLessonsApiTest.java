@@ -273,7 +273,7 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
 
         ResponseEntity<Map> tooWide = list(token, workingDay, workingDay.plusDays(62));
         assertThat(tooWide.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(tooWide.getBody().get("code")).isEqualTo("LESSON_RANGE_TOO_WIDE");
+        assertThat(tooWide.getBody().get("code")).isEqualTo("DATE_RANGE_INVALID");
     }
 
     /**
@@ -332,6 +332,22 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
 
         assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(missing.getBody().get("code")).isEqualTo("LESSON_NOT_FOUND");
+    }
+
+    /**
+     * A malformed id used to fall through to the catch-all handler and answer 500. It is the
+     * caller's mistake, and the answer has to say so.
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void aMalformedIdIsABadRequestNotAServerError() {
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
+
+        ResponseEntity<Map> response = rest.exchange("/api/v1/lessons/not-a-uuid", HttpMethod.GET,
+                new HttpEntity<>(bearer(token)), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().get("code")).isEqualTo("VALIDATION_ERROR");
     }
 
     /** Opens the day the lessons are scheduled on, through the availability API rather than its internals. */

@@ -8,7 +8,7 @@ import com.tennisplatform.booking.domain.EmailNotVerifiedException;
 import com.tennisplatform.booking.domain.LessonAlreadyStartedException;
 import com.tennisplatform.booking.domain.LessonFullException;
 import com.tennisplatform.booking.domain.LessonNotBookableException;
-import com.tennisplatform.booking.domain.StudentNotManagedException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
@@ -109,7 +109,7 @@ class BookLessonServiceTest {
         when(managedStudents.isManagedBy(TEACHER_ID, STUDENT_ID)).thenReturn(false);
 
         assertThatThrownBy(() -> service.book(STUDENT_ID, true, LESSON_ID))
-                .isInstanceOf(StudentNotManagedException.class);
+                .isInstanceOf(ForbiddenOperationException.class);
         verify(bookings, never()).save(any());
     }
 

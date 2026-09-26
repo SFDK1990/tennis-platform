@@ -8,7 +8,6 @@ import com.tennisplatform.student.domain.StudentLimitReachedException;
 import com.tennisplatform.student.domain.StudentNotManagedException;
 import com.tennisplatform.student.domain.StudentProfileIncompleteException;
 import com.tennisplatform.student.domain.StudentProfileNotFoundException;
-import com.tennisplatform.student.domain.TeacherRoleRequiredException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -43,12 +42,6 @@ class StudentExceptionHandler {
     ProblemDetail handleNotManaged(StudentNotManagedException e) {
         return Problems.of(HttpStatus.FORBIDDEN, "Not allowed",
                 "This student is not managed by you.", "STUDENT_NOT_MANAGED");
-    }
-
-    @ExceptionHandler(TeacherRoleRequiredException.class)
-    ProblemDetail handleNotTheTeacher(TeacherRoleRequiredException e) {
-        return Problems.of(HttpStatus.FORBIDDEN, "Not allowed",
-                "Only the teacher can manage students.", "TEACHER_FORBIDDEN");
     }
 
     @ExceptionHandler(StudentAlreadyManagedException.class)

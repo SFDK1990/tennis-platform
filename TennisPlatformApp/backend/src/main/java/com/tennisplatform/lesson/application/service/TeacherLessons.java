@@ -1,6 +1,6 @@
 package com.tennisplatform.lesson.application.service;
 
-import com.tennisplatform.lesson.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 
@@ -32,13 +32,13 @@ class TeacherLessons {
      *
      * <p>Looking the caller up among teacher profiles is what makes this hold: the role in a
      * token says what kind of account it is, this says it is the account that owns what is being
-     * touched. 08-security-engineer.md requires both, and neither replaces the other. With a
+     * touched. 02-arquitectura.md requires both, and neither replaces the other. With a
      * single teacher it looks redundant; it is not, and the day there are two, a check that is
      * missing does not fail - it hits the wrong diary.
      */
     ZoneId requireTheTeacher(UUID callerId) {
         TeacherProfileView profile = teacherProfile.byUserId(callerId)
-                .orElseThrow(() -> new TeacherRoleRequiredException(
+                .orElseThrow(() -> ForbiddenOperationException.teacherOnly(
                         "Only the teacher can manage lessons"));
         return ZoneId.of(profile.timezone());
     }

@@ -1,6 +1,6 @@
 # Fase 6 — Análisis: perfiles y gestión de usuarios
 
-Corresponde a la **Fase 2 del roadmap** (`09-roadmap-implementacion.md`), que numera las fases de
+Corresponde a la **Fase 2 del roadmap** (`12-metodologia-trabajo.md`), que numera las fases de
 otra manera. Cubre los módulos `teacher` y `student`, y la relación "alumno gestionado".
 
 Este documento es el entregable de análisis: no se escribe código hasta que esté validado.
@@ -54,7 +54,7 @@ aprende nada de las tablas del otro.
 
 ### El perfil del alumno nace cuando el alumno lo rellena
 
-El flujo de alta de `01-product-architect.md` es: registro → verificación → **completar datos
+El flujo de alta de `01-analisis-funcional.md` es: registro → verificación → **completar datos
 personales** → el profesor lo gestiona. La fila de `student_profiles` se crea en ese tercer paso,
 con `PATCH /me`, no en el registro.
 
@@ -71,7 +71,7 @@ Consecuencias que hay que respetar en el contrato:
 `GET /teacher/students?query=` sirve hoy, según el propio contrato, para dos cosas distintas:
 listar los alumnos ya gestionados y localizar a un alumno cualquiera del sistema. Lo segundo, con
 búsqueda parcial, permite al profesor **enumerar quién está registrado en la plataforma** y leer
-nombres de personas con las que no tiene ninguna relación. `08-security-engineer.md` prohíbe
+nombres de personas con las que no tiene ninguna relación. `02-arquitectura.md` prohíbe
 exactamente eso.
 
 Se separan los dos usos:
@@ -101,7 +101,7 @@ en el código sin dueño.
 
 ## Datos personales
 
-`national_id` y `address` son de acceso restringido (`10-diagrama-er.md`, `08-security-engineer.md`):
+`national_id` y `address` son de acceso restringido (`10-diagrama-er.md`, `02-arquitectura.md`):
 
 - Solo se devuelven al propio usuario, al profesor que lo gestiona y a un `ADMIN`.
 - Nunca aparecen en listados ni en la búsqueda por email.

@@ -1,7 +1,7 @@
 package com.tennisplatform.student.adapters.in.web;
 
 import com.tennisplatform.student.application.port.in.ManagedStudentDetailView;
-import com.tennisplatform.student.application.port.in.ManagedStudentPage;
+import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.in.StudentLookupView;
 
@@ -18,7 +18,7 @@ final class StudentDtos {
     /**
      * One row of the teacher's list. It has no field for the national id or the address, which
      * is what makes it impossible to leak them in a listing by mistake
-     * (08-security-engineer.md).
+     * (02-arquitectura.md).
      */
     record StudentSummaryResponse(UUID userId, String fullName, String email,
                                   String managedStatus, Instant managedAt) {
@@ -32,7 +32,7 @@ final class StudentDtos {
     record StudentSummaryPageResponse(List<StudentSummaryResponse> items, int page, int size,
                                       long totalItems) {
 
-        static StudentSummaryPageResponse from(ManagedStudentPage page) {
+        static StudentSummaryPageResponse from(ResultPage<ManagedStudentView> page) {
             return new StudentSummaryPageResponse(
                     page.items().stream().map(StudentSummaryResponse::from).toList(),
                     page.page(), page.size(), page.totalItems());
