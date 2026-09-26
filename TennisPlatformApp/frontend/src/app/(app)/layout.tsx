@@ -19,6 +19,11 @@ const NAV: Record<string, { href: string; label: string }[]> = {
     { href: "/teacher/students", label: "Alumnos" },
     { href: "/profile", label: "Perfil" },
   ],
+  ADMIN: [
+    { href: "/admin", label: "Configuración" },
+    { href: "/admin/users", label: "Usuarios" },
+    { href: "/profile", label: "Perfil" },
+  ],
 };
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -47,7 +52,7 @@ function Header({ me }: { me: Me }) {
       <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
         <Link href="/" className="font-display text-xl font-semibold">Tennis Platform</Link>
         <nav className="flex flex-wrap items-center gap-x-5 gap-y-1">
-          {(NAV[me.role] ?? NAV.STUDENT.slice(2)).map((item) => (
+          {NAV[me.role].map((item) => (
             <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined}
               className="border-b-2 border-transparent py-1 aria-[current=page]:border-ball">
               {item.label}

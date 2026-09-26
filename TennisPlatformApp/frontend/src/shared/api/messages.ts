@@ -48,6 +48,9 @@ const MESSAGES: Record<string, string> = {
   BOOKING_ALREADY_CANCELLED: "La reserva ya estaba cancelada.",
   CANCELLATION_WINDOW_EXPIRED: "Faltan menos de 24 horas: ya no se puede cancelar. Habla con tu profesor.",
   ATTENDANCE_NOT_YET_OPEN: "La asistencia se marca cuando la clase ha empezado.",
+
+  ADMIN_TARGET_NOT_ALLOWED: "Sólo se pueden activar o desactivar cuentas de alumnos.",
+  USER_NOT_FOUND: "Esa cuenta ya no existe.",
 };
 
 export function messageFor(error: ApiError): string {

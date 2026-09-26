@@ -1550,7 +1550,15 @@ export interface paths {
                         "application/json": components["schemas"]["PlatformConfiguration"];
                     };
                 };
-                403: components["responses"]["Forbidden"];
+                /** @description AUTH_FORBIDDEN, si quien llama no es ADMIN (igual en todo /admin) */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1558,23 +1566,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/configuration/student-limit": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Actualiza el límite global de alumnos gestionables */
+        /**
+         * Cambia el límite de alumnos y la capacidad máxima de grupo
+         * @description Los dos campos son opcionales: el que no se envía conserva su valor. Bajar el límite por debajo de los alumnos ya gestionados se permite: no echa a nadie, sólo impide gestionar nuevos. Las clases ya creadas conservan su capacidad. Registra updatedAt y updatedBy.
+         */
         patch: {
             parameters: {
                 query?: never;
@@ -1584,7 +1579,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["UpdateStudentLimitRequest"];
+                    "application/json": components["schemas"]["UpdateConfigurationRequest"];
                 };
             };
             responses: {
@@ -1610,7 +1605,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Lista de usuarios de la plataforma */
+        /** Lista de usuarios de la plataforma, la más reciente primero */
         get: {
             parameters: {
                 query?: {
@@ -1618,6 +1613,8 @@ export interface paths {
                     size?: components["parameters"]["Size"];
                     role?: components["schemas"]["Role"];
                     status?: components["schemas"]["UserStatus"];
+                    /** @description Parte del email, sin distinguir mayúsculas. Al profesor se le niega la búsqueda parcial para que no pueda enumerar cuentas; el admin ya puede verlas todas. */
+                    query?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1634,6 +1631,7 @@ export interface paths {
                         "application/json": components["schemas"]["AdminUserSummaryPage"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
                 403: components["responses"]["Forbidden"];
             };
         };
@@ -1658,7 +1656,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Activa o desactiva un usuario */
+        /**
+         * Activa o desactiva la cuenta de un alumno
+         * @description Desactivar cierra sus sesiones (el access token vivo caduca en 15 minutos como mucho), hace que el profesor deje de gestionarlo y cancela sus reservas futuras como CANCELLED_BY_ADMIN. Reactivar devuelve ACTIVE si había verificado el email y PENDING_VERIFICATION si no; no vuelve a quedar gestionado, eso lo decide el profesor.
+         */
         patch: {
             parameters: {
                 query?: never;
@@ -1684,8 +1685,24 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["ValidationError"];
-                403: components["responses"]["Forbidden"];
-                404: components["responses"]["NotFound"];
+                /** @description AUTH_FORBIDDEN si quien llama no es ADMIN; ADMIN_TARGET_NOT_ALLOWED si la cuenta no es de un alumno. Desactivar al único profesor apagaría la plataforma, y un admin que desactiva a otro, o a sí mismo, puede quedarse sin nadie que lo deshaga. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description USER_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         trace?: never;
@@ -2053,8 +2070,9 @@ export interface components {
             /** Format: uuid */
             updatedBy: string | null;
         };
-        UpdateStudentLimitRequest: {
-            studentLimit: number;
+        UpdateConfigurationRequest: {
+            studentLimit?: number;
+            maxGroupCapacity?: number;
         };
         AdminUserSummary: {
             /** Format: uuid */
