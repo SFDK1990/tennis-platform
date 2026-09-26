@@ -39,7 +39,14 @@ paths:
             cuando se crea y 409 cuando ya existe permitiría enumerar usuarios, que es
             precisamente lo que prohíbe 02-arquitectura.md. Si el email ya estaba
             registrado no se crea nada y se avisa por correo al titular real de la dirección.
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: >-
+            Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña de más de
+            72 bytes (`AUTH_WEAK_PASSWORD`): bcrypt no usa el resto, y aceptarla engañaría a
+            quien la eligió.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /auth/login:
@@ -129,6 +136,13 @@ paths:
       responses:
         "204": { description: Email verificado }
         "400": { $ref: "#/components/responses/ValidationError" }
+        "403":
+          description: >-
+            La cuenta está desactivada (`AUTH_ACCOUNT_NOT_ACTIVE`): el enlace se pidió antes de
+            desactivarla.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
           description: Token inválido, expirado o ya usado
           content:
@@ -180,7 +194,21 @@ paths:
             schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
       responses:
         "204": { description: Contraseña actualizada }
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: >-
+            Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña de más de
+            72 bytes (`AUTH_WEAK_PASSWORD`): bcrypt no usa el resto, y aceptarla engañaría a
+            quien la eligió.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "403":
+          description: >-
+            La cuenta está desactivada (`AUTH_ACCOUNT_NOT_ACTIVE`): el enlace se pidió antes de
+            desactivarla.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
           description: Token inválido, expirado o ya usado
           content:

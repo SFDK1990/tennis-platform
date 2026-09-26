@@ -328,7 +328,70 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(tooShort.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    /**
+     * The request only checks the length in characters; bcrypt ignores everything past 72
+     * bytes, so a longer password would be accepted and silently cut (Fase 14).
+     */
+    @Test
+    void aPasswordLongerThanBcryptCanHashIsRejectedWithItsOwnCode() {
+        String email = uniqueEmail();
+
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/register",
+                json(Map.of("email", email, "password", "x".repeat(100))), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("code", "AUTH_WEAK_PASSWORD");
+        assertThat(countUsers(email)).isZero();
+    }
+
+    @Test
+    void aVerificationLinkSentBeforeTheAccountWasDisabledNoLongerWorks() {
+        String email = uniqueEmail();
+        register(email);
+        disable(email);
+
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/verify-email",
+                json(Map.of("token", mailer.lastVerificationToken())), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).containsEntry("code", "AUTH_ACCOUNT_NOT_ACTIVE");
+    }
+
+    @Test
+    void aResetLinkSentBeforeTheAccountWasDisabledCannotChangeThePassword() {
+        String email = uniqueEmail();
+        register(email);
+        verifyEmail(mailer.lastVerificationToken());
+        rest.postForEntity("/api/v1/auth/forgot-password", json(Map.of("email", email)), String.class);
+        disable(email);
+
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/reset-password",
+                json(Map.of("token", mailer.lastResetToken(), "newPassword", "another-valid-password")),
+                Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).containsEntry("code", "AUTH_ACCOUNT_NOT_ACTIVE");
+    }
+
+    /** Same 202 as for anyone, so the address is not revealed, but no link goes out. */
+    @Test
+    void aDisabledAccountIsSentNoResetLink() {
+        String email = uniqueEmail();
+        register(email);
+        disable(email);
+
+        ResponseEntity<String> response = rest.postForEntity("/api/v1/auth/forgot-password",
+                json(Map.of("email", email)), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.resetCount()).isZero();
+    }
+
     // --- helpers ---------------------------------------------------------------
+
+    private void disable(String email) {
+        jdbc.update("UPDATE users SET status = 'DISABLED' WHERE email = ?", email);
+    }
 
     private ResponseEntity<String> resendVerification(String accessToken) {
         HttpHeaders headers = new HttpHeaders();

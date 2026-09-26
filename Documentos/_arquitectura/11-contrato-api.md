@@ -112,6 +112,8 @@ Códigos añadidos en la Fase 6, con el mismo criterio:
 | `TEACHER_FORBIDDEN`            | 403  | `/teacher/**`                                     | El llamante no es el profesor                                         |
 | `FIELD_NOT_APPLICABLE_TO_ROLE` | 400  | `PATCH /me`                                       | El cuerpo trae un campo de otro rol; se rechaza en vez de ignorarlo   |
 | `AUTH_SESSION_EXPIRED`         | 401  | `POST /auth/refresh`                              | Refresh token ausente, expirado, revocado o reusado: los cuatro casos responden idénticamente |
+| `AUTH_WEAK_PASSWORD`           | 400  | `POST /auth/register`, `POST /auth/reset-password` | Más de 72 bytes: bcrypt ignoraría el resto (Fase 14)                  |
+| `AUTH_ACCOUNT_NOT_ACTIVE`      | 403  | `POST /auth/verify-email`, `POST /auth/reset-password` | Cuenta desactivada después de enviarle el enlace (Fase 14)        |
 
 Códigos añadidos en la Fase 7:
 
