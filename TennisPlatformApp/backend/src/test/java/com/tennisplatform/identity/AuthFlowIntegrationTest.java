@@ -230,7 +230,50 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
                 .isEqualTo(HttpStatus.ACCEPTED);
     }
 
+    /** A student whose link expired asks for another, and the new one works (Fase 11). */
+    @Test
+    @SuppressWarnings("unchecked")
+    void aSignedInStudentCanAskForANewVerificationLinkAndItWorks() {
+        String email = uniqueEmail();
+        register(email);
+        String accessToken = (String) login(email).getBody().get("accessToken");
+
+        ResponseEntity<String> resent = resendVerification(accessToken);
+
+        assertThat(resent.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.verificationCount()).isEqualTo(2);
+        assertThat(verifyEmail(mailer.lastVerificationToken()).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(get("/api/v1/me", accessToken).getBody()).containsEntry("status", "ACTIVE");
+    }
+
+    @Test
+    void aVerifiedAddressGetsNoNewLink() {
+        String email = uniqueEmail();
+        register(email);
+        verifyEmail(mailer.lastVerificationToken());
+        String accessToken = (String) login(email).getBody().get("accessToken");
+
+        assertThat(resendVerification(accessToken).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.verificationCount()).isEqualTo(1);
+    }
+
+    /** Asking by address would let anyone flood someone else's inbox: only the account holder may ask. */
+    @Test
+    void askingForANewLinkNeedsToBeSignedIn() {
+        ResponseEntity<String> anonymous = rest.postForEntity("/api/v1/auth/verification-email",
+                json(Map.of()), String.class);
+
+        assertThat(anonymous.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
     // --- helpers ---------------------------------------------------------------
+
+    private ResponseEntity<String> resendVerification(String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        return rest.exchange("/api/v1/auth/verification-email", HttpMethod.POST,
+                new HttpEntity<>(null, headers), String.class);
+    }
 
     private String uniqueEmail() {
         return "student-" + java.util.UUID.randomUUID() + "@example.com";

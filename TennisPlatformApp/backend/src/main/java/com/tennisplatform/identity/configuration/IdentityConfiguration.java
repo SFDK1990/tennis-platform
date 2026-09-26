@@ -8,6 +8,7 @@ import com.tennisplatform.identity.application.port.in.ProvisionTeacherAccount;
 import com.tennisplatform.identity.application.port.in.RefreshSession;
 import com.tennisplatform.identity.application.port.in.RegisterUser;
 import com.tennisplatform.identity.application.port.in.RequestPasswordReset;
+import com.tennisplatform.identity.application.port.in.ResendEmailVerification;
 import com.tennisplatform.identity.application.port.in.ResetPassword;
 import com.tennisplatform.identity.application.port.in.VerifyEmail;
 import com.tennisplatform.identity.application.port.out.AccessTokenIssuer;
@@ -27,6 +28,7 @@ import com.tennisplatform.identity.application.service.ProvisionTeacherAccountSe
 import com.tennisplatform.identity.application.service.RefreshSessionService;
 import com.tennisplatform.identity.application.service.RegisterUserService;
 import com.tennisplatform.identity.application.service.RequestPasswordResetService;
+import com.tennisplatform.identity.application.service.ResendEmailVerificationService;
 import com.tennisplatform.identity.application.service.ResetPasswordService;
 import com.tennisplatform.identity.application.service.VerifyEmailService;
 import com.tennisplatform.identity.adapters.in.web.AuthRateLimitFilter;
@@ -70,6 +72,16 @@ public class IdentityConfiguration {
                                      IdentityProperties properties) {
         return new RegisterUserService(users, verificationTokens, passwordHasher, tokenGenerator,
                 tokenHasher, mailer, clock, properties.getEmailVerificationTtl());
+    }
+
+    @Bean
+    public ResendEmailVerification resendEmailVerification(UserRepository users,
+                                                           EmailVerificationTokens verificationTokens,
+                                                           SecureTokenGenerator tokenGenerator,
+                                                           TokenHasher tokenHasher, IdentityMailer mailer,
+                                                           Clock clock, IdentityProperties properties) {
+        return new ResendEmailVerificationService(users, verificationTokens, tokenGenerator, tokenHasher,
+                mailer, clock, properties.getEmailVerificationTtl());
     }
 
     @Bean

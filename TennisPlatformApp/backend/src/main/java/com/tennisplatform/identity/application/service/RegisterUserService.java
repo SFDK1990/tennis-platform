@@ -8,7 +8,6 @@ import com.tennisplatform.identity.application.port.out.SecureTokenGenerator;
 import com.tennisplatform.identity.application.port.out.TokenHasher;
 import com.tennisplatform.identity.application.port.out.UserRepository;
 import com.tennisplatform.identity.domain.EmailAddress;
-import com.tennisplatform.identity.domain.OneTimeToken;
 import com.tennisplatform.identity.domain.PasswordPolicy;
 import com.tennisplatform.identity.domain.User;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,26 +20,21 @@ import java.util.Optional;
 public class RegisterUserService implements RegisterUser {
 
     private final UserRepository users;
-    private final EmailVerificationTokens verificationTokens;
     private final PasswordHasher passwordHasher;
-    private final SecureTokenGenerator tokenGenerator;
-    private final TokenHasher tokenHasher;
+    private final VerificationEmails verificationEmails;
     private final IdentityMailer mailer;
     private final Clock clock;
-    private final Duration verificationTokenTtl;
 
     public RegisterUserService(UserRepository users, EmailVerificationTokens verificationTokens,
                                PasswordHasher passwordHasher, SecureTokenGenerator tokenGenerator,
                                TokenHasher tokenHasher, IdentityMailer mailer, Clock clock,
                                Duration verificationTokenTtl) {
         this.users = users;
-        this.verificationTokens = verificationTokens;
         this.passwordHasher = passwordHasher;
-        this.tokenGenerator = tokenGenerator;
-        this.tokenHasher = tokenHasher;
+        this.verificationEmails = new VerificationEmails(verificationTokens, tokenGenerator, tokenHasher,
+                mailer, verificationTokenTtl);
         this.mailer = mailer;
         this.clock = clock;
-        this.verificationTokenTtl = verificationTokenTtl;
     }
 
     @Override
@@ -59,13 +53,6 @@ public class RegisterUserService implements RegisterUser {
         }
 
         User user = users.save(User.register(email, passwordHasher.hash(command.password()), now));
-        issueVerificationToken(user, now);
-    }
-
-    private void issueVerificationToken(User user, Instant now) {
-        String rawToken = tokenGenerator.generate();
-        verificationTokens.save(OneTimeToken.issue(
-                user.id(), tokenHasher.hash(rawToken), now.plus(verificationTokenTtl)));
-        mailer.sendEmailVerification(user.email(), rawToken);
+        verificationEmails.send(user, now);
     }
 }
