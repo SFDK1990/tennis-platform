@@ -162,6 +162,13 @@ topes distintos para la misma clase de consulta serían peor que cualquiera de l
 pide datos de un alumno con el que no tiene relación: la falta de relación es lo que se niega,
 tanto al reservar como al leer.
 
+Códigos añadidos en la Fase 12:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `ADMIN_TARGET_NOT_ALLOWED` | 403 | `PATCH /admin/users/{id}/status` | La cuenta no es de un alumno: ni el profesor ni un admin se desactivan desde la consola |
+| `USER_NOT_FOUND` | 404 | `PATCH /admin/users/{id}/status` | No existe una cuenta con ese id |
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos
@@ -170,6 +177,7 @@ El spec cubre los 24 endpoints ya listados en `02-arquitectura.md` §8, agrupado
 
 ## Pendiente al pasar a implementación
 
-- Generar el cliente TypeScript tipado del frontend a partir de este spec (p. ej. `openapi-typescript`), en vez de escribir los tipos a mano, para que un cambio de contrato rompa la build en vez de fallar en runtime.
+- ~~Generar el cliente TypeScript tipado desde este spec~~: hecho en la Fase 11, y el CI falla si
+  los tipos no coinciden con el spec.
 - Añadir ejemplos (`examples:`) por endpoint una vez haya payloads reales de referencia acordados con QA.
 - Revisar si `PATCH /me` necesita separarse en endpoints específicos por rol (`/teacher/profile` y perfil de alumno ya son independientes) para evitar un DTO demasiado genérico; se deja como está por ahora porque el propio `02-arquitectura.md` ya lo definía así. **Actualización de la Fase 6**: se mantiene el DTO único, pero deja de ser permisivo — un campo que no corresponde al rol se rechaza con `400` en lugar de ignorarse, así que el DTO es genérico en la forma pero no en el comportamiento.

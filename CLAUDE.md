@@ -91,7 +91,8 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
   `SecurityConfig` pone `NullAuthenticatedSessionStrategy`; no quitarlo.
 - **Los tipos del frontend se generan de `openapi.yaml`** y se versionan. Tocar el contrato sin
   `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
-- **No hay admin** hasta la Fase 12: para probar, se registra uno y se le cambia el rol en la base.
+- **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
+  estado de alumnos; el profesor y los admins no se desactivan desde la consola.
 
 ## Repositorio
 

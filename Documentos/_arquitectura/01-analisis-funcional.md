@@ -64,8 +64,10 @@ Un alumno desactivado:
 
 El administrador podrá configurar un límite global.
 
-- `NULL` representa sin límite.
-- El valor debe poder modificarse desde la consola.
+- Siempre es un número positivo: un límite alto hace lo mismo que "sin límite" sin un caso
+  especial en cada comprobación (Fase 12).
+- El valor se modifica desde la consola. Bajarlo por debajo de los alumnos ya gestionados no
+  da de baja a nadie.
 - Cuando se alcance el límite, no se podrán gestionar nuevos alumnos.
 - El MVP no aplica todavía límites por profesor porque solo existe uno.
 

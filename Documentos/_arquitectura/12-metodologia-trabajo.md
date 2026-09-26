@@ -55,8 +55,8 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 9 | Reservas (`booking`) | Completada (PR #23) | `20-fase9-analisis-booking.md` |
 | 10 | Calendario (`calendar`) | Completada (PR #25) | `21-fase10-analisis-calendar.md` |
 | 11 | Frontend | Completada | `22-fase11-analisis-frontend.md`. Daniel recorre en el navegador, con los dos roles, registro → verificación → gestión → clase → reserva → cancelación → asistencia. Después, cada fase trae su pantalla |
-| 12 | Administración (`administration`) | **Siguiente** | Sólo `ADMIN` accede; ajusta el límite de alumnos y el estado de cualquier usuario |
-| 13 | Revisión de API | Pendiente | Revisión REST completa y `openapi.yaml` sin diferencias con lo implementado |
+| 12 | Administración (`administration`) | Completada | `23-fase12-analisis-administracion.md`. Sólo `ADMIN` accede; ajusta el límite de alumnos y el estado de cualquier usuario |
+| 13 | Revisión de API | **Siguiente** | Revisión REST completa y `openapi.yaml` sin diferencias con lo implementado |
 | 14 | Cobertura y E2E | Pendiente | Playwright cubre los flujos críticos de los dos roles |
 | 15 | Auditoría de seguridad | Pendiente | OWASP Top 10, acceso horizontal, secretos y dependencias revisados |
 | 16 | Observabilidad | Pendiente | Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |

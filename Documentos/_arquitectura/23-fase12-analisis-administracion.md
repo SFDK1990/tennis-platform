@@ -75,3 +75,26 @@ auditoría formal (`01` §16). Se anotan para la Fase 13.
 - ArchUnit sigue en verde con `administration` usando sólo puertos de entrada.
 - Daniel recorre en el navegador: entra como admin, cambia el límite, desactiva a un alumno y
   comprueba que no puede entrar, y lo reactiva.
+
+## Decisiones tomadas al implementar
+
+1. **`administration` puede depender de `platform`.** La regla de ArchUnit todavía no lo
+   permitía, aunque la tabla de `TennisPlatformApp/CLAUDE.md` sí: la configuración vive en
+   `platform` desde la Fase 6. Se corrigió la regla.
+2. **Dos métodos en el spi de `student`, no un parámetro.** Para que las reservas digan
+   `CANCELLED_BY_ADMIN`, `StudentBookings` ganó `cancelUpcomingOfDisabledAccount`. Un enum
+   anidado en la interfaz habría obligado a `booking` a *usar* un tipo de `student`, y la regla
+   sólo le deja *implementar* su spi; ArchUnit lo detectó.
+3. **La comprobación de rol va en el controlador** (`AdminController`), como en el calendario:
+   un `ADMIN` que no lo es recibe `403 AUTH_FORBIDDEN` con el formato de siempre.
+4. **Los filtros de la lista son enums en el adaptador**: un rol o estado desconocido es un
+   `400`, no un `500`. La búsqueda por email escapa `%` y `_`: se buscan como texto.
+5. **Una reserva ya empezada se conserva al desactivar**, igual que al dejar de gestionar: es
+   historia, con su asistencia.
+6. **`PlatformSettings` es `final`**: su constructor valida y lanza, y SpotBugs
+   (`CT_CONSTRUCTOR_THROW`) no admite eso en una clase que se puede heredar.
+7. **El perfil del admin** dice que no tiene datos de perfil, en vez de un formulario vacío.
+
+Recorrido en el navegador: el admin entra y cae en `/admin`, cambia el límite, busca a la alumna
+por parte de su email, la desactiva (no puede entrar, su reserva futura queda
+`CANCELLED_BY_ADMIN` y la de una clase ya empezada se conserva) y la reactiva.
