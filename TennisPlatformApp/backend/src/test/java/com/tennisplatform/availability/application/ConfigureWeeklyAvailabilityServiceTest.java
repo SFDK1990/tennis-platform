@@ -5,7 +5,7 @@ import com.tennisplatform.availability.application.port.out.AvailabilityRuleRepo
 import com.tennisplatform.availability.application.service.ConfigureWeeklyAvailabilityService;
 import com.tennisplatform.availability.domain.InvalidAvailabilityException;
 import com.tennisplatform.availability.domain.OverlappingAvailabilityRulesException;
-import com.tennisplatform.availability.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,7 +98,7 @@ class ConfigureWeeklyAvailabilityServiceTest {
         when(teacherProfile.byUserId(somebodyElse)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.replace(somebodyElse, List.of(rule("MONDAY", 9, 13))))
-                .isInstanceOf(TeacherRoleRequiredException.class);
+                .isInstanceOf(ForbiddenOperationException.class);
 
         verify(rules, never()).replaceAllForTeacher(any(), anyList());
     }

@@ -10,7 +10,7 @@ import com.tennisplatform.availability.application.port.in.GetAvailability;
 import com.tennisplatform.availability.application.port.in.ManageAvailabilityExceptions;
 import com.tennisplatform.availability.application.port.in.NewAvailabilityOverride;
 import com.tennisplatform.availability.application.port.in.WeeklyRuleCommand;
-import com.tennisplatform.availability.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -99,7 +99,7 @@ class TeacherAvailabilityController {
 
     private static void requireTeacher(AuthenticatedUser caller) {
         if (caller == null || !caller.isTeacher()) {
-            throw new TeacherRoleRequiredException("Only the teacher can change the availability");
+            throw ForbiddenOperationException.teacherOnly("Only the teacher can change the availability");
         }
     }
 }

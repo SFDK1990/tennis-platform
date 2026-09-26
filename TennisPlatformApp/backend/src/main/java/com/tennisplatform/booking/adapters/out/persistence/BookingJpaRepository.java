@@ -45,14 +45,14 @@ interface BookingJpaRepository extends JpaRepository<BookingEntity, UUID>,
     List<Object[]> countConfirmed(@Param("lessonIds") Collection<UUID> lessonIds);
 
     /**
-     * Bulk updates, one statement each. {@code clearAutomatically} because they bypass the
-     * persistence context: an entity loaded earlier in the same transaction would otherwise keep
-     * reporting the status it had before.
+     * Bulk updates, one statement each. They bypass the persistence context, so {@code
+     * clearAutomatically} keeps an entity loaded earlier from reporting its old status, and
+     * {@code updatedAt} is set by hand because {@code @UpdateTimestamp} never sees them.
      */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""
             update BookingEntity b
-            set b.status = :newStatus, b.cancelledAt = :at
+            set b.status = :newStatus, b.cancelledAt = :at, b.updatedAt = :at
             where b.lessonId = :lessonId
               and b.status = com.tennisplatform.booking.domain.BookingStatus.CONFIRMED
             """)
@@ -62,7 +62,7 @@ interface BookingJpaRepository extends JpaRepository<BookingEntity, UUID>,
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("""
             update BookingEntity b
-            set b.status = :newStatus, b.cancelledAt = :now
+            set b.status = :newStatus, b.cancelledAt = :now, b.updatedAt = :now
             where b.teacherUserId = :teacherUserId
               and b.studentUserId = :studentUserId
               and b.status = com.tennisplatform.booking.domain.BookingStatus.CONFIRMED

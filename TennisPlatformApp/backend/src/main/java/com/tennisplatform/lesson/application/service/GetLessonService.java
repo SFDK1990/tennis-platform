@@ -5,7 +5,7 @@ import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.domain.Lesson;
-import com.tennisplatform.lesson.domain.LessonDateRange;
+import com.tennisplatform.shared.domain.DateRange;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,7 +70,7 @@ public class GetLessonService implements GetLesson {
     @Transactional(readOnly = true)
     public List<LessonView> forTeacherBetween(UUID teacherUserId, LocalDate from, LocalDate to) {
         ZoneId zone = teacher.requireTheTeacher(teacherUserId);
-        LessonDateRange range = new LessonDateRange(from, to);
+        DateRange range = new DateRange(from, to);
 
         Instant start = range.from().atStartOfDay(zone).toInstant();
         Instant end = range.to().plusDays(1).atStartOfDay(zone).toInstant();

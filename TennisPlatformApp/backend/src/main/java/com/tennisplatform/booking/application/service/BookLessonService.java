@@ -9,7 +9,7 @@ import com.tennisplatform.booking.domain.EmailNotVerifiedException;
 import com.tennisplatform.booking.domain.LessonAlreadyStartedException;
 import com.tennisplatform.booking.domain.LessonFullException;
 import com.tennisplatform.booking.domain.LessonNotBookableException;
-import com.tennisplatform.booking.domain.StudentNotManagedException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
@@ -61,7 +61,7 @@ public class BookLessonService implements BookLesson {
         // Checked against the database on every request, not against the token: an access token
         // outlives the deactivation of the student it was issued to by several minutes.
         if (!managedStudents.isManagedBy(lesson.teacherUserId(), studentUserId)) {
-            throw new StudentNotManagedException("The teacher of this lesson does not manage you");
+            throw new ForbiddenOperationException("STUDENT_NOT_MANAGED", "The teacher of this lesson does not manage you");
         }
         if (CANCELLED.equals(lesson.status())) {
             throw new LessonNotBookableException("The lesson was cancelled");

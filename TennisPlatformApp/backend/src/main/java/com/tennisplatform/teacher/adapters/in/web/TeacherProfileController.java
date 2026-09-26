@@ -6,7 +6,7 @@ import com.tennisplatform.teacher.adapters.in.web.TeacherDtos.UpdateTeacherProfi
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileUpdate;
 import com.tennisplatform.teacher.application.port.in.UpdateTeacherProfile;
-import com.tennisplatform.teacher.domain.NotTheTeacherException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +46,7 @@ class TeacherProfileController {
     TeacherProfileResponse update(@AuthenticationPrincipal AuthenticatedUser caller,
                                   @Valid @RequestBody UpdateTeacherProfileRequest request) {
         if (!caller.isTeacher()) {
-            throw new NotTheTeacherException("Only the teacher can change the teacher profile");
+            throw ForbiddenOperationException.teacherOnly("Only the teacher can change the teacher profile");
         }
         return TeacherProfileResponse.from(updateTeacherProfile.update(caller.id(),
                 new TeacherProfileUpdate(request.displayName(), request.phone(),

@@ -1,5 +1,7 @@
 package com.tennisplatform.student.application.port.in;
 
+import com.tennisplatform.shared.domain.ResultPage;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,7 +22,7 @@ public interface GetManagedStudents {
      * email. The partial match is safe here precisely because it never leaves the set of
      * students the teacher already manages.
      */
-    ManagedStudentPage list(UUID teacherUserId, String query, int page, int size);
+    ResultPage<ManagedStudentView> list(UUID teacherUserId, String query, int page, int size);
 
     /**
      * The account with this exact address, if it exists and belongs to a student.

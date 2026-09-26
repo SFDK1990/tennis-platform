@@ -51,7 +51,7 @@ public final class AvailabilitySchedule {
      * that the schedule is stored a day at a time.
      *
      * <p>Each day rescans the whole exception list rather than reading from a map built once,
-     * which is quadratic on paper. It is left that way on purpose: {@link AvailabilityDateRange}
+     * which is quadratic on paper. It is left that way on purpose: {@link DateRange}
      * caps a range at {@code MAX_DAYS} and callers hand over only the exceptions of those same
      * days, so both sides of the product are bounded by the same two months. The scan it saves
      * is worth far less than the round trips that loaded the data.

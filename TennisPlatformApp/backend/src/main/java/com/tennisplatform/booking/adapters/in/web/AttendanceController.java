@@ -3,7 +3,7 @@ package com.tennisplatform.booking.adapters.in.web;
 import com.tennisplatform.booking.adapters.in.web.BookingDtos.BookingResponse;
 import com.tennisplatform.booking.adapters.in.web.BookingDtos.MarkAttendanceRequest;
 import com.tennisplatform.booking.application.port.in.MarkAttendance;
-import com.tennisplatform.booking.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,7 +33,7 @@ class AttendanceController {
     List<BookingResponse> mark(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id,
                                @Valid @RequestBody MarkAttendanceRequest request) {
         if (!caller.isTeacher()) {
-            throw new TeacherRoleRequiredException("Only the teacher can record attendance");
+            throw ForbiddenOperationException.teacherOnly("Only the teacher can record attendance");
         }
         List<MarkAttendance.Entry> entries = request.entries().stream()
                 .map(entry -> new MarkAttendance.Entry(entry.bookingId(), entry.status()))

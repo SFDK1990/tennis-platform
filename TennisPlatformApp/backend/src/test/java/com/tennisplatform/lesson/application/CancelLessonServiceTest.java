@@ -7,7 +7,7 @@ import com.tennisplatform.lesson.application.service.CancelLessonService;
 import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonType;
-import com.tennisplatform.lesson.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,7 +107,7 @@ class CancelLessonServiceTest {
     @Test
     void refusesACallerWhoIsNotTheTeacher() {
         assertThatThrownBy(() -> service.cancel(UUID.randomUUID(), LESSON_ID))
-                .isInstanceOf(TeacherRoleRequiredException.class);
+                .isInstanceOf(ForbiddenOperationException.class);
 
         verify(lessons, never()).findById(any());
     }

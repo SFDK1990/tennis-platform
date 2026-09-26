@@ -154,7 +154,7 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
         ResponseEntity<Map> response = get(tokenOf(TEACHER_EMAIL, PASSWORD), "2026-01-01", "2026-12-31");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).containsEntry("code", "AVAILABILITY_RANGE_TOO_WIDE");
+        assertThat(response.getBody()).containsEntry("code", "DATE_RANGE_INVALID");
     }
 
     @Test

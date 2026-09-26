@@ -2,7 +2,6 @@ package com.tennisplatform.teacher.adapters.in.web;
 
 import com.tennisplatform.error.Problems;
 import com.tennisplatform.teacher.domain.InvalidTeacherProfileException;
-import com.tennisplatform.teacher.domain.NotTheTeacherException;
 import com.tennisplatform.teacher.domain.TeacherProfileNotFoundException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -32,12 +31,6 @@ class TeacherExceptionHandler {
     ProblemDetail handleNotFound(TeacherProfileNotFoundException e) {
         return Problems.of(HttpStatus.NOT_FOUND, "Teacher profile not found",
                 "There is no teacher profile yet.", "TEACHER_PROFILE_NOT_FOUND");
-    }
-
-    @ExceptionHandler(NotTheTeacherException.class)
-    ProblemDetail handleNotTheTeacher(NotTheTeacherException e) {
-        return Problems.of(HttpStatus.FORBIDDEN, "Not allowed",
-                "Only the teacher can change this profile.", "TEACHER_FORBIDDEN");
     }
 
     @ExceptionHandler(InvalidTeacherProfileException.class)

@@ -10,7 +10,7 @@ import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonInThePastException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
 import com.tennisplatform.lesson.domain.LessonOverlapException;
-import com.tennisplatform.lesson.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.platform.application.port.in.GetMaxGroupCapacity;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
@@ -131,7 +131,7 @@ class ScheduleLessonServiceTest {
     @Test
     void refusesACallerWhoIsNotTheTeacher() {
         assertThatThrownBy(() -> service.schedule(UUID.randomUUID(), request(1, false)))
-                .isInstanceOf(TeacherRoleRequiredException.class);
+                .isInstanceOf(ForbiddenOperationException.class);
 
         verify(availability, never()).covers(any(), any(), any());
     }

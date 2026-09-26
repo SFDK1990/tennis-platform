@@ -1,6 +1,6 @@
 package com.tennisplatform.availability.application.service;
 
-import com.tennisplatform.availability.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 
 import java.util.UUID;
@@ -31,7 +31,7 @@ class TeacherSchedules {
      */
     void requireTheTeacher(UUID callerId) {
         if (teacherProfile.byUserId(callerId).isEmpty()) {
-            throw new TeacherRoleRequiredException("Only the teacher can change the availability");
+            throw ForbiddenOperationException.teacherOnly("Only the teacher can change the availability");
         }
     }
 }

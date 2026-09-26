@@ -1,6 +1,6 @@
 package com.tennisplatform.lesson.application.service;
 
-import com.tennisplatform.lesson.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 
@@ -38,7 +38,7 @@ class TeacherLessons {
      */
     ZoneId requireTheTeacher(UUID callerId) {
         TeacherProfileView profile = teacherProfile.byUserId(callerId)
-                .orElseThrow(() -> new TeacherRoleRequiredException(
+                .orElseThrow(() -> ForbiddenOperationException.teacherOnly(
                         "Only the teacher can manage lessons"));
         return ZoneId.of(profile.timezone());
     }

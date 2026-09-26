@@ -8,8 +8,6 @@ import com.tennisplatform.lesson.domain.LessonInThePastException;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
 import com.tennisplatform.lesson.domain.LessonOverlapException;
-import com.tennisplatform.lesson.domain.LessonRangeTooWideException;
-import com.tennisplatform.lesson.domain.TeacherRoleRequiredException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -68,20 +66,9 @@ class LessonExceptionHandler {
         return Problems.of(HttpStatus.BAD_REQUEST, "Invalid lesson", e.getMessage(), "LESSON_INVALID");
     }
 
-    @ExceptionHandler(LessonRangeTooWideException.class)
-    ProblemDetail handleRangeTooWide(LessonRangeTooWideException e) {
-        return Problems.of(HttpStatus.BAD_REQUEST, "Range too wide", e.getMessage(),
-                "LESSON_RANGE_TOO_WIDE");
-    }
-
     @ExceptionHandler(LessonNotFoundException.class)
     ProblemDetail handleNotFound(LessonNotFoundException e) {
         return Problems.of(HttpStatus.NOT_FOUND, "Lesson not found", e.getMessage(), "LESSON_NOT_FOUND");
     }
 
-    @ExceptionHandler(TeacherRoleRequiredException.class)
-    ProblemDetail handleNotTheTeacher(TeacherRoleRequiredException e) {
-        return Problems.of(HttpStatus.FORBIDDEN, "Only the teacher can do this", e.getMessage(),
-                "TEACHER_FORBIDDEN");
-    }
 }

@@ -4,7 +4,7 @@ import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.identity.application.port.in.UserSummary;
 import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.ManagedStudentDetailView;
-import com.tennisplatform.student.application.port.in.ManagedStudentPage;
+import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentLookupView;
@@ -59,7 +59,7 @@ public class GetManagedStudentsService implements GetManagedStudents, QueryManag
 
     @Override
     @Transactional(readOnly = true)
-    public ManagedStudentPage list(UUID teacherUserId, String query, int page, int size) {
+    public ResultPage<ManagedStudentView> list(UUID teacherUserId, String query, int page, int size) {
         List<ManagedStudent> managed = relationships.findAllByTeacher(teacherUserId).stream()
                 .filter(ManagedStudent::isManaged)
                 .toList();
@@ -78,7 +78,7 @@ public class GetManagedStudentsService implements GetManagedStudents, QueryManag
                 .limit(size)
                 .toList();
 
-        return new ManagedStudentPage(items, page, size, matching.size());
+        return new ResultPage<ManagedStudentView>(items, page, size, matching.size());
     }
 
     /**

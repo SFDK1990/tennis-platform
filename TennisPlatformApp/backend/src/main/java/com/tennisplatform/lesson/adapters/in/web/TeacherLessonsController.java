@@ -8,7 +8,7 @@ import com.tennisplatform.lesson.application.port.in.CancelLesson;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.NewLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
-import com.tennisplatform.lesson.domain.TeacherRoleRequiredException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -77,7 +77,7 @@ class TeacherLessonsController {
 
     private static void requireTeacher(AuthenticatedUser caller) {
         if (caller == null || !caller.isTeacher()) {
-            throw new TeacherRoleRequiredException("Only the teacher can manage lessons");
+            throw ForbiddenOperationException.teacherOnly("Only the teacher can manage lessons");
         }
     }
 }

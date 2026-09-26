@@ -6,7 +6,7 @@ import com.tennisplatform.booking.application.port.in.BookLesson;
 import com.tennisplatform.booking.application.port.in.BookingView;
 import com.tennisplatform.booking.application.port.in.CancelBooking;
 import com.tennisplatform.booking.application.port.in.GetBookings;
-import com.tennisplatform.booking.domain.RoleNotAllowedException;
+import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,7 +44,7 @@ class BookingsController {
     @ResponseStatus(HttpStatus.CREATED)
     BookingResponse book(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id) {
         if (!caller.isStudent()) {
-            throw new RoleNotAllowedException("Only a student can book a seat in a lesson");
+            throw ForbiddenOperationException.roleNotAllowed("Only a student can book a seat in a lesson");
         }
         return BookingResponse.from(bookLesson.book(caller.id(), caller.emailVerified(), id));
     }
@@ -64,7 +64,7 @@ class BookingsController {
             return BookingPageResponse.from(
                     getBookings.forTeacher(caller.id(), lessonId, status, safePage, safeSize));
         }
-        throw new RoleNotAllowedException("Bookings are listed for a student or for the teacher");
+        throw ForbiddenOperationException.roleNotAllowed("Bookings are listed for a student or for the teacher");
     }
 
     @PostMapping("/bookings/{id}/cancel")
@@ -77,7 +77,7 @@ class BookingsController {
         } else if (caller.isAdmin()) {
             cancelled = cancelBooking.asAdmin(id);
         } else {
-            throw new RoleNotAllowedException("This account cannot cancel bookings");
+            throw ForbiddenOperationException.roleNotAllowed("This account cannot cancel bookings");
         }
         return BookingResponse.from(cancelled);
     }
