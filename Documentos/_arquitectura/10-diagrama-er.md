@@ -275,7 +275,27 @@ CREATE INDEX ix_lessons_status ON lessons (status);
 
 La regla "no cruza medianoche" depende de la zona horaria local del profesor (la columna `starts_at`/`ends_at` guarda instantes UTC), así que se valida en la capa de aplicación al convertir a hora local, no como `CHECK` de base de datos.
 
-`version` soporta bloqueo optimista adicional a nivel de aplicación; el bloqueo pesimista real de la reserva (`SELECT ... FOR UPDATE`) sigue siendo el mecanismo principal descrito en `02-arquitectura.md` §11.
+`version` soporta bloqueo optimista adicional a nivel de aplicación; el bloqueo pesimista real de la reserva (`SELECT ... FOR UPDATE`) sigue siendo el mecanismo principal descrito en `02-arquitectura.md` §11. La columna existe desde la Fase 8 pero **no se mapea todavía**: la Fase 9 es la que le da sentido, y arrastrar un número que nadie lee sólo invita a creer que hace algo.
+
+**Corrección de la Fase 8 — `status` guarda dos valores, no cuatro.** El `CHECK` real es
+`status IN ('OPEN','CANCELLED')`, y la tabla gana una columna `cancelled_at` ligada a él por
+`CHECK ((status = 'CANCELLED') = (cancelled_at IS NOT NULL))`. `FULL` y `COMPLETED` se derivan
+al leer. El motivo es que ninguno de los dos puede mantenerse honesto como columna: `FULL`
+significa "no quedan plazas", que sólo `booking` puede contar, así que habría que escribirlo
+desde allí y mantenerlo en paz con el recuento real — el día que discrepen, la clase no falla,
+miente. `COMPLETED` es un hecho sobre el reloj, y derivarlo evita un proceso programado que el
+MVP no tiene. La columna guarda sólo lo que decidió una persona. Razonamiento completo en
+`19-fase8-analisis-lesson.md`.
+
+Por el mismo criterio **no hay columna `cancelled_within_window`**: si la cancelación dejó menos
+de 24 horas es `cancelled_at` restado de `starts_at`, y escribirlo sería una segunda copia de
+una resta.
+
+**La Fase 8 añade también `platform_configuration.max_group_capacity`** (`INT NOT NULL DEFAULT 8
+CHECK (> 0)`), el tope de plazas de una clase grupal. Hasta entonces la única regla era
+`capacity > 0`, así que un error de tecleo podía crear una clase de diez mil plazas sobre una
+única pista. Vive en la configuración y no en el código porque el día que el número esté mal, lo
+estará para todas las clases a la vez.
 
 ## Changelog 6 — booking
 

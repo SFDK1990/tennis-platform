@@ -43,7 +43,9 @@ Criterio de salida: el profesor puede definir su disponibilidad semanal y excepc
 
 ## Fase 4 — `lesson`
 
-- Creación de clases individuales y grupales, validación de duración (múltiplo de 30, no cruza medianoche), validación contra disponibilidad (con override explícito del profesor), estados (`OPEN`, `FULL`, `CANCELLED`, `COMPLETED`).
+- Creación de clases individuales y grupales, validación de duración (múltiplo de 30, no cruza medianoche), validación contra disponibilidad (con override explícito del profesor), listado por rango y cancelación.
+- Estados `OPEN`, `FULL`, `CANCELLED`, `COMPLETED`, de los cuales **sólo los dos primeros llegan a esta fase y sólo dos se almacenan**: `FULL` necesita contar reservas, que es cosa de `booking`. Ver `19-fase8-analisis-lesson.md`.
+- **La modificación de una clase queda fuera**, aunque este documento la prometía aquí. Cambiar la hora de una clase que ya tiene reservas es una operación que afecta a `booking`, y escribirla antes de que `booking` exista significa escribirla dos veces. Cancelar y volver a crear cubre el caso mientras tanto.
 - Frontend: creación de clase, detalle de clase.
 - Tests: reglas de duración, solapamiento de clases del profesor, override de disponibilidad.
 

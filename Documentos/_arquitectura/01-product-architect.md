@@ -62,7 +62,14 @@ El registro público no equivale a autorización para reservar.
 - Un alumno no puede tener dos clases solapadas.
 - Una reserva confirmada ocupa una plaza.
 - Solo una petición gana la última plaza en una reserva concurrente.
-- Las cancelaciones se permiten hasta 24 horas antes.
+- Las cancelaciones **de una reserva por parte del alumno** se permiten hasta 24 horas antes.
+- **El profesor puede cancelar su propia clase en cualquier momento** (corregido en la Fase 8).
+  La regla decía antes que la ventana de 24 horas ataba a todo el mundo, y leída así dejaba sin
+  salida al profesor que enfermara la noche antes: la única opción habría sido que un ADMIN
+  cancelase por él, y en este MVP el ADMIN no es una persona de guardia, es una cuenta. La
+  ventana existe para proteger al profesor de un hueco que ya no puede llenar, lo que justifica
+  atar al alumno y no al propio profesor. Queda registrado si la cancelación dejó menos de 24
+  horas, para que se pueda avisar a los alumnos afectados.
 - El ADMIN puede cancelar clases o reservas sin respetar la ventana de 24 horas.
 - No existen penalizaciones en el MVP.
 - Desactivar un alumno cancela sus reservas futuras activas.

@@ -1,0 +1,122 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v6-btree-gist-extension
+      author: tennis-platform
+      comment: >-
+        btree_gist is what lets a GiST exclusion constraint mix an equality on a plain column
+        (teacher_user_id) with an overlap on a range. Without it the constraint below cannot be
+        created at all, and the failure arrives at migration time on an empty database rather
+        than as a missing guarantee in production.
+
+        It is a separate changeset from the table on purpose: an extension is a database-wide
+        object, not a lesson one, and the next module that needs a GiST constraint - bookings,
+        in Fase 9 - should find it already there instead of adding a second CREATE EXTENSION.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE EXTENSION IF NOT EXISTS btree_gist;
+      rollback:
+        - sql:
+            sql: SELECT 1
+
+  - changeSet:
+      id: v6-lessons
+      author: tennis-platform
+      comment: >-
+        The teacher's lessons. starts_at and ends_at are instants: a lesson happens at a point
+        in real time, unlike an availability rule, which is wall clock and only becomes an
+        instant once a date is known.
+
+        status holds only OPEN and CANCELLED, not the four values 10-diagrama-er.md specified.
+        FULL and COMPLETED are derived when read, and the reason is that neither can be kept
+        honest as a column. FULL means "no seats left", which only the booking module can know;
+        storing it would mean booking writes it and then has to keep it in step with the real
+        count, and the day the two disagree the lesson does not fail - it says OPEN with no
+        seats, or FULL with one free. COMPLETED is a fact about the clock, and deriving it
+        avoids a scheduled job the MVP does not have. The column therefore holds only what a
+        person decided, and everything derivable is derived. Reasoning in
+        19-fase8-analisis-lesson.md.
+
+        cancelled_within_window is deliberately NOT a column either: whether a cancellation
+        happened inside the 24-hour window is cancelled_at measured against starts_at, and
+        writing it down would be a second copy of a subtraction.
+
+        The duration CHECK enforces "multiple of 30 minutes" on real elapsed time, and together
+        with starts_at < ends_at it also enforces the 30-minute minimum. "Does not cross
+        midnight" is NOT here: midnight is local to the teacher's zone and these columns hold
+        instants, so that rule lives in the application where the zone is known.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE lessons (
+                  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id              UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  type                         VARCHAR(10) NOT NULL CHECK (type IN ('INDIVIDUAL','GROUP')),
+                  starts_at                    TIMESTAMPTZ NOT NULL,
+                  ends_at                      TIMESTAMPTZ NOT NULL,
+                  capacity                     SMALLINT NOT NULL CHECK (capacity > 0),
+                  status                       VARCHAR(20) NOT NULL DEFAULT 'OPEN'
+                                               CHECK (status IN ('OPEN','CANCELLED')),
+                  notes                        TEXT,
+                  created_outside_availability BOOLEAN NOT NULL DEFAULT false,
+                  cancelled_at                 TIMESTAMPTZ,
+                  version                      INT NOT NULL DEFAULT 0,
+                  created_at                   TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  updated_at                   TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  CONSTRAINT ck_lessons_period CHECK (starts_at < ends_at),
+                  CONSTRAINT ck_lessons_individual_capacity
+                      CHECK (type <> 'INDIVIDUAL' OR capacity = 1),
+                  CONSTRAINT ck_lessons_duration_multiple
+                      CHECK (MOD(EXTRACT(EPOCH FROM (ends_at - starts_at))::INT, 1800) = 0),
+                  CONSTRAINT ck_lessons_cancelled_at
+                      CHECK ((status = 'CANCELLED') = (cancelled_at IS NOT NULL))
+              );
+        - sql:
+            dbms: postgresql
+            comment: >-
+              "No overlapping lessons for the teacher", enforced by the schema rather than by
+              the application alone. The application checks first so it can answer 409 with a
+              message that means something, but between that check and the INSERT there is room
+              for another request - the teacher with two tabs open is enough. Cancelled lessons
+              are excluded so the freed slot can be used again, which is exactly what a teacher
+              does right after cancelling.
+            sql: |
+              ALTER TABLE lessons ADD CONSTRAINT ex_lessons_no_teacher_overlap
+                  EXCLUDE USING gist (
+                      teacher_user_id WITH =,
+                      tstzrange(starts_at, ends_at) WITH &&
+                  ) WHERE (status <> 'CANCELLED');
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE INDEX ix_lessons_teacher_starts_at ON lessons (teacher_user_id, starts_at);
+      rollback:
+        - sql:
+            sql: DROP TABLE lessons
+
+  - changeSet:
+      id: v6-platform-max-group-capacity
+      author: tennis-platform
+      comment: >-
+        The cap on how many students a group lesson may hold. Until now capacity only had to be
+        greater than zero, so a typo could create a lesson with ten thousand seats on a court
+        that fits a handful.
+
+        It lives in platform_configuration, beside the student limit, rather than as a constant
+        in code: the day the number is wrong it is wrong for every lesson at once, and changing
+        it should not need a deploy. Eight is a starting value for a single court, not a rule.
+
+        NOT NULL with a default so the existing singleton row is valid the moment this runs;
+        there is no second row to backfill, which is the point of the CHECK (id = 1).
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE platform_configuration
+                  ADD COLUMN max_group_capacity INT NOT NULL DEFAULT 8
+                  CHECK (max_group_capacity > 0);
+      rollback:
+        - sql:
+            sql: ALTER TABLE platform_configuration DROP COLUMN max_group_capacity

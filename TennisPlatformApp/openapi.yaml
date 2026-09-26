@@ -526,13 +526,57 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Lesson" }
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: >-
+            LESSON_INVALID: duracion que no es multiplo de 30, fin antes del inicio, o la clase
+            cruza medianoche en la zona del profesor.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409":
           description: LESSON_OVERLAP
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: >-
+            LESSON_OUTSIDE_AVAILABILITY: la clase cae fuera del horario configurado y no se pidio
+            overrideAvailability. Releer la disponibilidad no cambia la respuesta: o se mueve la
+            clase o se fuerza a proposito.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    get:
+      tags: [lessons]
+      summary: Lista las clases del profesor en un rango de fechas
+      description: >-
+        Anadido en la Fase 8. Sin el, el profesor no tiene forma de ver lo que ha creado hasta
+        que exista /calendar. El rango es obligatorio y no puede superar 62 dias, el mismo tope
+        que la lectura de disponibilidad: dos numeros distintos serian una diferencia que nadie
+        decidio. Las fechas se interpretan en la zona del profesor, porque un dia es una idea
+        local. Incluye las clases canceladas.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonsResponse" }
+        "400":
+          description: "LESSON_RANGE_TOO_WIDE, o fechas mal formadas"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /lessons/{id}:
     get:
@@ -614,7 +658,14 @@ paths:
   /teacher/lessons/{id}/cancel:
     post:
       tags: [lessons]
-      summary: Cancela una clase completa (cancela en cascada sus reservas activas)
+      summary: Cancela una clase completa
+      description: >-
+        El profesor puede cancelar su propia clase en cualquier momento. La ventana de 24 horas
+        NO le ata: un profesor que enferma la noche antes tiene que poder cancelar. La ventana
+        sigue intacta para el alumno que cancela su reserva, que es donde el producto la
+        justifico. La respuesta trae cancelledAtShortNotice para que el cliente sepa si hubo
+        menos de 24 horas de aviso. La cascada sobre las reservas activas llega con la Fase 9:
+        bookings no existe todavia, y lesson no puede escribir en un modulo que depende de el.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -625,8 +676,15 @@ paths:
               schema: { $ref: "#/components/schemas/Lesson" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "LESSON_ALREADY_CANCELLED: ya estaba cancelada, casi siempre una pantalla obsoleta"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "422":
-          description: CANCELLATION_WINDOW_EXPIRED (no aplica si quien cancela es ADMIN)
+          description: >-
+            LESSON_ALREADY_FINISHED: la clase ya termino. Cancelar algo que ya ocurrio es
+            reescribir el pasado.
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -635,6 +693,11 @@ paths:
     post:
       tags: [lessons]
       summary: Marca asistencia de los participantes de una clase
+      description: >-
+        Pendiente hasta la Fase 9. El cuerpo son bookingId y la respuesta son reservas, asi que
+        lo sirve el modulo booking aunque la ruta cuelgue de /teacher/lessons: una ruta no dice
+        que modulo la atiende. lesson no puede implementarlo porque booking depende de lesson y
+        no al reves.
       parameters:
         - $ref: "#/components/parameters/Id"
       requestBody:
@@ -1100,7 +1163,12 @@ components:
         type: { $ref: "#/components/schemas/LessonType" }
         startsAt: { type: string, format: date-time }
         endsAt: { type: string, format: date-time }
-        capacity: { type: integer, minimum: 1 }
+        capacity:
+          type: integer
+          minimum: 1
+          description: >-
+            Una clase INDIVIDUAL tiene capacidad exactamente 1. Una GROUP va de 1 hasta el tope
+            configurado en platform_configuration.max_group_capacity, 8 por defecto.
         notes: { type: string, nullable: true }
         overrideAvailability:
           type: boolean
@@ -1109,6 +1177,19 @@ components:
 
     Lesson:
       type: object
+      description: >-
+        bookedCount se retira hasta la Fase 9: contar plazas ocupadas solo puede hacerlo el
+        modulo booking, que todavia no existe, y responder un cero constante pareceria un dato
+        en vez de la funcionalidad que falta. Es la misma decision que tomo RegisterRequest con
+        fullName en la Fase 5.
+
+        status se calcula al leer y no se guarda. La columna solo tiene OPEN y CANCELLED, que es
+        lo que decide una persona; COMPLETED se deduce del reloj y FULL del numero de reservas.
+        Hasta la Fase 9, FULL no es alcanzable, y eso es correcto en vez de aproximado: sin
+        reservas en el sistema, ninguna clase puede estar llena.
+
+        notes es del profesor. Viaja como null para cualquier otro llamante: es texto libre que
+        el profesor escribe para si mismo, no para que lo lea el alumno.
       properties:
         id: { type: string, format: uuid }
         teacherUserId: { type: string, format: uuid }
@@ -1116,10 +1197,20 @@ components:
         startsAt: { type: string, format: date-time }
         endsAt: { type: string, format: date-time }
         capacity: { type: integer }
-        bookedCount: { type: integer }
         status: { $ref: "#/components/schemas/LessonStatus" }
         notes: { type: string, nullable: true }
         createdOutsideAvailability: { type: boolean }
+        cancelledAt: { type: string, format: date-time, nullable: true }
+        cancelledAtShortNotice:
+          type: boolean
+          description: Si la cancelacion dejo menos de 24 horas. Derivado de cancelledAt y startsAt.
+
+    LessonsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Lesson" }
 
     Booking:
       type: object
@@ -1158,6 +1249,12 @@ components:
       type: object
       properties:
         studentLimit: { type: integer }
+        maxGroupCapacity:
+          type: integer
+          description: >-
+            Tope de plazas de una clase grupal, anadido en la Fase 8. Configurable y no una
+            constante del codigo: el dia que el numero este mal, lo estara para todas las clases
+            a la vez.
         updatedAt: { type: string, format: date-time }
         updatedBy: { type: string, format: uuid, nullable: true }
 

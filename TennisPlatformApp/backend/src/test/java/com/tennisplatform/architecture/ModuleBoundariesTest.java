@@ -97,9 +97,19 @@ class ModuleBoundariesTest {
     static final ArchRule availabilityDependsOnTeacherAndIdentity =
             mayOnlyDependOn("availability", "teacher", "identity");
 
+    /**
+     * 02-arquitectura.md lists {@code lesson -> teacher, availability}, and Fase 8 adds two more
+     * edges that the document did not foresee rather than contradicting it.
+     *
+     * <p>{@code identity} for the reason already written above for {@code availability}: a web
+     * adapter has to know who is calling. {@code platform} because the cap on how large a group
+     * lesson may be is configuration, and configuration is what that module owns - the same way
+     * {@code student} reads the student limit from it. {@code platform} depends on nothing by
+     * design, precisely so that anyone may read it without creating a cycle.
+     */
     @ArchTest
-    static final ArchRule lessonDependsOnTeacherAndAvailability =
-            mayOnlyDependOn("lesson", "teacher", "availability");
+    static final ArchRule lessonDependsOnTeacherAvailabilityIdentityAndPlatform =
+            mayOnlyDependOn("lesson", "teacher", "availability", "identity", "platform");
 
     @ArchTest
     static final ArchRule bookingDependsOnStudentAndLesson =

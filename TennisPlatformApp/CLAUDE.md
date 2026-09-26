@@ -29,6 +29,7 @@ The docs are the source of truth for design decisions; treat them as binding req
 - `16-fase6-analisis-perfiles.md` — Fase 6 analysis (`teacher` and `student` profiles, managed students), plus the decisions taken while implementing it
 - `17-analisis-archunit-limites-modulares.md` — why the module boundary rules look the way they do
 - `18-fase7-analisis-availability.md` — Fase 7 analysis (`availability`), plus the decisions taken while implementing it
+- `19-fase8-analisis-lesson.md` — Fase 8 analysis (`lesson`), plus the decisions taken while implementing it
 
 ## Backend commands
 
@@ -93,7 +94,7 @@ Modules: `identity`, `teacher`, `student`, `availability`, `lesson`, `booking`, 
 - `teacher` → `identity`
 - `student` → `identity`, `teacher`, `platform`
 - `availability` → `teacher`, `identity`
-- `lesson` → `teacher`, `availability`
+- `lesson` → `teacher`, `availability`, `identity`, `platform`
 - `booking` → `student`, `lesson`
 - `administration` → `identity`, `teacher`, `student`, `platform`
 - `calendar` → only public query interfaces of other modules (never writes to another module's domain)
@@ -108,6 +109,8 @@ Cross-module access must go through a module's public ports — never reach into
 
 `web` is exempt from the graph but not unguarded: `theWebEdgeOnlyUsesInboundPorts` lets it call any module's `application/port/in` and nothing else. That is what allows `/me` — which mixes account data from `identity` with the profile owned by `student` or `teacher` — to be composed at the edge instead of forcing one module to reach into another.
 
+`lesson` depends on `identity` for the same reason as `availability` — a web adapter has to know who is calling — and on `platform` because the cap on how large a group lesson may be is configuration, which is what that module owns. `platform` depends on nothing by design, precisely so that anyone may read it without creating a cycle.
+
 `availability` depends on `identity` although `02-arquitectura.md` lists only `teacher`. That document's graph is incomplete rather than wrong: any module with a web adapter has to know who is calling, and that is `identity`'s `AuthenticatedUser`. `teacher` and `student` already depend on identity for exactly this, they just had other reasons too. `lesson` and `booking` will need the same edge when they arrive.
 
 A practical consequence: to check a caller's role from another module, use `AuthenticatedUser.isTeacher()` rather than comparing against `identity.domain.Role` — the comparison imports identity's domain and the rules reject it. The same reasoning is why views carry wire values, not domain types: `UserSummary` reports the role and status as strings, and `TeacherProfileView` reports the time zone as its IANA id.
@@ -118,12 +121,12 @@ A practical consequence: to check a caller's role from another module, use `Auth
 
 These are enforced primarily in the backend/database (frontend validation is UX-only, never authoritative):
 
-- Lesson duration: minimum 30 minutes, must be a multiple of 30, cannot cross midnight.
-- Individual lesson capacity is always 1; group lesson capacity is configurable and can start with a single participant.
+- Lesson duration: minimum 30 minutes, must be a multiple of 30, cannot cross midnight. The first two are measured on real elapsed time (a CHECK in the schema); "cannot cross midnight" is local to the teacher's zone and therefore lives in the application.
+- Individual lesson capacity is always 1; group lesson capacity can start with a single participant and is capped by `platform_configuration.max_group_capacity` (8 by default).
 - No exceeding lesson capacity; no duplicate bookings for the same student+lesson.
 - No overlapping lessons for the teacher; no overlapping bookings for the same student.
 - A student may only book if currently managed by the teacher.
-- Cancellations (student or teacher) are only allowed ≥24 hours before the lesson start; no penalties in the MVP.
+- Cancellations of a **booking by the student** are only allowed ≥24 hours before the lesson start; no penalties in the MVP. The **teacher may cancel their own lesson at any notice** (corrected in Fase 8): the window protects the teacher from a gap they can no longer fill, which is no reason to bind the teacher themselves, and as written a teacher who fell ill the night before could not cancel. Whether it happened at short notice is recorded.
 - Deactivating a student cancels their active future bookings.
 - The teacher may create lessons outside configured availability only via an explicit override action.
 - Booking the last available slot must be safe under concurrency — this requires transactional locking plus PostgreSQL constraints, not just application-level checks (see "last slot" race in `07-qa-test-engineer.md`).
