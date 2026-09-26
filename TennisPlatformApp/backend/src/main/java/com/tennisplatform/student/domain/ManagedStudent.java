@@ -8,19 +8,16 @@ import java.util.UUID;
  *
  * <p>A student may only book while this exists and is {@link ManagedStatus#MANAGED}
  * (01-product-architect.md), so this object - not a role, not a flag on the account - is what
- * gates booking from Fase 9 on.
+ * gates booking.
  *
  * <p>Deactivating never deletes the row. Two reasons: the history of who was managed when is
  * worth keeping, and the unique index on the pair turns "take them back" into a reactivation
  * of this same row instead of a second relationship that both sides would then have to
  * reconcile.
  *
- * <h2>Known debt, with an owner</h2>
- * The rule in 01-product-architect.md says deactivating a student cancels their active future
- * bookings. The {@code booking} module does not exist until Fase 9, so deactivation here only
- * flips the status and stamps {@code deactivatedAt}. <strong>Fase 9 must close this</strong>,
- * and its exit criterion has to include a test proving that deactivation cancels future
- * bookings. It is written here rather than as a bare TODO so the debt has an address.
+ * <p>Deactivating also cancels the student's upcoming bookings with this teacher, as
+ * 01-product-architect.md requires. That happens in {@code ManageStudentService} through {@code
+ * StudentBookings}, not here: this object knows nothing about bookings, and should not.
  */
 public class ManagedStudent {
 

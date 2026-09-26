@@ -3,6 +3,8 @@ package com.tennisplatform.lesson.application.service;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
+import com.tennisplatform.lesson.application.port.spi.LessonBookings;
+import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonDateRange;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
@@ -12,17 +14,22 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class GetLessonService implements GetLesson {
 
     private final LessonRepository lessons;
+    private final LessonBookings bookings;
     private final TeacherLessons teacher;
     private final Clock clock;
 
-    public GetLessonService(LessonRepository lessons, GetTeacherProfile teacherProfile, Clock clock) {
+    public GetLessonService(LessonRepository lessons, LessonBookings bookings,
+                            GetTeacherProfile teacherProfile, Clock clock) {
         this.lessons = lessons;
+        this.bookings = bookings;
         this.teacher = new TeacherLessons(teacherProfile);
         this.clock = clock;
     }
@@ -36,10 +43,18 @@ public class GetLessonService implements GetLesson {
     @Override
     @Transactional(readOnly = true)
     public LessonView byId(UUID id) {
-        Instant now = clock.instant();
-        return lessons.findById(id)
-                .map(lesson -> LessonView.from(lesson, now))
+        Lesson lesson = lessons.findById(id)
                 .orElseThrow(() -> new LessonNotFoundException("No lesson with id " + id));
+        return viewsOf(List.of(lesson)).get(0);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LessonView> byIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return viewsOf(lessons.findAllById(ids));
     }
 
     /**
@@ -59,10 +74,15 @@ public class GetLessonService implements GetLesson {
 
         Instant start = range.from().atStartOfDay(zone).toInstant();
         Instant end = range.to().plusDays(1).atStartOfDay(zone).toInstant();
-        Instant now = clock.instant();
+        return viewsOf(lessons.findByTeacherBetween(teacherUserId, start, end));
+    }
 
-        return lessons.findByTeacherBetween(teacherUserId, start, end).stream()
-                .map(lesson -> LessonView.from(lesson, now))
+    /** One count for the whole batch, however many lessons it holds. */
+    private List<LessonView> viewsOf(List<Lesson> found) {
+        Instant now = clock.instant();
+        Map<UUID, Integer> booked = bookings.countConfirmed(found.stream().map(Lesson::id).toList());
+        return found.stream()
+                .map(lesson -> LessonView.from(lesson, now, booked.getOrDefault(lesson.id(), 0)))
                 .toList();
     }
 }

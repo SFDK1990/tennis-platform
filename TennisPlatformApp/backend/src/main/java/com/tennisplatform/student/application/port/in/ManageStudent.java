@@ -20,9 +20,8 @@ public interface ManageStudent {
      * Stops managing a student: the relationship goes INACTIVE and the moment is recorded. The
      * row survives, so the student can be taken back later without a second relationship.
      *
-     * <p><strong>It does not cancel their future bookings</strong>, which the rule in
-     * 01-product-architect.md requires, because {@code booking} does not exist until Fase 9.
-     * That phase must close the debt and prove it with a test; see {@code ManagedStudent}.
+     * <p>Their upcoming bookings with this teacher are cancelled in the same transaction, as
+     * 01-product-architect.md requires. Bookings of lessons that already started are kept.
      */
     void stopManaging(UUID teacherUserId, UUID studentUserId);
 }

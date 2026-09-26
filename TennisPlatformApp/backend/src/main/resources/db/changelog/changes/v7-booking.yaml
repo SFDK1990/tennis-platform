@@ -1,0 +1,80 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v7-bookings
+      author: tennis-platform
+      comment: >-
+        A student's seat in a lesson. Reasoning in 20-fase9-analisis-booking.md.
+
+        status and attendance are two columns, not the single status 10-diagrama-er.md
+        specified. Folding ATTENDED and NO_SHOW into status would make a marked booking stop
+        being CONFIRMED, and every guarantee below filters on status = 'CONFIRMED': the unique
+        index would let the student book the same lesson again, the exclusion constraint would
+        free their time, and the seat count would drop. Whether a booking stands and whether the
+        student came are two facts, and each gets its column.
+
+        lesson_starts_at and lesson_ends_at copy the lesson's instants because an exclusion
+        constraint cannot join lessons. The copy is safe only because a lesson's time cannot be
+        changed; whatever operation changes it one day has to update these rows in the same
+        transaction. teacher_user_id is copied for the same reason and with the same safety: a
+        lesson never changes teacher, and every teacher-side query filters on it.
+
+        There is no capacity trigger, although 10-diagrama-er.md suggested one as optional. The
+        only path that adds a confirmed booking locks the lesson row first, and the concurrency
+        test is what proves it; a trigger would restate the rule in PL/pgSQL, and of two copies
+        the one nobody reads is the one that drifts.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE bookings (
+                  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  lesson_id         UUID NOT NULL REFERENCES lessons(id),
+                  teacher_user_id   UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  student_user_id   UUID NOT NULL REFERENCES student_profiles(user_id),
+                  status            VARCHAR(30) NOT NULL DEFAULT 'CONFIRMED' CHECK (status IN (
+                                        'CONFIRMED','CANCELLED_BY_STUDENT','CANCELLED_BY_TEACHER',
+                                        'CANCELLED_BY_ADMIN')),
+                  attendance        VARCHAR(10) NOT NULL DEFAULT 'PENDING'
+                                    CHECK (attendance IN ('PENDING','ATTENDED','NO_SHOW')),
+                  lesson_starts_at  TIMESTAMPTZ NOT NULL,
+                  lesson_ends_at    TIMESTAMPTZ NOT NULL,
+                  booked_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  cancelled_at      TIMESTAMPTZ,
+                  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+                  CONSTRAINT ck_bookings_period CHECK (lesson_starts_at < lesson_ends_at),
+                  CONSTRAINT ck_bookings_cancelled_at
+                      CHECK ((status = 'CONFIRMED') = (cancelled_at IS NULL))
+              );
+        - sql:
+            dbms: postgresql
+            comment: >-
+              "No duplicate bookings": one confirmed booking per student and lesson. Partial, so a
+              student who cancelled can book the same lesson again.
+            sql: |
+              CREATE UNIQUE INDEX ux_bookings_active_pair
+                  ON bookings (lesson_id, student_user_id) WHERE status = 'CONFIRMED';
+        - sql:
+            dbms: postgresql
+            comment: >-
+              "A student cannot have two overlapping lessons", enforced by the schema. The
+              application checks first so it can answer 409 with a useful message, but the lock
+              on the lesson serialises bookings of one lesson, not the same student booking two
+              different lessons at once - that race is this constraint's to stop. btree_gist was
+              created by the v6-lesson changelog.
+            sql: |
+              ALTER TABLE bookings ADD CONSTRAINT ex_bookings_no_student_overlap
+                  EXCLUDE USING gist (
+                      student_user_id WITH =,
+                      tstzrange(lesson_starts_at, lesson_ends_at) WITH &&
+                  ) WHERE (status = 'CONFIRMED');
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE INDEX ix_bookings_lesson_status ON bookings (lesson_id, status);
+              CREATE INDEX ix_bookings_student_starts_at ON bookings (student_user_id, lesson_starts_at);
+              CREATE INDEX ix_bookings_teacher_starts_at ON bookings (teacher_user_id, lesson_starts_at);
+      rollback:
+        - sql:
+            sql: DROP TABLE bookings

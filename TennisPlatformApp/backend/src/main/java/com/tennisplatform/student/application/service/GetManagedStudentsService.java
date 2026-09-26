@@ -6,6 +6,7 @@ import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.ManagedStudentDetailView;
 import com.tennisplatform.student.application.port.in.ManagedStudentPage;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
+import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentLookupView;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
  * this service reads that bounded set. If the limit ever grows into the thousands, this is the
  * place that has to change - and it will change here, not everywhere.
  */
-public class GetManagedStudentsService implements GetManagedStudents {
+public class GetManagedStudentsService implements GetManagedStudents, QueryManagedStudent {
 
     private final ManagedStudentRepository relationships;
     private final StudentProfileRepository profiles;
@@ -46,6 +47,14 @@ public class GetManagedStudentsService implements GetManagedStudents {
         this.relationships = relationships;
         this.profiles = profiles;
         this.accounts = accounts;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isManagedBy(UUID teacherUserId, UUID studentUserId) {
+        return relationships.findByPair(teacherUserId, studentUserId)
+                .map(ManagedStudent::isManaged)
+                .orElse(false);
     }
 
     @Override

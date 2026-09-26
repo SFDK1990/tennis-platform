@@ -1,14 +1,27 @@
 package com.tennisplatform.lesson.adapters.out.persistence;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 interface LessonJpaRepository extends JpaRepository<LessonEntity, UUID> {
+
+    /**
+     * {@code SELECT ... FOR UPDATE}. A pessimistic lock rather than an optimistic one because
+     * the contended case is the normal one here - two students after the last seat - and an
+     * optimistic lock would turn every such race into a failed write that has to be retried or
+     * translated, instead of simply making the second request wait its turn.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select l from LessonEntity l where l.id = :id")
+    Optional<LessonEntity> findByIdForUpdate(@Param("id") UUID id);
 
     /**
      * Everything that touches the interval, cancelled lessons included: the listing shows what

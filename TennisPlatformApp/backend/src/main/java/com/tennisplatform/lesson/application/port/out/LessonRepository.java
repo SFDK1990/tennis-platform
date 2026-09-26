@@ -3,6 +3,7 @@ package com.tennisplatform.lesson.application.port.out;
 import com.tennisplatform.lesson.domain.Lesson;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +21,11 @@ public interface LessonRepository {
     Lesson save(Lesson lesson);
 
     Optional<Lesson> findById(UUID id);
+
+    /** Reads the lesson with {@code SELECT ... FOR UPDATE}; the lock lasts until the transaction ends. */
+    Optional<Lesson> findByIdForUpdate(UUID id);
+
+    List<Lesson> findAllById(Collection<UUID> ids);
 
     /** The teacher's lessons that touch the interval, cancelled ones included, earliest first. */
     List<Lesson> findByTeacherBetween(UUID teacherUserId, Instant from, Instant to);

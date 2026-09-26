@@ -6,6 +6,7 @@ import com.tennisplatform.platform.application.port.in.GetStudentLimit;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
+import com.tennisplatform.student.application.port.spi.StudentBookings;
 import com.tennisplatform.student.application.service.ManageStudentService;
 import com.tennisplatform.student.domain.ManagedStatus;
 import com.tennisplatform.student.domain.ManagedStudent;
@@ -45,6 +46,7 @@ class ManageStudentServiceTest {
     private StudentProfileRepository profiles;
     private FindUserAccounts accounts;
     private GetStudentLimit studentLimit;
+    private StudentBookings bookings;
     private ManageStudentService service;
 
     @BeforeEach
@@ -53,7 +55,8 @@ class ManageStudentServiceTest {
         profiles = mock(StudentProfileRepository.class);
         accounts = mock(FindUserAccounts.class);
         studentLimit = mock(GetStudentLimit.class);
-        service = new ManageStudentService(relationships, profiles, accounts, studentLimit,
+        bookings = mock(StudentBookings.class);
+        service = new ManageStudentService(relationships, profiles, accounts, studentLimit, bookings,
                 Clock.fixed(NOW, ZoneOffset.UTC));
 
         when(accounts.byIds(List.of(STUDENT_ID))).thenReturn(Map.of(STUDENT_ID,
@@ -152,6 +155,19 @@ class ManageStudentServiceTest {
     void stoppingToManageSomebodyNeverManagedIsRefused() {
         assertThatThrownBy(() -> service.stopManaging(TEACHER_ID, STUDENT_ID))
                 .isInstanceOf(StudentNotManagedException.class);
+
+        verify(bookings, never()).cancelUpcomingWith(any(), any(), any());
+    }
+
+    /** Criterion of Fase 9: letting a student go cancels their upcoming bookings with this teacher. */
+    @Test
+    void stoppingToManageCancelsTheStudentsUpcomingBookingsWithThisTeacher() {
+        when(relationships.findByPair(TEACHER_ID, STUDENT_ID))
+                .thenReturn(Optional.of(ManagedStudent.take(TEACHER_ID, STUDENT_ID, NOW)));
+
+        service.stopManaging(TEACHER_ID, STUDENT_ID);
+
+        verify(bookings).cancelUpcomingWith(TEACHER_ID, STUDENT_ID, NOW);
     }
 
     @Test

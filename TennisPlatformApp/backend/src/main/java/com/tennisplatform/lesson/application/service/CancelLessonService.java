@@ -3,6 +3,7 @@ package com.tennisplatform.lesson.application.service;
 import com.tennisplatform.lesson.application.port.in.CancelLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
+import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
@@ -15,11 +16,14 @@ import java.util.UUID;
 public class CancelLessonService implements CancelLesson {
 
     private final LessonRepository lessons;
+    private final LessonBookings bookings;
     private final TeacherLessons teacher;
     private final Clock clock;
 
-    public CancelLessonService(LessonRepository lessons, GetTeacherProfile teacherProfile, Clock clock) {
+    public CancelLessonService(LessonRepository lessons, LessonBookings bookings,
+                               GetTeacherProfile teacherProfile, Clock clock) {
         this.lessons = lessons;
+        this.bookings = bookings;
         this.teacher = new TeacherLessons(teacherProfile);
         this.clock = clock;
     }
@@ -39,7 +43,12 @@ public class CancelLessonService implements CancelLesson {
         }
 
         Instant now = clock.instant();
-        return LessonView.from(lessons.save(lesson.cancel(now)), now);
+        Lesson cancelled = lessons.save(lesson.cancel(now));
+
+        // Same transaction on purpose: if the bookings cannot be cancelled, the lesson is not
+        // cancelled either, and nobody is left holding a seat in a lesson that no longer runs.
+        bookings.cancelAllOf(cancelled.id(), now);
+        return LessonView.from(cancelled, now, 0);
     }
 
     private static LessonNotFoundException notFound(UUID lessonId) {

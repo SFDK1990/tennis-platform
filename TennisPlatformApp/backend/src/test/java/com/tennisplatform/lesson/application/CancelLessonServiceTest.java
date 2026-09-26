@@ -2,6 +2,7 @@ package com.tennisplatform.lesson.application;
 
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
+import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.application.service.CancelLessonService;
 import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
@@ -37,6 +38,7 @@ class CancelLessonServiceTest {
     private static final Instant NOW = STARTS.minusSeconds(10 * 3600);
 
     private LessonRepository lessons;
+    private LessonBookings bookings;
     private CancelLessonService service;
 
     @BeforeEach
@@ -48,7 +50,9 @@ class CancelLessonServiceTest {
                 new TeacherProfileView(TEACHER_ID, "The teacher", null, "Europe/Madrid")));
         when(lessons.save(any())).thenAnswer(call -> call.getArgument(0));
 
-        service = new CancelLessonService(lessons, teacherProfile, Clock.fixed(NOW, ZoneOffset.UTC));
+        bookings = mock(LessonBookings.class);
+        service = new CancelLessonService(lessons, bookings, teacherProfile,
+                Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     /**
@@ -65,6 +69,16 @@ class CancelLessonServiceTest {
         assertThat(cancelled.status()).isEqualTo("CANCELLED");
         assertThat(cancelled.cancelledAt()).isEqualTo(NOW);
         assertThat(cancelled.cancelledAtShortNotice()).isTrue();
+    }
+
+    /** The cascade runs inside the same use case, with the same instant, so nothing can separate the two. */
+    @Test
+    void cancellingALessonCancelsItsBookingsAtTheSameInstant() {
+        when(lessons.findById(LESSON_ID)).thenReturn(Optional.of(lessonOf(TEACHER_ID)));
+
+        service.cancel(TEACHER_ID, LESSON_ID);
+
+        verify(bookings).cancelAllOf(LESSON_ID, NOW);
     }
 
     @Test

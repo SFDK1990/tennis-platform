@@ -72,6 +72,6 @@ public class ScheduleLessonService implements ScheduleLesson {
         Lesson lesson = Lesson.create(teacherUserId, type, period, request.capacity(),
                 request.notes(), !covered, zone, maxGroupCapacity);
 
-        return LessonView.from(lessons.save(lesson), now);
+        return LessonView.from(lessons.save(lesson), now, 0);
     }
 }

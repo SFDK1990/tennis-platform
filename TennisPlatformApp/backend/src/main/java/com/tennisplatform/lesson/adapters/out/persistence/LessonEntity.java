@@ -60,9 +60,11 @@ class LessonEntity {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
-    // The "version" column exists in the schema and is deliberately not mapped yet. Fase 9 adds
-    // the optimistic locking that gives it meaning, together with the SELECT ... FOR UPDATE that
-    // protects the last seat; mapping it now would only mean carrying a number nothing reads.
+    // The "version" column exists in the schema and is deliberately not mapped. Fase 8 expected
+    // Fase 9 to bring optimistic locking with it, and Fase 9 decided against it: the last seat is
+    // protected by a SELECT ... FOR UPDATE on this row, and an optimistic lock on top would add a
+    // second failure path - OptimisticLockException - without protecting anything the pessimistic
+    // one does not. See 20-fase9-analisis-booking.md.
 
     protected LessonEntity() {
     }

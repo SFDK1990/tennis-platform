@@ -29,4 +29,12 @@ public record AuthenticatedUser(UUID id, Role role, boolean emailVerified) {
     public boolean isTeacher() {
         return role == Role.TEACHER;
     }
+
+    public boolean isStudent() {
+        return role == Role.STUDENT;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
 }

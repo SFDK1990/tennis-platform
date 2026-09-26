@@ -112,9 +112,17 @@ class ModuleBoundariesTest {
     static final ArchRule lessonDependsOnTeacherAvailabilityIdentityAndPlatform =
             mayOnlyDependOn("lesson", "teacher", "availability", "identity", "platform");
 
+    /**
+     * 02-arquitectura.md lists {@code booking -> student, lesson}. {@code identity} is added for
+     * the reason written above for {@code availability}: a web adapter has to know who is calling.
+     *
+     * <p>{@code lesson} and {@code student} also call into {@code booking} at run time - to count
+     * seats and to cascade cancellations - but not at compile time: they declare the interface in
+     * their own spi package and this module implements it. See {@link PublicPorts}.
+     */
     @ArchTest
-    static final ArchRule bookingDependsOnStudentAndLesson =
-            mayOnlyDependOn("booking", "student", "lesson");
+    static final ArchRule bookingDependsOnStudentLessonAndIdentity =
+            mayOnlyDependOn("booking", "student", "lesson", "identity");
 
     @ArchTest
     static final ArchRule administrationDependsOnIdentityTeacherAndStudent =
