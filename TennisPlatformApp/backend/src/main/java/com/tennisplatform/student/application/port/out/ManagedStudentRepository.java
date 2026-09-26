@@ -22,5 +22,8 @@ public interface ManagedStudentRepository {
     /** How many students this teacher currently manages, for the platform limit. */
     long countManagedBy(UUID teacherUserId);
 
+    /** The teachers with an active relationship to this student. */
+    List<UUID> findManagingTeachers(UUID studentUserId);
+
     ManagedStudent save(ManagedStudent relationship);
 }

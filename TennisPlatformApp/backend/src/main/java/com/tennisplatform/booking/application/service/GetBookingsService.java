@@ -9,6 +9,8 @@ import com.tennisplatform.booking.domain.BookingStatus;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public class GetBookingsService implements GetBookings {
@@ -26,6 +28,17 @@ public class GetBookingsService implements GetBookings {
     public ResultPage<BookingView> forStudent(UUID studentUserId, String status, int page, int size) {
         Slice slice = bookings.findForStudent(studentUserId, BookingStatus.filter(status), page, size);
         return new ResultPage<BookingView>(views.of(slice.items()), page, size, slice.total());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingView> ofStudentInLessons(UUID studentUserId, Collection<UUID> lessonIds) {
+        if (lessonIds.isEmpty()) {
+            return List.of();
+        }
+        return bookings.findByStudentInLessons(studentUserId, lessonIds).stream()
+                .map(booking -> BookingView.from(booking, null))
+                .toList();
     }
 
     /**

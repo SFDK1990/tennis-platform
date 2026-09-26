@@ -15,4 +15,6 @@ interface ManagedStudentJpaRepository extends JpaRepository<ManagedStudentEntity
     List<ManagedStudentEntity> findAllByTeacherUserIdOrderByManagedAtAsc(UUID teacherUserId);
 
     long countByTeacherUserIdAndStatus(UUID teacherUserId, ManagedStatus status);
+
+    List<ManagedStudentEntity> findAllByStudentUserIdAndStatus(UUID studentUserId, ManagedStatus status);
 }
