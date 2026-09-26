@@ -141,6 +141,24 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /auth/verification-email:
+    post:
+      tags: [auth]
+      summary: Reenvía el enlace de verificación al usuario autenticado
+      description: >-
+        Para quien perdió el correo o dejó caducar el enlace. Se pide con sesión, nunca por
+        dirección: aceptar un email permitiría inundar el buzón de otro. Cuelga de /auth para
+        que le aplique el límite por IP. Los enlaces anteriores siguen valiendo hasta caducar.
+      responses:
+        "202":
+          description: Enviado, o nada que enviar porque la dirección ya estaba verificada
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429":
+          description: Demasiados intentos desde la misma IP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
   /auth/forgot-password:
     post:
       tags: [auth]
@@ -956,6 +974,15 @@ components:
           description: Código de negocio, ver 11-contrato-api.md
           example: LESSON_FULL
         instance: { type: string }
+        errors:
+          type: array
+          description: Solo en VALIDATION_ERROR de un cuerpo, un elemento por campo rechazado
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
 
     Role:
       type: string
@@ -985,6 +1012,7 @@ components:
 
     UserSummary:
       type: object
+      required: [id, email, role, status]
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email }
@@ -1011,6 +1039,7 @@ components:
 
     LoginResponse:
       type: object
+      required: [accessToken, accessTokenExpiresAt, user]
       properties:
         accessToken: { type: string }
         accessTokenExpiresAt: { type: string, format: date-time }
@@ -1018,6 +1047,7 @@ components:
 
     AccessTokenResponse:
       type: object
+      required: [accessToken, accessTokenExpiresAt]
       properties:
         accessToken: { type: string }
         accessTokenExpiresAt: { type: string, format: date-time }
@@ -1043,6 +1073,7 @@ components:
 
     MeResponse:
       type: object
+      required: [id, email, role, status, emailVerifiedAt, fullName, phone, nationalId, address, displayName, timezone]
       description: >-
         Forma única para todos los roles: los campos que no aplican llegan a `null`. Un alumno
         recién verificado que aún no ha rellenado sus datos recibe `fullName`, `phone`,
@@ -1080,6 +1111,7 @@ components:
 
     TeacherProfile:
       type: object
+      required: [userId, displayName, phone, timezone]
       properties:
         userId: { type: string, format: uuid }
         displayName: { type: string }
@@ -1095,6 +1127,7 @@ components:
 
     StudentSummary:
       type: object
+      required: [userId, fullName, email, managedStatus, managedAt]
       properties:
         userId: { type: string, format: uuid }
         fullName: { type: string }
@@ -1104,6 +1137,7 @@ components:
 
     StudentLookup:
       type: object
+      required: [userId, email, fullName, managedStatus]
       description: >-
         Lo mínimo para confirmar a quién se va a asociar. Sin teléfono, DNI ni dirección.
       properties:
@@ -1118,6 +1152,7 @@ components:
 
     StudentDetail:
       type: object
+      required: [userId, email, fullName, phone, nationalId, address, managedStatus, managedAt, deactivatedAt]
       description: >-
         Ficha completa de un alumno gestionado, con los datos restringidos. Nunca se devuelve
         en listados ni búsquedas.
@@ -1136,6 +1171,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/Page"
         - type: object
+          required: [items]
           properties:
             items:
               type: array
@@ -1161,6 +1197,7 @@ components:
 
     WeeklyAvailabilityRule:
       type: object
+      required: [id, dayOfWeek, startTime, endTime, activeFrom, activeUntil]
       properties:
         id: { type: string, format: uuid }
         dayOfWeek: { $ref: "#/components/schemas/DayOfWeek" }
@@ -1194,6 +1231,7 @@ components:
 
     WeeklyAvailabilityResponse:
       type: object
+      required: [rules]
       properties:
         rules:
           type: array
@@ -1201,6 +1239,7 @@ components:
 
     AvailabilityException:
       type: object
+      required: [id, date, startTime, endTime, type]
       properties:
         id: { type: string, format: uuid }
         date: { type: string, format: date }
@@ -1227,6 +1266,7 @@ components:
 
     AvailabilityResponse:
       type: object
+      required: [weeklyRules, exceptions]
       properties:
         weeklyRules:
           type: array
@@ -1237,12 +1277,14 @@ components:
 
     Calendar:
       type: object
+      required: [timezone, availability, lessons]
       properties:
         timezone: { type: string, nullable: true, description: "Zona IANA del profesor; null si el alumno no esta gestionado" }
         availability:
           type: array
           items:
             type: object
+            required: [startsAt, endsAt]
             properties:
               startsAt: { type: string, format: date-time }
               endsAt: { type: string, format: date-time }
@@ -1250,6 +1292,7 @@ components:
           type: array
           items:
             type: object
+            required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, myBooking]
             properties:
               id: { type: string, format: uuid }
               teacherUserId: { type: string, format: uuid }
@@ -1261,6 +1304,7 @@ components:
               status: { $ref: "#/components/schemas/LessonStatus" }
               myBooking:
                 type: object
+                required: [id, status, attendance]
                 nullable: true
                 properties:
                   id: { type: string, format: uuid }
@@ -1288,6 +1332,7 @@ components:
 
     Lesson:
       type: object
+      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes, createdOutsideAvailability, cancelledAt, cancelledAtShortNotice]
       description: >-
         bookedCount es el numero de reservas confirmadas. Se retiro en la Fase 8, cuando solo
         booking podia contarlas y aun no existia, y volvio con la Fase 9.
@@ -1317,6 +1362,7 @@ components:
 
     LessonsResponse:
       type: object
+      required: [items]
       properties:
         items:
           type: array
@@ -1324,6 +1370,7 @@ components:
 
     Booking:
       type: object
+      required: [id, lessonId, studentUserId, status, attendance, bookedAt, cancelledAt, lesson]
       description: >-
         lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia
         clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia.
@@ -1337,6 +1384,7 @@ components:
         cancelledAt: { type: string, format: date-time, nullable: true }
         lesson:
           type: object
+          required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status]
           properties:
             id: { type: string, format: uuid }
             teacherUserId: { type: string, format: uuid }
@@ -1351,6 +1399,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/Page"
         - type: object
+          required: [items]
           properties:
             items:
               type: array
@@ -1371,6 +1420,7 @@ components:
 
     PlatformConfiguration:
       type: object
+      required: [studentLimit, maxGroupCapacity, updatedAt, updatedBy]
       properties:
         studentLimit: { type: integer }
         maxGroupCapacity:
@@ -1390,6 +1440,7 @@ components:
 
     AdminUserSummary:
       type: object
+      required: [id, email, role, status, createdAt]
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email }
@@ -1401,6 +1452,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/Page"
         - type: object
+          required: [items]
           properties:
             items:
               type: array
@@ -1414,6 +1466,7 @@ components:
 
     Page:
       type: object
+      required: [page, size, totalItems]
       properties:
         page: { type: integer }
         size: { type: integer }

@@ -53,9 +53,9 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 7 | Disponibilidad (`availability`) | Completada (PR #17) | `18-fase7-analisis-availability.md` |
 | 8 | Clases (`lesson`) | Completada (PR #20) | `19-fase8-analisis-lesson.md` |
 | 9 | Reservas (`booking`) | Completada (PR #23) | `20-fase9-analisis-booking.md` |
-| 10 | Calendario (`calendar`) | Completada | `21-fase10-analisis-calendar.md` |
-| 11 | Frontend | **Siguiente** | Daniel recorre en el navegador, con los dos roles, registro → verificación → gestión → clase → reserva → cancelación → asistencia. Después, cada fase trae su pantalla |
-| 12 | Administración (`administration`) | Pendiente | Sólo `ADMIN` accede; ajusta el límite de alumnos y el estado de cualquier usuario |
+| 10 | Calendario (`calendar`) | Completada (PR #25) | `21-fase10-analisis-calendar.md` |
+| 11 | Frontend | Completada | `22-fase11-analisis-frontend.md`. Daniel recorre en el navegador, con los dos roles, registro → verificación → gestión → clase → reserva → cancelación → asistencia. Después, cada fase trae su pantalla |
+| 12 | Administración (`administration`) | **Siguiente** | Sólo `ADMIN` accede; ajusta el límite de alumnos y el estado de cualquier usuario |
 | 13 | Revisión de API | Pendiente | Revisión REST completa y `openapi.yaml` sin diferencias con lo implementado |
 | 14 | Cobertura y E2E | Pendiente | Playwright cubre los flujos críticos de los dos roles |
 | 15 | Auditoría de seguridad | Pendiente | OWASP Top 10, acceso horizontal, secretos y dependencias revisados |

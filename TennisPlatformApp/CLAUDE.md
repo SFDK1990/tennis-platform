@@ -8,7 +8,7 @@ binding, not background reading.
 ## Layout
 
 - `backend/` — Spring Boot 3.5 on Java 21, the modular monolith below.
-- `frontend/` — Next.js (from Fase 11).
+- `frontend/` — Next.js 16 + TypeScript + Tailwind, the structure below.
 - `openapi.yaml` — the API contract. It must describe what the backend does, not what it will do.
 - `compose.yaml`, `.env.example` — the local stack. Each service owns its `Dockerfile`.
 
@@ -59,6 +59,18 @@ skipped). `PublicPortsTest` proves the cross-module rule rejects what it must. R
 To check a role from another module, use `AuthenticatedUser.isTeacher()` / `isStudent()` /
 `isAdmin()`; comparing against identity's `Role` imports its domain and the rules reject it.
 Views carry wire values (strings), not domain enums, for the same reason.
+
+## Frontend architecture
+
+It mirrors the backend: `src/modules/<module>` (`api.ts` with the TanStack Query hooks, plus
+`components/`), `src/shared` (the API client, session, generated types, time helpers, UI
+primitives) and `src/app` (routes; the composition root, the only place that combines modules).
+A module imports only `@/shared` and itself, never another module or a parent path: enforced by
+`eslint.config.mjs`. Every call goes through `shared/api/client.ts` (openapi-fetch typed from
+`openapi.yaml`); the access token lives only in memory, and the refresh cookie restores it.
+After any mutation every query is invalidated (`shared/api/query.ts`). Dates are shown in the
+teacher's zone. Decisions: `22-fase11-analisis-frontend.md`. Read `frontend/AGENTS.md` first:
+Next 16 differs from what you may remember.
 
 ## API and errors
 

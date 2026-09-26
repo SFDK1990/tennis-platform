@@ -82,6 +82,38 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  frontend:
+    name: Frontend lint, types, tests and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: TennisPlatformApp/frontend
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: TennisPlatformApp/frontend/package-lock.json
+
+      - run: npm ci
+
+      # The types are generated from openapi.yaml and committed. A contract change without
+      # regenerating them - or a hand edit of the generated file - fails here.
+      - name: API types match openapi.yaml
+        run: |
+          npm run api:types
+          git diff --exit-code -- src/shared/api/schema.d.ts
+
+      # The lint includes the module boundaries (eslint.config.mjs), the frontend's ArchUnit.
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
   docker-image:
     name: Image builds and the stack starts
     needs: backend

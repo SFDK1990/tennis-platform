@@ -230,7 +230,71 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
                 .isEqualTo(HttpStatus.ACCEPTED);
     }
 
+    /**
+     * Found in the browser in Fase 11: every bearer request deleted the XSRF-TOKEN cookie, so
+     * the next logout went out without it, was refused, and the session survived.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void usingTheApiDoesNotCostTheCsrfCookieSoLogoutStillWorks() {
+        String email = uniqueEmail();
+        register(email);
+        String accessToken = (String) login(email).getBody().get("accessToken");
+        String csrfBefore = jar.get("XSRF-TOKEN");
+
+        HttpHeaders headers = jar.asHeaders();
+        headers.setBearerAuth(accessToken);
+        jar.absorb(rest.exchange("/api/v1/me", HttpMethod.GET, new HttpEntity<>(null, headers), Map.class));
+
+        assertThat(jar.get("XSRF-TOKEN")).isEqualTo(csrfBefore);
+        assertThat(logout().getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(refresh().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    /** A student whose link expired asks for another, and the new one works (Fase 11). */
+    @Test
+    @SuppressWarnings("unchecked")
+    void aSignedInStudentCanAskForANewVerificationLinkAndItWorks() {
+        String email = uniqueEmail();
+        register(email);
+        String accessToken = (String) login(email).getBody().get("accessToken");
+
+        ResponseEntity<String> resent = resendVerification(accessToken);
+
+        assertThat(resent.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.verificationCount()).isEqualTo(2);
+        assertThat(verifyEmail(mailer.lastVerificationToken()).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(get("/api/v1/me", accessToken).getBody()).containsEntry("status", "ACTIVE");
+    }
+
+    @Test
+    void aVerifiedAddressGetsNoNewLink() {
+        String email = uniqueEmail();
+        register(email);
+        verifyEmail(mailer.lastVerificationToken());
+        String accessToken = (String) login(email).getBody().get("accessToken");
+
+        assertThat(resendVerification(accessToken).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.verificationCount()).isEqualTo(1);
+    }
+
+    /** Asking by address would let anyone flood someone else's inbox: only the account holder may ask. */
+    @Test
+    void askingForANewLinkNeedsToBeSignedIn() {
+        ResponseEntity<String> anonymous = rest.postForEntity("/api/v1/auth/verification-email",
+                json(Map.of()), String.class);
+
+        assertThat(anonymous.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
     // --- helpers ---------------------------------------------------------------
+
+    private ResponseEntity<String> resendVerification(String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        return rest.exchange("/api/v1/auth/verification-email", HttpMethod.POST,
+                new HttpEntity<>(null, headers), String.class);
+    }
 
     private String uniqueEmail() {
         return "student-" + java.util.UUID.randomUUID() + "@example.com";

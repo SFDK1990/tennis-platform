@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -54,7 +55,12 @@ public class SecurityConfig {
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                     .requireCsrfProtectionMatcher(new OrRequestMatcher(
                             new AntPathRequestMatcher("/api/v1/auth/refresh", "POST"),
-                            new AntPathRequestMatcher("/api/v1/auth/logout", "POST")));
+                            new AntPathRequestMatcher("/api/v1/auth/logout", "POST")))
+                    // Stateless, every bearer request counts as a fresh authentication, and the
+                    // default strategy "rotates" the token on each one - by deleting the cookie.
+                    // The next logout then went out without it, got a 403, and the session
+                    // survived. The token guards the refresh cookie, not a login, so it stays.
+                    .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy());
                 csrf.addObjectPostProcessor(csrfErrorsFollowTheErrorContract(accessDeniedHandler));
             })
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
