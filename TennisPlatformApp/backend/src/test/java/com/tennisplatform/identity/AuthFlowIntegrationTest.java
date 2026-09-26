@@ -287,6 +287,47 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(anonymous.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void aRegistrationThatBreaksTheRulesIsABadRequestAndCreatesNothing() {
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/register",
+                json(Map.of("email", "not-an-email", "password", "short")), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("code", "VALIDATION_ERROR");
+        assertThat(countUsers("not-an-email")).isZero();
+    }
+
+    /** A verification link works once: the second click is told the link is spent. */
+    @Test
+    void aVerificationLinkThatWasAlreadyUsedIsAConflict() {
+        register(uniqueEmail());
+        String token = mailer.lastVerificationToken();
+        verifyEmail(token);
+
+        ResponseEntity<Map> again = rest.postForEntity("/api/v1/auth/verify-email",
+                json(Map.of("token", token)), Map.class);
+
+        assertThat(again.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(again.getBody()).containsEntry("code", "AUTH_INVALID_TOKEN");
+    }
+
+    @Test
+    void verifyingWithoutATokenIsABadRequest() {
+        assertThat(verifyEmail("").getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void aResetLinkThatIsNotRealIsAConflictAndAShortPasswordIsABadRequest() {
+        ResponseEntity<Map> unknown = rest.postForEntity("/api/v1/auth/reset-password",
+                json(Map.of("token", "not-a-real-token", "newPassword", "another-valid-password")), Map.class);
+        assertThat(unknown.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(unknown.getBody()).containsEntry("code", "AUTH_INVALID_TOKEN");
+
+        ResponseEntity<Map> tooShort = rest.postForEntity("/api/v1/auth/reset-password",
+                json(Map.of("token", "not-a-real-token", "newPassword", "short")), Map.class);
+        assertThat(tooShort.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
     // --- helpers ---------------------------------------------------------------
 
     private ResponseEntity<String> resendVerification(String accessToken) {

@@ -4,7 +4,6 @@ import com.tennisplatform.lesson.application.port.in.LessonView;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -45,15 +44,6 @@ final class LessonDtos {
                     lesson.status(),
                     forTheTeacher ? lesson.notes() : null, lesson.createdOutsideAvailability(),
                     lesson.cancelledAt(), lesson.cancelledAtShortNotice());
-        }
-    }
-
-    record LessonsResponse(List<LessonResponse> items) {
-
-        static LessonsResponse of(List<LessonView> lessons) {
-            return new LessonsResponse(lessons.stream()
-                    .map(lesson -> LessonResponse.from(lesson, true))
-                    .toList());
         }
     }
 }

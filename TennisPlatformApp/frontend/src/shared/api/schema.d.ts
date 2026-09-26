@@ -35,15 +35,7 @@ export interface paths {
                     content?: never;
                 };
                 400: components["responses"]["ValidationError"];
-                /** @description Demasiados intentos desde la misma IP */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -85,6 +77,7 @@ export interface paths {
                         "application/json": components["schemas"]["LoginResponse"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
                 /** @description Único resultado de cualquier fallo: email inexistente, contraseña incorrecta o cuenta desactivada. Distinguirlos revelaría qué direcciones tienen cuenta. Una cuenta pendiente de verificación SÍ puede iniciar sesión: la verificación condiciona reservar, no acceder (ver 13-fase5-analisis-identity.md, decisión 8.5). */
                 401: {
                     headers: {
@@ -94,15 +87,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
-                /** @description Demasiados intentos desde la misma IP */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -141,6 +126,7 @@ export interface paths {
                     content?: never;
                 };
                 403: components["responses"]["CsrfTokenMissing"];
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -190,6 +176,7 @@ export interface paths {
                     };
                 };
                 403: components["responses"]["CsrfTokenMissing"];
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -238,6 +225,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -276,15 +264,7 @@ export interface paths {
                     content?: never;
                 };
                 401: components["responses"]["Unauthorized"];
-                /** @description Demasiados intentos desde la misma IP */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -323,6 +303,8 @@ export interface paths {
                     };
                     content?: never;
                 };
+                400: components["responses"]["ValidationError"];
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -371,6 +353,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                429: components["responses"]["TooManyRequests"];
             };
         };
         delete?: never;
@@ -457,7 +440,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Perfil público/operativo del profesor único */
+        /**
+         * Perfil público/operativo del profesor único
+         * @description Solo lectura. El profesor cambia su perfil con PATCH /me, como cualquier usuario.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -484,33 +470,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Actualiza el perfil del profesor (solo el propio TEACHER) */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpdateTeacherProfileRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["TeacherProfile"];
-                    };
-                };
-                400: components["responses"]["ValidationError"];
-                403: components["responses"]["Forbidden"];
-            };
-        };
+        patch?: never;
         trace?: never;
     };
     "/teacher/students": {
@@ -544,6 +504,8 @@ export interface paths {
                         "application/json": components["schemas"]["StudentSummaryPage"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
             };
         };
@@ -587,6 +549,7 @@ export interface paths {
                         "application/json": components["schemas"]["StudentLookup"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
                 /** @description Ninguna cuenta de alumno tiene esa dirección */
@@ -639,6 +602,7 @@ export interface paths {
                         "application/json": components["schemas"]["StudentDetail"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
                 /** @description El llamante no es el profesor (`TEACHER_FORBIDDEN`), o no gestiona a ese alumno (`STUDENT_NOT_MANAGED`) */
                 403: {
@@ -692,6 +656,7 @@ export interface paths {
                         "application/json": components["schemas"]["StudentSummary"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
                 /** @description No existe una cuenta de alumno con ese id (`STUDENT_NOT_FOUND`) */
@@ -746,6 +711,7 @@ export interface paths {
                     };
                     content?: never;
                 };
+                400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
                 /** @description El llamante no es el profesor (`TEACHER_FORBIDDEN`), o nunca gestionó a ese alumno (`STUDENT_NOT_MANAGED`) */
                 403: {
@@ -814,6 +780,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
             };
         };
         put?: never;
@@ -868,6 +835,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
             };
         };
@@ -922,6 +890,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
             };
         };
@@ -960,6 +929,8 @@ export interface paths {
                     };
                     content?: never;
                 };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
                 /** @description No existe (`AVAILABILITY_EXCEPTION_NOT_FOUND`). Un id de otro profesor responde lo mismo: un 403 confirmaría que el id existe. */
                 404: {
@@ -1018,6 +989,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 /** @description AUTH_FORBIDDEN, si quien llama no es profesor ni alumno */
                 403: {
                     headers: {
@@ -1044,43 +1016,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Lista las clases del profesor en un rango de fechas
-         * @description Anadido en la Fase 8. Sin el, el profesor no tiene forma de ver lo que ha creado hasta que exista /calendar. El rango es obligatorio y no puede superar 62 dias, el mismo tope que la lectura de disponibilidad: dos numeros distintos serian una diferencia que nadie decidio. Las fechas se interpretan en la zona del profesor, porque un dia es una idea local. Incluye las clases canceladas.
-         */
-        get: {
-            parameters: {
-                query: {
-                    from: string;
-                    to: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["LessonsResponse"];
-                    };
-                };
-                /** @description DATE_RANGE_INVALID, o fechas mal formadas (VALIDATION_ERROR) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                403: components["responses"]["Forbidden"];
-            };
-        };
+        get?: never;
         put?: never;
         /** Crea una clase individual o grupal */
         post: {
@@ -1114,6 +1050,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
                 /** @description LESSON_OVERLAP */
                 409: {
@@ -1169,6 +1106,8 @@ export interface paths {
                         "application/json": components["schemas"]["Lesson"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 404: components["responses"]["NotFound"];
             };
         };
@@ -1213,6 +1152,8 @@ export interface paths {
                         "application/json": components["schemas"]["Booking"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 /** @description STUDENT_NOT_MANAGED: el profesor de la clase no gestiona al alumno, o lo desactivo. EMAIL_NOT_VERIFIED: el alumno no ha verificado su direccion. AUTH_FORBIDDEN: quien llama no es un alumno. */
                 403: {
                     headers: {
@@ -1293,6 +1234,7 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 /** @description AUTH_FORBIDDEN, si quien llama no es alumno ni profesor */
                 403: {
                     headers: {
@@ -1345,7 +1287,8 @@ export interface paths {
                         "application/json": components["schemas"]["Booking"];
                     };
                 };
-                403: components["responses"]["Forbidden"];
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 /** @description BOOKING_NOT_FOUND, tambien cuando la reserva existe pero no es de quien llama: confirmar que un id existe es decir algo que no tenia por que saber. */
                 404: {
                     headers: {
@@ -1414,6 +1357,8 @@ export interface paths {
                         "application/json": components["schemas"]["Lesson"];
                     };
                 };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
                 404: components["responses"]["NotFound"];
                 /** @description LESSON_ALREADY_CANCELLED: ya estaba cancelada, casi siempre una pantalla obsoleta */
@@ -1480,6 +1425,7 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 /** @description TEACHER_FORBIDDEN */
                 403: {
                     headers: {
@@ -1550,6 +1496,7 @@ export interface paths {
                         "application/json": components["schemas"]["PlatformConfiguration"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 /** @description AUTH_FORBIDDEN, si quien llama no es ADMIN (igual en todo /admin) */
                 403: {
                     headers: {
@@ -1593,6 +1540,7 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
             };
         };
@@ -1632,6 +1580,7 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
             };
         };
@@ -1685,6 +1634,7 @@ export interface paths {
                     };
                 };
                 400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
                 /** @description AUTH_FORBIDDEN si quien llama no es ADMIN; ADMIN_TARGET_NOT_ALLOWED si la cuenta no es de un alumno. Desactivar al único profesor apagaría la plataforma, y un admin que desactiva a otro, o a sí mismo, puede quedarse sin nadie que lo deshaga. */
                 403: {
                     headers: {
@@ -1840,11 +1790,6 @@ export interface components {
             /** @example Europe/Madrid */
             timezone: string;
         };
-        UpdateTeacherProfileRequest: {
-            displayName?: string;
-            phone?: string;
-            timezone?: string;
-        };
         StudentSummary: {
             /** Format: uuid */
             userId: string;
@@ -1863,8 +1808,11 @@ export interface components {
             email: string;
             /** @description null si el alumno aún no ha rellenado sus datos */
             fullName: string | null;
-            /** @description null cuando todavía no existe relación con este profesor */
-            managedStatus: components["schemas"]["ManagedStatus"] | null;
+            /**
+             * @description null cuando todavía no existe relación con este profesor. Repite los valores de ManagedStatus en vez de referenciarlo: en OpenAPI 3.0 un nullable junto a un $ref o un allOf no tiene efecto, y el null quedaba fuera del contrato.
+             * @enum {string|null}
+             */
+            managedStatus: "MANAGED" | "INACTIVE" | null;
         };
         /** @description Ficha completa de un alumno gestionado, con los datos restringidos. Nunca se devuelve en listados ni búsquedas. */
         StudentDetail: {
@@ -2018,9 +1966,6 @@ export interface components {
             /** @description Si la cancelacion dejo menos de 24 horas. Derivado de cancelledAt y startsAt. */
             cancelledAtShortNotice: boolean;
         };
-        LessonsResponse: {
-            items: components["schemas"]["Lesson"][];
-        };
         /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. */
         Booking: {
             /** Format: uuid */
@@ -2134,8 +2079,17 @@ export interface components {
                 "application/problem+json": components["schemas"]["ProblemDetails"];
             };
         };
-        /** @description Formato o validación de campos incorrecta */
+        /** @description Cuerpo, id o parámetro mal formados, o un campo que no pasa la validación (`VALIDATION_ERROR`) */
         ValidationError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetails"];
+            };
+        };
+        /** @description Demasiados intentos desde la misma IP (`AUTH_RATE_LIMITED`). Todo /auth comparte el límite; la cabecera Retry-After dice cuántos segundos esperar. */
+        TooManyRequests: {
             headers: {
                 [name: string]: unknown;
             };

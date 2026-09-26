@@ -1,5 +1,6 @@
 package com.tennisplatform;
 
+import com.tennisplatform.contract.ContractValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,12 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbc;
+
+    /** Every response a test gets is checked against openapi.yaml (see {@link ContractValidation}). */
+    @BeforeEach
+    void checkEveryResponseAgainstTheContract() {
+        ContractValidation.installOn(rest.getRestTemplate());
+    }
 
     /**
      * Every integration test starts from an empty database.

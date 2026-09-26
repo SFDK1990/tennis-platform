@@ -151,6 +151,26 @@ class MeApiTest extends AbstractIntegrationTest {
         assertThat(response.getBody()).containsEntry("timezone", "America/Bogota");
     }
 
+    /** Moved from the retired PATCH /teacher/profile, which is where these two cases lived. */
+    @Test
+    void aPartialUpdateOfTheTeacherKeepsTheFieldsNotSent() {
+        ResponseEntity<Map> response = patch(tokenOf(TEACHER_EMAIL, PASSWORD), Map.of("phone", "600123123"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsEntry("phone", "600123123");
+        assertThat(response.getBody()).containsEntry("timezone", "Europe/Madrid");
+    }
+
+    @Test
+    void theTeacherCannotSetATimeZoneThatIsNotReal() {
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
+
+        ResponseEntity<Map> response = patch(token, Map.of("timezone", "Madrid/Spain"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(get(token).getBody()).containsEntry("timezone", "Europe/Madrid");
+    }
+
     @Test
     void theTeacherCannotSendFieldsThatBelongToAStudent() {
         String token = tokenOf(TEACHER_EMAIL, PASSWORD);
