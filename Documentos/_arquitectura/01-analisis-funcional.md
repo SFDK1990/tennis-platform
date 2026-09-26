@@ -64,8 +64,10 @@ Un alumno desactivado:
 
 El administrador podrá configurar un límite global.
 
-- `NULL` representa sin límite.
-- El valor debe poder modificarse desde la consola.
+- Siempre es un número positivo: un límite alto hace lo mismo que "sin límite" sin un caso
+  especial en cada comprobación (Fase 12).
+- El valor se modifica desde la consola. Bajarlo por debajo de los alumnos ya gestionados no
+  da de baja a nadie.
 - Cuando se alcance el límite, no se podrán gestionar nuevos alumnos.
 - El MVP no aplica todavía límites por profesor porque solo existe uno.
 
@@ -238,7 +240,8 @@ La asistencia se modela separadamente como `PENDING`, `ATTENDED` o `NO_SHOW`.
   profesor. Si algún día hay varias, habrá que introducirla y separar las dos reglas.
 - **Asociación alumno-profesor**: el profesor busca al alumno por su email exacto y lo gestiona.
 - **Alta del profesor**: por bootstrap al desplegar, no por registro ni consola.
-- **Zona mostrada al alumno**: su hora local y, junto a ella, la zona del profesor.
+- **Zona mostrada**: la del profesor para todos, indicada en el calendario (Fase 11): una clase
+  no cambia de hora porque alguien abra la aplicación de viaje.
 - **El admin cancela clases o reservas sin ventana de 24 horas**, para resolver incidencias.
 - **Una reserva cancelada no se reactiva**, pero el alumno puede volver a reservar si hay plaza.
 - **Se puede reservar hasta el inicio de la clase.** Quien reserva con menos de 24 horas ya no

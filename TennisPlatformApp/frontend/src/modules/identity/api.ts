@@ -20,6 +20,8 @@ export function homeFor(role: Role): string {
       return "/teacher";
     case "STUDENT":
       return "/calendar";
+    case "ADMIN":
+      return "/admin";
     default:
       return "/profile";
   }

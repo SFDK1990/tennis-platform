@@ -22,4 +22,12 @@ class PlatformSettingsRepositoryAdapter implements PlatformSettingsRepository {
     public Optional<PlatformSettings> find() {
         return jpa.findById(SINGLETON_ID).map(PlatformConfigurationEntity::toDomain);
     }
+
+    @Override
+    public PlatformSettings save(PlatformSettings settings) {
+        PlatformConfigurationEntity entity = jpa.findById(SINGLETON_ID).orElseThrow(() ->
+                new IllegalStateException("The platform configuration row is missing"));
+        entity.update(settings);
+        return jpa.save(entity).toDomain();
+    }
 }

@@ -26,6 +26,10 @@ export function ProfileForm({ me }: { me: Me }) {
   const update = useUpdateMe();
   const fields = FIELDS_BY_ROLE[me.role] ?? [];
 
+  if (fields.length === 0) {
+    return <p className="text-muted">{me.email}. Una cuenta de administración no tiene datos de perfil.</p>;
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);

@@ -24,4 +24,12 @@ public interface ManageStudent {
      * 01-analisis-funcional.md requires. Bookings of lessons that already started are kept.
      */
     void stopManaging(UUID teacherUserId, UUID studentUserId);
+
+    /**
+     * An administrator disabled the student's account: every teacher stops managing them, and
+     * their upcoming bookings are cancelled as decided by the administration. Otherwise their
+     * seats would stay taken by somebody who can no longer sign in. Taking them back after a
+     * reactivation is the teacher's call, as with any student (23-fase12, decision 7).
+     */
+    void releaseDisabledAccount(UUID studentUserId);
 }

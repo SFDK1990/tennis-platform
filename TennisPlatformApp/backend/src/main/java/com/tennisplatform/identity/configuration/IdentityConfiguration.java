@@ -1,5 +1,6 @@
 package com.tennisplatform.identity.configuration;
 
+import com.tennisplatform.identity.application.port.in.AdministerAccounts;
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.Login;
@@ -20,10 +21,12 @@ import com.tennisplatform.identity.application.port.out.RefreshTokens;
 import com.tennisplatform.identity.application.port.out.SecureTokenGenerator;
 import com.tennisplatform.identity.application.port.out.TokenHasher;
 import com.tennisplatform.identity.application.port.out.UserRepository;
+import com.tennisplatform.identity.application.service.AdministerAccountsService;
 import com.tennisplatform.identity.application.service.FindUserAccountsService;
 import com.tennisplatform.identity.application.service.GetCurrentUserService;
 import com.tennisplatform.identity.application.service.LoginService;
 import com.tennisplatform.identity.application.service.LogoutService;
+import com.tennisplatform.identity.application.service.ProvisionAdminAccountService;
 import com.tennisplatform.identity.application.service.ProvisionTeacherAccountService;
 import com.tennisplatform.identity.application.service.RefreshSessionService;
 import com.tennisplatform.identity.application.service.RegisterUserService;
@@ -114,6 +117,18 @@ public class IdentityConfiguration {
                                                            PasswordHasher passwordHasher,
                                                            Clock clock) {
         return new ProvisionTeacherAccountService(users, passwordHasher, clock);
+    }
+
+    @Bean
+    public ProvisionAdminAccountService provisionAdminAccount(UserRepository users, PasswordHasher passwordHasher,
+                                                              Clock clock) {
+        return new ProvisionAdminAccountService(users, passwordHasher, clock);
+    }
+
+    /** Offered to administration, which decides which accounts the console may touch. */
+    @Bean
+    public AdministerAccounts administerAccounts(UserRepository users, RefreshTokens refreshTokens, Clock clock) {
+        return new AdministerAccountsService(users, refreshTokens, clock);
     }
 
     /**

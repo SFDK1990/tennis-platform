@@ -124,9 +124,14 @@ class ModuleBoundariesTest {
     static final ArchRule bookingDependsOnStudentLessonAndIdentity =
             mayOnlyDependOn("booking", "student", "lesson", "identity");
 
+    /**
+     * {@code platform} joined in Fase 12: the configuration the console changes has lived there
+     * since Fase 6, when {@code student} needed to read the limit without depending on this
+     * module.
+     */
     @ArchTest
-    static final ArchRule administrationDependsOnIdentityTeacherAndStudent =
-            mayOnlyDependOn("administration", "identity", "teacher", "student");
+    static final ArchRule administrationDependsOnIdentityTeacherStudentAndPlatform =
+            mayOnlyDependOn("administration", "identity", "teacher", "student", "platform");
 
     /**
      * A cycle between modules means they can no longer be understood, tested or replaced

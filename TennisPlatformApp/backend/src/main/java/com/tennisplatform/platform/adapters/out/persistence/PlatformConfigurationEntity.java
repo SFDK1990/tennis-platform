@@ -27,7 +27,7 @@ class PlatformConfigurationEntity {
     private Instant updatedAt;
 
     /**
-     * Who last changed the configuration, written by the Fase 7 console. Mapped as a plain UUID
+     * Who last changed the configuration, written by the administration console (Fase 12). Mapped as a plain UUID
      * and not as a relation: in the database it is a foreign key to {@code users}, because the
      * integrity of an audit field is worth keeping, but this module does not depend on
      * {@code identity} and must not learn what a user is to read a number.
@@ -39,6 +39,13 @@ class PlatformConfigurationEntity {
     }
 
     PlatformSettings toDomain() {
-        return PlatformSettings.of(studentLimit, maxGroupCapacity);
+        return PlatformSettings.rehydrate(studentLimit, maxGroupCapacity, updatedAt, updatedBy);
+    }
+
+    void update(PlatformSettings settings) {
+        this.studentLimit = settings.studentLimit();
+        this.maxGroupCapacity = settings.maxGroupCapacity();
+        this.updatedAt = settings.updatedAt();
+        this.updatedBy = settings.updatedBy();
     }
 }

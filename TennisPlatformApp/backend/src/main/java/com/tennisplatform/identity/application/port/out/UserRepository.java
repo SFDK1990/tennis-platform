@@ -1,5 +1,8 @@
 package com.tennisplatform.identity.application.port.out;
 
+import com.tennisplatform.identity.domain.Role;
+import com.tennisplatform.identity.domain.UserStatus;
+import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.identity.domain.EmailAddress;
 import com.tennisplatform.identity.domain.User;
 
@@ -28,6 +31,12 @@ public interface UserRepository {
      * that has to change rather than silently return an arbitrary row.
      */
     Optional<User> findTheTeacher();
+
+    /**
+     * A page of accounts, newest first. A null filter does not filter; {@code emailContains} is
+     * matched case-insensitively anywhere in the address.
+     */
+    ResultPage<User> findAll(Role role, UserStatus status, String emailContains, int page, int size);
 
     User save(User user);
 }

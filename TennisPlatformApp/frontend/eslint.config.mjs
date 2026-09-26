@@ -5,7 +5,7 @@ import nextTs from "eslint-config-next/typescript";
 // The frontend mirrors the backend modules, and this is its ArchUnit: a module may use
 // `shared` and itself, never another module. What two modules need goes up to `shared`;
 // the pages in `app/` are the composition root and may combine modules.
-const MODULES = ["identity", "teacher", "student", "availability", "lesson", "booking", "calendar"];
+const MODULES = ["identity", "teacher", "student", "availability", "lesson", "booking", "calendar", "administration"];
 
 const noParentImports = {
   group: ["../*"],
