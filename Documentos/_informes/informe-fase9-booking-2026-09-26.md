@@ -1,6 +1,6 @@
 # Informe de cierre — Fase 9 (`booking`)
 
-Rama `fase-9-booking`, cinco commits sobre `main` (tras el PR #22). El análisis, con sus siete
+Rama `fase-9-booking`, seis commits sobre `main` —los cinco de la tabla más este informe— (tras el PR #22). El análisis, con sus siete
 decisiones validadas antes de escribir código y las que aparecieron al implementar, está en
 `Documentos/_arquitectura/20-fase9-analisis-booking.md`. Este informe no lo repite: resume, da la
 evidencia y deja escrito lo que queda pendiente.
