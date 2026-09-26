@@ -89,6 +89,9 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
 - **Con sesiones sin estado, la estrategia CSRF por defecto borra la cookie `XSRF-TOKEN` en cada
   petición con bearer**, y el logout siguiente falla con 403 dejando viva la sesión. Por eso
   `SecurityConfig` pone `NullAuthenticatedSessionStrategy`; no quitarlo.
+- **Cada respuesta de un test de integración se valida contra `openapi.yaml`** (`ContractValidation`),
+  y un test compara las rutas del código con las del spec. Un endpoint, un campo o un estado nuevo
+  sin tocar el spec rompe el build; un nullable junto a `$ref`/`allOf` no hace nada en OpenAPI 3.0.
 - **Los tipos del frontend se generan de `openapi.yaml`** y se versionan. Tocar el contrato sin
   `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
 - **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
