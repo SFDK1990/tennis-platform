@@ -230,6 +230,27 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
                 .isEqualTo(HttpStatus.ACCEPTED);
     }
 
+    /**
+     * Found in the browser in Fase 11: every bearer request deleted the XSRF-TOKEN cookie, so
+     * the next logout went out without it, was refused, and the session survived.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void usingTheApiDoesNotCostTheCsrfCookieSoLogoutStillWorks() {
+        String email = uniqueEmail();
+        register(email);
+        String accessToken = (String) login(email).getBody().get("accessToken");
+        String csrfBefore = jar.get("XSRF-TOKEN");
+
+        HttpHeaders headers = jar.asHeaders();
+        headers.setBearerAuth(accessToken);
+        jar.absorb(rest.exchange("/api/v1/me", HttpMethod.GET, new HttpEntity<>(null, headers), Map.class));
+
+        assertThat(jar.get("XSRF-TOKEN")).isEqualTo(csrfBefore);
+        assertThat(logout().getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(refresh().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
     /** A student whose link expired asks for another, and the new one works (Fase 11). */
     @Test
     @SuppressWarnings("unchecked")
