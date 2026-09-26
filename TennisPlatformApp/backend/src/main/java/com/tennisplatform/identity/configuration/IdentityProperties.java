@@ -54,6 +54,11 @@ public class IdentityProperties {
     /** Requests per minute per client IP allowed on the authentication endpoints. */
     private int authRateLimitPerMinute = 20;
 
+    /** The first administrator, created at startup. Blank means none is created. */
+    private String adminBootstrapEmail;
+
+    private String adminBootstrapPassword;
+
     public String getJwtSecret() {
         return jwtSecret;
     }
@@ -132,5 +137,21 @@ public class IdentityProperties {
 
     public void setAuthRateLimitPerMinute(int authRateLimitPerMinute) {
         this.authRateLimitPerMinute = authRateLimitPerMinute;
+    }
+
+    public String getAdminBootstrapEmail() {
+        return adminBootstrapEmail;
+    }
+
+    public void setAdminBootstrapEmail(String adminBootstrapEmail) {
+        this.adminBootstrapEmail = adminBootstrapEmail;
+    }
+
+    public String getAdminBootstrapPassword() {
+        return adminBootstrapPassword;
+    }
+
+    public void setAdminBootstrapPassword(String adminBootstrapPassword) {
+        this.adminBootstrapPassword = adminBootstrapPassword;
     }
 }

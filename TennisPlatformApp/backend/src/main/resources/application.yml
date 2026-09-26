@@ -26,6 +26,9 @@ tennis:
     password-reset-ttl: 1h
     frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
     mail-from: ${MAIL_FROM:no-reply@tennis-platform.local}
+    # The first administrator, created at startup like the teacher. Blank means none.
+    admin-bootstrap-email: ${ADMIN_EMAIL:}
+    admin-bootstrap-password: ${ADMIN_PASSWORD:}
   teacher:
     # The single teacher is created at startup from these values. Blank credentials mean no
     # teacher is created, which is the default: nothing is seeded by accident.

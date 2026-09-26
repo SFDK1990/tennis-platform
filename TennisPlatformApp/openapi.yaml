@@ -829,17 +829,23 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PlatformConfiguration" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-
-  /admin/configuration/student-limit:
+        "403":
+          description: AUTH_FORBIDDEN, si quien llama no es ADMIN (igual en todo /admin)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
     patch:
       tags: [administration]
-      summary: Actualiza el límite global de alumnos gestionables
+      summary: Cambia el límite de alumnos y la capacidad máxima de grupo
+      description: >-
+        Los dos campos son opcionales: el que no se envía conserva su valor. Bajar el límite por
+        debajo de los alumnos ya gestionados se permite: no echa a nadie, sólo impide gestionar
+        nuevos. Las clases ya creadas conservan su capacidad. Registra updatedAt y updatedBy.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/UpdateStudentLimitRequest" }
+            schema: { $ref: "#/components/schemas/UpdateConfigurationRequest" }
       responses:
         "200":
           description: OK
@@ -852,7 +858,7 @@ paths:
   /admin/users:
     get:
       tags: [administration]
-      summary: Lista de usuarios de la plataforma
+      summary: Lista de usuarios de la plataforma, la más reciente primero
       parameters:
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Size"
@@ -862,18 +868,30 @@ paths:
         - name: status
           in: query
           schema: { $ref: "#/components/schemas/UserStatus" }
+        - name: query
+          in: query
+          description: >-
+            Parte del email, sin distinguir mayúsculas. Al profesor se le niega la búsqueda
+            parcial para que no pueda enumerar cuentas; el admin ya puede verlas todas.
+          schema: { type: string }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AdminUserSummaryPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /admin/users/{id}/status:
     patch:
       tags: [administration]
-      summary: Activa o desactiva un usuario
+      summary: Activa o desactiva la cuenta de un alumno
+      description: >-
+        Desactivar cierra sus sesiones (el access token vivo caduca en 15 minutos como mucho),
+        hace que el profesor deje de gestionarlo y cancela sus reservas futuras como
+        CANCELLED_BY_ADMIN. Reactivar devuelve ACTIVE si había verificado el email y
+        PENDING_VERIFICATION si no; no vuelve a quedar gestionado, eso lo decide el profesor.
       parameters:
         - $ref: "#/components/parameters/Id"
       requestBody:
@@ -888,8 +906,19 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AdminUserSummary" }
         "400": { $ref: "#/components/responses/ValidationError" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "403":
+          description: >-
+            AUTH_FORBIDDEN si quien llama no es ADMIN; ADMIN_TARGET_NOT_ALLOWED si la cuenta no es
+            de un alumno. Desactivar al único profesor apagaría la plataforma, y un admin que
+            desactiva a otro, o a sí mismo, puede quedarse sin nadie que lo deshaga.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: USER_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
 components:
   securitySchemes:
@@ -1432,11 +1461,11 @@ components:
         updatedAt: { type: string, format: date-time }
         updatedBy: { type: string, format: uuid, nullable: true }
 
-    UpdateStudentLimitRequest:
+    UpdateConfigurationRequest:
       type: object
-      required: [studentLimit]
       properties:
         studentLimit: { type: integer, minimum: 1 }
+        maxGroupCapacity: { type: integer, minimum: 1 }
 
     AdminUserSummary:
       type: object

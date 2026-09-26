@@ -20,4 +20,11 @@ public interface StudentBookings {
      * whatever attendance they recorded is history worth keeping.
      */
     void cancelUpcomingWith(UUID teacherUserId, UUID studentUserId, Instant at);
+
+    /**
+     * The same, when it was an administrator who disabled the account. A separate method
+     * because the cancelled bookings must say who decided: a student who finds their seat gone
+     * should know whether it was their teacher or the administration.
+     */
+    void cancelUpcomingOfDisabledAccount(UUID teacherUserId, UUID studentUserId, Instant at);
 }

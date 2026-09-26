@@ -30,6 +30,22 @@ class UserTest {
         assertThat(User.register(EMAIL, "hash", NOW).canAuthenticate()).isTrue();
     }
 
+    /** Reactivating must never verify an address nobody confirmed (Fase 12). */
+    @Test
+    void reactivatingGivesBackWhatTheAccountWasBeforeBeingDisabled() {
+        User unverified = User.register(EMAIL, "hash", NOW);
+        User verified = User.register(new EmailAddress("other@example.com"), "hash", NOW);
+        verified.verifyEmail(NOW);
+        unverified.disable();
+        verified.disable();
+
+        unverified.reactivate();
+        verified.reactivate();
+
+        assertThat(unverified.status()).isEqualTo(UserStatus.PENDING_VERIFICATION);
+        assertThat(verified.status()).isEqualTo(UserStatus.ACTIVE);
+    }
+
     @Test
     void aDisabledAccountMayNotAuthenticate() {
         User user = User.register(EMAIL, "hash", NOW);
