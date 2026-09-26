@@ -75,8 +75,8 @@ Al finalizar cada fase se entrega:
 | 5.1 | Integración continua | Pipeline de GitHub Actions: build, tests unitarios, tests de integración, análisis estático, comprobación de dependencias y construcción de imagen. Adelantada desde la fase 15. | Completada y verificada en verde (ver `14-fase5.1-integracion-continua.md`) |
 | 6 | Perfiles y gestión de usuarios | Perfiles de profesor y alumno, alta y asociación de alumnos, activación y desactivación. | Completada — entregada en dos PRs, `teacher` (#13) y `student` (#15) |
 | 7 | Disponibilidad | Reglas semanales de disponibilidad del profesor y excepciones. | Completada (PR #17; ver `18-fase7-analisis-availability.md`) |
-| 8 | Clases | Creación, consulta, modificación y cancelación de clases, con validación de solapamientos. | Siguiente |
-| 9 | Reservas | Reserva y cancelación, capacidad, duplicados, solapamientos del alumno y concurrencia. | Pendiente |
+| 8 | Clases | Creación, consulta y cancelación de clases, con validación de solapamientos. La modificación se aplazó porque toca reservas. | Completada (PR #20; ver `19-fase8-analisis-lesson.md`) |
+| 9 | Reservas | Reserva y cancelación, capacidad, duplicados, solapamientos del alumno y concurrencia. Hereda de la Fase 8 `bookedCount`, `FULL`, asistencia y cascada al cancelar. | Siguiente |
 | 10 | Revisión de API | Revisión REST completa: naming, verbos, códigos, paginación, errores, idempotencia, versionado. OpenAPI. | Pendiente |
 | 11 | Frontend | Next.js, React, TypeScript, Tailwind. Estados de carga, vacío y error. | Pendiente |
 | 12 | Cobertura y E2E | Pirámide de testing completa y flujos E2E críticos. | Pendiente |

@@ -46,8 +46,9 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 5.1 Integración continua | Completada y verificada (run 35137942307 en verde) |
 | 6. Perfiles y gestión de usuarios | Completada — `teacher` (PR #13) y `student` (PR #15) en `main` |
 | 7. Disponibilidad del profesor (`availability`) | Completada — PR #17 en `main` |
-| **8. Clases (`lesson`)** | **En curso**: análisis validado, implementación en `fase-8-lesson` |
-| 9 en adelante | Pendientes |
+| 8. Clases (`lesson`) | Completada — PR #20 en `main` |
+| **9. Reservas (`booking`)** | **Siguiente**: pendiente de análisis |
+| 10 en adelante | Pendientes |
 
 El análisis de la Fase 6 y sus decisiones están en
 `Documentos/_arquitectura/16-fase6-analisis-perfiles.md`. Se entregó en dos PRs, `teacher`
@@ -72,6 +73,9 @@ no los marca, así que el disparador iba con aquellos dos tipos concretos y no c
 
 El análisis de la Fase 8 está en `Documentos/_arquitectura/19-fase8-analisis-lesson.md`, con las
 cinco decisiones que hubo que cerrar antes de escribir código.
+Su informe de cierre está en `Documentos/_informes/informe-fase8-lesson-2026-09-20.md`. La Fase 8
+aplazó a la 9 todo lo que depende de contar reservas: `bookedCount`, el estado `FULL`, el marcado
+de asistencia y la cascada al cancelar una clase. **`booking` hereda esas cuatro piezas.**
 
 La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
 `02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
