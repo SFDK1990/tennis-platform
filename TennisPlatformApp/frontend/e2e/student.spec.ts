@@ -1,5 +1,5 @@
 import { linkSentTo } from "./support/mailbox";
-import { dayInCalendar, expect, signIn, test } from "./support/fixtures";
+import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
 import { STUDENT_PASSWORD, uniqueEmail } from "./support/stack";
 
 test("un alumno se registra, verifica su email con el enlace del correo y completa su perfil", async ({ page }) => {
@@ -36,10 +36,10 @@ test("un alumno reserva una clase de su profesor y la cancela", async ({ page, a
   await expect(lesson.getByText("Tienes plaza")).toBeVisible();
   await expect(lesson).toContainText("1 plaza libre");
 
-  await page.getByRole("link", { name: "Mis reservas" }).click();
+  await openFromMenu(page, "Mis reservas");
   await expect(page.getByRole("listitem").filter({ hasText: "10:00" })).toContainText("Confirmada");
 
-  await page.getByRole("link", { name: "Clases" }).click();
+  await openFromMenu(page, "Clases");
   const again = (await dayInCalendar(page, day)).getByRole("listitem").filter({ hasText: "10:00" });
   await again.getByRole("button", { name: "Cancelar reserva" }).click();
   await again.getByRole("button", { name: "Sí, cancelar" }).click();

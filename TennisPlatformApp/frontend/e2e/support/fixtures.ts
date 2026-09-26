@@ -22,6 +22,16 @@ export async function signIn(page: Page, email: string, password: string): Promi
   await expect(page).not.toHaveURL(/\/login/);
 }
 
+/**
+ * Follows a menu link and waits until the menu marks it as the current page: a locator
+ * evaluated before that would still be looking at the previous screen.
+ */
+export async function openFromMenu(page: Page, name: string): Promise<void> {
+  const link = page.getByRole("navigation").getByRole("link", { name, exact: true });
+  await link.click();
+  await expect(link).toHaveAttribute("aria-current", "page");
+}
+
 /** Moves the calendar on screen to the week of `date` and returns that day's block. */
 export async function dayInCalendar(page: Page, date: LocalDate): Promise<Locator> {
   const weeks = Math.round(

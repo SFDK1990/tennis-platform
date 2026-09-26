@@ -34,7 +34,15 @@ export interface paths {
                     };
                     content?: never;
                 };
-                400: components["responses"]["ValidationError"];
+                /** @description Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña de más de 72 bytes (`AUTH_WEAK_PASSWORD`): bcrypt no usa el resto, y aceptarla engañaría a quien la eligió. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 429: components["responses"]["TooManyRequests"];
             };
         };
@@ -216,6 +224,15 @@ export interface paths {
                     content?: never;
                 };
                 400: components["responses"]["ValidationError"];
+                /** @description La cuenta está desactivada (`AUTH_ACCOUNT_NOT_ACTIVE`): el enlace se pidió antes de desactivarla. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Token inválido, expirado o ya usado */
                 409: {
                     headers: {
@@ -343,7 +360,24 @@ export interface paths {
                     };
                     content?: never;
                 };
-                400: components["responses"]["ValidationError"];
+                /** @description Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña de más de 72 bytes (`AUTH_WEAK_PASSWORD`): bcrypt no usa el resto, y aceptarla engañaría a quien la eligió. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description La cuenta está desactivada (`AUTH_ACCOUNT_NOT_ACTIVE`): el enlace se pidió antes de desactivarla. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Token inválido, expirado o ya usado */
                 409: {
                     headers: {

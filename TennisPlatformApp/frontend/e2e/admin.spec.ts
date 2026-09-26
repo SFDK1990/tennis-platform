@@ -1,4 +1,4 @@
-import { expect, signIn, test } from "./support/fixtures";
+import { expect, openFromMenu, signIn, test } from "./support/fixtures";
 import { ADMIN, TEACHER } from "./support/stack";
 
 test("con el límite de alumnos alcanzado, el profesor no puede añadir otro", async ({ page, arrange }) => {
@@ -19,7 +19,7 @@ test("con el límite de alumnos alcanzado, el profesor no puede añadir otro", a
   }
   await page.getByRole("button", { name: "Salir" }).click();
   await signIn(page, TEACHER.email, TEACHER.password);
-  await page.getByRole("link", { name: "Alumnos" }).click();
+  await openFromMenu(page, "Alumnos");
   await page.getByLabel("Email del alumno").fill(student.email);
   await page.getByRole("button", { name: "Buscar" }).click();
   await page.getByRole("button", { name: "Añadir a mis alumnos" }).click();
@@ -30,7 +30,7 @@ test("un alumno desactivado por el admin ya no puede entrar", async ({ page, arr
   const student = await arrange.student();
 
   await signIn(page, ADMIN.email, ADMIN.password);
-  await page.getByRole("link", { name: "Usuarios" }).click();
+  await openFromMenu(page, "Usuarios");
   await page.getByLabel("Email").fill(student.email);
   await page.getByRole("button", { name: "Buscar" }).click();
   const row = page.getByRole("listitem").filter({ hasText: student.email });

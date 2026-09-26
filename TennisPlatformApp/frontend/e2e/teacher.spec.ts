@@ -1,4 +1,4 @@
-import { dayInCalendar, expect, signIn, test } from "./support/fixtures";
+import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
 test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla, el alumno lo ve", async ({ page, browser, arrange }) => {
@@ -6,7 +6,7 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   const day = await arrange.freeDay();
 
   await signIn(page, TEACHER.email, TEACHER.password);
-  await page.getByRole("link", { name: "Horario" }).click();
+  await openFromMenu(page, "Horario");
   const extra = page.locator("form").filter({ has: page.getByRole("button", { name: "Añadir" }) });
   await extra.getByLabel("Día").fill(day);
   await extra.getByLabel("Tipo").selectOption({ label: "Horas extra" });
@@ -15,14 +15,14 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   await extra.getByRole("button", { name: "Añadir" }).click();
   await expect(page.getByText("Disponible además de 09:00 a 13:00")).toBeVisible();
 
-  await page.getByRole("link", { name: "Alumnos" }).click();
+  await openFromMenu(page, "Alumnos");
   await page.getByLabel("Email del alumno").fill(student.email);
   await page.getByRole("button", { name: "Buscar" }).click();
   await page.getByRole("button", { name: "Añadir a mis alumnos" }).click();
   await expect(page.getByText("Alumno añadido")).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: student.email })).toContainText(student.fullName);
 
-  await page.getByRole("link", { name: "Calendario" }).click();
+  await openFromMenu(page, "Calendario");
   await page.getByRole("button", { name: "Nueva clase" }).click();
   await page.getByLabel("Día").fill(day);
   await page.getByLabel("Hora").fill("10:00");
@@ -47,7 +47,7 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   await page.getByRole("button", { name: "Sí, cancelar la clase" }).click();
   await expect(page.getByText(/Cancelada, con/)).toBeVisible();
 
-  await phone.getByRole("link", { name: "Mis reservas" }).click();
+  await openFromMenu(phone, "Mis reservas");
   await expect(phone.getByRole("listitem").filter({ hasText: "10:00" })).toContainText("Cancelada por el profesor");
   await phone.close();
 });
@@ -73,6 +73,6 @@ test("el profesor marca la asistencia en cuanto la clase empieza", async ({ page
 
   await page.getByRole("button", { name: "Salir" }).click();
   await signIn(page, student.email, student.password);
-  await page.getByRole("link", { name: "Mis reservas" }).click();
+  await openFromMenu(page, "Mis reservas");
   await expect(page.getByText("Asististe")).toBeVisible();
 });
