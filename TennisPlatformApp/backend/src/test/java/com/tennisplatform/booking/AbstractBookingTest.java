@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * booking test needs lessons that started an hour ago, or that start in five hours whatever the
  * time of day the suite runs at - neither of which it could get from the API reliably.
  */
-abstract class AbstractBookingTest extends AbstractIntegrationTest {
+public abstract class AbstractBookingTest extends AbstractIntegrationTest {
 
     protected static final String TEACHER_EMAIL = "teacher@tennis-platform.local";
     protected static final String PASSWORD = "a-valid-password";

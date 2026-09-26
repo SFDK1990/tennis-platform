@@ -15,6 +15,9 @@ import java.util.UUID;
 interface BookingJpaRepository extends JpaRepository<BookingEntity, UUID>,
         JpaSpecificationExecutor<BookingEntity> {
 
+    List<BookingEntity> findAllByStudentUserIdAndLessonIdInOrderByBookedAtAsc(UUID studentUserId,
+                                                                             Collection<UUID> lessonIds);
+
     @Query("""
             select count(b) > 0 from BookingEntity b
             where b.lessonId = :lessonId

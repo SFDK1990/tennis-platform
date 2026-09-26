@@ -491,25 +491,38 @@ paths:
   /calendar:
     get:
       tags: [calendar]
-      summary: Vista agregada de disponibilidad, clases y reservas en un rango de fechas
+      summary: Calendario de un rango de dias, para el profesor o para el alumno
+      description: >-
+        Las fechas se leen en la zona del profesor (timezone en la respuesta), con el tope comun
+        de 62 dias. El profesor recibe su disponibilidad resuelta en intervalos y todas sus
+        clases, canceladas incluidas. El alumno recibe las clases de los profesores que lo
+        gestionan, sin las canceladas salvo que tuviera reserva en ellas, y en cada una su propia
+        reserva (myBooking). Un alumno no gestionado recibe listas vacias. Sin notes para nadie.
       parameters:
         - name: from
           in: query
           required: true
-          schema: { type: string, format: date-time }
+          schema: { type: string, format: date }
         - name: to
           in: query
           required: true
-          schema: { type: string, format: date-time }
+          schema: { type: string, format: date }
       responses:
         "200":
           description: OK
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/CalendarEntry" }
-        "400": { $ref: "#/components/responses/ValidationError" }
+              schema: { $ref: "#/components/schemas/Calendar" }
+        "400":
+          description: DATE_RANGE_INVALID, o fechas mal formadas (VALIDATION_ERROR)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "403":
+          description: AUTH_FORBIDDEN, si quien llama no es profesor ni alumno
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /teacher/lessons:
     post:
@@ -1222,17 +1235,37 @@ components:
           type: array
           items: { $ref: "#/components/schemas/AvailabilityException" }
 
-    CalendarEntry:
+    Calendar:
       type: object
-      description: Unión discriminada por `kind`
-      required: [kind, startsAt, endsAt]
       properties:
-        kind: { type: string, enum: [AVAILABILITY, LESSON] }
-        startsAt: { type: string, format: date-time }
-        endsAt: { type: string, format: date-time }
-        lesson:
-          $ref: "#/components/schemas/Lesson"
-          description: Presente solo si kind = LESSON
+        timezone: { type: string, nullable: true, description: "Zona IANA del profesor; null si el alumno no esta gestionado" }
+        availability:
+          type: array
+          items:
+            type: object
+            properties:
+              startsAt: { type: string, format: date-time }
+              endsAt: { type: string, format: date-time }
+        lessons:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              teacherUserId: { type: string, format: uuid }
+              type: { $ref: "#/components/schemas/LessonType" }
+              startsAt: { type: string, format: date-time }
+              endsAt: { type: string, format: date-time }
+              capacity: { type: integer }
+              bookedCount: { type: integer }
+              status: { $ref: "#/components/schemas/LessonStatus" }
+              myBooking:
+                type: object
+                nullable: true
+                properties:
+                  id: { type: string, format: uuid }
+                  status: { $ref: "#/components/schemas/BookingStatus" }
+                  attendance: { $ref: "#/components/schemas/Attendance" }
 
     CreateLessonRequest:
       type: object

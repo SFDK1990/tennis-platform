@@ -37,6 +37,13 @@ class ManagedStudentRepositoryAdapter implements ManagedStudentRepository {
     }
 
     @Override
+    public List<UUID> findManagingTeachers(UUID studentUserId) {
+        return jpa.findAllByStudentUserIdAndStatus(studentUserId, ManagedStatus.MANAGED).stream()
+                .map(entity -> entity.toDomain().teacherUserId())
+                .toList();
+    }
+
+    @Override
     public ManagedStudent save(ManagedStudent relationship) {
         return jpa.save(ManagedStudentEntity.fromDomain(relationship)).toDomain();
     }

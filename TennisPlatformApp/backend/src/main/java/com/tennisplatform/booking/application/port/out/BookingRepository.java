@@ -27,6 +27,8 @@ public interface BookingRepository {
 
     boolean existsConfirmed(UUID lessonId, UUID studentUserId);
 
+    List<Booking> findByStudentInLessons(UUID studentUserId, Collection<UUID> lessonIds);
+
     /** Whether the student already has a confirmed booking that overlaps the interval. */
     boolean existsOverlappingConfirmed(UUID studentUserId, Instant startsAt, Instant endsAt);
 
