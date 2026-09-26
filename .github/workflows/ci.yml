@@ -115,12 +115,22 @@ jobs:
       - run: npm run build
 
   docker-image:
-    name: Image builds and the stack starts
+    name: Stack starts and the end-to-end flows pass
     needs: backend
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: TennisPlatformApp
+    # What compose passes to the backend, and what the E2E suite signs in with. Throwaway
+    # values for a stack that lives as long as the job.
+    env:
+      TEACHER_EMAIL: teacher@e2e.local
+      TEACHER_PASSWORD: e2e-teacher-password
+      TEACHER_DISPLAY_NAME: Profesora E2E
+      ADMIN_EMAIL: admin@e2e.local
+      ADMIN_PASSWORD: e2e-admin-password
+      # The whole suite comes from one IP (25-fase14-analisis-cobertura-e2e.md).
+      AUTH_RATE_LIMIT_PER_MINUTE: 1000
 
     steps:
       - uses: actions/checkout@v7
@@ -146,6 +156,45 @@ jobs:
 
       - name: Check the health endpoint from outside the container
         run: curl --fail --silent --show-error http://localhost:8080/actuator/health
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: TennisPlatformApp/frontend/package-lock.json
+
+      - name: Install the frontend and Chromium
+        working-directory: TennisPlatformApp/frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # Playwright builds and starts the frontend itself (playwright.config.ts), no retries.
+      - name: End-to-end flows
+        working-directory: TennisPlatformApp/frontend
+        run: npm run e2e
+
+      # Same rule as the backend: a skipped flow looks green and proves nothing.
+      - name: Fail if any end-to-end test was skipped
+        if: always()
+        working-directory: TennisPlatformApp/frontend
+        run: |
+          node -e '
+            const { stats } = require("./test-results/results.json");
+            console.log(stats);
+            if (stats.skipped > 0) process.exit(1);
+          '
+
+      - name: Publish the Playwright report and traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report
+          path: |
+            TennisPlatformApp/frontend/playwright-report/
+            TennisPlatformApp/frontend/test-results/
+          retention-days: 14
 
       - name: Dump logs when something went wrong
         if: failure()

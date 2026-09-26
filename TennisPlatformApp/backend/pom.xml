@@ -218,9 +218,9 @@
             </plugin>
 
             <!--
-                Report only, no coverage threshold. With a single module implemented any
-                percentage would be an arbitrary number that later phases would have to
-                fight; the gate arrives in Fase 12, which is where coverage is the subject.
+                A floor, not a target: the coverage measured when Fase 14 closed, rounded down
+                (25-fase14-analisis-cobertura-e2e.md). It stops the suite from quietly going
+                backwards; raising it is a decision of its own.
             -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -232,6 +232,11 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <!-- By default each run adds to the last one's data, and the gate
+                                 would pass on coverage of tests that no longer run. -->
+                            <append>false</append>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>report</id>
@@ -239,6 +244,32 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.97</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.83</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

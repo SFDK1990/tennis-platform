@@ -39,9 +39,14 @@ npm run dev                   # http://localhost:3000, reenvía /api al backend
 npm run lint                  # incluye las fronteras entre módulos
 npm run typecheck && npm test && npm run build
 npm run api:types             # regenera los tipos tras tocar openapi.yaml
+npm run e2e                   # Playwright contra el stack levantado (ver abajo)
 ```
 
 CI falla si algún test se salta. Sin Docker en marcha, los de integración se saltan.
+
+`npm run e2e` necesita el stack con el profesor y el admin del `.env` y el rate limiting subido:
+`AUTH_RATE_LIMIT_PER_MINUTE=1000 docker compose up -d --build`. Construye y arranca el
+frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de alumno `e2e-*`.
 
 ## Entorno de desarrollo
 
@@ -92,6 +97,10 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
 - **Cada respuesta de un test de integración se valida contra `openapi.yaml`** (`ContractValidation`),
   y un test compara las rutas del código con las del spec. Un endpoint, un campo o un estado nuevo
   sin tocar el spec rompe el build; un nullable junto a `$ref`/`allOf` no hace nada en OpenAPI 3.0.
+- **La cobertura del backend es una puerta** (`jacoco:check`). Tras borrar clases, medir con
+  `mvn clean verify`: los `.class` viejos de `target/` cuentan como código sin cubrir.
+- **Los E2E corren sobre el reloj real.** Lo que depende de la hora (24 horas, clase empezada) lo
+  prueba el backend con `Clock` fijo; el test de asistencia crea una clase que empieza a los 15 s.
 - **Los tipos del frontend se generan de `openapi.yaml`** y se versionan. Tocar el contrato sin
   `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
 - **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
