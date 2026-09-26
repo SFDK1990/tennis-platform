@@ -7,6 +7,7 @@ import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.application.service.ScheduleLessonService;
 import com.tennisplatform.lesson.domain.InvalidLessonException;
 import com.tennisplatform.lesson.domain.Lesson;
+import com.tennisplatform.lesson.domain.LessonInThePastException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
 import com.tennisplatform.lesson.domain.LessonOverlapException;
 import com.tennisplatform.lesson.domain.TeacherRoleRequiredException;
@@ -38,14 +39,16 @@ class ScheduleLessonServiceTest {
 
     private LessonRepository lessons;
     private QueryAvailability availability;
+    private GetTeacherProfile teacherProfile;
+    private GetMaxGroupCapacity groupCapacity;
     private ScheduleLessonService service;
 
     @BeforeEach
     void setUp() {
         lessons = mock(LessonRepository.class);
         availability = mock(QueryAvailability.class);
-        GetTeacherProfile teacherProfile = mock(GetTeacherProfile.class);
-        GetMaxGroupCapacity groupCapacity = mock(GetMaxGroupCapacity.class);
+        teacherProfile = mock(GetTeacherProfile.class);
+        groupCapacity = mock(GetMaxGroupCapacity.class);
 
         when(teacherProfile.byUserId(TEACHER_ID)).thenReturn(Optional.of(
                 new TeacherProfileView(TEACHER_ID, "The teacher", null, "Europe/Madrid")));
@@ -97,6 +100,21 @@ class ScheduleLessonServiceTest {
 
         assertThat(service.schedule(TEACHER_ID, request(1, true)).createdOutsideAvailability())
                 .isFalse();
+    }
+
+    /**
+     * Decision 6 of 20-fase9-analisis-booking.md. The boundary is the start itself: a lesson
+     * that starts at this very instant has already started by the time anybody could book it.
+     */
+    @Test
+    void refusesALessonThatStartsAtTheMomentItIsCreated() {
+        ScheduleLessonService atTheStart = new ScheduleLessonService(lessons, teacherProfile,
+                availability, groupCapacity, Clock.fixed(STARTS, ZoneOffset.UTC));
+
+        assertThatThrownBy(() -> atTheStart.schedule(TEACHER_ID, request(1, true)))
+                .isInstanceOf(LessonInThePastException.class);
+
+        verify(lessons, never()).save(any());
     }
 
     @Test

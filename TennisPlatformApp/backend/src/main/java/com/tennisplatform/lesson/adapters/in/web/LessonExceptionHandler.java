@@ -4,6 +4,7 @@ import com.tennisplatform.error.Problems;
 import com.tennisplatform.lesson.domain.InvalidLessonException;
 import com.tennisplatform.lesson.domain.LessonAlreadyCancelledException;
 import com.tennisplatform.lesson.domain.LessonAlreadyFinishedException;
+import com.tennisplatform.lesson.domain.LessonInThePastException;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
 import com.tennisplatform.lesson.domain.LessonOverlapException;
@@ -54,6 +55,12 @@ class LessonExceptionHandler {
     ProblemDetail handleAlreadyFinished(LessonAlreadyFinishedException e) {
         return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Lesson already finished", e.getMessage(),
                 "LESSON_ALREADY_FINISHED");
+    }
+
+    @ExceptionHandler(LessonInThePastException.class)
+    ProblemDetail handleInThePast(LessonInThePastException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Lesson in the past", e.getMessage(),
+                "LESSON_IN_THE_PAST");
     }
 
     @ExceptionHandler(InvalidLessonException.class)
