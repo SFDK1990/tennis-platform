@@ -89,7 +89,11 @@ Primitivas técnicas mínimas: identificadores, errores comunes, reloj e infraes
 - `student` puede consultar identity, teacher y platform.
 - `availability` puede consultar teacher.
 - `lesson` puede consultar teacher y availability.
-- `booking` puede consultar student y lesson.
+- `booking` puede consultar student, lesson e identity (esta última por el adaptador web, igual
+  que el resto de módulos con endpoints). Además **implementa** las interfaces que `lesson` y
+  `student` declaran en su paquete `application/port/spi`: así cancelar una clase o desactivar a
+  un alumno cancela sus reservas, y leer una clase cuenta sus plazas, sin que ninguno de los dos
+  dependa de `booking` al compilar (Fase 9, `20-fase9-analisis-booking.md`).
 - `administration` puede consultar identity, teacher, student y platform.
 - `platform` no depende de ningún módulo: es la configuración global y la lee todo el mundo.
 - `calendar` solo usa interfaces públicas de consulta.

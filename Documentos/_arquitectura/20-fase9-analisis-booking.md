@@ -426,3 +426,103 @@ regla que releer no cambia.
 
 Un solo PR desde `fase-9-booking`, con este análisis primero —validado antes de escribir código—
 y la implementación después, como en las fases 7 y 8.
+
+## Decisiones tomadas al implementar
+
+Lo que no se podía saber hasta escribir el código. Va aquí y no sólo en el informe de cierre,
+porque es la clase de detalle que la siguiente fase necesita y un informe fechado no se relee.
+
+### El email verificado sólo lo puede exigir `booking`: `403 EMAIL_NOT_VERIFIED`
+
+La tabla de condiciones de este análisis daba por hecho que "verificado" venía garantizado por el
+token. No es así: el login acepta una cuenta sin verificar —`openapi.yaml` lo dice expresamente—,
+y rellenar el perfil y ser gestionado tampoco lo exigen. Reservar es, por tanto, el único sitio
+donde la regla de `01-analisis-funcional.md` §9 puede cumplirse. Se usa el `emailVerified` del
+token, que el propio javadoc de `AuthenticatedUser` ya declaraba "aceptable para reservar": como
+mucho va un tiempo de vida del token por detrás de la realidad, y en esa dirección —alguien que
+acaba de verificar y aún no puede reservar— el coste es volver a iniciar sesión.
+
+### El profesor se copia en la reserva
+
+Además de los instantes de la clase, `bookings` guarda `teacher_user_id`. Todas las consultas
+del lado del profesor —listar, cancelar, asistencia, la cascada al desactivar un alumno— filtran
+por él, y la alternativa era un `JOIN` contra `lessons`, que es la tabla de otro módulo. La copia
+es segura por la misma razón que la de los instantes: una clase nunca cambia de profesor.
+
+### El paquete se llama `application/port/spi`, y la regla sólo deja implementarlo
+
+La opción C necesitaba un sitio para las interfaces que un módulo declara y otro implementa. Se
+llama `spi` —*service provider interface*, el nombre establecido para exactamente esto— y
+`ModuleBoundariesTest` acepta una dependencia sobre él **sólo desde una clase que implementa esa
+interfaz**. Una clase de `booking` que la inyectara para llamarla sería rechazada, y hay un test,
+`PublicPortsTest`, que lo demuestra con módulos de prueba: una regla que sólo se ha visto pasar no
+prueba nada sobre lo que debe impedir.
+
+### El cerrojo lo presta `lesson`, y cuenta él mismo después de cerrarlo
+
+`LockLesson.lockForBooking` hace el `SELECT ... FOR UPDATE` y, ya con la fila bloqueada, pide el
+recuento a `LessonBookings`. Así el `FULL` que devuelve está calculado bajo el cerrojo y por la
+única regla que existe —`Lesson.statusAt`—, y `booking` no repite la comparación entre plazas y
+capacidad. Exige transacción (`Propagation.MANDATORY`): llamado fuera de una, el cerrojo se
+soltaría al volver y no protegería nada, y es mejor que eso falle con una excepción que con una
+carrera.
+
+Por la misma razón, la respuesta de una reserva recién hecha **vuelve a leer la clase** en vez de
+sumar uno a mano: sumar a mano habría sido una segunda copia de la regla de `FULL`.
+
+### El test de concurrencia se comprobó rompiendo lo que prueba
+
+`LastSeatConcurrencyTest` lanza dos reservas de la última plaza soltadas por el mismo
+`CountDownLatch`, cinco veces seguidas. Pasa. Para saber si eso significa algo, se quitó el
+`@Lock` de `LessonJpaRepository.findByIdForUpdate` y se volvió a ejecutar: **falla**, con las dos
+reservas dentro. El cerrojo es lo que gana la carrera, no la suerte. El mismo test comprueba que
+el pool de conexiones admite al menos dos, porque con una sola las peticiones harían cola en el
+pool en vez de en el cerrojo y el test pasaría sin probar nada.
+
+### Reutilizar códigos antes que inventarlos
+
+- **`AUTH_FORBIDDEN`** para "este rol no hace esto": un profesor que intenta reservar, un admin
+  que pide "mis reservas". Es exactamente lo que ese código ya significaba en la cadena de
+  seguridad.
+- **`VALIDATION_ERROR`** para un filtro `status` desconocido o una reserva repetida en un lote de
+  asistencia. Con un detalle que habría fallado en silencio: si el parámetro se declara con el
+  enum de dominio, el conversor de Spring lanza una excepción que ningún advice captura y responde
+  un **500**. Por eso el filtro llega como texto y lo interpreta `BookingStatus.filter`.
+
+### Filtros opcionales con `Specification`, no con `:param is null`
+
+El listado tiene hasta tres filtros opcionales. La forma corta en JPQL —`(:lessonId is null or
+b.lessonId = :lessonId)`— falla en PostgreSQL con un UUID nulo, porque la base no puede deducir el
+tipo del parámetro. Se construye con `JpaSpecificationExecutor`, que simplemente no añade la
+condición cuando el filtro no viene.
+
+### La clase que viaja dentro de una reserva no lleva `notes`
+
+Para nadie. Quién ve las notas lo decide `lesson` al servir la clase; repetir aquí la regla del
+dueño habría sido una segunda copia de ella, y ninguna pantalla de reservas las necesita.
+
+### No se extrajo una página genérica a `shared`
+
+El javadoc de `ManagedStudentPage` anunciaba que, al llegar el segundo listado, habría que llevar
+un tipo de página común a `shared`. Llegó y no se hizo: exigiría que **todos** los módulos
+pudieran depender de `shared`, un cambio en el grafo entero, para ahorrarse un record de cuatro
+campos. `BookingPage` es el segundo; si llega un tercero con la misma forma —la lista de usuarios
+de `administration`— vuelve a valorarse.
+
+### Una clase en curso se puede cancelar, y la asistencia marcada se conserva
+
+La Fase 8 sólo impide cancelar una clase que ya **terminó**. Una en curso se puede cancelar, y la
+cascada pasa sus reservas a `CANCELLED_BY_TEACHER` aunque alguna tenga ya la asistencia marcada.
+Por eso el esquema **no** tiene un `CHECK` que obligue a que sólo las reservas confirmadas tengan
+asistencia: ese `CHECK` habría convertido esa cancelación en un 500. La asistencia marcada queda
+como histórico de lo que pasó antes de cancelar.
+
+### Lo que queda sin resolver
+
+- **`updated_at` no se actualiza** ni en `lessons` ni en `bookings`: las dos columnas tienen
+  `DEFAULT now()` y ninguna entidad las mapea, así que conservan la fecha de creación para
+  siempre. Hoy nadie las lee. Si alguna vez se necesitan, o se mapean con
+  `@UpdateTimestamp` o se quitan; mantenerlas mintiendo es lo único que no vale.
+- **La modificación de clases** sigue fuera. Cuando llegue, tendrá que actualizar en la misma
+  transacción las copias de instantes que guardan las reservas; está escrito en el changeset
+  `v7-booking` para que no sea una sorpresa.

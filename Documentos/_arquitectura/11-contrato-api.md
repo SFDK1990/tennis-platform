@@ -57,8 +57,9 @@ contrato como el resto:
 formado o firmado por otro. Esa diferencia es justo lo que un atacante necesita para saber cuál
 de sus intentos se acerca.
 
-`AUTH_FORBIDDEN` no lo produce hoy ningún endpoint —los 403 de negocio los lanzan los módulos y
-los mapea su propio advice—, pero es el valor por defecto de la cadena y tiene su prueba.
+`AUTH_FORBIDDEN` es el valor por defecto de la cadena y tiene su prueba. Desde la Fase 9 lo
+usa también `booking` con el mismo significado —autenticado, pero con un rol al que esa operación
+no sirve—: un profesor que intenta reservar plaza, o un admin que pide "mis reservas".
 
 ## Mapeo código de negocio → HTTP
 
@@ -112,7 +113,24 @@ cambio deliberado respecto a lo que este documento decía. La ventana de 24 hora
 profesor de un hueco que ya no puede llenar, lo que justifica atar al alumno que cancela su
 reserva y no justifica atar al profesor sobre su propia clase: tal como estaba escrito, un
 profesor que enfermara la noche antes no podía cancelar. El código sigue reservado para
-`POST /bookings/{id}/cancel` en la Fase 9.
+`POST /bookings/{id}/cancel`, y solo cuando quien cancela es el alumno.
+
+Códigos añadidos en la Fase 9 (ver `20-fase9-analisis-booking.md`):
+
+| Código                        | HTTP | Endpoint típico                              | Motivo                                                                  |
+|--------------------------------|------|-----------------------------------------------|--------------------------------------------------------------------------|
+| `LESSON_NOT_BOOKABLE`          | 409  | `POST /lessons/{id}/bookings`                 | La clase está cancelada; la pantalla que la ofrecía está obsoleta        |
+| `LESSON_ALREADY_STARTED`       | 422  | reservar, y cancelar una reserva              | La clase ya empezó. Releer no hace retroceder el reloj                   |
+| `LESSON_IN_THE_PAST`           | 422  | `POST /teacher/lessons`                       | La clase empezaría al crearla o antes: no podría tener reservas          |
+| `BOOKING_NOT_FOUND`            | 404  | `/bookings/{id}/cancel`, asistencia           | No existe; la reserva de otro responde lo mismo                          |
+| `BOOKING_ALREADY_CANCELLED`    | 409  | `POST /bookings/{id}/cancel`, asistencia      | Ya no está en pie; casi siempre una pantalla obsoleta                    |
+| `ATTENDANCE_NOT_YET_OPEN`      | 422  | `POST /teacher/lessons/{id}/attendance`       | La asistencia se marca a partir del inicio de la clase                   |
+| `EMAIL_NOT_VERIFIED`           | 403  | `POST /lessons/{id}/bookings`                 | El alumno no ha verificado su dirección. Nada antes lo exige: el login sí la acepta |
+
+`LESSON_FULL`, `BOOKING_ALREADY_EXISTS`, `STUDENT_SCHEDULE_OVERLAP`, `STUDENT_NOT_MANAGED` y
+`CANCELLATION_WINDOW_EXPIRED` ya estaban en la primera tabla y se implementan tal cual. Un filtro
+`status` desconocido en `GET /bookings`, o una misma reserva dos veces en un lote de asistencia,
+responden `400 VALIDATION_ERROR`, el código que ya usan los fallos de validación.
 
 Los códigos de la Fase 7 son todos de forma o de referencia; los de la Fase 8 incluyen dos
 `422` porque aquí sí hay reglas de negocio sobre datos por lo demás válidos: una clase fuera

@@ -87,8 +87,10 @@ erDiagram
     BOOKINGS {
         uuid id PK
         uuid lesson_id FK
+        uuid teacher_user_id FK
         uuid student_user_id FK
         varchar status
+        varchar attendance
         timestamptz lesson_starts_at
         timestamptz lesson_ends_at
     }
@@ -299,45 +301,60 @@ estará para todas las clases a la vez.
 
 ## Changelog 6 — booking
 
+**Corregido en la Fase 9.** Lo que había aquí era el borrador; el changeset real es
+`v7-booking.yaml` (la numeración de este documento no coincide con la de los ficheros).
+Razonamiento completo en `20-fase9-analisis-booking.md`.
+
 ```sql
 CREATE TABLE bookings (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lesson_id         UUID NOT NULL REFERENCES lessons(id),
+    teacher_user_id   UUID NOT NULL REFERENCES teacher_profiles(user_id),
     student_user_id   UUID NOT NULL REFERENCES student_profiles(user_id),
     status            VARCHAR(30) NOT NULL DEFAULT 'CONFIRMED' CHECK (status IN (
                           'CONFIRMED','CANCELLED_BY_STUDENT','CANCELLED_BY_TEACHER',
-                          'CANCELLED_BY_ADMIN','ATTENDED','NO_SHOW'
-                      )),
-    -- Copia inmutable del rango horario de la clase en el momento de reservar,
-    -- necesaria para poder expresar el solapamiento del alumno como EXCLUDE constraint
-    -- (una EXCLUDE no puede hacer JOIN contra lessons).
-    lesson_starts_at TIMESTAMPTZ NOT NULL,
-    lesson_ends_at   TIMESTAMPTZ NOT NULL,
+                          'CANCELLED_BY_ADMIN')),
+    attendance        VARCHAR(10) NOT NULL DEFAULT 'PENDING'
+                      CHECK (attendance IN ('PENDING','ATTENDED','NO_SHOW')),
+    -- Copias inmutables de la clase: la EXCLUDE no puede hacer JOIN contra lessons.
+    lesson_starts_at  TIMESTAMPTZ NOT NULL,
+    lesson_ends_at    TIMESTAMPTZ NOT NULL,
     booked_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
     cancelled_at      TIMESTAMPTZ,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT ck_bookings_period CHECK (lesson_starts_at < lesson_ends_at),
+    CONSTRAINT ck_bookings_cancelled_at CHECK ((status = 'CONFIRMED') = (cancelled_at IS NULL))
 );
 
--- "No se admiten reservas duplicadas": solo una reserva CONFIRMED por alumno y clase
--- (permite volver a reservar tras cancelar).
 CREATE UNIQUE INDEX ux_bookings_active_pair
     ON bookings (lesson_id, student_user_id) WHERE status = 'CONFIRMED';
 
--- "Un alumno no puede tener dos clases solapadas" (solo cuenta reservas confirmadas).
 ALTER TABLE bookings ADD CONSTRAINT ex_bookings_no_student_overlap
     EXCLUDE USING gist (
         student_user_id WITH =,
         tstzrange(lesson_starts_at, lesson_ends_at) WITH &&
     ) WHERE (status = 'CONFIRMED');
 
-CREATE INDEX ix_bookings_lesson ON bookings (lesson_id);
-CREATE INDEX ix_bookings_student ON bookings (student_user_id);
+CREATE INDEX ix_bookings_lesson_status    ON bookings (lesson_id, status);
+CREATE INDEX ix_bookings_student_starts_at ON bookings (student_user_id, lesson_starts_at);
+CREATE INDEX ix_bookings_teacher_starts_at ON bookings (teacher_user_id, lesson_starts_at);
 ```
 
-El campo `attendance` que mencionaba `05-database-engineer.md` como posible tabla separada se modela directamente como los estados `ATTENDED`/`NO_SHOW` de `bookings.status`: no hay ciclo de vida propio de la asistencia más allá de "se marcó" o no, así que una tabla aparte solo añadiría un join sin beneficio.
+Tres cambios respecto al borrador, los tres deliberados:
 
-"No superar capacidad" (`LESSON_FULL`) **no** se expresa como constraint declarativa porque requeriría contar filas de otra tabla; se protege combinando el `SELECT ... FOR UPDATE` sobre `lessons` descrito en `02-arquitectura.md` §11 con, opcionalmente, un trigger `AFTER INSERT OR UPDATE ON bookings` que recuente reservas `CONFIRMED` de `lesson_id` y lance una excepción si supera `lessons.capacity`, como último cinturón de seguridad ante un bug en la capa de aplicación.
+- **La asistencia sale de `status` a su propia columna.** El borrador decía que `ATTENDED` y
+  `NO_SHOW` eran valores de `status` porque "la asistencia no tiene ciclo de vida propio". El
+  problema no era el ciclo de vida sino los filtros: el índice único, la restricción de exclusión
+  y el recuento de plazas miran `status = 'CONFIRMED'`, y marcar a un alumno como asistido lo
+  habría sacado de los tres a la vez. Que la reserva siga en pie y que el alumno viniera son dos
+  hechos, y cada uno tiene su columna.
+- **`teacher_user_id` se copia en la reserva**, igual que los instantes: es el filtro de todas
+  las consultas del lado del profesor, y una clase nunca cambia de profesor.
+- **No hay trigger de capacidad.** El único camino que añade una reserva confirmada bloquea antes
+  la fila de la clase (`SELECT ... FOR UPDATE`), y `LastSeatConcurrencyTest` lo demuestra —falla
+  si se quita el cerrojo, y se comprobó quitándolo—. Un trigger repetiría la regla en PL/pgSQL, y
+  de dos copias la que nadie lee es la que se desincroniza.
 
 ## Changelog 7 — platform (configuración global)
 
