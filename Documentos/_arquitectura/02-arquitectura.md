@@ -344,15 +344,17 @@ Variables sensibles fuera de Git:
 
 ## 17. Frontend
 
-Next.js con TypeScript estricto y Tailwind, organizado por funcionalidad (`authentication`,
-`profile`, `students`, `availability`, `calendar`, `lessons`, `bookings`, `administration`).
+Next.js con TypeScript estricto y Tailwind, en `TennisPlatformApp/frontend`. Se organiza como el
+backend, un módulo por módulo (`src/modules/<modulo>`), más `src/shared` y las páginas de
+`src/app`, que son la raíz de composición. Un módulo no importa de otro; lo vigila el lint
+(`eslint.config.mjs`), como ArchUnit en el backend. El porqué y el detalle, en
+`22-fase11-analisis-frontend.md`.
 
 - **Un único cliente HTTP** añade credenciales, renueva la sesión, normaliza los errores Problem
   Details y tipa las respuestas. Ningún componente llama a la API por su cuenta.
 - El backend es la fuente de verdad de clases, reservas y disponibilidad. Un `409` significa
   "lo que tienes en pantalla está obsoleto": se relee y se vuelve a mostrar.
-- Las fechas se muestran en la hora local del usuario, indicando la zona cuando pueda haber
-  ambigüedad.
+- Las fechas se muestran en la zona del profesor, indicándola en el calendario.
 - La validación en el cliente es comodidad; la que vale es la del backend.
 - Accesibilidad básica: teclado, etiquetas, errores asociados a su campo, confirmación de
   acciones destructivas.

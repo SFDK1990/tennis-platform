@@ -33,6 +33,12 @@ mvn spotless:apply        # corrige el formato
 cd TennisPlatformApp
 docker compose up postgres    # sólo la base
 docker compose up -d --build  # stack completo
+
+cd TennisPlatformApp/frontend
+npm run dev                   # http://localhost:3000, reenvía /api al backend
+npm run lint                  # incluye las fronteras entre módulos
+npm run typecheck && npm test && npm run build
+npm run api:types             # regenera los tipos tras tocar openapi.yaml
 ```
 
 CI falla si algún test se salta. Sin Docker en marcha, los de integración se saltan.
@@ -40,7 +46,8 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
 ## Entorno de desarrollo
 
 - Backend en el puerto **8081** (el 8080 lo ocupa un Tomcat ajeno). Ver `TennisPlatformApp/.env`.
-- JDK 21. Mailpit (correos de verificación) en http://localhost:8025.
+- Frontend en el **3000** (Node 24). JDK 21. Mailpit (correos de verificación) en http://localhost:8025.
+- Para recorrer pantallas, Playwright CLI (`playwright-cli`, skill en `.claude/skills/`).
 - PostgreSQL en `localhost:5432`, base/usuario/contraseña `tennis_platform`.
 
 ## Trampas que fallan en silencio
@@ -79,6 +86,12 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
 - **`:param is null or ...` con un UUID falla en PostgreSQL.** Los filtros opcionales, con
   `Specification`.
 - **El perfil del alumno nace en `PATCH /me`**, y sin perfil el profesor no puede gestionarlo.
+- **Con sesiones sin estado, la estrategia CSRF por defecto borra la cookie `XSRF-TOKEN` en cada
+  petición con bearer**, y el logout siguiente falla con 403 dejando viva la sesión. Por eso
+  `SecurityConfig` pone `NullAuthenticatedSessionStrategy`; no quitarlo.
+- **Los tipos del frontend se generan de `openapi.yaml`** y se versionan. Tocar el contrato sin
+  `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
+- **No hay admin** hasta la Fase 12: para probar, se registra uno y se le cambia el rol en la base.
 
 ## Repositorio
 
