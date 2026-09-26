@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * one class to replace - which is why the counting lives here and nowhere else.
  *
  * <p>Known limit: per-IP counting does not stop a distributed attack against one account.
- * Account lockout is explicitly out of the MVP (08-security-engineer.md).
+ * Account lockout is explicitly out of the MVP (02-arquitectura.md).
  */
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 

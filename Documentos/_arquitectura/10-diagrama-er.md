@@ -1,6 +1,6 @@
 # Tennis Platform — Diagrama ER y borrador de DDL
 
-Formaliza en un diagrama y en SQL las entidades ya descritas de forma textual en `05-database-engineer.md`, incorporando las decisiones cerradas en `00-indice-arquitectura.md` (pista única, asociación por email, bootstrap del profesor, refresh token en cookie, cancelación libre del `ADMIN`). Es un borrador para convertir en changesets reales de Liquibase durante la Fase 0/1 del roadmap (`09-roadmap-implementacion.md`), no el changelog definitivo.
+Formaliza en un diagrama y en SQL las entidades ya descritas de forma textual en `03-modelo-de-datos.md`, incorporando las decisiones cerradas en `00-indice-arquitectura.md` (pista única, asociación por email, bootstrap del profesor, refresh token en cookie, cancelación libre del `ADMIN`). Es un borrador para convertir en changesets reales de Liquibase durante la Fase 0/1 del roadmap (`12-metodologia-trabajo.md`), no el changelog definitivo.
 
 ## Extensiones necesarias
 
@@ -96,7 +96,7 @@ erDiagram
     }
 ```
 
-No aparece una entidad "pista/cancha": el MVP asume una única pista (ver `01-product-architect.md`), así que el solapamiento se controla solo por `teacher_user_id`.
+No aparece una entidad "pista/cancha": el MVP asume una única pista (ver `01-analisis-funcional.md`), así que el solapamiento se controla solo por `teacher_user_id`.
 
 ## Changelog 1 — identity
 
@@ -144,7 +144,7 @@ CREATE TABLE password_reset_tokens (
 CREATE UNIQUE INDEX ux_password_reset_tokens_token_hash ON password_reset_tokens (token_hash);
 CREATE INDEX ix_password_reset_tokens_expires_at ON password_reset_tokens (expires_at);
 
--- Necesaria por la decisión de refresh token rotatorio en cookie HttpOnly (ver 08-security-engineer.md).
+-- Necesaria por la decisión de refresh token rotatorio en cookie HttpOnly (ver 02-arquitectura.md).
 CREATE TABLE refresh_tokens (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id              UUID NOT NULL REFERENCES users(id),
@@ -199,12 +199,12 @@ CREATE TABLE teacher_students (
     deactivated_at   TIMESTAMPTZ
 );
 
--- "Una relación alumno-profesor única" (05-database-engineer.md).
+-- "Una relación alumno-profesor única" (03-modelo-de-datos.md).
 CREATE UNIQUE INDEX ux_teacher_students_pair ON teacher_students (teacher_user_id, student_user_id);
 CREATE INDEX ix_teacher_students_student ON teacher_students (student_user_id);
 ```
 
-`national_id` y `address` son datos personales de acceso restringido (ver `08-security-engineer.md`): no deben devolverse en listados generales ni aparecer en logs; solo en el detalle de perfil accedido por el propio alumno, el profesor que lo gestiona o un `ADMIN`.
+`national_id` y `address` son datos personales de acceso restringido (ver `02-arquitectura.md`): no deben devolverse en listados generales ni aparecer en logs; solo en el detalle de perfil accedido por el propio alumno, el profesor que lo gestiona o un `ADMIN`.
 
 ## Changelog 4 — availability
 
@@ -382,4 +382,4 @@ El `CHECK (id = 1)` junto con la clave primaria impide insertar una segunda fila
 
 ## Changelog 8 — índices y constraints adicionales
 
-Cubierto ya en los changelogs anteriores; este changelog queda reservado para ajustes de rendimiento (p. ej. índices compuestos adicionales) que solo se justifiquen con datos reales de uso, siguiendo la recomendación de `05-database-engineer.md` de no adelantar índices sin evidencia.
+Cubierto ya en los changelogs anteriores; este changelog queda reservado para ajustes de rendimiento (p. ej. índices compuestos adicionales) que solo se justifiquen con datos reales de uso, siguiendo la recomendación de `03-modelo-de-datos.md` de no adelantar índices sin evidencia.

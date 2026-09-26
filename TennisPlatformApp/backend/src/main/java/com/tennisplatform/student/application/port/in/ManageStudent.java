@@ -21,7 +21,7 @@ public interface ManageStudent {
      * row survives, so the student can be taken back later without a second relationship.
      *
      * <p>Their upcoming bookings with this teacher are cancelled in the same transaction, as
-     * 01-product-architect.md requires. Bookings of lessons that already started are kept.
+     * 01-analisis-funcional.md requires. Bookings of lessons that already started are kept.
      */
     void stopManaging(UUID teacherUserId, UUID studentUserId);
 }

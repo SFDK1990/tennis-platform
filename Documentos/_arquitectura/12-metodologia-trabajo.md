@@ -1,122 +1,72 @@
 # Tennis Platform — Metodología de trabajo
 
-## Propósito
-
-Este documento define **cómo** se construye Tennis Platform: el orden de las fases, qué se puede hacer en cada una y qué debe entregarse antes de pasar a la siguiente. El resto de documentos de esta carpeta definen *qué* se construye; este define el proceso.
-
-Va dirigido tanto a Daniel como a cualquier agente de programación que trabaje sobre el repositorio.
-
-## Origen
-
-La metodología procede de una sesión de diseño previa, conservada como exportación en PDF (`tenisAPP.pdf`, 27 páginas). Este documento la recoge en texto para que quede versionada junto al código y sea consultable sin depender de un PDF de capturas de pantalla.
-
-La sección "Reglas adicionales" recoge añadidos posteriores, surgidos de la experiencia real de ejecutar la Fase 4 y de trabajar con un agente que dispone de terminal. Fueron aprobados el 16 de septiembre de 2026 y tienen el mismo rango que el resto.
+Cómo se construye el proyecto y en qué punto está. **Es la única fuente del estado de las
+fases**: ningún otro documento lo repite.
 
 ## Regla central
 
-> **No avanzar de fase hasta haber validado la anterior.**
+> **No se avanza de fase sin validación explícita de Daniel.**
 
-El agente no encadena fases por iniciativa propia. Al terminar una fase se detiene, entrega el informe de cierre y espera revisión.
+El agente no encadena fases por iniciativa propia.
 
-## Principios
+## Cómo se trabaja una fase
 
-Se aplican SOLID, Clean Code, separación de responsabilidades, modularización por dominio cuando aporte valor, inversión de dependencias, diseño API-first, seguridad por defecto, testabilidad, observabilidad y mantenibilidad.
+1. **Rama** `fase-<n>-<tema>`; lo que no es una fase va en `docs/<tema>`, `fix/<tema>` o
+   `chore/<tema>`.
+2. **Análisis antes de código**, en `NN-fase<n>-analisis-<modulo>.md`: requisitos, ambigüedades,
+   decisiones con su porqué, contrato y criterios de aceptación medibles. Daniel lo valida.
+3. **Implementación** en commits que dejan el proyecto compilando y en verde.
+4. **Cierre en el propio PR.** El análisis gana un apartado "Decisiones tomadas al implementar".
+   La descripción del PR es el informe de cierre: evidencia pegada, riesgos y qué revisar. **El
+   PR marca la fase como completada en la tabla de abajo**; al fusionarlo, pasa a ser cierto. No
+   hay informes aparte ni PR de "poner al día el estado".
+5. Daniel fusiona **con el CI en verde**. `main` no se puede proteger en el plan actual, así que
+   es la única barrera.
 
-Tres restricciones que acotan lo anterior:
+## Reglas
 
-- No introducir complejidad innecesaria.
-- No usar patrones simplemente por usarlos.
-- Cada decisión arquitectónica debe tener una razón explicable.
+- **La evidencia se pega, no se afirma.** La salida real de `mvn verify`, mirando el contador de
+  tests **saltados**, no sólo `BUILD SUCCESS`.
+- **Un test que sólo se ha visto pasar no prueba nada.** Lo crítico se comprueba rompiéndolo.
+- **Una mala decisión anterior se señala y se corrige**, no se mantiene por compatibilidad.
+- **Una decisión vive en un solo sitio.** Si una fase la cambia, se cambia ahí; no se anotan
+  correcciones en cada documento que la mencionaba.
+- **Criterios de aceptación medibles**: "existe un test que demuestra X", no "implementa X".
+- **El testing no es una fase**: cada fase trae sus tests.
+- **Al empezar una sesión**, el estado se comprueba (`git log`, `gh pr list`) antes de resumirlo.
+  Un resumen de memoria ya dio una vez por pendiente una fase que estaba fusionada.
 
-Kafka y la IA quedan fuera del MVP. Kafka se incorporará cuando exista una necesidad arquitectónica real (por ejemplo, eventos de dominio que alimenten email, calendario o analítica), nunca por aparentar madurez técnica.
+Principios de diseño: SOLID, dependencias explícitas y ninguna complejidad sin una razón que se
+pueda explicar. Kafka y la IA quedan fuera del MVP.
 
-## Reglas de trabajo
+## Fases
 
-Antes de escribir código en cualquier fase:
+| # | Fase | Estado | Criterio de salida |
+|---|------|--------|--------------------|
+| 1 | Análisis funcional | Completada | `01-analisis-funcional.md` |
+| 2 | Arquitectura | Completada | `02-arquitectura.md` |
+| 3 | Modelo de datos | Completada | `03-modelo-de-datos.md`, `10-diagrama-er.md` |
+| 4 | Skeleton del backend | Completada | — |
+| 5 | Seguridad y autenticación (`identity`) | Completada | `13-fase5-analisis-identity.md` |
+| 5.1 | Integración continua | Completada | `14-fase5.1-integracion-continua.md` |
+| 6 | Perfiles y alumnos (`teacher`, `student`) | Completada (PR #13, #15) | `16-fase6-analisis-perfiles.md` |
+| 7 | Disponibilidad (`availability`) | Completada (PR #17) | `18-fase7-analisis-availability.md` |
+| 8 | Clases (`lesson`) | Completada (PR #20) | `19-fase8-analisis-lesson.md` |
+| 9 | Reservas (`booking`) | Completada (PR #23) | `20-fase9-analisis-booking.md` |
+| 10 | Calendario (`calendar`) | **Siguiente** | Alumno y profesor ven disponibilidad, clases y reservas de un rango en su hora local, sin reimplementar reglas; ArchUnit demuestra que `calendar` no escribe |
+| 11 | Frontend | Pendiente; primer corte tras la 10 | Daniel recorre en el navegador, con los dos roles, registro → verificación → gestión → clase → reserva → cancelación → asistencia. Después, cada fase trae su pantalla |
+| 12 | Administración (`administration`) | Pendiente | Sólo `ADMIN` accede; ajusta el límite de alumnos y el estado de cualquier usuario |
+| 13 | Revisión de API | Pendiente | Revisión REST completa y `openapi.yaml` sin diferencias con lo implementado |
+| 14 | Cobertura y E2E | Pendiente | Playwright cubre los flujos críticos de los dos roles |
+| 15 | Auditoría de seguridad | Pendiente | OWASP Top 10, acceso horizontal, secretos y dependencias revisados |
+| 16 | Observabilidad | Pendiente | Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |
+| 17 | Endurecimiento y despliegue | Pendiente | PWA completa, accesibilidad, proveedor elegido y política de backups |
+| 18 | Revisión final de arquitectura | Pendiente | Informe con severidades; nada se aplica sin aprobación |
 
-1. Analizar los requisitos.
-2. Identificar ambigüedades.
-3. Proponer la arquitectura.
-4. Explicar las decisiones importantes.
-5. Definir la estructura de carpetas.
-6. Definir el modelo de datos.
-7. Definir los contratos de API.
-8. Definir la estrategia de testing.
-9. Definir los criterios de aceptación.
+## Decisiones de proceso resueltas
 
-Después implementar.
-
-Si se detecta una mala decisión arquitectónica previa, **no debe mantenerse por compatibilidad**: hay que señalarla y proponer una alternativa.
-
-Sobre el nivel de detalle: al cerrar cada bloque grande de implementación se entrega un **resumen de las decisiones tomadas y su porqué**, no un volcado de código sin explicar, pero tampoco una narración de cada archivo mientras se trabaja.
-
-## Informe de cierre de fase
-
-Al finalizar cada fase se entrega:
-
-- Cambios realizados.
-- Archivos creados o modificados.
-- Decisiones tomadas.
-- Tests ejecutados.
-- Problemas encontrados.
-- Riesgos pendientes.
-- Cómo ejecutar el proyecto.
-- Qué debería revisarse antes de continuar.
-
-## Secuencia de fases
-
-| # | Fase | Contenido | Estado |
-|---|------|-----------|--------|
-| 1 | Análisis funcional | User stories, requisitos funcionales y no funcionales, roles, casos de uso, reglas de negocio, casos límite. Sin código. | Completada |
-| 2 | Arquitectura | Módulos, responsabilidades, dependencias permitidas, capas, estructura de paquetes, ADRs. Sin código. | Completada |
-| 3 | Modelo de datos | Entidades, relaciones, restricciones, índices, diagrama ER y borrador de DDL. | Completada |
-| 4 | Skeleton del backend | Proyecto Maven compilable, estructura modular, perfiles, Docker, health endpoint, manejo de errores, logging y tests mínimos. Sin lógica de negocio. | Completada |
-| 5 | Seguridad y autenticación | Registro, verificación por email, login, JWT, refresh tokens rotativos, autorización por rol y por pertenencia. | Completada (los dos criterios abiertos se cerraron en la 5.1) |
-| 5.1 | Integración continua | Pipeline de GitHub Actions: build, tests unitarios, tests de integración, análisis estático, comprobación de dependencias y construcción de imagen. Adelantada desde la fase 15. | Completada y verificada en verde (ver `14-fase5.1-integracion-continua.md`) |
-| 6 | Perfiles y gestión de usuarios | Perfiles de profesor y alumno, alta y asociación de alumnos, activación y desactivación. | Completada — entregada en dos PRs, `teacher` (#13) y `student` (#15) |
-| 7 | Disponibilidad | Reglas semanales de disponibilidad del profesor y excepciones. | Completada (PR #17; ver `18-fase7-analisis-availability.md`) |
-| 8 | Clases | Creación, consulta y cancelación de clases, con validación de solapamientos. La modificación se aplazó porque toca reservas. | Completada (PR #20; ver `19-fase8-analisis-lesson.md`) |
-| 9 | Reservas | Reserva y cancelación, capacidad, duplicados, solapamientos del alumno y concurrencia. Hereda de la Fase 8 `bookedCount`, `FULL`, asistencia y cascada al cancelar. | Siguiente |
-| 10 | Revisión de API | Revisión REST completa: naming, verbos, códigos, paginación, errores, idempotencia, versionado. OpenAPI. | Pendiente |
-| 11 | Frontend | Next.js, React, TypeScript, Tailwind. Estados de carga, vacío y error. | Pendiente |
-| 12 | Cobertura y E2E | Pirámide de testing completa y flujos E2E críticos. | Pendiente |
-| 13 | Auditoría de seguridad | OWASP Top 10, escalada de privilegios, acceso a recursos ajenos, secretos, dependencias. | Pendiente |
-| 14 | Observabilidad | Logs estructurados, métricas, trazas y correlation IDs, ejecutables en local. | Pendiente |
-| 15 | Empaquetado de despliegue | Imágenes de producción y ajustes finales de Docker. El pipeline de integración continua se adelantó a la fase 5.1. | Pendiente |
-| 16 | Revisión final de arquitectura | Informe con severidades CRITICAL / HIGH / MEDIUM / LOW y preguntas de escalabilidad. Sin aplicar cambios sin aprobación. | Pendiente |
-
-## Reglas adicionales
-
-Aprobadas el 16 de septiembre de 2026. Surgen de ejecutar la Fase 4 y de trabajar con un agente que dispone de terminal, no solo de chat. Tienen el mismo rango que las reglas de las secciones anteriores.
-
-### 1. La evidencia se pega, no se afirma
-
-Una fase no se da por terminada sin la salida real del comando. Un build en verde no es evidencia suficiente: debe mostrarse el recuento de tests ejecutados, fallados y **saltados**.
-
-Motivo: durante la Fase 4 la suite reportó `BUILD SUCCESS` mientras cinco de los ocho tests se saltaban en silencio, porque Testcontainers no lograba conectar con Docker. El resultado parecía correcto y no lo era.
-
-### 2. Cada fase cierra con un commit
-
-La metodología original no menciona el control de versiones en ningún punto. Las cuatro primeras fases se completaron sin un solo commit. Cada fase debe terminar con su propio commit, cuyo mensaje describa la fase y su verificación.
-
-Matizado el 18 de septiembre de 2026 en `15-convenciones-de-codigo.md`: lo que se exige es que la fase **cierre** con ese commit, no que sea el único. Una fase puede tener varios commits, siempre que cada uno deje el proyecto compilando y con los tests en verde. Desde la Fase 6, además, cada fase se desarrolla en su propia rama y entra en `main` mediante Pull Request con el pipeline en verde.
-
-### 3. La integración continua se adelanta
-
-La integración continua estaba en la fase 15. Situarla al final implica descubrir tarde si el proyecto es reproducible fuera de la máquina de desarrollo. Pasa a ser la fase 5.1, justo después de autenticación, de forma que todo el trabajo posterior nazca ya cubierto por el pipeline.
-
-### 4. El testing no es una fase
-
-Las fases 6 a 9 ya exigen tests unitarios y de integración en cada módulo, lo que contradice que el testing sea una fase propia al final. La fase 12 se reinterpreta como *cobertura y E2E* —cerrar huecos y cubrir los flujos completos—, no como el momento en que empiezan a escribirse tests.
-
-### 5. Criterios de aceptación medibles
-
-Cada fase debe declarar su criterio de salida en términos verificables. Por ejemplo, para la Fase 9: *"existe un test que demuestra que dos reservas simultáneas del último hueco libre no producen sobreventa"*, en lugar de *"implementa el sistema de reservas"*.
-
-## Decisiones resueltas
-
-### Número de roles
-
-El documento de origen definía **dos roles** (`TEACHER` y `STUDENT`), mientras que el resto de la documentación de arquitectura, el modelo de datos y el contrato de API trabajaban con **tres** (`ADMIN`, `TEACHER`, `STUDENT`).
-
-Resuelto el 16 de septiembre de 2026 a favor de **tres roles**. `ADMIN` se mantiene porque ya está incorporado al modelo de datos, al diagrama ER y al contrato de API, y porque hay reglas de negocio que dependen de él —cancelar fuera de la ventana de 24 horas y desactivar alumnos—. Donde el documento de origen mencione dos roles, prevalece esta decisión.
+- **Tres roles** (`ADMIN`, `TEACHER`, `STUDENT`), no dos: el modelo, la API y reglas como la
+  cancelación sin ventana dependen de `ADMIN`.
+- **La integración continua se adelantó** a la 5.1, para que todo lo posterior naciera cubierto.
+- **El frontend no espera al final**: empieza tras el calendario, que es lo primero que permite a
+  un alumno ver qué reservar.

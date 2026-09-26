@@ -16,7 +16,7 @@ Entra en esta fase:
 - Infraestructura de autorización por rol y por pertenencia, que los módulos posteriores consumirán.
 - Rate limiting de los endpoints anteriores.
 
-No entra: perfiles de usuario (Fase 6), gestión de alumnos por el profesor (Fase 6), ni MFA (riesgo aceptado en `08-security-engineer.md`).
+No entra: perfiles de usuario (Fase 6), gestión de alumnos por el profesor (Fase 6), ni MFA (riesgo aceptado en `02-arquitectura.md`).
 
 ## 2. Endpoints
 
@@ -58,7 +58,7 @@ Una cuenta `DISABLED` no puede iniciar sesión, y sus refresh tokens deben queda
 
 El cliente envía email y contraseña. El email se normaliza a minúsculas antes de cualquier comprobación. Se crea el usuario con rol `STUDENT` y estado `PENDING_VERIFICATION`, se genera un token de verificación de un solo uso y se envía por correo.
 
-**La respuesta es idéntica exista o no la cuenta**, para no permitir enumeración de usuarios (`08-security-engineer.md`). Si el email ya está registrado no se crea nada y no se revela nada; opcionalmente se envía un aviso a la dirección real informando del intento.
+**La respuesta es idéntica exista o no la cuenta**, para no permitir enumeración de usuarios (`02-arquitectura.md`). Si el email ya está registrado no se crea nada y no se revela nada; opcionalmente se envía un aviso a la dirección real informando del intento.
 
 El rol nunca se acepta desde el cliente: registrarse siempre produce un `STUDENT`.
 
@@ -84,7 +84,7 @@ Si llega un refresh token que ya fue reemplazado, se interpreta como robo: **se 
 
 ## 6. Autorización
 
-Dos dimensiones, según `08-security-engineer.md`: rol **y** propiedad o relación con el recurso. Esta fase construye la infraestructura; las reglas concretas se aplican en cada módulo posterior.
+Dos dimensiones, según `02-arquitectura.md`: rol **y** propiedad o relación con el recurso. Esta fase construye la infraestructura; las reglas concretas se aplican en cada módulo posterior.
 
 La regla que debe quedar imposible de saltar: **la identidad del sujeto se toma siempre del token**, nunca de un campo del DTO o de un parámetro de ruta. Un identificador de usuario que llegue en el cuerpo de una petición se ignora.
 
@@ -128,7 +128,7 @@ El secreto no tiene valor por defecto en el perfil de producción: si falta, la 
 
 ### 8.3 Algoritmo de hash de contraseñas
 
-`08-security-engineer.md` admite Argon2id o BCrypt.
+`02-arquitectura.md` admite Argon2id o BCrypt.
 
 **Recomendación:** BCrypt con coste 12, gestionado a través del codificador delegante de Spring Security, que almacena el algoritmo como prefijo del hash. Así se puede migrar a Argon2id más adelante **sin invalidar las contraseñas existentes**: los hashes antiguos se siguen verificando y se re-cifran al siguiente login.
 
@@ -144,7 +144,7 @@ Un changeset de Liquibase es un archivo versionado en Git, y este repositorio ya
 
 ### 8.5 ¿La verificación de email bloquea el login?
 
-`08-security-engineer.md` dice "email verificado antes de reservar", no antes de entrar.
+`02-arquitectura.md` dice "email verificado antes de reservar", no antes de entrar.
 
 **Recomendación:** permitir el login en estado `PENDING_VERIFICATION` y bloquear únicamente la reserva. Así el usuario puede entrar, ver la aplicación y reenviarse el correo de verificación. Si la verificación bloqueara el login, un correo perdido dejaría la cuenta inaccesible sin margen de maniobra.
 
@@ -168,7 +168,7 @@ Una sola instancia no necesita estado compartido, y añadir Redis ahora contradi
 
 Los enlaces de verificación y recuperación llegan por correo, pero apuntan a páginas del frontend que llaman a la API por su cuenta; no dependen de que la cookie de refresh viaje en la navegación inicial, así que `Strict` no rompe esos flujos y es más restrictivo que `Lax`.
 
-Con `Strict` el riesgo de CSRF queda muy acotado, pero `08-security-engineer.md` exige protección explícita en los endpoints que aceptan la cookie: se mantiene, con un token de doble envío en `/auth/refresh` y `/auth/logout`.
+Con `Strict` el riesgo de CSRF queda muy acotado, pero `02-arquitectura.md` exige protección explícita en los endpoints que aceptan la cookie: se mantiene, con un token de doble envío en `/auth/refresh` y `/auth/logout`.
 
 ## 9. Estrategia de testing
 

@@ -94,7 +94,7 @@ jobs:
       - uses: actions/checkout@v7
 
       # Deliberately no push to a registry: there is no deployment target yet
-      # (06-devops-engineer.md defers the provider), so published images would be
+      # (02-arquitectura.md defers the provider), so published images would be
       # inventory nobody consumes. What must not regress is that the image builds and
       # the application actually starts against a real database with Liquibase applied.
       - name: Build the image and start the stack

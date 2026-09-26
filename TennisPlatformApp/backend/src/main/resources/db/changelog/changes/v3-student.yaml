@@ -11,7 +11,7 @@ databaseChangeLog:
         The row is created when the student fills their data in (PATCH /me), not at
         registration - which is why full_name can be NOT NULL without blocking sign-up.
 
-        national_id and address are restricted personal data (08-security-engineer.md): they
+        national_id and address are restricted personal data (02-arquitectura.md): they
         are only ever returned to the student themselves, the teacher managing them or an
         ADMIN, and never appear in listings, searches or logs.
       changes:
@@ -58,7 +58,7 @@ databaseChangeLog:
         - sql:
             dbms: postgresql
             comment: >-
-              "Una relacion alumno-profesor unica" (05-database-engineer.md). The pair is
+              "Una relacion alumno-profesor unica" (03-modelo-de-datos.md). The pair is
               unique regardless of status, which is what turns "reactivate" into an update of
               the existing row and makes a duplicate relationship impossible at the schema
               level, not only in the use case.

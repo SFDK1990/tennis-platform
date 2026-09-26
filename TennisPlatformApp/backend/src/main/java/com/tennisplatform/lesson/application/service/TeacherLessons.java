@@ -32,7 +32,7 @@ class TeacherLessons {
      *
      * <p>Looking the caller up among teacher profiles is what makes this hold: the role in a
      * token says what kind of account it is, this says it is the account that owns what is being
-     * touched. 08-security-engineer.md requires both, and neither replaces the other. With a
+     * touched. 02-arquitectura.md requires both, and neither replaces the other. With a
      * single teacher it looks redundant; it is not, and the day there are two, a check that is
      * missing does not fail - it hits the wrong diary.
      */

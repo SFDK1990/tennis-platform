@@ -71,7 +71,7 @@ class TeacherBootstrap implements ApplicationRunner {
                 clock.instant()));
 
         // Neither the address nor the name is logged: they are personal data
-        // (08-security-engineer.md).
+        // (02-arquitectura.md).
         log.info("Teacher account and profile created by bootstrap");
     }
 

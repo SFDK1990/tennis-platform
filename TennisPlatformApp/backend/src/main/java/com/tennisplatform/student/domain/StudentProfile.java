@@ -16,7 +16,7 @@ import java.util.UUID;
  * how the frontend knows it has to ask.
  *
  * <p>{@code nationalId} and {@code address} are restricted personal data
- * (08-security-engineer.md): they may only reach the student themselves, the teacher managing
+ * (02-arquitectura.md): they may only reach the student themselves, the teacher managing
  * them or an ADMIN, and they never appear in a listing, a search or a log line.
  */
 public class StudentProfile {

@@ -191,7 +191,7 @@ añadido: son lo que hacen falta para cumplir los criterios de aceptación acord
   a la vez para filtrar entre los alumnos propios y para localizar a cualquiera del sistema.
   Con búsqueda parcial sobre todas las cuentas, un profesor podía **enumerar quién está
   registrado** y leer nombres de personas con las que no tiene ninguna relación, que es
-  justamente lo que prohíbe `08-security-engineer.md`. Separadas, `?query=` solo filtra entre
+  justamente lo que prohíbe `02-arquitectura.md`. Separadas, `?query=` solo filtra entre
   los alumnos ya gestionados, donde la coincidencia parcial no expone nada nuevo.
 - `GET /teacher/students/{userId}` devuelve la ficha completa —con `national_id` y `address`—
   de **un alumno que ese profesor gestiona**. Sin ella no había forma de cumplir los criterios
@@ -292,15 +292,19 @@ Mapeo general:
 
 ## 13. Seguridad
 
-- Spring Security.
-- Access token corto.
-- Refresh token rotatorio.
-- Hash de refresh tokens.
-- BCrypt o Argon2id.
-- CORS restringido.
-- Rate limiting para autenticación.
-- Autorización por rol y propiedad.
-- No usar localStorage para refresh tokens.
+- Access token corto en `Authorization: Bearer`; refresh token rotatorio en cookie `HttpOnly`,
+  `Secure`, `SameSite`, guardado como hash y con familia para detectar reutilización. Nunca en
+  `localStorage` ni en el cuerpo de una respuesta.
+- CSRF sólo en `/auth/refresh` y `/auth/logout`, los dos endpoints que autentica la cookie.
+- Contraseñas con BCrypt. Tokens de recuperación de un solo uso y con caducidad.
+- **Autorización por rol y por propiedad**, siempre las dos. Ocultar un botón no es autorización.
+  Cambiar un id en la URL no debe dar acceso a nada ajeno: lo ajeno responde 404.
+- Nunca confiar en roles ni en ids de propiedad que vengan en el cuerpo.
+- Sin enumeración: registro, recuperación y búsqueda no revelan si una cuenta existe.
+- Rate limiting en autenticación.
+- Nunca registrar contraseñas, tokens, DNI ni dirección completos.
+- `ADMIN` no se registra públicamente.
+- La PWA sólo cachea el shell y datos no personales; nada de reservar ni cancelar sin conexión.
 
 ## 14. Observabilidad
 
@@ -338,7 +342,22 @@ Variables sensibles fuera de Git:
 - Email (host, puerto, credenciales SMTP).
 - Parámetros de negocio.
 
-## 17. ADRs principales
+## 17. Frontend
+
+Next.js con TypeScript estricto y Tailwind, organizado por funcionalidad (`authentication`,
+`profile`, `students`, `availability`, `calendar`, `lessons`, `bookings`, `administration`).
+
+- **Un único cliente HTTP** añade credenciales, renueva la sesión, normaliza los errores Problem
+  Details y tipa las respuestas. Ningún componente llama a la API por su cuenta.
+- El backend es la fuente de verdad de clases, reservas y disponibilidad. Un `409` significa
+  "lo que tienes en pantalla está obsoleto": se relee y se vuelve a mostrar.
+- Las fechas se muestran en la hora local del usuario, indicando la zona cuando pueda haber
+  ambigüedad.
+- La validación en el cliente es comodidad; la que vale es la del backend.
+- Accesibilidad básica: teclado, etiquetas, errores asociados a su campo, confirmación de
+  acciones destructivas.
+
+## 18. ADRs principales
 
 - Modular Monolith.
 - Arquitectura hexagonal.

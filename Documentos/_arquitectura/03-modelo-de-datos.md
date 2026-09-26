@@ -243,11 +243,9 @@ Las clases canceladas no participan en la restricción.
 
 ### Evitar solapamientos del alumno
 
-~~La aplicación bloqueará la fila del alumno, consultará sus reservas activas y comprobará los
-rangos de las clases antes de insertar.~~ Sustituido por la restricción de exclusión que ya
-proponía `10-diagrama-er.md`, sobre una copia de los instantes de la clase en la reserva: la
+Restricción de exclusión sobre una copia de los instantes de la clase en la reserva: la
 aplicación comprueba antes para responder un 409 con sentido, y la base garantiza. Es el mismo
-esquema de doble comprobación que el solapamiento de clases del profesor (Fase 9).
+esquema de doble comprobación que el solapamiento de clases del profesor.
 
 ## 6. Timestamps y zonas horarias
 

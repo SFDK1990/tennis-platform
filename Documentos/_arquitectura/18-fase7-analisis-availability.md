@@ -1,6 +1,6 @@
 # Fase 7 — Análisis: disponibilidad del profesor
 
-Corresponde a la **Fase 3 del roadmap** (`09-roadmap-implementacion.md`), que numera las fases de
+Corresponde a la **Fase 3 del roadmap** (`12-metodologia-trabajo.md`), que numera las fases de
 otra manera. Cubre el módulo `availability`.
 
 Este documento es el entregable de análisis: no se escribe código hasta que esté validado.

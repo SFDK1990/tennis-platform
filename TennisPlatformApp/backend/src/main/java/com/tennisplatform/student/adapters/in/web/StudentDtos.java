@@ -18,7 +18,7 @@ final class StudentDtos {
     /**
      * One row of the teacher's list. It has no field for the national id or the address, which
      * is what makes it impossible to leak them in a listing by mistake
-     * (08-security-engineer.md).
+     * (02-arquitectura.md).
      */
     record StudentSummaryResponse(UUID userId, String fullName, String email,
                                   String managedStatus, Instant managedAt) {

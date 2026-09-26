@@ -27,7 +27,7 @@ class TeacherSchedules {
      *
      * <p>Looking the caller up among teacher profiles is what makes this hold: the role in a
      * token says what kind of account it is, this says it is the account that owns what is being
-     * changed. 08-security-engineer.md requires both, and neither replaces the other.
+     * changed. 02-arquitectura.md requires both, and neither replaces the other.
      */
     void requireTheTeacher(UUID callerId) {
         if (teacherProfile.byUserId(callerId).isEmpty()) {

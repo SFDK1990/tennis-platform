@@ -232,12 +232,18 @@ La asistencia se modela separadamente como `PENDING`, `ATTENDED` o `NO_SHOW`.
 - Copias de seguridad automatizadas.
 - Auditoría formal.
 
-## 17. Decisiones aún pendientes
+## 17. Decisiones resueltas
 
-- Confirmar si la asociación se hará por email, DNI o invitación.
-- Confirmar cómo se crea el profesor inicial.
-- ~~Confirmar si una reserva cancelada puede volver a reservarse.~~ Resuelto en la Fase 9: sí,
-  si quedan plazas. La reserva original no se reactiva; se crea otra.
-- ~~Confirmar si ADMIN puede ignorar la ventana de 24 horas.~~ Resuelto: sí (ver
-  `01-product-architect.md`), implementado en la Fase 9.
-- Definir la política legal de eliminación y anonimización de datos.
+- **Una sola pista.** No se modela una entidad "pista": el solapamiento se controla por el
+  profesor. Si algún día hay varias, habrá que introducirla y separar las dos reglas.
+- **Asociación alumno-profesor**: el profesor busca al alumno por su email exacto y lo gestiona.
+- **Alta del profesor**: por bootstrap al desplegar, no por registro ni consola.
+- **Zona mostrada al alumno**: su hora local y, junto a ella, la zona del profesor.
+- **El admin cancela clases o reservas sin ventana de 24 horas**, para resolver incidencias.
+- **Una reserva cancelada no se reactiva**, pero el alumno puede volver a reservar si hay plaza.
+- **Se puede reservar hasta el inicio de la clase.** Quien reserva con menos de 24 horas ya no
+  puede cancelar; el frontend debe avisarlo antes de confirmar.
+- **No se crean clases que ya hayan empezado.**
+- **Email verificado para reservar.** El login lo acepta sin verificar; la reserva no.
+
+Pendiente: la política legal de eliminación y anonimización de datos.

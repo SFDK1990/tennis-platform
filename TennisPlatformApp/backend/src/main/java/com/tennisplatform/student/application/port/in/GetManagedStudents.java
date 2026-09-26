@@ -40,7 +40,7 @@ public interface GetManagedStudents {
      * The full record of one student, restricted personal data included.
      *
      * <p>Only for the teacher who manages them: any other caller gets a refusal, because
-     * authorization here is by relationship and not only by role (08-security-engineer.md).
+     * authorization here is by relationship and not only by role (02-arquitectura.md).
      * A deactivated student is still readable by the teacher who managed them - the data did
      * not stop being theirs to see when the lessons stopped.
      */

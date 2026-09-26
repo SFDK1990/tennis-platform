@@ -7,7 +7,7 @@ Durante la implementación, este archivo puede moverse a `docs/openapi.yaml` den
 ## Convenciones generales
 
 - Todas las rutas van bajo `/api/v1`.
-- Autenticación: `Authorization: Bearer <accessToken>` en cada petición autenticada. El `accessToken` es de corta duración (ver `08-security-engineer.md`).
+- Autenticación: `Authorization: Bearer <accessToken>` en cada petición autenticada. El `accessToken` es de corta duración (ver `02-arquitectura.md`).
 - El `refreshToken` viaja en una cookie `HttpOnly`, `Secure`, `SameSite` (decisión ya cerrada); nunca aparece en el cuerpo de ninguna respuesta ni request, salvo el propio `Set-Cookie` que hace el backend en `/auth/login` y `/auth/refresh`.
 - **`POST /auth/refresh` y `POST /auth/logout` exigen además la cabecera `X-XSRF-TOKEN`.** Son los dos únicos endpoints que se autentican con la cookie sola, y una cookie la envía el navegador aunque la petición la origine otro sitio. Ver "Protección CSRF" más abajo.
 - Paginación en listados (`/teacher/students`, `/bookings`, `/admin/users`): query params `page` (0-index, por defecto 0) y `size` (por defecto 20), respuesta envuelta en `{ items: [...], page, size, totalItems }`.
@@ -61,6 +61,15 @@ de sus intentos se acerca.
 usa también `booking` con el mismo significado —autenticado, pero con un rol al que esa operación
 no sirve—: un profesor que intenta reservar plaza, o un admin que pide "mis reservas".
 
+## Códigos comunes a todos los módulos
+
+| Código               | HTTP | Motivo |
+|-----------------------|------|--------|
+| `VALIDATION_ERROR`    | 400  | Cuerpo inválido, JSON mal formado, parámetro obligatorio ausente o de tipo incorrecto (un id que no es UUID) |
+| `DATE_RANGE_INVALID`  | 400  | Rango `from`/`to` ausente, invertido o de más de 62 días. Es el mismo tope para toda consulta por rango |
+| `AUTH_FORBIDDEN`      | 403  | Autenticado, pero con un rol al que esa operación no sirve |
+| `TEACHER_FORBIDDEN`   | 403  | La operación es del profesor dueño de lo que se toca |
+
 ## Mapeo código de negocio → HTTP
 
 No estaba explícito en los documentos previos qué status exacto lleva cada código; se fija aquí para que backend y frontend lo interpreten igual:
@@ -93,7 +102,6 @@ Códigos añadidos en la Fase 7:
 |----------------------------------|------|----------------------------------------------------|-------------------------------------------------------------------------|
 | `AVAILABILITY_RULES_OVERLAP`     | 400  | `PUT /teacher/availability/weekly`                 | Dos reglas del mismo día se pisan en el conjunto enviado                |
 | `AVAILABILITY_INVALID`           | 400  | `PUT /teacher/availability/weekly`, `POST .../exceptions` | Día desconocido, fin no posterior al inicio, `EXTRA` sin horas   |
-| `AVAILABILITY_RANGE_TOO_WIDE`    | 400  | `GET /teacher/availability`                        | El rango pedido supera los 62 días                                      |
 | `AVAILABILITY_EXCEPTION_NOT_FOUND` | 404 | `DELETE /teacher/availability/exceptions/{id}`     | No existe; un id de otro profesor responde lo mismo                     |
 
 Códigos añadidos en la Fase 8:
@@ -103,7 +111,6 @@ Códigos añadidos en la Fase 8:
 | `LESSON_OVERLAP`               | 409  | `POST /teacher/lessons`                 | Choca con otra clase no cancelada. Es un 409 porque la otra puede cancelarse un segundo después |
 | `LESSON_OUTSIDE_AVAILABILITY`  | 422  | `POST /teacher/lessons`                 | Fuera del horario y sin pedir forzarlo. Releer no cambia nada: o se mueve la clase o se fuerza  |
 | `LESSON_INVALID`               | 400  | `POST /teacher/lessons`                 | Duración que no es múltiplo de 30, fin antes del inicio, o cruza medianoche en la zona del profesor |
-| `LESSON_RANGE_TOO_WIDE`        | 400  | `GET /teacher/lessons`                  | El rango pedido supera los 62 días, el mismo tope que la disponibilidad      |
 | `LESSON_ALREADY_CANCELLED`     | 409  | `POST /teacher/lessons/{id}/cancel`     | Ya estaba cancelada; casi siempre una pantalla obsoleta                      |
 | `LESSON_ALREADY_FINISHED`      | 422  | `POST /teacher/lessons/{id}/cancel`     | La clase ya terminó. Cancelar lo que ya ocurrió es reescribir el pasado      |
 | `LESSON_NOT_FOUND`             | 404  | `/lessons/{id}`                         | No existe; la clase de otro profesor responde lo mismo                       |
@@ -155,7 +162,7 @@ topes distintos para la misma clase de consulta serían peor que cualquiera de l
 pide datos de un alumno con el que no tiene relación: la falta de relación es lo que se niega,
 tanto al reservar como al leer.
 
-`409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `04-frontend-engineer-next-react.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
+`409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos
 

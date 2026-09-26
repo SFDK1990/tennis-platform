@@ -38,7 +38,7 @@ paths:
           description: >
             Siempre 202 y sin cuerpo, exista o no una cuenta con ese email. Devolver 201
             cuando se crea y 409 cuando ya existe permitiría enumerar usuarios, que es
-            precisamente lo que prohíbe 08-security-engineer.md. Si el email ya estaba
+            precisamente lo que prohíbe 02-arquitectura.md. Si el email ya estaba
             registrado no se crea nada y se avisa por correo al titular real de la dirección.
         "400": { $ref: "#/components/responses/ValidationError" }
         "429":
@@ -155,7 +155,7 @@ paths:
         "202":
           description: >
             Siempre 202, exista o no la cuenta, para no permitir enumeración
-            de usuarios (ver 08-security-engineer.md).
+            de usuarios (ver 02-arquitectura.md).
 
   /auth/reset-password:
     post:
@@ -358,7 +358,7 @@ paths:
 
         Cancela en la misma transaccion las reservas confirmadas del alumno en clases de este
         profesor que aun no han empezado (`CANCELLED_BY_TEACHER`), como exige
-        `01-product-architect.md`. Las de clases ya empezadas se conservan: son historico.
+        `01-analisis-funcional.md`. Las de clases ya empezadas se conservan: son historico.
       parameters:
         - $ref: "#/components/parameters/UserId"
       responses:
@@ -404,7 +404,7 @@ paths:
               schema: { $ref: "#/components/schemas/AvailabilityResponse" }
         "400":
           description: >-
-            Rango inválido o más ancho de 62 días (`AVAILABILITY_RANGE_TOO_WIDE`)
+            Rango inválido o más ancho de 62 días (`DATE_RANGE_INVALID`)
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -573,7 +573,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/LessonsResponse" }
         "400":
-          description: "LESSON_RANGE_TOO_WIDE, o fechas mal formadas"
+          description: "DATE_RANGE_INVALID, o fechas mal formadas (VALIDATION_ERROR)"
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }

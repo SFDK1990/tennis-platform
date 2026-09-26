@@ -22,7 +22,7 @@ Los tres se cumplen.
 
 ### El pipeline es solo de backend
 
-`06-devops-engineer.md` pide también lint, *type checking*, tests y E2E de frontend. No existe
+`02-arquitectura.md` pide también lint, *type checking*, tests y E2E de frontend. No existe
 `frontend/`: nace en la Fase 11. Se descartó crear *jobs* vacíos como marcador, porque un job
 que no comprueba nada y sale en verde es peor que su ausencia — entrena a leer el check como
 ruido. Los jobs de frontend se añadirán en la Fase 11, con algo real que ejecutar.
@@ -70,7 +70,7 @@ hay que leerlas.
 
 ### La imagen se construye pero no se publica
 
-No hay destino de despliegue: `06-devops-engineer.md` aplaza deliberadamente la elección de
+No hay destino de despliegue: `02-arquitectura.md` aplaza deliberadamente la elección de
 proveedor hasta que haya usuarios reales. Publicar imágenes en un registro sería inventario que
 nadie consume. Lo que sí debe estar protegido contra regresiones es que la imagen construya y
 que la aplicación arranque de verdad contra una base de datos real con Liquibase aplicado, así

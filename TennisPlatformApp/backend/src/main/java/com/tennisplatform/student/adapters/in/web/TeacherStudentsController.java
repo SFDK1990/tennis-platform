@@ -27,7 +27,7 @@ import java.util.UUID;
  *
  * <p>Every endpoint checks the role here and the relationship in the service. Neither check
  * replaces the other: the role says who may ask, the relationship says about whom - and
- * 08-security-engineer.md requires both.
+ * 02-arquitectura.md requires both.
  */
 @RestController
 @RequestMapping("/api/v1/teacher/students")
