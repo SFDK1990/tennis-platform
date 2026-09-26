@@ -27,7 +27,7 @@
         -->
         <testcontainers.version>1.21.4</testcontainers.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <bucket4j.version>8.19.0</bucket4j.version>
+        <bucket4j.version>8.20.0</bucket4j.version>
 
         <!-- Build-quality tooling, introduced in Fase 5.1 together with the CI pipeline. -->
         <archunit.version>1.5.0</archunit.version>
