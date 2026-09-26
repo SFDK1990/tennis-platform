@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
@@ -170,9 +171,11 @@ class ModuleBoundariesTest {
     // --- C. Cross-module access goes through inbound ports ---------------------
 
     /**
-     * What one module may see of another: only {@code application/port/in}. Its domain, its
-     * services, its outbound ports, its adapters and its wiring are the inside of that module,
-     * and reaching any of them turns two modules into one, silently.
+     * What one module may see of another: {@code application/port/in}, and - since Fase 9 - the
+     * interfaces in {@code application/port/spi}, which it may implement but never call. Its
+     * domain, its services, its outbound ports, its adapters and its wiring are the inside of
+     * that module, and reaching any of them turns two modules into one, silently. The spi half,
+     * and why it is safe, is explained in {@link PublicPorts}.
      *
      * <p>One rule per module because the check needs both ends: a module reaching into its own
      * internals is not a violation, it is the point of having internals.
@@ -267,22 +270,11 @@ class ModuleBoundariesTest {
     }
 
     private static ArchRule crossesOnlyThroughInboundPorts(String module) {
-        return noClasses()
+        return classes()
                 .that().resideInAPackage(packageOf(module))
-                .should().dependOnClassesThat(insidesOfModulesOtherThan(module))
-                .because("a module's public API is its inbound ports, nothing else");
-    }
-
-    private static DescribedPredicate<JavaClass> insidesOfModulesOtherThan(String module) {
-        return new DescribedPredicate<>("the insides of a module other than " + module) {
-            @Override
-            public boolean test(JavaClass target) {
-                String owner = moduleOf(target);
-                return owner != null
-                        && !owner.equals(module)
-                        && !target.getPackageName().contains(".application.port.in");
-            }
-        };
+                .should(PublicPorts.onlyCrossThroughPorts(ROOT, MODULES, module))
+                .because("a module's public API is its inbound ports, plus the spi interfaces it "
+                        + "asks others to implement - see PublicPorts");
     }
 
     private static DescribedPredicate<JavaClass> insidesOfAnyModule() {
@@ -311,9 +303,6 @@ class ModuleBoundariesTest {
 
     /** The module a class belongs to, or null when it is not inside one. */
     private static String moduleOf(JavaClass type) {
-        return MODULES.stream()
-                .filter(module -> type.getPackageName().startsWith(ROOT + "." + module + "."))
-                .findFirst()
-                .orElse(null);
+        return PublicPorts.moduleOf(ROOT, MODULES, type);
     }
 }
