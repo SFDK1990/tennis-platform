@@ -77,7 +77,28 @@ además rechaza los campos que el spec no declara).
 - Se repite la medición de respuestas no observadas y queda en cero, o con cada excepción
   justificada.
 
-## Respuestas documentadas que ningún test produce
+## Decisiones tomadas al implementar
+
+1. **El `400` cubre toda operación que recibe entrada**, no solo las rutas con `{id}`. Un
+   parámetro de query mal formado o un cuerpo ilegible también dan `400 VALIDATION_ERROR`, así que
+   la regla que comprueba el test es "cuerpo, id o parámetros".
+2. **`POST /bookings/{id}/cancel` pierde su `403`.** Los tres roles tienen su camino para
+   cancelar, así que no puede ocurrir, y el spec no debe prometerlo.
+3. **El validador no se apoya en el request factory.** `AuthRateLimitTest` instala el suyo, y con
+   el buffering en el factory el interceptor se comía el cuerpo de la respuesta. Ahora el propio
+   interceptor devuelve la respuesta ya leída.
+4. **`allOf` se resuelve antes de validar.** Sin eso, cada parte de un `allOf` rechaza las
+   propiedades de la otra: el validador trata las propiedades no declaradas como error, y eso es
+   justo lo que queremos para detectar campos que se escapan.
+5. **Las respuestas no observadas quedan en 38, todas de los estados comunes**:
+   - `401`, que lo da la cadena de seguridad igual en toda ruta protegida;
+   - `429`, que lo da el filtro de `/auth/*`;
+   - `400`, que lo da el manejador global.
+
+   Cada mecanismo tiene su test. Las 28 respuestas específicas de la lista inicial (29 menos la
+   del endpoint retirado) tienen ahora test, o salieron del spec.
+
+## Respuestas documentadas que ningún test produce (antes de la fase)
 
 ```
 POST   /auth/register                        400, 429
