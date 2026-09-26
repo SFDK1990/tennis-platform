@@ -26,22 +26,23 @@ final class LessonDtos {
     /**
      * A lesson on the wire.
      *
-     * <p>{@code bookedCount} is deliberately absent until Fase 9. Only {@code booking} can count
-     * seats, and answering with a constant zero would look like a number instead of like the
-     * missing feature it is - the same call {@code RegisterRequest} made about {@code fullName}
-     * in Fase 5.
+     * <p>{@code bookedCount} is the number of confirmed bookings. It was left out of Fase 8 on
+     * purpose - only {@code booking} can count seats, and a constant zero would have looked like a
+     * number - and came back with Fase 9.
      *
      * <p>{@code notes} is null for everyone but the teacher: it is a free-text field where "work
      * on the backhand" and anything else the teacher writes to themselves ends up, and it was
      * not written for the student to read.
      */
     record LessonResponse(UUID id, UUID teacherUserId, String type, Instant startsAt, Instant endsAt,
-                          int capacity, String status, String notes, boolean createdOutsideAvailability,
-                          Instant cancelledAt, boolean cancelledAtShortNotice) {
+                          int capacity, int bookedCount, String status, String notes,
+                          boolean createdOutsideAvailability, Instant cancelledAt,
+                          boolean cancelledAtShortNotice) {
 
         static LessonResponse from(LessonView lesson, boolean forTheTeacher) {
             return new LessonResponse(lesson.id(), lesson.teacherUserId(), lesson.type(),
-                    lesson.startsAt(), lesson.endsAt(), lesson.capacity(), lesson.status(),
+                    lesson.startsAt(), lesson.endsAt(), lesson.capacity(), lesson.bookedCount(),
+                    lesson.status(),
                     forTheTeacher ? lesson.notes() : null, lesson.createdOutsideAvailability(),
                     lesson.cancelledAt(), lesson.cancelledAtShortNotice());
         }

@@ -69,10 +69,10 @@ class LessonTest {
     void isOpenBeforeItStartsAndCompletedOnceItHasEnded() {
         Lesson lesson = lesson(LessonType.INDIVIDUAL, 1);
 
-        assertThat(lesson.statusAt(STARTS.minusSeconds(60))).isEqualTo(LessonStatus.OPEN);
-        assertThat(lesson.statusAt(ENDS.minusSeconds(60))).isEqualTo(LessonStatus.OPEN);
-        assertThat(lesson.statusAt(ENDS)).isEqualTo(LessonStatus.COMPLETED);
-        assertThat(lesson.statusAt(ENDS.plusSeconds(60))).isEqualTo(LessonStatus.COMPLETED);
+        assertThat(lesson.statusAt(STARTS.minusSeconds(60), 0)).isEqualTo(LessonStatus.OPEN);
+        assertThat(lesson.statusAt(ENDS.minusSeconds(60), 0)).isEqualTo(LessonStatus.OPEN);
+        assertThat(lesson.statusAt(ENDS, 0)).isEqualTo(LessonStatus.COMPLETED);
+        assertThat(lesson.statusAt(ENDS.plusSeconds(60), 0)).isEqualTo(LessonStatus.COMPLETED);
     }
 
     /** Nobody runs anything for this: the status follows from the clock at the moment of reading. */
@@ -80,8 +80,30 @@ class LessonTest {
     void becomesCompletedWithoutAnybodyChangingIt() {
         Lesson lesson = lesson(LessonType.GROUP, 4);
 
-        assertThat(lesson.statusAt(STARTS)).isEqualTo(LessonStatus.OPEN);
-        assertThat(lesson.statusAt(ENDS.plusSeconds(1))).isEqualTo(LessonStatus.COMPLETED);
+        assertThat(lesson.statusAt(STARTS, 0)).isEqualTo(LessonStatus.OPEN);
+        assertThat(lesson.statusAt(ENDS.plusSeconds(1), 0)).isEqualTo(LessonStatus.COMPLETED);
+    }
+
+    @Test
+    void isFullOnceTheConfirmedBookingsReachTheCapacity() {
+        Lesson lesson = lesson(LessonType.GROUP, 4);
+        Instant before = STARTS.minusSeconds(60);
+
+        assertThat(lesson.statusAt(before, 3)).isEqualTo(LessonStatus.OPEN);
+        assertThat(lesson.statusAt(before, 4)).isEqualTo(LessonStatus.FULL);
+    }
+
+    /**
+     * What anybody wants to know about a lesson in the past is that it happened, so a full one
+     * that has ended reads COMPLETED - and a cancelled one reads CANCELLED whatever else is true.
+     */
+    @Test
+    void finishingAndCancellingOutrankBeingFull() {
+        Lesson lesson = lesson(LessonType.INDIVIDUAL, 1);
+
+        assertThat(lesson.statusAt(ENDS, 1)).isEqualTo(LessonStatus.COMPLETED);
+        assertThat(lesson.cancel(STARTS.minusSeconds(3600)).statusAt(STARTS.minusSeconds(60), 1))
+                .isEqualTo(LessonStatus.CANCELLED);
     }
 
     @Test
@@ -91,7 +113,7 @@ class LessonTest {
 
         assertThat(cancelled.isCancelled()).isTrue();
         assertThat(cancelled.cancelledAt()).isEqualTo(cancelledAt);
-        assertThat(cancelled.statusAt(ENDS.plusSeconds(3600))).isEqualTo(LessonStatus.CANCELLED);
+        assertThat(cancelled.statusAt(ENDS.plusSeconds(3600), 0)).isEqualTo(LessonStatus.CANCELLED);
     }
 
     /** The original is untouched, which is what makes "a cancelled lesson is never reopened" a property of the type. */

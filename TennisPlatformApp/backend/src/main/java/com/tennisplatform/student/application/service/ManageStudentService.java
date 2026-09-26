@@ -7,6 +7,7 @@ import com.tennisplatform.student.application.port.in.ManageStudent;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
+import com.tennisplatform.student.application.port.spi.StudentBookings;
 import com.tennisplatform.student.domain.ManagedStudent;
 import com.tennisplatform.student.domain.StudentAlreadyManagedException;
 import com.tennisplatform.student.domain.StudentLimitReachedException;
@@ -16,6 +17,7 @@ import com.tennisplatform.student.domain.StudentProfileNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,15 +35,18 @@ public class ManageStudentService implements ManageStudent {
     private final StudentProfileRepository profiles;
     private final FindUserAccounts accounts;
     private final GetStudentLimit studentLimit;
+    private final StudentBookings bookings;
     private final Clock clock;
 
     public ManageStudentService(ManagedStudentRepository relationships,
                                 StudentProfileRepository profiles, FindUserAccounts accounts,
-                                GetStudentLimit studentLimit, Clock clock) {
+                                GetStudentLimit studentLimit, StudentBookings bookings,
+                                Clock clock) {
         this.relationships = relationships;
         this.profiles = profiles;
         this.accounts = accounts;
         this.studentLimit = studentLimit;
+        this.bookings = bookings;
         this.clock = clock;
     }
 
@@ -73,8 +78,10 @@ public class ManageStudentService implements ManageStudent {
                 .orElseThrow(() -> new StudentNotManagedException(
                         "This teacher has never managed this student"));
 
-        relationship.deactivate(clock.instant());
+        Instant now = clock.instant();
+        relationship.deactivate(now);
         relationships.save(relationship);
+        bookings.cancelUpcomingWith(teacherUserId, studentUserId, now);
     }
 
     /**

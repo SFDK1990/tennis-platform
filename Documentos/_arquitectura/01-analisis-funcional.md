@@ -136,7 +136,10 @@ La reserva queda confirmada inmediatamente.
 
 ## 10. Cancelaciones
 
-La cancelación está permitida hasta 24 horas antes del inicio, tanto para alumno como para profesor.
+El alumno puede cancelar su reserva hasta 24 horas antes del inicio. **El profesor puede cancelar
+su clase, o una reserva en ella, en cualquier momento antes de que empiece** (corregido en las
+fases 8 y 9): la ventana protege al profesor de un hueco que ya no puede llenar, y eso no es
+motivo para atarlo a él. El administrador tampoco está sujeto a la ventana.
 
 No existen penalizaciones en el MVP.
 
@@ -169,6 +172,7 @@ La asistencia se marcará una vez iniciada o finalizada la clase.
 - `CONFIRMED`.
 - `CANCELLED_BY_STUDENT`.
 - `CANCELLED_BY_TEACHER`.
+- `CANCELLED_BY_ADMIN`.
 
 La asistencia se modela separadamente como `PENDING`, `ATTENDED` o `NO_SHOW`.
 
@@ -232,6 +236,8 @@ La asistencia se modela separadamente como `PENDING`, `ATTENDED` o `NO_SHOW`.
 
 - Confirmar si la asociación se hará por email, DNI o invitación.
 - Confirmar cómo se crea el profesor inicial.
-- Confirmar si una reserva cancelada puede volver a reservarse.
-- Confirmar si ADMIN puede ignorar la ventana de 24 horas.
+- ~~Confirmar si una reserva cancelada puede volver a reservarse.~~ Resuelto en la Fase 9: sí,
+  si quedan plazas. La reserva original no se reactiva; se crea otra.
+- ~~Confirmar si ADMIN puede ignorar la ventana de 24 horas.~~ Resuelto: sí (ver
+  `01-product-architect.md`), implementado en la Fase 9.
 - Definir la política legal de eliminación y anonimización de datos.

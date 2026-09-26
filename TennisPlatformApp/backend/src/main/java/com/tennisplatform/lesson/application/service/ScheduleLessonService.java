@@ -6,6 +6,7 @@ import com.tennisplatform.lesson.application.port.in.NewLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.domain.Lesson;
+import com.tennisplatform.lesson.domain.LessonInThePastException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
 import com.tennisplatform.lesson.domain.LessonOverlapException;
 import com.tennisplatform.lesson.domain.LessonPeriod;
@@ -15,6 +16,7 @@ import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.UUID;
 
@@ -42,6 +44,10 @@ public class ScheduleLessonService implements ScheduleLesson {
         ZoneId zone = teacher.requireTheTeacher(teacherUserId);
         LessonType type = LessonType.parse(request.type());
         LessonPeriod period = new LessonPeriod(request.startsAt(), request.endsAt());
+        Instant now = clock.instant();
+        if (!period.startsAt().isAfter(now)) {
+            throw new LessonInThePastException("A lesson has to start after the moment it is created");
+        }
 
         boolean covered = availability.covers(teacherUserId, period.startsAt(), period.endsAt());
         if (!covered && !request.overrideAvailability()) {
@@ -66,6 +72,6 @@ public class ScheduleLessonService implements ScheduleLesson {
         Lesson lesson = Lesson.create(teacherUserId, type, period, request.capacity(),
                 request.notes(), !covered, zone, maxGroupCapacity);
 
-        return LessonView.from(lessons.save(lesson), clock.instant());
+        return LessonView.from(lessons.save(lesson), now, 0);
     }
 }

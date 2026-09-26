@@ -2,10 +2,10 @@ package com.tennisplatform.student.configuration;
 
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.platform.application.port.in.GetStudentLimit;
-import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.ManageStudent;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
+import com.tennisplatform.student.application.port.spi.StudentBookings;
 import com.tennisplatform.student.application.service.GetManagedStudentsService;
 import com.tennisplatform.student.application.service.ManageStudentService;
 import com.tennisplatform.student.application.service.StudentProfileService;
@@ -36,14 +36,19 @@ public class StudentConfiguration {
     public ManageStudent manageStudent(ManagedStudentRepository relationships,
                                        StudentProfileRepository profiles,
                                        FindUserAccounts accounts, GetStudentLimit studentLimit,
-                                       Clock clock) {
-        return new ManageStudentService(relationships, profiles, accounts, studentLimit, clock);
+                                       StudentBookings bookings, Clock clock) {
+        return new ManageStudentService(relationships, profiles, accounts, studentLimit, bookings,
+                clock);
     }
 
+    /**
+     * Declared by its concrete type, like {@link #studentProfileService}: it implements both
+     * {@code GetManagedStudents} and {@code QueryManagedStudent}, and one bean serves both.
+     */
     @Bean
-    public GetManagedStudents getManagedStudents(ManagedStudentRepository relationships,
-                                                 StudentProfileRepository profiles,
-                                                 FindUserAccounts accounts) {
+    public GetManagedStudentsService getManagedStudents(ManagedStudentRepository relationships,
+                                                        StudentProfileRepository profiles,
+                                                        FindUserAccounts accounts) {
         return new GetManagedStudentsService(relationships, profiles, accounts);
     }
 }

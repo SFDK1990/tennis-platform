@@ -356,9 +356,9 @@ paths:
         Marca la relación como `INACTIVE` y registra `deactivatedAt`; la fila no se borra, para
         que volver a asociarlo reutilice la relación en vez de crear una segunda.
 
-        **Todavía no cancela las reservas futuras del alumno**, como exige la regla de
-        `01-product-architect.md`: el módulo `booking` no existe hasta la Fase 9, que es la que
-        debe cerrar esa deuda y demostrarlo con un test.
+        Cancela en la misma transaccion las reservas confirmadas del alumno en clases de este
+        profesor que aun no han empezado (`CANCELLED_BY_TEACHER`), como exige
+        `01-product-architect.md`. Las de clases ya empezadas se conservan: son historico.
       parameters:
         - $ref: "#/components/parameters/UserId"
       responses:
@@ -543,7 +543,8 @@ paths:
           description: >-
             LESSON_OUTSIDE_AVAILABILITY: la clase cae fuera del horario configurado y no se pidio
             overrideAvailability. Releer la disponibilidad no cambia la respuesta: o se mueve la
-            clase o se fuerza a proposito.
+            clase o se fuerza a proposito. LESSON_IN_THE_PAST (Fase 9): la clase empezaria en el
+            instante de crearla o antes; no podria tener reservas ni, por tanto, asistencia.
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -596,6 +597,12 @@ paths:
     post:
       tags: [bookings]
       summary: Reserva la clase para el alumno autenticado
+      description: >-
+        Confirmada al instante. Bloquea la fila de la clase (SELECT ... FOR UPDATE) antes de
+        contar plazas, de modo que dos peticiones por la ultima plaza hacen cola y solo una
+        gana. Solo para alumnos con el email verificado y gestionados por el profesor de la
+        clase. Se puede reservar hasta el inicio de la clase; quien reserva con menos de 24
+        horas ya no podra cancelar, y el cliente deberia avisarlo antes de confirmar.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -605,13 +612,28 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Booking" }
         "403":
-          description: STUDENT_NOT_MANAGED
+          description: >-
+            STUDENT_NOT_MANAGED: el profesor de la clase no gestiona al alumno, o lo desactivo.
+            EMAIL_NOT_VERIFIED: el alumno no ha verificado su direccion. AUTH_FORBIDDEN: quien
+            llama no es un alumno.
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "404":
+          description: LESSON_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
-          description: LESSON_FULL | BOOKING_ALREADY_EXISTS | STUDENT_SCHEDULE_OVERLAP
+          description: >-
+            LESSON_FULL | BOOKING_ALREADY_EXISTS | STUDENT_SCHEDULE_OVERLAP | LESSON_NOT_BOOKABLE
+            (la clase esta cancelada). En los cuatro casos la pantalla del cliente esta obsoleta:
+            releer la clase puede cambiar la respuesta.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_ALREADY_STARTED
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -619,24 +641,44 @@ paths:
   /bookings:
     get:
       tags: [bookings]
-      summary: Reservas del alumno autenticado (o de todos los alumnos si lo consulta el profesor)
+      summary: Reservas del alumno autenticado, o de las clases del profesor si lo consulta el profesor
+      description: >-
+        Ordenadas por la clase mas reciente primero. El profesor puede filtrar por lessonId,
+        que es lo que construye la pantalla de asistencia. Un lessonId de una clase ajena
+        devuelve una pagina vacia, no las reservas de otro.
       parameters:
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Size"
         - name: status
           in: query
           schema: { $ref: "#/components/schemas/BookingStatus" }
+        - name: lessonId
+          in: query
+          description: Solo para el profesor; el alumno ya ve unicamente las suyas.
+          schema: { type: string, format: uuid }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BookingPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403":
+          description: AUTH_FORBIDDEN, si quien llama no es alumno ni profesor
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /bookings/{id}/cancel:
     post:
       tags: [bookings]
-      summary: Cancela una reserva propia (alumno), o cualquiera (profesor/admin)
+      summary: Cancela una reserva
+      description: >-
+        El alumno cancela las suyas con al menos 24 horas de antelacion (CANCELLED_BY_STUDENT).
+        El profesor cancela cualquiera de sus clases sin ventana (CANCELLED_BY_TEACHER), por la
+        misma razon por la que puede cancelar la clase entera. El admin cancela cualquiera sin
+        ventana (CANCELLED_BY_ADMIN). Nadie cancela una reserva de una clase que ya empezo: a
+        partir de ese momento lo que toca es marcar asistencia.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -646,11 +688,21 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Booking" }
         "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "404":
+          description: >-
+            BOOKING_NOT_FOUND, tambien cuando la reserva existe pero no es de quien llama:
+            confirmar que un id existe es decir algo que no tenia por que saber.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: BOOKING_ALREADY_CANCELLED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "422":
-          description: >
-            CANCELLATION_WINDOW_EXPIRED. No aplica si quien cancela es ADMIN
-            (puede cancelar sin ventana de 24h, decisión ya cerrada).
+          description: >-
+            CANCELLATION_WINDOW_EXPIRED (solo alumno, menos de 24 horas) | LESSON_ALREADY_STARTED
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -664,8 +716,9 @@ paths:
         NO le ata: un profesor que enferma la noche antes tiene que poder cancelar. La ventana
         sigue intacta para el alumno que cancela su reserva, que es donde el producto la
         justifico. La respuesta trae cancelledAtShortNotice para que el cliente sepa si hubo
-        menos de 24 horas de aviso. La cascada sobre las reservas activas llega con la Fase 9:
-        bookings no existe todavia, y lesson no puede escribir en un modulo que depende de el.
+        menos de 24 horas de aviso. Cancela en cascada, en la misma transaccion, todas sus
+        reservas confirmadas (CANCELLED_BY_TEACHER): si la cascada falla, la clase no queda
+        cancelada.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -691,13 +744,13 @@ paths:
 
   /teacher/lessons/{id}/attendance:
     post:
-      tags: [lessons]
+      tags: [bookings]
       summary: Marca asistencia de los participantes de una clase
       description: >-
-        Pendiente hasta la Fase 9. El cuerpo son bookingId y la respuesta son reservas, asi que
-        lo sirve el modulo booking aunque la ruta cuelgue de /teacher/lessons: una ruta no dice
-        que modulo la atiende. lesson no puede implementarlo porque booking depende de lesson y
-        no al reves.
+        Lo sirve el modulo booking aunque la ruta cuelgue de /teacher/lessons: el cuerpo son
+        bookingId y la respuesta son reservas. Solo a partir del inicio de la clase, solo sobre
+        reservas confirmadas de esa clase, y todo o nada: si una entrada no se puede aplicar,
+        no se aplica ninguna. Se puede corregir: marcar de nuevo sustituye lo anterior.
       parameters:
         - $ref: "#/components/parameters/Id"
       requestBody:
@@ -714,8 +767,26 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/Booking" }
         "400": { $ref: "#/components/responses/ValidationError" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "403":
+          description: TEACHER_FORBIDDEN
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: BOOKING_NOT_FOUND, si alguna entrada no es una reserva de esta clase y de este profesor
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: BOOKING_ALREADY_CANCELLED, si alguna entrada es una reserva cancelada
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: ATTENDANCE_NOT_YET_OPEN
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /admin/configuration:
     get:
@@ -887,7 +958,14 @@ components:
       enum: [OPEN, FULL, CANCELLED, COMPLETED]
     BookingStatus:
       type: string
-      enum: [CONFIRMED, CANCELLED_BY_STUDENT, CANCELLED_BY_TEACHER, CANCELLED_BY_ADMIN, ATTENDED, NO_SHOW]
+      description: >-
+        Si la reserva sigue en pie y, si no, quien la termino. La asistencia NO esta aqui desde la
+        Fase 9: ATTENDED y NO_SHOW sacaban la reserva de CONFIRMED y, con ello, del indice unico,
+        de la restriccion de solapamiento y del recuento de plazas. Ver Attendance.
+      enum: [CONFIRMED, CANCELLED_BY_STUDENT, CANCELLED_BY_TEACHER, CANCELLED_BY_ADMIN]
+    Attendance:
+      type: string
+      enum: [PENDING, ATTENDED, NO_SHOW]
     ManagedStatus:
       type: string
       enum: [MANAGED, INACTIVE]
@@ -1178,15 +1256,13 @@ components:
     Lesson:
       type: object
       description: >-
-        bookedCount se retira hasta la Fase 9: contar plazas ocupadas solo puede hacerlo el
-        modulo booking, que todavia no existe, y responder un cero constante pareceria un dato
-        en vez de la funcionalidad que falta. Es la misma decision que tomo RegisterRequest con
-        fullName en la Fase 5.
+        bookedCount es el numero de reservas confirmadas. Se retiro en la Fase 8, cuando solo
+        booking podia contarlas y aun no existia, y volvio con la Fase 9.
 
         status se calcula al leer y no se guarda. La columna solo tiene OPEN y CANCELLED, que es
         lo que decide una persona; COMPLETED se deduce del reloj y FULL del numero de reservas.
-        Hasta la Fase 9, FULL no es alcanzable, y eso es correcto en vez de aproximado: sin
-        reservas en el sistema, ninguna clase puede estar llena.
+        Precedencia: CANCELLED, luego COMPLETED, luego FULL, luego OPEN. Una clase llena que ya
+        termino es COMPLETED: de una clase pasada lo que importa es que ocurrio.
 
         notes es del profesor. Viaja como null para cualquier otro llamante: es texto libre que
         el profesor escribe para si mismo, no para que lo lea el alumno.
@@ -1197,6 +1273,7 @@ components:
         startsAt: { type: string, format: date-time }
         endsAt: { type: string, format: date-time }
         capacity: { type: integer }
+        bookedCount: { type: integer }
         status: { $ref: "#/components/schemas/LessonStatus" }
         notes: { type: string, nullable: true }
         createdOutsideAvailability: { type: boolean }
@@ -1214,14 +1291,28 @@ components:
 
     Booking:
       type: object
+      description: >-
+        lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia
+        clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia.
       properties:
         id: { type: string, format: uuid }
         lessonId: { type: string, format: uuid }
         studentUserId: { type: string, format: uuid }
         status: { $ref: "#/components/schemas/BookingStatus" }
+        attendance: { $ref: "#/components/schemas/Attendance" }
         bookedAt: { type: string, format: date-time }
         cancelledAt: { type: string, format: date-time, nullable: true }
-        lesson: { $ref: "#/components/schemas/Lesson" }
+        lesson:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            teacherUserId: { type: string, format: uuid }
+            type: { $ref: "#/components/schemas/LessonType" }
+            startsAt: { type: string, format: date-time }
+            endsAt: { type: string, format: date-time }
+            capacity: { type: integer }
+            bookedCount: { type: integer }
+            status: { $ref: "#/components/schemas/LessonStatus" }
 
     BookingPage:
       allOf:

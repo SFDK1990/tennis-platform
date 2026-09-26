@@ -61,6 +61,11 @@ Criterio de salida: el profesor puede crear clases individuales y grupales respe
 
 Criterio de salida: dos usuarios pueden intentar reservar la última plaza simultáneamente y el sistema garantiza que solo uno gana, sin excepción no controlada.
 
+Cumplido en la Fase 9 de `12-metodologia-trabajo.md` por `LastSeatConcurrencyTest`, que además
+falla si se quita el cerrojo. La fase cerró también lo que la Fase 8 le dejó —`bookedCount`,
+`FULL`, la cascada al cancelar una clase— y la deuda de la Fase 6: desactivar un alumno cancela
+sus reservas futuras. Ver `20-fase9-analisis-booking.md`.
+
 ## Fase 6 — `calendar`
 
 - Vista agregada de disponibilidad, clases y reservas, en hora local del usuario con la zona horaria del profesor visible.

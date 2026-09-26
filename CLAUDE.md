@@ -47,7 +47,7 @@ Los documentos de `Documentos/_arquitectura/` son vinculantes, no lectura de fon
 | 6. Perfiles y gestión de usuarios | Completada — `teacher` (PR #13) y `student` (PR #15) en `main` |
 | 7. Disponibilidad del profesor (`availability`) | Completada — PR #17 en `main` |
 | 8. Clases (`lesson`) | Completada — PR #20 en `main` |
-| **9. Reservas (`booking`)** | **Siguiente**: pendiente de análisis |
+| **9. Reservas (`booking`)** | **En curso**: análisis validado e implementación completa en `fase-9-booking`, pendiente de PR |
 | 10 en adelante | Pendientes |
 
 El análisis de la Fase 6 y sus decisiones están en
@@ -75,7 +75,15 @@ El análisis de la Fase 8 está en `Documentos/_arquitectura/19-fase8-analisis-l
 cinco decisiones que hubo que cerrar antes de escribir código.
 Su informe de cierre está en `Documentos/_informes/informe-fase8-lesson-2026-09-20.md`. La Fase 8
 aplazó a la 9 todo lo que depende de contar reservas: `bookedCount`, el estado `FULL`, el marcado
-de asistencia y la cascada al cancelar una clase. **`booking` hereda esas cuatro piezas.**
+de asistencia y la cascada al cancelar una clase. `booking` heredó esas cuatro piezas.
+
+El análisis de la Fase 9 está en `Documentos/_arquitectura/20-fase9-analisis-booking.md`, con las
+siete decisiones cerradas antes de escribir código y las que aparecieron al implementar. La que
+da forma a todo: `lesson` y `student` tienen que actuar sobre reservas —contarlas, cancelarlas en
+cascada— sin depender de `booking`. Lo resuelve la **inversión de dependencias**: declaran la
+interfaz en su paquete `application/port/spi` y `booking` la implementa. **Un módulo puede
+implementar el spi de otro, nunca llamarlo**; `ModuleBoundariesTest` lo exige y `PublicPortsTest`
+demuestra que la regla rechaza la llamada.
 
 La entrega `student` trae un **módulo nuevo, `platform`**, dueño de la configuración global.
 `02-arquitectura.md` asignaba `platform_configuration` a `administration`, y era un error de
@@ -214,6 +222,24 @@ Cosas que ya han costado tiempo y que fallan **en silencio**:
   `v6-lesson`. Sin la extensión, la restricción no se puede ni crear. Y se comprueba dos veces a
   propósito: antes en la aplicación para poder responder un 409 con sentido, y en la base porque
   entre la comprobación y el `INSERT` cabe otra petición.
+- **La última plaza la protege un cerrojo, no una restricción.** `LockLesson.lockForBooking`
+  hace `SELECT ... FOR UPDATE` sobre la clase y cuenta después; exige transacción
+  (`Propagation.MANDATORY`) porque fuera de una el cerrojo se soltaría al volver. Quitar el `@Lock`
+  no rompe ningún test salvo `LastSeatConcurrencyTest`, que es justo el que tiene que romperse:
+  se comprobó quitándolo.
+- **La asistencia no está en `bookings.status`**, al contrario de lo que decía el borrador del ER.
+  Tiene su columna, `attendance`. Si alguien la vuelve a mezclar con el estado, marcar a un alumno
+  como asistido lo saca del índice único, de la restricción de solapamiento y del recuento de
+  plazas, todo a la vez y sin fallar.
+- **El login acepta cuentas sin verificar.** La única comprobación de email verificado está al
+  reservar (`403 EMAIL_NOT_VERIFIED`), y un test que siembre un alumno para reservar tiene que
+  verificarlo y **volver a iniciar sesión**, porque el dato va en el token.
+- **Un parámetro de consulta tipado con un enum de dominio responde 500**, no 400, cuando llega un
+  valor desconocido: la excepción del conversor de Spring no la captura ningún advice. Por eso
+  `GET /bookings` recibe `status` como texto y lo interpreta `BookingStatus.filter`.
+- **Los filtros opcionales en JPQL no pueden ser `:param is null or ...` con un UUID**: PostgreSQL
+  no deduce el tipo de un parámetro nulo y la consulta falla. `BookingRepositoryAdapter` usa
+  `Specification`.
 - **El perfil del alumno nace en `PATCH /me`, no en el registro.** Un alumno recién verificado
   tiene los campos personales a `null` en `GET /me`, y eso es correcto: es la señal de que el
   frontend debe pedírselos. Además, un alumno sin perfil **no puede ser asociado** por el

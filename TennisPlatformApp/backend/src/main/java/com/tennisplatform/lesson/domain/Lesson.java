@@ -24,7 +24,7 @@ public class Lesson {
      *
      * <p>It does not forbid anything here. The teacher may cancel their own lesson at any time -
      * a teacher who falls ill the night before has to be able to - but whether it happened
-     * inside this window is what Fase 9 will use to decide who needs telling. The window that
+     * inside this window is recorded, so the students affected can be told. The window that
      * does forbid is the student's, over their own booking, and that one lives in {@code
      * booking}.
      */
@@ -116,7 +116,7 @@ public class Lesson {
     /**
      * Cancels the lesson, which frees its slot for another one.
      *
-     * <p>A cancelled lesson is never reopened: Fase 9 will cancel its bookings too, and bringing
+     * <p>A cancelled lesson is never reopened: its bookings are cancelled with it, and bringing
      * it back would leave those students out without telling them. If the teacher changes their
      * mind, they create another lesson - the slot is free again precisely because this one is
      * cancelled.
@@ -132,18 +132,25 @@ public class Lesson {
     }
 
     /**
-     * What the lesson looks like right now.
+     * What the lesson looks like right now, given how many confirmed bookings it has.
      *
-     * <p>{@link LessonStatus#FULL} is not reachable yet and that is correct rather than missing:
-     * it needs the number of confirmed bookings, which only {@code booking} can count, and no
-     * bookings exist until Fase 9.
+     * <p>The order matters and is deliberate: a lesson that was cancelled reads {@code
+     * CANCELLED} whatever else is true of it, and a full lesson that has already finished reads
+     * {@code COMPLETED}, because what anybody wants to know about a lesson in the past is that it
+     * happened. {@code FULL} only means something while a seat could still be taken.
+     *
+     * <p>The count comes from outside because only {@code booking} can make it; see {@code
+     * LessonBookings}.
      */
-    public LessonStatus statusAt(Instant now) {
+    public LessonStatus statusAt(Instant now, int confirmedBookings) {
         if (cancelledAt != null) {
             return LessonStatus.CANCELLED;
         }
         if (!period.endsAt().isAfter(now)) {
             return LessonStatus.COMPLETED;
+        }
+        if (confirmedBookings >= capacity) {
+            return LessonStatus.FULL;
         }
         return LessonStatus.OPEN;
     }

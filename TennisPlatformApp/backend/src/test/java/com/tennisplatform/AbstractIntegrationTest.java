@@ -65,7 +65,7 @@ public abstract class AbstractIntegrationTest {
      * as their modules arrive - the alternative, each class cleaning up after itself, is exactly
      * the arrangement that already failed once.
      *
-     * <p>The availability tables and {@code lessons} are listed although CASCADE would reach
+     * <p>The availability tables, {@code lessons} and {@code bookings} are listed although CASCADE would reach
      * them anyway through their foreign key to {@code teacher_profiles}. Relying on that is precisely how
      * {@code platform_configuration} got emptied without anyone meaning to, so a table this
      * cleanup depends on is named here whether or not it strictly has to be.
@@ -79,7 +79,7 @@ public abstract class AbstractIntegrationTest {
      */
     @BeforeEach
     void emptyTheDatabase() {
-        jdbc.execute("TRUNCATE TABLE lessons, weekly_availability_rules, availability_exceptions, "
+        jdbc.execute("TRUNCATE TABLE bookings, lessons, weekly_availability_rules, availability_exceptions, "
                 + "teacher_students, student_profiles, teacher_profiles, "
                 + "refresh_tokens, password_reset_tokens, email_verifications, users CASCADE");
         jdbc.update("INSERT INTO platform_configuration (id, student_limit) VALUES (1, 50) "

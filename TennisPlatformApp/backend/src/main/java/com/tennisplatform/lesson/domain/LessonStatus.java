@@ -9,9 +9,8 @@ package com.tennisplatform.lesson.domain;
  *
  * <p>{@code COMPLETED} follows from the clock, so it needs no scheduled job - which is just as
  * well, because the MVP has none. {@code FULL} follows from the number of confirmed bookings,
- * which only {@code booking} can count; until Fase 9 exists a lesson that is not cancelled and
- * has not finished reads {@code OPEN}. That is honest rather than approximate: with no bookings
- * in the system, no lesson can be full.
+ * which only {@code booking} can count, so the count is handed in when the status is worked
+ * out. See {@code Lesson.statusAt}.
  */
 public enum LessonStatus {
     OPEN,

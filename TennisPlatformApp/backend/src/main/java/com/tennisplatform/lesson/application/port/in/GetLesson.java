@@ -1,6 +1,7 @@
 package com.tennisplatform.lesson.application.port.in;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +15,13 @@ import java.util.UUID;
 public interface GetLesson {
 
     LessonView byId(UUID id);
+
+    /**
+     * Several lessons at once, in no particular order; ids that do not exist are left out. For
+     * callers that hold a page of references - bookings - and would otherwise read them one by
+     * one.
+     */
+    List<LessonView> byIds(Collection<UUID> ids);
 
     /**
      * The teacher's lessons whose time touches the given range of dates, both included.

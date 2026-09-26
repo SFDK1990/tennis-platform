@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -89,6 +90,16 @@ class LessonRepositoryAdapter implements LessonRepository {
     @Override
     public Optional<Lesson> findById(UUID id) {
         return jpa.findById(id).map(LessonEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Lesson> findByIdForUpdate(UUID id) {
+        return jpa.findByIdForUpdate(id).map(LessonEntity::toDomain);
+    }
+
+    @Override
+    public List<Lesson> findAllById(Collection<UUID> ids) {
+        return jpa.findAllById(ids).stream().map(LessonEntity::toDomain).toList();
     }
 
     @Override

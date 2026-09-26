@@ -80,7 +80,11 @@ El registro público no equivale a autorización para reservar.
 
 ### Reserva
 
-`CONFIRMED`, `CANCELLED_BY_STUDENT`, `CANCELLED_BY_TEACHER`, `ATTENDED`, `NO_SHOW`.
+`CONFIRMED`, `CANCELLED_BY_STUDENT`, `CANCELLED_BY_TEACHER`, `CANCELLED_BY_ADMIN`.
+
+La asistencia es un campo aparte: `PENDING`, `ATTENDED`, `NO_SHOW` (corregido en la Fase 9).
+Mezclarla con el estado hacía que marcar a un alumno como asistido dejara de contar su reserva
+como confirmada. Ver `20-fase9-analisis-booking.md`.
 
 ### Clase
 

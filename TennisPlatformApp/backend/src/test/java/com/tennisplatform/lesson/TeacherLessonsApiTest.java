@@ -178,9 +178,7 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
     @SuppressWarnings("rawtypes")
     void aLessonThatHasAlreadyEndedReadsAsCompletedWithoutAnythingHavingRun() {
         String token = tokenOf(TEACHER_EMAIL, PASSWORD);
-        LocalDate lastMonth = LocalDate.now(clock.withZone(MADRID)).minusDays(30);
-        String id = (String) create(token,
-                lessonOn(lastMonth, "INDIVIDUAL", 1, 10, 11, true)).getBody().get("id");
+        String id = aLessonLastMonth();
 
         ResponseEntity<Map> read = rest.exchange("/api/v1/lessons/" + id, HttpMethod.GET,
                 new HttpEntity<>(bearer(token)), Map.class);
@@ -193,14 +191,35 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
     @SuppressWarnings("rawtypes")
     void refusesToCancelALessonThatAlreadyEnded() {
         String token = tokenOf(TEACHER_EMAIL, PASSWORD);
-        LocalDate lastMonth = LocalDate.now(clock.withZone(MADRID)).minusDays(30);
-        String id = (String) create(token,
-                lessonOn(lastMonth, "INDIVIDUAL", 1, 10, 11, true)).getBody().get("id");
+        String id = aLessonLastMonth();
 
         ResponseEntity<Map> refused = cancel(token, id);
 
         assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
         assertThat(refused.getBody().get("code")).isEqualTo("LESSON_ALREADY_FINISHED");
+    }
+
+    /** Decision 6 of 20-fase9-analisis-booking.md: a lesson that has already started has no use. */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void refusesALessonThatWouldAlreadyHaveStarted() {
+        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
+        LocalDate lastMonth = LocalDate.now(clock.withZone(MADRID)).minusDays(30);
+
+        ResponseEntity<Map> refused = create(token, lessonOn(lastMonth, "INDIVIDUAL", 1, 10, 11, true));
+
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(refused.getBody().get("code")).isEqualTo("LESSON_IN_THE_PAST");
+    }
+
+    /**
+     * The API no longer creates a lesson in the past, so one is written straight through the
+     * repository. That is the only way such a lesson exists now: it was created before and time
+     * went by.
+     */
+    private String aLessonLastMonth() {
+        return lessons.save(lesson(LocalDate.now(clock.withZone(MADRID)).minusDays(30), 10, 11))
+                .id().toString();
     }
 
     /** The notes are the teacher's own shorthand; they were not written for the student to read. */
