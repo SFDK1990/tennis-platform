@@ -97,5 +97,8 @@ last seat is protected by `SELECT ... FOR UPDATE` on the lesson. DDL: `10-diagra
 
 Domain tests without Spring, application tests with mocked ports, API and integration tests
 against real PostgreSQL through Testcontainers (`AbstractIntegrationTest`), concurrency tests
-for the last-seat race, ArchUnit for the boundaries. Test names are sentences
+for the last-seat race, ArchUnit for the boundaries, and the contract tests in
+`src/test/java/com/tennisplatform/contract`: every integration-test response is validated
+against `openapi.yaml`, the routes of the code and of the spec must be the same set, and the
+common statuses (401, 429, 400) must be documented on every operation they apply to. Test names are sentences
 (`twoStudentsRaceForTheLastSeatAndExactlyOneWins`).

@@ -160,6 +160,10 @@ Los casos de uso principales son:
 
 ## 8. REST API inicial
 
+La lista vigente, con cada respuesta, es `TennisPlatformApp/openapi.yaml`, y los tests
+comprueban que coincide con el código (`11-contrato-api.md`). Esta es la de partida, al día tras
+la Fase 13.
+
 ### Identity
 
 - `POST /api/v1/auth/register`
@@ -167,6 +171,7 @@ Los casos de uso principales son:
 - `POST /api/v1/auth/logout`
 - `POST /api/v1/auth/refresh`
 - `POST /api/v1/auth/verify-email`
+- `POST /api/v1/auth/verification-email`
 - `POST /api/v1/auth/forgot-password`
 - `POST /api/v1/auth/reset-password`
 - `GET /api/v1/me`
@@ -175,7 +180,6 @@ Los casos de uso principales son:
 ### Teacher y students
 
 - `GET /api/v1/teacher/profile`
-- `PATCH /api/v1/teacher/profile`
 - `GET /api/v1/teacher/students`
 - `GET /api/v1/teacher/students/lookup`
 - `GET /api/v1/teacher/students/{userId}`
@@ -219,7 +223,7 @@ añadido: son lo que hacen falta para cumplir los criterios de aceptación acord
 ### Administration
 
 - `GET /api/v1/admin/configuration`
-- `PATCH /api/v1/admin/configuration/student-limit`
+- `PATCH /api/v1/admin/configuration`
 - `GET /api/v1/admin/users`
 - `PATCH /api/v1/admin/users/{id}/status`
 

@@ -1,8 +1,15 @@
 # Tennis Platform — Contrato de API
 
-Formaliza la lista de endpoints de `02-arquitectura.md` en un spec OpenAPI 3.0 completo (`../../TennisPlatformApp/openapi.yaml`, en la raíz del proyecto de código — `TennisPlatformApp/`, hermana de esta carpeta `Documentos/`, no dentro de ella — junto a donde ya vive `backend/` e irá `frontend/`), con schemas de request/response reales, para que frontend y backend puedan avanzar en paralelo desde la Fase 1 del roadmap contra un contrato fijo en lugar de contra suposiciones.
+El contrato es `../../TennisPlatformApp/openapi.yaml` (OpenAPI 3.0). Describe lo que el backend
+hace, y eso se comprueba en cada build (Fase 13, `24-fase13-analisis-revision-api.md`):
 
-Durante la implementación, este archivo puede moverse a `docs/openapi.yaml` dentro del monorepo (o generarse desde las anotaciones de los controllers, si se prefiere code-first más adelante) y debe mantenerse como fuente de verdad versionada junto al código.
+- cada respuesta de los tests de integración se valida contra el spec: un estado sin documentar,
+  un campo que no declara o uno que falta hacen fallar el test (`ContractValidation`);
+- las rutas del código y las del spec son el mismo conjunto (`ImplementedRoutesMatchTheContractTest`);
+- los estados comunes están en todas las operaciones (`ContractConventionsTest`, ver abajo);
+- los tipos del frontend se generan del spec, y el CI falla si no coinciden.
+
+Tocar un endpoint es tocar el spec en el mismo cambio.
 
 ## Convenciones generales
 
@@ -14,6 +21,15 @@ Durante la implementación, este archivo puede moverse a `docs/openapi.yaml` den
 - `/calendar` no pagina: se filtra por rango de fechas obligatorio (`from`, `to`), acotado a un máximo razonable (p. ej. 62 días) para no exponer una consulta ilimitada.
 - Todas las fechas/horas son ISO 8601 (`date-time` en UTC, sufijo `Z`); el frontend convierte a hora local del usuario, incluyendo la zona horaria del profesor cuando aplica (decisión ya cerrada en `00-indice-arquitectura.md`).
 - Los errores siempre usan `application/problem+json` (RFC 7807) con el schema `ProblemDetails`, que añade un campo `code` con los códigos de negocio ya definidos en `02-arquitectura.md`.
+- **Estados comunes, documentados en cada operación**: `401` en toda la que exige bearer token,
+  `429` en todo `/auth/*` (el límite por IP cubre el prefijo entero) y `400` en toda la que recibe
+  cuerpo, id o parámetros. Son los que un test rara vez provoca, y por eso los comprueba un test
+  sobre el propio spec.
+- **Las transiciones de estado son acciones** (`POST .../cancel`, `.../manage`, `.../attendance`,
+  `PATCH .../status`), no un `DELETE` ni un `PATCH` genérico: cancelar deja la reserva con su
+  motivo, y cada transición tiene reglas propias (ventana de 24 horas, quién la hace).
+- **Un recurso se escribe por un solo camino.** El perfil de cualquier rol se cambia con
+  `PATCH /me`; `GET /teacher/profile` es de solo lectura.
 
 ## Protección CSRF
 
@@ -41,7 +57,7 @@ depuración durante las pruebas manuales del 19/09/2026.
 
 ## Errores que no los produce un controlador
 
-Tres respuestas nacen en la cadena de filtros de Spring Security, antes de que la petición llegue
+Cuatro respuestas nacen en la cadena de filtros, antes de que la petición llegue
 a ningún controlador, y por tanto fuera del alcance de cualquier `@RestControllerAdvice`. Por
 omisión salían con el formato por defecto del contenedor —o con el cuerpo vacío— incumpliendo la
 regla de que *todos* los errores son `application/problem+json`. Desde la corrección siguen el
@@ -52,6 +68,7 @@ contrato como el resto:
 | `AUTH_UNAUTHENTICATED`      | 401  | No hay bearer token, o no es válido, en un endpoint que lo exige |
 | `AUTH_CSRF_TOKEN_INVALID`   | 403  | Falta `X-XSRF-TOKEN` o no coincide con la cookie                |
 | `AUTH_FORBIDDEN`            | 403  | Denegación de autorización genérica de la cadena de filtros      |
+| `AUTH_RATE_LIMITED`         | 429  | Demasiadas peticiones a `/auth/*` desde la misma IP; `Retry-After` dice cuánto esperar |
 
 `AUTH_UNAUTHENTICATED` es deliberadamente vago: no distingue token ausente de expirado, mal
 formado o firmado por otro. Esa diferencia es justo lo que un atacante necesita para saber cuál
@@ -173,11 +190,10 @@ Códigos añadidos en la Fase 12:
 
 ## Endpoints cubiertos
 
-El spec cubre los 24 endpoints ya listados en `02-arquitectura.md` §8, agrupados en los mismos cuatro bloques: `auth`/`me`, `teacher`/`students`, `availability`, `lesson`/`booking`/`calendar`, `administration`. Ver `openapi.yaml` para el detalle de schemas, parámetros y respuestas de error de cada uno.
+32 operaciones, agrupadas por las etiquetas del spec. En la Fase 13 se retiraron
+`PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
+`/calendar`).
 
-## Pendiente al pasar a implementación
+## Pendiente
 
-- ~~Generar el cliente TypeScript tipado desde este spec~~: hecho en la Fase 11, y el CI falla si
-  los tipos no coinciden con el spec.
-- Añadir ejemplos (`examples:`) por endpoint una vez haya payloads reales de referencia acordados con QA.
-- Revisar si `PATCH /me` necesita separarse en endpoints específicos por rol (`/teacher/profile` y perfil de alumno ya son independientes) para evitar un DTO demasiado genérico; se deja como está por ahora porque el propio `02-arquitectura.md` ya lo definía así. **Actualización de la Fase 6**: se mantiene el DTO único, pero deja de ser permisivo — un campo que no corresponde al rol se rechaza con `400` en lugar de ignorarse, así que el DTO es genérico en la forma pero no en el comportamiento.
+- Ejemplos (`examples:`) por endpoint, cuando haya payloads de referencia acordados.

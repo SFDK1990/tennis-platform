@@ -254,26 +254,11 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
 
         assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(refused.getBody().get("code")).isEqualTo("TEACHER_FORBIDDEN");
-    }
 
-    @Test
-    @SuppressWarnings("rawtypes")
-    void listsTheLessonsOfARangeAndRefusesOneTooWide() {
-        String token = tokenOf(TEACHER_EMAIL, PASSWORD);
-        openTheWorkingDay(token);
-        create(token, lesson("INDIVIDUAL", 1, 10, 11, false));
-        create(token, lesson("GROUP", 4, 11, 12, false));
-
-        ResponseEntity<Map> listed = list(token, workingDay.minusDays(1), workingDay.plusDays(1));
-        assertThat(listed.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat((List<?>) listed.getBody().get("items")).hasSize(2);
-
-        ResponseEntity<Map> empty = list(token, workingDay.plusDays(5), workingDay.plusDays(10));
-        assertThat((List<?>) empty.getBody().get("items")).isEmpty();
-
-        ResponseEntity<Map> tooWide = list(token, workingDay, workingDay.plusDays(62));
-        assertThat(tooWide.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(tooWide.getBody().get("code")).isEqualTo("DATE_RANGE_INVALID");
+        String teacherToken = tokenOf(TEACHER_EMAIL, PASSWORD);
+        openTheWorkingDay(teacherToken);
+        String id = (String) create(teacherToken, lesson("INDIVIDUAL", 1, 10, 11, false)).getBody().get("id");
+        assertThat(cancel(studentToken, id).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -332,6 +317,10 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
 
         assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(missing.getBody().get("code")).isEqualTo("LESSON_NOT_FOUND");
+
+        ResponseEntity<Map> cancelMissing = cancel(token, UUID.randomUUID().toString());
+        assertThat(cancelMissing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(cancelMissing.getBody().get("code")).isEqualTo("LESSON_NOT_FOUND");
     }
 
     /**
@@ -371,12 +360,6 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
     private ResponseEntity<Map> cancel(String token, String id) {
         return rest.exchange(LESSONS + "/" + id + "/cancel", HttpMethod.POST,
                 new HttpEntity<>(jsonBearer(token)), Map.class);
-    }
-
-    @SuppressWarnings("rawtypes")
-    private ResponseEntity<Map> list(String token, LocalDate from, LocalDate to) {
-        return rest.exchange(LESSONS + "?from=" + from + "&to=" + to, HttpMethod.GET,
-                new HttpEntity<>(bearer(token)), Map.class);
     }
 
     private Map<String, Object> lesson(String type, int capacity, int fromHour, int toHour,

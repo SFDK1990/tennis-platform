@@ -75,6 +75,25 @@ class AdministrationApiTest extends AbstractBookingTest {
     }
 
     @Test
+    void theAdministratorReadsTheConfigurationAsSeeded() {
+        ResponseEntity<Map> configuration = call(adminToken, HttpMethod.GET, "/api/v1/admin/configuration", null);
+
+        assertThat(configuration.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(configuration.getBody()).containsEntry("studentLimit", 50).containsEntry("maxGroupCapacity", 8);
+        assertThat(configuration.getBody().get("updatedBy")).isNull();
+    }
+
+    /** Only ACTIVE and DISABLED can be asked for; PENDING_VERIFICATION is earned by the address. */
+    @Test
+    void aStatusTheConsoleCannotSetIsABadRequest() {
+        Student student = aStudentWithAProfile();
+
+        ResponseEntity<Map> refused = changeStatus(student.id(), "PENDING_VERIFICATION");
+
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void aLimitThatIsNotPositiveIsRefused() {
         ResponseEntity<Map> refused = call(adminToken, HttpMethod.PATCH, "/api/v1/admin/configuration",
                 Map.of("maxGroupCapacity", 0));

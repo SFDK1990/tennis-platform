@@ -277,6 +277,38 @@ class BookingsApiTest extends AbstractBookingTest {
         assertThat(refused.getBody()).containsEntry("code", "TEACHER_FORBIDDEN");
     }
 
+    /** All or nothing, and each way an entry can be wrong has its own answer. */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void attendanceIsRefusedForAnUnknownStatusABookingOfAnotherLessonOrACancelledOne() {
+        Student student = aStudentWhoMayBook();
+        UUID started = anIndividualLessonIn(Duration.ofMinutes(-30));
+        Booking booking = aBookingIn(started, student.id());
+
+        ResponseEntity<Map> unknownStatus = markAttendanceAsMap(started, booking.id().toString(), "MAYBE");
+        assertThat(unknownStatus.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        ResponseEntity<Map> notOfThisLesson = markAttendanceAsMap(started, UUID.randomUUID().toString(), "ATTENDED");
+        assertThat(notOfThisLesson.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(notOfThisLesson.getBody()).containsEntry("code", "BOOKING_NOT_FOUND");
+
+        // Cancelled while it still could be, before the lesson started.
+        bookings.save(booking.cancelByAdmin(clock.instant().minus(Duration.ofHours(1))));
+        ResponseEntity<Map> cancelled = markAttendanceAsMap(started, booking.id().toString(), "ATTENDED");
+        assertThat(cancelled.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(cancelled.getBody()).containsEntry("code", "BOOKING_ALREADY_CANCELLED");
+    }
+
+    /** An admin cancels bookings but has no list of them: that is a student's or the teacher's. */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void anAdminHasNoListOfBookings() {
+        ResponseEntity<Map> response = list(anAdminToken(), "");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).containsEntry("code", "AUTH_FORBIDDEN");
+    }
+
     /** The attendance screen needs exactly the bookings of one lesson, which is what lessonId gives it. */
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})
