@@ -8,7 +8,7 @@ const MESSAGES: Record<string, string> = {
   AUTH_INVALID_CREDENTIALS: "El email o la contraseña no son correctos.",
   AUTH_ACCOUNT_NOT_ACTIVE: "Esta cuenta está desactivada.",
   AUTH_RATE_LIMITED: "Demasiados intentos. Espera un minuto y vuelve a probar.",
-  AUTH_WEAK_PASSWORD: "La contraseña es demasiado débil: usa al menos 10 caracteres.",
+  AUTH_WEAK_PASSWORD: "La contraseña es demasiado larga. Elige una más corta.",
   AUTH_INVALID_TOKEN: "El enlace no es válido o ya se ha usado. Pide uno nuevo.",
   AUTH_SESSION_EXPIRED: "Tu sesión ha caducado. Inicia sesión otra vez.",
   AUTH_FORBIDDEN: "Tu cuenta no puede hacer esto.",

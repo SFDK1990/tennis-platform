@@ -53,6 +53,8 @@ services:
       TEACHER_TIMEZONE: ${TEACHER_TIMEZONE:-Europe/Madrid}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # The E2E suite raises it: all of it comes from one IP (25-fase14-analisis-cobertura-e2e.md).
+      TENNIS_IDENTITY_AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-20}
     ports:
       - "${SERVER_PORT:-8080}:8080"
     healthcheck:

@@ -101,4 +101,10 @@ for the last-seat race, ArchUnit for the boundaries, and the contract tests in
 `src/test/java/com/tennisplatform/contract`: every integration-test response is validated
 against `openapi.yaml`, the routes of the code and of the spec must be the same set, and the
 common statuses (401, 429, 400) must be documented on every operation they apply to. Test names are sentences
-(`twoStudentsRaceForTheLastSeatAndExactlyOneWins`).
+(`twoStudentsRaceForTheLastSeatAndExactlyOneWins`). `mvn verify` fails below 97 % of lines or
+83 % of branches.
+
+The frontend has Vitest unit tests (`src/**/*.test.ts`) and the Playwright flows in `frontend/e2e`
+(Spanish names, one sentence each), which drive the screens by role and accessible name. What a
+test needs beforehand is made through the API (`e2e/support/arrange.ts`) and undone afterwards;
+emails are read from Mailpit.

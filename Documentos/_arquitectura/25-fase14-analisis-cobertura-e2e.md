@@ -99,3 +99,28 @@ asunto de la auditoría de seguridad (Fase 15).
   - bajar la cobertura por debajo del suelo rompe `mvn verify`.
 - `mvn verify` en verde con `jacoco:check` activo y los seis huecos cerrados.
 - `lint`, `typecheck`, `test` y `build` del frontend siguen en verde.
+
+## Decisiones tomadas al implementar
+
+1. **El suelo es 97 % de líneas y 83 % de ramas**, no el 97,1/82,6 del punto de partida ni el
+   97,6/84,1 que salió después. Esas dos cifras estaban infladas:
+   - JaCoCo acumulaba en `jacoco.exec` los datos de ejecuciones anteriores. Ahora cada ejecución
+     empieza de cero (`append=false`).
+   - `target/` conservaba `.class` de clases ya borradas.
+
+   Medido con `mvn clean verify`, la suite completa da 97,5 % y 83,9 %.
+2. **La asistencia se prueba con una clase que empieza a los 15 segundos.** Se crea por la API,
+   fuera de horario a propósito, y el test espera a que empiece: el stack corre con el reloj
+   real.
+3. **Lo que el test no recorre se prepara por la API**, con el cliente tipado de `openapi.yaml`
+   (`e2e/support/arrange.ts`), y se deshace al terminar:
+   - alumnos que dejan de estar gestionados;
+   - clases canceladas y excepciones borradas;
+   - la configuración, devuelta a su valor.
+
+   Las cuentas `e2e-*` se quedan, porque la API no borra usuarios.
+4. **El "día libre" excluye también los días con clases canceladas**: siguen en el calendario
+   del profesor y compartirían pantalla con las del test.
+5. **Arreglado en el frontend**: el mensaje de `AUTH_WEAK_PASSWORD` pedía "al menos 10
+   caracteres", pero desde la validación del DTO ese código sólo sale por una contraseña
+   demasiado larga.
