@@ -79,8 +79,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
         log.debug("Method not allowed: {}", ex.getMessage());
         HttpHeaders headers = new HttpHeaders();
-        if (ex.getSupportedHttpMethods() != null) {
-            headers.setAllow(ex.getSupportedHttpMethods());
+        var supported = ex.getSupportedHttpMethods();
+        if (supported != null) {
+            headers.setAllow(supported);
         }
         return new ResponseEntity<>(Problems.of(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed",
                 "This address does not accept " + ex.getMethod(), "METHOD_NOT_ALLOWED"),
