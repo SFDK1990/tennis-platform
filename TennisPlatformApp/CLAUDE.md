@@ -5,12 +5,7 @@ phase status and the traps are in `../CLAUDE.md`; the design documents are in
 `../Documentos/_arquitectura/` (Spanish), indexed by `00-indice-arquitectura.md`. They are
 binding, not background reading.
 
-## Layout
-
-- `backend/` — Spring Boot 3.5 on Java 21, the modular monolith below.
-- `frontend/` — Next.js 16 + TypeScript + Tailwind, the structure below.
-- `openapi.yaml` — the API contract. It must describe what the backend does, not what it will do.
-- `compose.yaml`, `.env.example` — the local stack. Each service owns its `Dockerfile`.
+`openapi.yaml` must describe what the backend does, not what it will do.
 
 ## Commands
 

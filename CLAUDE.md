@@ -105,7 +105,3 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
 - **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
   estado de alumnos; el profesor y los admins no se desactivan desde la consola.
-
-## Repositorio
-
-`https://github.com/SFDK1990/tennis-platform` (privado). Rama principal: `main`.
