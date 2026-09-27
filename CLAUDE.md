@@ -112,5 +112,11 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
 - **El rate limiting cuenta por la IP de `X-Forwarded-For`** cuando la petición llega de un proxy
   de confianza (`tennis.identity.trusted-proxies`). En producción, el proxy de entrada tiene que
   sobrescribir esa cabecera, no añadirle: Next pasa tal cual la que manda el cliente.
+- **Logback se configura una vez por JVM.** Un test con otro formato de log
+  (`logging.structured.format.console`) no lo recibe si otro contexto arrancó antes: pasa solo y
+  falla en la suite. `RequestLogTest` reinicia el `LoggingSystem` antes y después de su clase.
+- **El código de error llega a la métrica y al log por un atributo de la petición** (`ProblemCode`).
+  Quien escriba un error fuera de un `@RestControllerAdvice` tiene que registrarlo, como
+  `ProblemDetailWriter` y `AuthRateLimitFilter`, o se contará como `none`.
 - **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
   estado de alumnos; el profesor y los admins no se desactivan desde la consola.

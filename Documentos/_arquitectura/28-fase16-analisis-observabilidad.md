@@ -124,3 +124,31 @@ decir qué pasó, a quién y por qué, sin exponer datos personales.
 3. `code` en `http.server.requests` y `/actuator/metrics` para el admin.
 4. Frontend: id por petición y código de referencia en los errores.
 5. Documentación: el formato del log y cómo buscar por id, en `TennisPlatformApp/CLAUDE.md`.
+
+## Decisiones tomadas al implementar
+
+- **La IP queda fuera del log**, como se propuso; se revisa en la Fase 17 con el proveedor y la
+  retención.
+- **Un paquete `observability`**, fuera de los módulos como `error` y `web`, con la línea por
+  petición y la etiqueta de la métrica. En `web` no cabían: `identity` pone el usuario en el MDC,
+  y `identity → web → identity` habría sido un ciclo.
+- **El mailer ya no escribe la excepción**, sólo su tipo. Un servidor SMTP que rechaza un
+  destinatario cita la dirección en el mensaje; el comentario decía que no se registraba y sí se
+  hacía.
+- **La traza de un 500 se sigue escribiendo entera.** Puede llevar un valor que la base cite en
+  su mensaje, pero sin ella un 500 no se puede diagnosticar. Es el único sitio donde puede
+  aparecer un dato, y sólo ante un fallo no previsto.
+- **Hibernate deja de escribir las violaciones de restricción** (`SqlExceptionHelper` en `OFF`).
+  Las escribía como ERROR aunque fueran las esperadas (la última plaza, dos clases que se
+  pisan, que son un 409), y su mensaje puede citar los valores de la fila. Una que nadie maneja
+  sigue llegando al log como excepción no controlada, con su traza.
+- **La línea de cambio de estado se escribe antes del commit.** Si el commit fallara, la línea de
+  la petición diría 500 con el mismo id; es esa la que confirma el resultado.
+- **Una petición que la seguridad rechaza** no llega a un controlador: en la métrica su `uri` es
+  `UNKNOWN` y en el log sale la ruta con sus ids. El 429 del rate limit se cuenta igual, con su
+  `code`.
+- **El id del frontend son 32 caracteres hexadecimales de `crypto.getRandomValues`**, no
+  `crypto.randomUUID`, que el navegador sólo da por HTTPS o en `localhost`, y la app también se
+  abre por la IP de la red local.
+- **El test del JSON reinicia Logback** antes y después de su clase: Logback se configura una vez
+  por JVM, y el test pasaba solo y fallaba detrás de cualquier otro.
