@@ -1,5 +1,9 @@
 import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 
+/** The look of every text box and select, so a select in a module matches a Field. */
+export const CONTROL_CLASS =
+  "min-h-11 rounded-lg border-[1.5px] border-line bg-paper px-3 text-base font-normal hover:border-muted aria-invalid:border-fault";
+
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   hint?: ReactNode;
@@ -19,7 +23,7 @@ export function Field({ label, hint, error, className = "", ...input }: FieldPro
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className="min-h-10 rounded-md border border-line bg-paper px-3 aria-invalid:border-fault"
+        className={CONTROL_CLASS}
         {...input}
       />
       {error ? (

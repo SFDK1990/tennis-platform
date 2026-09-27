@@ -6,6 +6,7 @@ import { useCalendar } from "@/modules/calendar/api";
 import { WeekCalendar } from "@/modules/calendar/components/WeekCalendar";
 import { WeekNavigator } from "@/modules/calendar/components/WeekNavigator";
 import { todayIn, weekOf } from "@/shared/time";
+import { EmptyState } from "@/shared/ui/EmptyState";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
 export default function StudentCalendarPage() {
@@ -15,13 +16,13 @@ export default function StudentCalendarPage() {
 
   return (
     <>
-      <h1 className="font-display text-3xl font-semibold">Clases</h1>
+      <h1 className="font-display text-4xl font-semibold leading-none">Clases</h1>
       <WeekNavigator from={from} to={to} onChange={setFrom} />
       <ErrorNotice error={calendar.error} />
       {calendar.data?.timezone === null ? (
-        <p className="text-muted">
+        <EmptyState title="Aún no ves ninguna clase">
           Cuando tu profesor te añada a sus alumnos, aquí verás sus clases y podrás reservar.
-        </p>
+        </EmptyState>
       ) : calendar.data ? (
         <WeekCalendar
           calendar={calendar.data}

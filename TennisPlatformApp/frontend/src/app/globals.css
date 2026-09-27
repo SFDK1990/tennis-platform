@@ -1,28 +1,43 @@
 @import "tailwindcss";
 
 /*
- * A hard court seen from above: court blue for what can be done, the green of the surround
- * for what is confirmed, and the optic yellow of the ball kept for one thing only - a free
- * seat you can take. Lines are chalk-thin; nothing floats on shadows.
+ * The week grid places its blocks with these (modules/calendar/grid.ts): classes rather than
+ * inline styles, which the nonce-based CSP would block. A quarter of an hour per row, from
+ * midnight to midnight.
+ */
+@source inline("row-start-{1..97} row-span-{1..96}");
+
+/*
+ * MAS Tennis Academy: the palette of the logo (27-fase15.5, decision 1). Court blue is for what
+ * can be done, navy for the frame and the text, white lines for the court drawn under the
+ * things that matter most. Every text pair here passes WCAG AA.
  */
 @theme {
-  --color-chalk: #f6f7f4;
+  --color-ground: #eef2f7;
   --color-paper: #ffffff;
-  --color-ink: #16213a;
-  --color-muted: #5b6677;
-  --color-line: #d6dce3;
-  --color-court: #24557f;
-  --color-court-deep: #1a3f60;
-  --color-surround: #2e6b4a;
-  --color-ball: #d8e73a;
+  --color-ink: #0b1e3f;
+  --color-navy: #0b1e3f;
+  --color-muted: #4e5d78;
+  --color-line: #d3dbe7;
+  --color-line-soft: #e3e9f1;
+  --color-court: #1f5fb8;
+  --color-court-deep: #174a91;
+  --color-court-tint: #e3ecf9;
+  --color-on-navy: #c9d6ea;
+  --color-surround: #1f7a55;
+  --color-surround-tint: #d7efe3;
+  --color-surround-ink: #1f5f43;
+  --color-warning: #7a4300;
+  --color-warning-tint: #fcebd2;
   --color-fault: #b42318;
+  --color-fault-tint: #f7dcd6;
 
   --font-sans: var(--font-barlow), system-ui, sans-serif;
   --font-display: var(--font-barlow-condensed), var(--font-barlow), system-ui, sans-serif;
 }
 
 body {
-  background: var(--color-chalk);
+  background: var(--color-ground);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1;

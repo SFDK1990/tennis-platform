@@ -8,7 +8,7 @@ export default function AdminConfigurationPage() {
   const configuration = useConfiguration();
   return (
     <>
-      <h1 className="font-display text-3xl font-semibold">Configuración</h1>
+      <h1 className="font-display text-4xl font-semibold leading-none">Configuración</h1>
       <ErrorNotice error={configuration.error} />
       {configuration.data ? (
         <ConfigurationForm configuration={configuration.data} />

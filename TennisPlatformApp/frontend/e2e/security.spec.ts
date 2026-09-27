@@ -16,7 +16,7 @@ test("las páginas llevan las cabeceras de seguridad y la CSP no bloquea nada de
   expect(headers["x-powered-by"]).toBeUndefined();
 
   await signIn(page, TEACHER.email, TEACHER.password);
-  await expect(page.getByRole("heading", { name: "Calendario" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hoy", exact: true })).toBeVisible();
   expect(violations).toEqual([]);
 });
 

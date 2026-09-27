@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import { Barlow, Barlow_Semi_Condensed } from "next/font/google";
+import { Barlow, Barlow_Condensed } from "next/font/google";
 import { connection } from "next/server";
 import { Providers } from "@/app/providers";
 import "./globals.css";
 
-const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["400", "600"] });
-const barlowCondensed = Barlow_Semi_Condensed({
+const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["400", "500", "600"] });
+// The face of the logo's name; next/font serves it from this origin, as the CSP requires.
+const barlowCondensed = Barlow_Condensed({
   variable: "--font-barlow-condensed",
   subsets: ["latin"],
-  weight: ["600"],
+  weight: ["500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "Tennis Platform",
-  description: "Clases de tenis: disponibilidad, reservas y asistencia.",
+  title: "MAS Tennis Academy",
+  description: "Clases de tenis con Marcos Asencio: reservas, horario y asistencia.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

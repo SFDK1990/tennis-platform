@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useChangeUserStatus, useUsers, type AdminUser, type UserFilters } from "@/modules/administration/api";
 import { dateIn, formatDay } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
-import { Field } from "@/shared/ui/Field";
+import { CONTROL_CLASS, Field } from "@/shared/ui/Field";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
 const ROLE: Record<AdminUser["role"], string> = { ADMIN: "Admin", TEACHER: "Profesor", STUDENT: "Alumno" };
@@ -14,7 +14,7 @@ const STATUS: Record<AdminUser["status"], string> = {
   DISABLED: "Desactivada",
 };
 
-const selectClass = "min-h-10 rounded-md border border-line bg-paper px-3 font-normal";
+const selectClass = CONTROL_CLASS;
 
 export function UsersList({ zone }: { zone: string }) {
   const [filters, setFilters] = useState<UserFilters>({});
@@ -60,7 +60,7 @@ export function UsersList({ zone }: { zone: string }) {
       ) : users.data.items.length === 0 ? (
         <p className="text-muted">Ninguna cuenta coincide con la búsqueda.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-paper">
+        <ul className="flex flex-col divide-y divide-line rounded-xl border border-line bg-paper">
           {users.data.items.map((user) => <UserRow key={user.id} user={user} zone={zone} />)}
         </ul>
       )}

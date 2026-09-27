@@ -15,10 +15,10 @@ export default function AvailabilityPage() {
 
   return (
     <>
-      <h1 className="font-display text-3xl font-semibold">Horario</h1>
+      <h1 className="font-display text-4xl font-semibold leading-none">Horario</h1>
       <ErrorNotice error={availability.error} />
       {availability.data ? (
-        <>
+        <div className="flex max-w-3xl flex-col gap-6">
           <section className="flex flex-col gap-3">
             <h2 className="font-display text-2xl font-semibold">Cada semana</h2>
             <WeeklyRulesEditor rules={availability.data.weeklyRules} />
@@ -27,7 +27,7 @@ export default function AvailabilityPage() {
             <h2 className="font-display text-2xl font-semibold">Días concretos</h2>
             <ExceptionsEditor exceptions={availability.data.exceptions} today={today} />
           </section>
-        </>
+        </div>
       ) : (
         <p className="text-muted">Cargando…</p>
       )}

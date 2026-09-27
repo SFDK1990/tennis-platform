@@ -7,10 +7,14 @@ import { unwrap } from "@/shared/api/errors";
  * a student needs it as much as the teacher.
  */
 export function useTeacherZone(): string | undefined {
-  const profile = useQuery({
+  return useTeacherProfile().data?.timezone;
+}
+
+/** Who the teacher is: students see their name on the home screen. */
+export function useTeacherProfile() {
+  return useQuery({
     queryKey: ["teacher-profile"],
     queryFn: async () => unwrap(await api.GET("/teacher/profile")),
     staleTime: Infinity,
   });
-  return profile.data?.timezone;
 }

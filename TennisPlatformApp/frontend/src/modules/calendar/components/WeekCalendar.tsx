@@ -63,7 +63,7 @@ function LessonRow({ lesson, zone, actions }: { lesson: CalendarLesson; zone: st
   const inactive = lesson.status === "CANCELLED" || lesson.status === "COMPLETED";
   const statusLabel = LESSON_STATUS[lesson.status];
   return (
-    <li className={`flex flex-wrap items-center gap-x-5 gap-y-3 rounded-md border border-line bg-paper px-4 py-3 ${inactive ? "opacity-60" : ""}`}>
+    <li className={`flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl border border-line bg-paper px-4 py-3 ${inactive ? "opacity-60" : ""}`}>
       <p className="w-16 font-display leading-tight">
         <span className="block text-2xl font-semibold">{formatTime(lesson.startsAt, zone)}</span>
         <span className="text-sm text-muted">{formatTime(lesson.endsAt, zone)}</span>
@@ -80,7 +80,7 @@ function LessonRow({ lesson, zone, actions }: { lesson: CalendarLesson; zone: st
   );
 }
 
-/** One ball per seat: yellow while it can still be taken. */
+/** One dot per seat: filled when taken, court blue while it can still be taken. */
 function Seats({ capacity, taken, muted }: { capacity: number; taken: number; muted: boolean }) {
   const free = Math.max(capacity - taken, 0);
   return (
@@ -90,7 +90,7 @@ function Seats({ capacity, taken, muted }: { capacity: number; taken: number; mu
           <span
             key={seat}
             className={`size-3 rounded-full border ${
-              seat < taken ? "border-ink/40 bg-ink/40" : muted ? "border-line bg-paper" : "border-ink/30 bg-ball"
+              seat < taken ? "border-navy bg-navy" : muted ? "border-line bg-paper" : "border-court bg-court-tint"
             }`}
           />
         ))}

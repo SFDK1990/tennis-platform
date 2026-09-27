@@ -22,6 +22,10 @@ El agente no encadena fases por iniciativa propia.
    hay informes aparte ni PR de "poner al día el estado".
 5. Daniel fusiona **con el CI en verde**. `main` no se puede proteger en el plan actual, así que
    es la única barrera.
+6. **Etiqueta.** Tras fusionar, `main` se etiqueta subiendo la versión menor (`v0.15.0`,
+   `v0.16.0`…), sin relación con el número de fase. `v1.0.0` es el primer despliegue que usa
+   Marcos; desde ahí, cada despliegue sale de una etiqueta, y un arreglo urgente va en una rama
+   `hotfix/<tema>` que sale de esa etiqueta y vuelve también a `main`.
 
 ## Reglas
 
@@ -59,13 +63,16 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 13 | Revisión de API | Completada | `24-fase13-analisis-revision-api.md`. Revisión REST completa y `openapi.yaml` sin diferencias con lo implementado |
 | 14 | Cobertura y E2E | Completada | `25-fase14-analisis-cobertura-e2e.md`. Playwright cubre los flujos críticos de los dos roles |
 | 15 | Auditoría de seguridad | Completada | `26-fase15-analisis-seguridad.md`. OWASP Top 10, acceso horizontal, secretos y dependencias revisados |
-| 15.5 | Experiencia y diseño | **Siguiente** | Maqueta aprobada por Daniel antes de implementar; identidad visual, "Hoy" del profesor, próxima clase del alumno y pantallas vacías que guían. Sólo frontend, con los E2E como red |
-| 16 | Observabilidad | Pendiente | Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |
+| 15.5 | Experiencia y diseño | Completada | `27-fase15.5-analisis-experiencia-diseno.md`. Maqueta aprobada por Daniel antes de implementar; identidad visual, "Hoy" del profesor, próxima clase del alumno y pantallas vacías que guían. Sólo frontend, con los E2E como red |
+| 16 | Observabilidad | **Siguiente** | Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |
 | 17 | Endurecimiento y despliegue | Pendiente | PWA completa, accesibilidad, proveedor elegido y política de backups |
 | 18 | Revisión final de arquitectura | Pendiente | Informe con severidades; nada se aplica sin aprobación |
 
 ## Decisiones de proceso resueltas
 
+- **Sin rama `develop`.** Una sola rama larga (`main`) y ramas cortas por fase: con una persona
+  y un PR por fase, una segunda rama larga sólo duplica fusiones. Los PR encadenados ya dejaron
+  una vez `main` parado en la Fase 10.
 - **Tres roles** (`ADMIN`, `TEACHER`, `STUDENT`), no dos: el modelo, la API y reglas como la
   cancelación sin ventana dependen de `ADMIN`.
 - **La integración continua se adelantó** a la 5.1, para que todo lo posterior naciera cubierto.

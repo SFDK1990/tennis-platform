@@ -37,7 +37,7 @@ export const config = {
   matcher: [
     {
       // Pages only: /api is the backend's, and static files carry no script to protect.
-      source: "/((?!api|_next/static|_next/image|favicon.ico).*)",
+      source: "/((?!api|_next/static|_next/image|icon.svg).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

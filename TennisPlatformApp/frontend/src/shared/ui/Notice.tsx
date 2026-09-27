@@ -5,14 +5,14 @@ import { messageFor } from "@/shared/api/messages";
 type Tone = "info" | "success" | "error";
 
 const TONES: Record<Tone, string> = {
-  info: "border-court/30 bg-court/5",
-  success: "border-surround/40 bg-surround/5",
-  error: "border-fault/40 bg-fault/5 text-fault",
+  info: "border-court/30 bg-court-tint/60",
+  success: "border-surround/40 bg-surround-tint/60 text-surround-ink",
+  error: "border-fault/40 bg-fault-tint/60 text-fault",
 };
 
 export function Notice({ tone = "info", children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <div role={tone === "error" ? "alert" : "status"} className={`rounded-md border px-4 py-3 ${TONES[tone]}`}>
+    <div role={tone === "error" ? "alert" : "status"} className={`rounded-lg border px-4 py-3 ${TONES[tone]}`}>
       {children}
     </div>
   );

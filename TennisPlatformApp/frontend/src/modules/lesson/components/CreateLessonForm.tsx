@@ -5,7 +5,7 @@ import { useCreateLesson, type CreateLesson } from "@/modules/lesson/api";
 import { ApiError } from "@/shared/api/errors";
 import { zonedToInstant, type LocalDate } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
-import { Field } from "@/shared/ui/Field";
+import { CONTROL_CLASS, Field } from "@/shared/ui/Field";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
 
 const DURATIONS = [30, 60, 90, 120];
@@ -38,7 +38,7 @@ export function CreateLessonForm({ zone, defaultDate }: { zone: string; defaultD
         <Field label="Hora" name="time" type="time" step={1800} defaultValue="18:00" required />
         <div className="flex flex-col gap-1">
           <label htmlFor="duration" className="text-sm font-semibold">Duración</label>
-          <select id="duration" name="duration" defaultValue={60} className="min-h-10 rounded-md border border-line bg-paper px-3">
+          <select id="duration" name="duration" defaultValue={60} className={CONTROL_CLASS}>
             {DURATIONS.map((minutes) => <option key={minutes} value={minutes}>{minutes} min</option>)}
           </select>
         </div>

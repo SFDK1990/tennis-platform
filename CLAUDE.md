@@ -106,6 +106,9 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
 - **El frontend lleva una CSP con nonce** (`src/proxy.ts`), y por eso todas las páginas se
   renderizan por petición (`connection()` en el layout raíz). Un `<script>` o un `style={}` en
   línea sin nonce queda bloqueado en silencio: la página carga, pero no se hidrata.
+- **La rejilla de la agenda coloca los bloques con clases `row-start-*`/`row-span-*`** que
+  genera `@source inline` en `globals.css`: la CSP no deja usar `style`. Sin esa línea, o con
+  una fila fuera de su rango, el bloque cae arriba sin error; el E2E del profesor lo comprueba.
 - **El rate limiting cuenta por la IP de `X-Forwarded-For`** cuando la petición llega de un proxy
   de confianza (`tennis.identity.trusted-proxies`). En producción, el proxy de entrada tiene que
   sobrescribir esa cabecera, no añadirle: Next pasa tal cual la que manda el cliente.

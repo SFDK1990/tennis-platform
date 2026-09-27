@@ -24,7 +24,7 @@ export function StudentsManager() {
   const active = students.data?.items.filter((student) => student.managedStatus === "MANAGED") ?? [];
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex max-w-3xl flex-col gap-8">
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-2xl font-semibold">Añadir un alumno</h2>
         <p className="text-muted">El alumno se registra primero y rellena su perfil. Después lo buscas por su email.</p>
@@ -34,7 +34,7 @@ export function StudentsManager() {
         </form>
         <ErrorNotice error={lookup.error} />
         {found ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-paper px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-paper px-4 py-3">
             <span>
               <span className="font-semibold">{found.fullName ?? "Sin nombre todavía"}</span>{" "}
               <span className="text-muted">{found.email}</span>
@@ -56,12 +56,17 @@ export function StudentsManager() {
         {active.length === 0 ? (
           <p className="text-muted">Todavía no tienes alumnos.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-paper">
+          <ul className="flex flex-col divide-y divide-line rounded-xl border border-line bg-paper">
             {active.map((student) => (
               <li key={student.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <span>
-                  <span className="font-semibold">{student.fullName}</span>{" "}
-                  <span className="text-muted">{student.email}</span>
+                <span className="flex min-w-0 items-center gap-3">
+                  <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-semibold text-white">
+                    {initialsOf(student.fullName)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-semibold">{student.fullName}</span>
+                    <span className="block truncate text-sm text-muted">{student.email}</span>
+                  </span>
                 </span>
                 {leaving === student.userId ? (
                   <span className="flex flex-wrap items-center gap-2">
@@ -82,4 +87,8 @@ export function StudentsManager() {
       </section>
     </div>
   );
+}
+
+function initialsOf(name: string): string {
+  return name.split(/\s+/).slice(0, 2).map((word) => word[0]?.toUpperCase() ?? "").join("");
 }
