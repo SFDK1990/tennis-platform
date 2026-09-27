@@ -5,6 +5,7 @@ import com.tennisplatform.identity.configuration.IdentityProperties;
 import com.tennisplatform.identity.domain.EmailAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -68,8 +69,11 @@ class SmtpIdentityMailer implements IdentityMailer {
             mailSender.send(message);
         } catch (MailException e) {
             // A mail outage must not turn into a failed registration that rolls back the
-            // account. The address is not logged: it is personal data.
-            log.error("Could not send '{}' email", subject, e);
+            // account. Only the kind of failure is logged, not the exception: an SMTP server
+            // that rejects a recipient quotes the address in its message, and that is personal
+            // data (28-fase16-analisis-observabilidad.md).
+            log.error("Could not send '{}' email: {}", subject,
+                    NestedExceptionUtils.getMostSpecificCause(e).getClass().getName());
         }
     }
 }

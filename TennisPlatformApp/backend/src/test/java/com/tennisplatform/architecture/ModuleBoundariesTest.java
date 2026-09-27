@@ -30,9 +30,10 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
  * already decided and does not depend on the code existing: every module then starts its life
  * under the rules, instead of the rules having to negotiate with code that already breaks them.
  *
- * <p>{@code config}, {@code error} and {@code web} are not modules and stay outside the graph by
- * decision: {@code config} is the composition root, {@code error} the global error mapping and
- * {@code web} the correlation-id filter. They are exempt simply by not being listed in
+ * <p>{@code config}, {@code error}, {@code observability} and {@code web} are not modules and stay
+ * outside the graph by decision: {@code config} is the composition root, {@code error} the global
+ * error mapping, {@code observability} the request log and metrics, and {@code web} the
+ * correlation-id filter and {@code /me}. They are exempt simply by not being listed in
  * {@link #MODULES} - any module may use them, and the composition root may see any module, since
  * assembling concrete implementations is precisely its job. Folding them into {@code shared}
  * instead would blur what shared means: technical primitives, not application wiring.

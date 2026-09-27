@@ -53,7 +53,12 @@ management:
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId:-}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId:-} %X{userId:-}] %logger{36} - %msg%n"
   level:
     root: INFO
     com.tennisplatform: INFO
+    # Hibernate logs every constraint violation at ERROR, the expected ones included: a lost last
+    # seat or two overlapping lessons answer 409 and are not errors. Its message can also quote
+    # the values of the row. A violation nobody handles still reaches the log, with its trace, as
+    # an unhandled exception.
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: OFF

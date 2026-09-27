@@ -8,6 +8,8 @@ import com.tennisplatform.booking.domain.Booking;
 import com.tennisplatform.booking.domain.BookingNotFoundException;
 import com.tennisplatform.booking.domain.InvalidBookingRequestException;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -20,6 +22,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MarkAttendanceService implements MarkAttendance {
+
+    private static final Logger log = LoggerFactory.getLogger(MarkAttendanceService.class);
 
     private final BookingRepository bookings;
     private final BookingViews views;
@@ -63,6 +67,7 @@ public class MarkAttendanceService implements MarkAttendance {
             marked.add(booking.markAttendance(Attendance.markable(entry.attendance()), now));
         }
 
+        log.info("Attendance marked for {} bookings of lesson {}", marked.size(), lessonId);
         return views.of(marked.stream().map(bookings::save).toList());
     }
 }

@@ -15,6 +15,8 @@ import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -30,6 +32,8 @@ import java.util.UUID;
  * the same reason: a check made before it could be stale by the time the insert happens.
  */
 public class BookLessonService implements BookLesson {
+
+    private static final Logger log = LoggerFactory.getLogger(BookLessonService.class);
 
     private static final String CANCELLED = "CANCELLED";
     private static final String FULL = "FULL";
@@ -89,6 +93,7 @@ public class BookLessonService implements BookLesson {
 
         Booking saved = bookings.save(Booking.confirm(lessonId, lesson.teacherUserId(), studentUserId,
                 lesson.startsAt(), lesson.endsAt(), now));
+        log.info("Booking {} created in lesson {} for student {}", saved.id(), lessonId, studentUserId);
 
         // Read again rather than adjusted by hand, so whether the lesson is now FULL is decided
         // in one place only - Lesson.statusAt - and the count includes the row just inserted.

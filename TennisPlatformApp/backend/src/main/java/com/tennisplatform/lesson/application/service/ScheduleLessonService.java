@@ -13,6 +13,8 @@ import com.tennisplatform.lesson.domain.LessonPeriod;
 import com.tennisplatform.lesson.domain.LessonType;
 import com.tennisplatform.platform.application.port.in.GetMaxGroupCapacity;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -21,6 +23,8 @@ import java.time.ZoneId;
 import java.util.UUID;
 
 public class ScheduleLessonService implements ScheduleLesson {
+
+    private static final Logger log = LoggerFactory.getLogger(ScheduleLessonService.class);
 
     private final LessonRepository lessons;
     private final TeacherLessons teacher;
@@ -72,6 +76,8 @@ public class ScheduleLessonService implements ScheduleLesson {
         Lesson lesson = Lesson.create(teacherUserId, type, period, request.capacity(),
                 request.notes(), !covered, zone, maxGroupCapacity);
 
-        return LessonView.from(lessons.save(lesson), now, 0);
+        Lesson saved = lessons.save(lesson);
+        log.info("Lesson {} scheduled", saved.id());
+        return LessonView.from(saved, now, 0);
     }
 }
