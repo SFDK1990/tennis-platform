@@ -67,6 +67,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_PATHS).permitAll()
                 .requestMatchers(PUBLIC_AUTH_PATHS).permitAll()
+                // Request counts by route and error code say how the platform is being used.
+                .requestMatchers("/actuator/metrics", "/actuator/metrics/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .exceptionHandling(handling -> handling
                 .authenticationEntryPoint(entryPoint)

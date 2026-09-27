@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { authenticatedFetch } from "@/shared/api/client";
+import { authenticatedFetch, CORRELATION_HEADER } from "@/shared/api/client";
 import { ApiError, unwrap } from "@/shared/api/errors";
+import { messageFor } from "@/shared/api/messages";
 import { endSession, getSession, startSession } from "@/shared/api/session";
 
 const ORIGIN = "http://localhost:3000";
@@ -68,6 +69,30 @@ describe("authenticatedFetch", () => {
     expect(getSession()).toEqual({ status: "signed-out", token: null });
   });
 
+  /** 28-fase16: the backend logs the request under the id the browser sends. */
+  it("sends a correlation id the backend accepts, and keeps it when it repeats the request", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json(401, { code: "AUTH_TOKEN_EXPIRED" }))
+      .mockResolvedValueOnce(json(200, { accessToken: "fresh-token" }))
+      .mockResolvedValueOnce(json(200, { ok: true }));
+
+    await authenticatedFetch(new Request(`${ORIGIN}/api/v1/me`));
+
+    const idOf = (call: number) => (fetchMock.mock.calls[call][0] as Request).headers.get(CORRELATION_HEADER);
+    expect(idOf(0)).toMatch(/^[0-9a-f]{32}$/);
+    expect(idOf(2)).toBe(idOf(0));
+  });
+
+  it("gives each request its own correlation id", async () => {
+    fetchMock.mockImplementation(async () => json(200, {}));
+
+    await authenticatedFetch(new Request(`${ORIGIN}/api/v1/me`));
+    await authenticatedFetch(new Request(`${ORIGIN}/api/v1/me`));
+
+    const ids = fetchMock.mock.calls.map(([input]) => (input as Request).headers.get(CORRELATION_HEADER));
+    expect(new Set(ids).size).toBe(2);
+  });
+
   it("does not treat a failed login as an expired token", async () => {
     fetchMock.mockResolvedValueOnce(json(401, { code: "AUTH_INVALID_CREDENTIALS" }));
 
@@ -100,6 +125,26 @@ describe("unwrap", () => {
     const error = ApiError.fromProblem(409, { title: "Conflict", status: 409, code: "LESSON_FULL" });
 
     expect(error.isStale).toBe(true);
+  });
+
+  it("tells the person what to pass on when the server fails", () => {
+    const response = new Response(null, { status: 500, headers: { [CORRELATION_HEADER]: "ab12cd34ef56ab12cd34ef56ab12cd34" } });
+    const problem = { title: "Internal server error", status: 500, detail: "Unexpected error", code: "INTERNAL_ERROR" };
+
+    let error: unknown;
+    try {
+      unwrap({ error: problem, response });
+    } catch (thrown) {
+      error = thrown;
+    }
+
+    expect((error as ApiError).correlationId).toBe("ab12cd34ef56ab12cd34ef56ab12cd34");
+    expect(messageFor(error as ApiError)).toBe("Ha fallado algo. Vuelve a probar en un momento. Código de referencia: ab12cd34.");
+  });
+
+  it("keeps the business message of a failure that is not the server's", () => {
+    const error = ApiError.fromProblem(409, { title: "Conflict", status: 409, code: "LESSON_FULL" }, "ab12cd34");
+    expect(messageFor(error)).toBe("Alguien ha cogido la última plaza. La lista está actualizada.");
   });
 
   it("still gives an ApiError when the body is not Problem Details", () => {

@@ -1,5 +1,6 @@
 package com.tennisplatform.identity.adapters.in.web;
 
+import com.tennisplatform.error.ProblemCode;
 import com.tennisplatform.identity.configuration.IdentityProperties;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -72,6 +73,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
+        ProblemCode.record(request, "AUTH_RATE_LIMITED");
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setHeader(HttpHeaders.RETRY_AFTER, "60");

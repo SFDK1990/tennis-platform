@@ -14,6 +14,8 @@ import com.tennisplatform.student.domain.StudentLimitReachedException;
 import com.tennisplatform.student.domain.StudentNotManagedException;
 import com.tennisplatform.student.domain.StudentProfileIncompleteException;
 import com.tennisplatform.student.domain.StudentProfileNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -30,6 +32,8 @@ import java.util.UUID;
  * unlikely - but the shape of the code is what survives into the phases where it is not.
  */
 public class ManageStudentService implements ManageStudent {
+
+    private static final Logger log = LoggerFactory.getLogger(ManageStudentService.class);
 
     private final ManagedStudentRepository relationships;
     private final StudentProfileRepository profiles;
@@ -67,6 +71,7 @@ public class ManageStudentService implements ManageStudent {
                 });
 
         ManagedStudent saved = relationships.save(relationship);
+        log.info("Student {} managed", studentUserId);
         return new ManagedStudentView(studentUserId, account.email(), fullName,
                 saved.status().name(), saved.managedAt());
     }
@@ -82,6 +87,7 @@ public class ManageStudentService implements ManageStudent {
         relationship.deactivate(now);
         relationships.save(relationship);
         bookings.cancelUpcomingWith(teacherUserId, studentUserId, now);
+        log.info("Student {} no longer managed, upcoming bookings cancelled", studentUserId);
     }
 
     @Override

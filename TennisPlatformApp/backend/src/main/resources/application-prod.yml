@@ -33,6 +33,11 @@ management:
       show-details: never
 
 logging:
+  # JSON in the Elastic Common Schema, one object per line, with the MDC (correlationId, userId,
+  # role) as fields: whatever collects it in Fase 17 reads it without a parser of its own.
+  structured:
+    format:
+      console: ecs
   level:
     root: WARN
     com.tennisplatform: INFO

@@ -38,8 +38,8 @@ Allowed dependencies, one-directional:
 | `calendar` | query ports only (`Get*`, `Find*`, `Query*`); it never writes |
 
 Every module may also use `shared.domain`: technical primitives only (`DateRange`,
-`ResultPage`, `ForbiddenOperationException`), no business rules. `config`, `error` and `web`
-are not modules; `web` may only call inbound ports.
+`ResultPage`, `ForbiddenOperationException`), no business rules. `config`, `error`,
+`observability` and `web` are not modules; `web` may only call inbound ports.
 
 Across modules, only `application/port/in` is visible, plus one exception: **a module may
 implement another module's `application/port/spi`, never call it**. That is how `lesson` and
@@ -79,6 +79,20 @@ module's `@RestControllerAdvice` with `Problems.of`; the shared ones (`Forbidden
 Auth: short access token as `Authorization: Bearer`; rotating refresh token in an `HttpOnly`
 cookie; CSRF only on `/auth/refresh` and `/auth/logout` (`X-XSRF-TOKEN` echoing the `XSRF-TOKEN`
 cookie). Security rules: `02-arquitectura.md` §13.
+
+## Logs and metrics
+
+Every line carries `correlationId` and, once authenticated, `userId` and `role` (MDC). The
+browser sends the id (`X-Correlation-Id`), and a 500 shows its first 8 characters to the user:
+search the log for them. `prod` writes JSON (ECS), `dev` and `test` text. Each API request leaves
+one line (`POST /api/v1/lessons/{id}/bookings 409 LESSON_FULL 12 ms`), and each change of state
+one line with ids only. Never log an email, name, phone, password, token or IP: `RequestLogTest`
+fails if the account and booking flows do. A 500 is logged with the type and frames of each
+exception but no messages, which can quote database values (`UnexpectedErrorTest`); so is a
+failure in a filter, which `UnhandledFailureFilter` catches before Tomcat logs it whole
+(`FailureInAFilterTest`). `http.server.requests` is tagged with the error
+`code` (`none` on success); `/actuator/metrics` is for `ADMIN` only. Decisions:
+`28-fase16-analisis-observabilidad.md`.
 
 ## Data
 

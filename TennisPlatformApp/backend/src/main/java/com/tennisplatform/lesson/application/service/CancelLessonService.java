@@ -7,6 +7,8 @@ import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -14,6 +16,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 public class CancelLessonService implements CancelLesson {
+
+    private static final Logger log = LoggerFactory.getLogger(CancelLessonService.class);
 
     private final LessonRepository lessons;
     private final LessonBookings bookings;
@@ -48,6 +52,7 @@ public class CancelLessonService implements CancelLesson {
         // Same transaction on purpose: if the bookings cannot be cancelled, the lesson is not
         // cancelled either, and nobody is left holding a seat in a lesson that no longer runs.
         bookings.cancelAllOf(cancelled.id(), now);
+        log.info("Lesson {} cancelled with its bookings", lessonId);
         return LessonView.from(cancelled, now, 0);
     }
 

@@ -43,6 +43,7 @@ public class ProblemDetailWriter {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
         problem.setProperty("code", code);
         problem.setInstance(URI.create(request.getRequestURI()));
+        ProblemCode.record(request, code);
 
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);

@@ -124,7 +124,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex) {
-        log.error("Unhandled exception", ex);
+        log.error("Unhandled exception", WithoutMessage.of(ex));
         // Nothing from the exception reaches the client: its message can name tables, columns
         // or values. The correlation id in the response header is what links it to this log line.
         return Problems.of(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error",

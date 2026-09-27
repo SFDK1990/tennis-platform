@@ -6,6 +6,8 @@ import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.domain.Booking;
 import com.tennisplatform.booking.domain.BookingNotFoundException;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -13,6 +15,8 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public class CancelBookingService implements CancelBooking {
+
+    private static final Logger log = LoggerFactory.getLogger(CancelBookingService.class);
 
     private final BookingRepository bookings;
     private final BookingViews views;
@@ -28,21 +32,27 @@ public class CancelBookingService implements CancelBooking {
     @Transactional
     public BookingView asStudent(UUID studentUserId, UUID bookingId) {
         Booking booking = find(bookingId, b -> b.studentUserId().equals(studentUserId));
-        return views.of(bookings.save(booking.cancelByStudent(clock.instant())));
+        BookingView cancelled = views.of(bookings.save(booking.cancelByStudent(clock.instant())));
+        log.info("Booking {} cancelled by the student", bookingId);
+        return cancelled;
     }
 
     @Override
     @Transactional
     public BookingView asTeacher(UUID teacherUserId, UUID bookingId) {
         Booking booking = find(bookingId, b -> b.teacherUserId().equals(teacherUserId));
-        return views.of(bookings.save(booking.cancelByTeacher(clock.instant())));
+        BookingView cancelled = views.of(bookings.save(booking.cancelByTeacher(clock.instant())));
+        log.info("Booking {} cancelled by the teacher", bookingId);
+        return cancelled;
     }
 
     @Override
     @Transactional
     public BookingView asAdmin(UUID bookingId) {
         Booking booking = find(bookingId, b -> true);
-        return views.of(bookings.save(booking.cancelByAdmin(clock.instant())));
+        BookingView cancelled = views.of(bookings.save(booking.cancelByAdmin(clock.instant())));
+        log.info("Booking {} cancelled by the admin", bookingId);
+        return cancelled;
     }
 
     /**

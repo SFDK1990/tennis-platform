@@ -2,10 +2,12 @@ package com.tennisplatform.identity.adapters.in.web;
 
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.identity.adapters.out.security.JwtAccessTokens;
+import com.tennisplatform.observability.RequestLogFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -50,6 +52,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var authentication = new UsernamePasswordAuthenticationToken(
                 user, null, List.of(new SimpleGrantedAuthority("ROLE_" + user.role().name())));
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Ids and a role, never the email: every log line of the request says who made it
+        // without saying who they are. RequestLogFilter takes them out when the request ends.
+        MDC.put(RequestLogFilter.MDC_USER_ID, user.id().toString());
+        MDC.put(RequestLogFilter.MDC_ROLE, user.role().name());
     }
 
     private java.util.Optional<String> bearerToken(HttpServletRequest request) {

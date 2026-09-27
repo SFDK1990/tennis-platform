@@ -1,9 +1,12 @@
 package com.tennisplatform.identity;
 
 import com.tennisplatform.AbstractIntegrationTest;
+import com.tennisplatform.observability.RequestMetricsTest;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,6 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestPropertySource(properties = "tennis.identity.auth-rate-limit-per-minute=3")
 class AuthRateLimitTest extends AbstractIntegrationTest {
 
+    private static final String[] THROTTLED = {"status", "429", "code", "AUTH_RATE_LIMITED"};
+
+    @Autowired
+    private MeterRegistry registry;
+
     /**
      * Apache HttpClient honours Retry-After and silently retries a 429 sixty seconds later,
      * by which point the allowance has refilled and the test sees the retry instead of the
@@ -41,6 +49,7 @@ class AuthRateLimitTest extends AbstractIntegrationTest {
 
     @Test
     void repeatedAttemptsFromTheSameClientAreThrottled() {
+        long throttledBefore = RequestMetricsTest.count(registry, THROTTLED);
         assertThat(attempt(0).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         assertThat(attempt(1).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         assertThat(attempt(2).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
@@ -50,6 +59,8 @@ class AuthRateLimitTest extends AbstractIntegrationTest {
         assertThat(throttled.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(throttled.getHeaders().getFirst("Retry-After")).isEqualTo("60");
         assertThat(throttled.getBody()).contains("AUTH_RATE_LIMITED");
+        // Answered before the security chain and MVC, and still counted with its code.
+        RequestMetricsTest.awaitCount(registry, throttledBefore + 1, THROTTLED);
     }
 
     /**

@@ -7,11 +7,15 @@ import com.tennisplatform.identity.application.port.in.AdministerAccounts;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.student.application.port.in.ManageStudent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 public class AdministerUsersService implements AdministerUsers {
+
+    private static final Logger log = LoggerFactory.getLogger(AdministerUsersService.class);
 
     public static final String ADMIN_TARGET_NOT_ALLOWED = "ADMIN_TARGET_NOT_ALLOWED";
 
@@ -43,10 +47,13 @@ public class AdministerUsersService implements AdministerUsers {
                     "The console only changes the status of student accounts");
         }
         if (active) {
-            return accounts.reactivate(accountId);
+            AccountView reactivated = accounts.reactivate(accountId);
+            log.info("Account {} reactivated by an admin", accountId);
+            return reactivated;
         }
         AccountView disabled = accounts.disable(accountId);
         students.releaseDisabledAccount(accountId);
+        log.info("Account {} disabled by an admin, its management and upcoming bookings released", accountId);
         return disabled;
     }
 }
