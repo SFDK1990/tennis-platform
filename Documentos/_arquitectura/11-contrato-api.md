@@ -86,6 +86,13 @@ no sirve—: un profesor que intenta reservar plaza, o un admin que pide "mis re
 | `DATE_RANGE_INVALID`  | 400  | Rango `from`/`to` ausente, invertido o de más de 62 días. Es el mismo tope para toda consulta por rango |
 | `AUTH_FORBIDDEN`      | 403  | Autenticado, pero con un rol al que esa operación no sirve |
 | `TEACHER_FORBIDDEN`   | 403  | La operación es del profesor dueño de lo que se toca |
+| `NOT_FOUND`           | 404  | La ruta no existe |
+| `METHOD_NOT_ALLOWED`  | 405  | La ruta existe pero no con ese método; `Allow` dice cuáles tiene |
+| `UNSUPPORTED_MEDIA_TYPE` | 415 | El cuerpo no es `application/json` |
+| `INTERNAL_ERROR`      | 500  | Fallo no previsto. No lleva nada de la excepción; el `X-Correlation-Id` lo enlaza con el log |
+
+`405` y `415` pueden salir en cualquier operación y el spec no los repite en cada una. `406`
+(el cliente no acepta JSON) sale sin cuerpo, porque un problem+json tampoco podría leerlo.
 
 ## Mapeo código de negocio → HTTP
 
