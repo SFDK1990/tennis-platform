@@ -70,3 +70,9 @@ function offsetOf(instant: number, zone: string): number {
   const asUtc = Date.UTC(part("year"), part("month") - 1, part("day"), part("hour"), part("minute"), part("second"));
   return asUtc - Math.floor(instant / 1000) * 1000;
 }
+
+/** "mié 30" - a day in a list that spans a couple of weeks. */
+export function formatShortWeekday(date: LocalDate): string {
+  return new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", weekday: "short", day: "numeric" })
+    .format(new Date(`${date}T00:00:00Z`));
+}

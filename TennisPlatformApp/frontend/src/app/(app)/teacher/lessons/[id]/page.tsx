@@ -19,7 +19,7 @@ export default function LessonPage() {
 
   return (
     <>
-      <Link href="/teacher" className="text-sm text-court underline">Volver al calendario</Link>
+      <Link href="/teacher/calendar" className="text-sm text-court underline">Volver a la agenda</Link>
       <ErrorNotice error={lesson.error} />
       {lesson.data && zone ? (
         <>

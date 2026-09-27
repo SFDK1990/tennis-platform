@@ -8,7 +8,7 @@ test("la sesión sobrevive a una recarga y termina al salir", async ({ page, arr
 
   await signIn(page, student.email, student.password);
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Clases" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Hola/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Salir" }).click();
   await expect(page).toHaveURL(/\/login/);
@@ -26,9 +26,9 @@ test("cada rol se queda en sus pantallas", async ({ page, arrange }) => {
 
   await signIn(page, student.email, student.password);
   await page.goto("/teacher/students");
-  await expect(page).toHaveURL(/\/calendar$/);
+  await expect(page).toHaveURL(/\/home$/);
   await page.goto("/admin/users");
-  await expect(page).toHaveURL(/\/calendar$/);
+  await expect(page).toHaveURL(/\/home$/);
 
   await page.getByRole("button", { name: "Salir" }).click();
   await signIn(page, TEACHER.email, TEACHER.password);
@@ -60,5 +60,5 @@ test("quien olvida la contraseña elige otra con el enlace del correo y entra co
   await expect(page.getByRole("alert").filter({ hasText: "El email o la contraseña no son correctos." })).toBeVisible();
 
   await signIn(page, student.email, newPassword);
-  await expect(page.getByRole("heading", { name: "Clases" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Hola/ })).toBeVisible();
 });

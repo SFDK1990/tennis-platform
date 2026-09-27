@@ -22,7 +22,7 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   await expect(page.getByText("Alumno añadido")).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: student.email })).toContainText(student.fullName);
 
-  await openFromMenu(page, "Calendario");
+  await openFromMenu(page, "Agenda");
   await page.getByRole("button", { name: "Nueva clase" }).click();
   await page.getByLabel("Día").fill(day);
   await page.getByLabel("Hora").fill("10:00");
@@ -34,6 +34,7 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   // The student, on their own phone, sees it and books it.
   const phone = await browser.newPage({ viewport: { width: 412, height: 915 } });
   await signIn(phone, student.email, student.password);
+  await openFromMenu(phone, "Clases");
   const booked = (await dayInCalendar(phone, day)).getByRole("listitem").filter({ hasText: "10:00" });
   await booked.getByRole("button", { name: "Reservar" }).click();
   await expect(booked.getByText("Tienes plaza")).toBeVisible();
@@ -52,7 +53,7 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   await phone.close();
 });
 
-test("el profesor marca la asistencia en cuanto la clase empieza", async ({ page, arrange }) => {
+test("el profesor pasa lista desde Hoy en cuanto la clase empieza", async ({ page, arrange }) => {
   const student = await arrange.student({ managed: true });
   // Attendance opens when the lesson starts, and the stack runs on the real clock: the lesson
   // starts a few seconds from now.
@@ -60,8 +61,10 @@ test("el profesor marca la asistencia en cuanto la clase empieza", async ({ page
   const lessonId = await arrange.lessonAt(startsAt);
   await arrange.book(student, lessonId);
 
+  // Hoy is where the teacher lands, and this lesson is the one about to start.
   await signIn(page, TEACHER.email, TEACHER.password);
-  await page.goto(`/teacher/lessons/${lessonId}`);
+  await expect(page.getByRole("heading", { name: "Hoy", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Próxima clase" })).toBeVisible();
   await expect(page.getByText(student.fullName)).toBeVisible();
   await expect(page.getByText("La asistencia se marca cuando empiece la clase.")).toBeVisible();
 

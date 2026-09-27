@@ -31,9 +31,10 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    // Students use it on their phone (a PWA); the teacher and the admin at a desk.
-    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /student\.spec\.ts/ },
-    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /student\.spec\.ts/ },
+    // Students use it on their phone (a PWA); the teacher and the admin at a desk. The phone
+    // navigation is checked for both.
+    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /(student|navigation)\.spec\.ts/ },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /(student|navigation)\.spec\.ts/ },
   ],
   webServer: {
     command: `npm run build && npx next start -p ${PORT}`,
