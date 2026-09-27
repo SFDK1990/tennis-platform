@@ -27,7 +27,7 @@ function Today({ zone }: { zone: string }) {
   const calendar = useCalendar(today, addDays(today, 6));
   const nameOf = useStudentNames();
   const day = calendar.data ? teacherDay(calendar.data.lessons, zone, today, now) : null;
-  const count = day ? [day.focus, ...day.rest].filter((l) => l !== null && l.status !== "CANCELLED").length : 0;
+  const count = day ? day.rest.length + (day.focus ? 1 : 0) : 0;
 
   return (
     <>

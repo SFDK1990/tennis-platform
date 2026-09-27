@@ -42,6 +42,8 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   await page.getByRole("button", { name: "Cerrar" }).click();
   const lesson = (await dayInCalendar(page, day)).getByRole("listitem").filter({ hasText: "10:00" });
   await expect(lesson).toContainText("2 plazas libres");
+  // Its row comes from a class generated ahead in globals.css; without it the block drops to the top.
+  await expect(lesson).not.toHaveCSS("grid-row-start", "auto");
   await lesson.getByRole("link").click();
   await expect(page.getByText(student.fullName)).toBeVisible();
   await page.getByRole("button", { name: "Cancelar clase" }).click();

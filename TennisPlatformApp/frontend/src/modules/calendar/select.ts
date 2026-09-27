@@ -7,7 +7,7 @@ const endsAfter = (lesson: CalendarLesson, now: number) => new Date(lesson.endsA
 export interface TeacherDay {
   /** The lesson on court now or the next one today; null once the day is done or empty. */
   focus: CalendarLesson | null;
-  /** Today's other lessons, earlier and later, in order. */
+  /** Today's other lessons still on, earlier and later, in order; cancelled ones stay in the agenda. */
   rest: CalendarLesson[];
   /** The next few lessons after today, for a day without any. */
   upcoming: CalendarLesson[];
@@ -20,7 +20,7 @@ export function teacherDay(lessons: CalendarLesson[], zone: string, today: Local
   const focus = todays.find((lesson) => lesson.status !== "CANCELLED" && endsAfter(lesson, now)) ?? null;
   return {
     focus,
-    rest: todays.filter((lesson) => lesson !== focus),
+    rest: todays.filter((lesson) => lesson !== focus && lesson.status !== "CANCELLED"),
     upcoming: sorted
       .filter((lesson) => dateIn(lesson.startsAt, zone) > today && lesson.status !== "CANCELLED")
       .slice(0, 3),

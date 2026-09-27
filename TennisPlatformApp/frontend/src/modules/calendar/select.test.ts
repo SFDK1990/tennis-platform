@@ -30,9 +30,10 @@ describe("teacherDay", () => {
     expect(day.upcoming.map((l) => l.id)).toEqual(["tomorrow"]);
   });
 
-  it("skips a cancelled lesson when choosing what comes next", () => {
-    const day = teacherDay([cancelled, evening], ZONE, "2026-09-28", Date.parse("2026-09-28T16:45:00Z"));
+  it("leaves cancelled lessons out of the day, which the agenda still shows", () => {
+    const day = teacherDay([cancelled, evening, morning], ZONE, "2026-09-28", Date.parse("2026-09-28T16:45:00Z"));
     expect(day.focus?.id).toBe("evening");
+    expect(day.rest.map((l) => l.id)).toEqual(["morning"]);
   });
 
   it("has nothing to focus once today's lessons are over", () => {
