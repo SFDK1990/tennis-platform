@@ -27,7 +27,7 @@ export function StudentLessonActions({ lessonId, startsAt, lessonStatus, booking
     return (
       <div className="flex flex-col items-end gap-2">
         <div className="flex items-center gap-2">
-          <span className="rounded-md bg-surround px-3 py-2 text-sm font-semibold text-white">Tienes plaza</span>
+          <span className="rounded-lg bg-surround px-3 py-2 text-sm font-semibold text-white">Tienes plaza</span>
           {started ? null : late ? (
             <span className="max-w-40 text-xs text-muted">Faltan menos de 24 h: ya no se puede cancelar</span>
           ) : confirming ? (

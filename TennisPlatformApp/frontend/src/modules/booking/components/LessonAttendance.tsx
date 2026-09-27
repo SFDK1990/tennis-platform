@@ -43,16 +43,20 @@ export function LessonAttendance({ lessonId, started, nameOf }: LessonAttendance
 
   return (
     <div className="flex flex-col gap-4">
-      <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-paper">
+      <ul className="flex flex-col divide-y divide-line-soft rounded-xl border border-line bg-paper">
         {confirmed.map((booking) => (
           <li key={booking.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <span className="font-semibold">{nameOf(booking.studentUserId)}</span>
             {started ? (
-              <fieldset className="flex gap-4">
+              <fieldset className="flex gap-2">
                 <legend className="sr-only">Asistencia de {nameOf(booking.studentUserId)}</legend>
                 {(["ATTENDED", "NO_SHOW"] as const).map((status) => (
-                  <label key={status} className="flex items-center gap-2">
+                  <label key={status}
+                    className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-line px-3 font-semibold has-checked:text-white ${
+                      status === "ATTENDED" ? "has-checked:border-surround has-checked:bg-surround" : "has-checked:border-navy has-checked:bg-navy"
+                    }`}>
                     <input
+                      className="size-4 accent-white"
                       type="radio"
                       name={booking.id}
                       checked={markOf(booking.id, booking.attendance) === status}

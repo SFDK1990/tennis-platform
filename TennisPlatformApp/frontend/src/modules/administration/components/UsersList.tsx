@@ -60,7 +60,7 @@ export function UsersList({ zone }: { zone: string }) {
       ) : users.data.items.length === 0 ? (
         <p className="text-muted">Ninguna cuenta coincide con la búsqueda.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-paper">
+        <ul className="flex flex-col divide-y divide-line rounded-xl border border-line bg-paper">
           {users.data.items.map((user) => <UserRow key={user.id} user={user} zone={zone} />)}
         </ul>
       )}

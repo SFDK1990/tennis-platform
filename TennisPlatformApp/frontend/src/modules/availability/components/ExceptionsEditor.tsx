@@ -35,7 +35,7 @@ export function ExceptionsEditor({ exceptions, today }: { exceptions: Availabili
       {sorted.length === 0 ? (
         <p className="text-muted">Ninguna en los próximos dos meses.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-paper">
+        <ul className="flex flex-col divide-y divide-line rounded-xl border border-line bg-paper">
           {sorted.map((exception) => (
             <li key={exception.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <span>

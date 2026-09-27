@@ -47,7 +47,7 @@ export function WeeklyRulesEditor({ rules }: { rules: WeeklyRule[] }) {
       {rows.length === 0 ? <p className="text-muted">Sin horario fijo. Añade una franja por cada tramo que trabajas.</p> : null}
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
-          <li key={row.key} className="flex flex-wrap items-end gap-3 rounded-md border border-line bg-paper px-4 py-3">
+          <li key={row.key} className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-paper px-4 py-3">
             <label className="flex flex-col gap-1 text-sm font-semibold">
               Día
               <select value={row.dayOfWeek} onChange={(e) => change(row.key, { dayOfWeek: e.target.value as Row["dayOfWeek"] })}
@@ -58,12 +58,12 @@ export function WeeklyRulesEditor({ rules }: { rules: WeeklyRule[] }) {
             <label className="flex flex-col gap-1 text-sm font-semibold">
               Desde
               <input type="time" step={1800} value={row.startTime} onChange={(e) => change(row.key, { startTime: e.target.value })}
-                className="min-h-10 rounded-md border border-line px-3 font-normal" />
+                className={CONTROL_CLASS} />
             </label>
             <label className="flex flex-col gap-1 text-sm font-semibold">
               Hasta
               <input type="time" step={1800} value={row.endTime} onChange={(e) => change(row.key, { endTime: e.target.value })}
-                className="min-h-10 rounded-md border border-line px-3 font-normal" />
+                className={CONTROL_CLASS} />
             </label>
             <Button variant="quiet" onClick={() => setRows((current) => current.filter((r) => r.key !== row.key))}>
               Quitar

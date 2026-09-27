@@ -8,6 +8,7 @@ import { LessonDetail } from "@/modules/lesson/components/LessonDetail";
 import { useStudentNames } from "@/modules/student/api";
 import { useTeacherZone } from "@/modules/teacher/api";
 import { useNow } from "@/shared/useNow";
+import { Icon } from "@/shared/ui/Icon";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
 export default function LessonPage() {
@@ -18,8 +19,8 @@ export default function LessonPage() {
   const now = useNow();
 
   return (
-    <>
-      <Link href="/teacher/calendar" className="text-sm text-court underline">Volver a la agenda</Link>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <Link href="/teacher/calendar" className="flex min-h-11 items-center gap-1 self-start font-semibold text-court"><Icon name="chevronLeft" />Volver a la agenda</Link>
       <ErrorNotice error={lesson.error} />
       {lesson.data && zone ? (
         <>
@@ -32,6 +33,6 @@ export default function LessonPage() {
       ) : (
         <p className="text-muted">Cargando…</p>
       )}
-    </>
+    </div>
   );
 }

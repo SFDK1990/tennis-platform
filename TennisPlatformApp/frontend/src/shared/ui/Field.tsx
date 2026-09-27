@@ -2,7 +2,7 @@ import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 
 /** The look of every text box and select, so a select in a module matches a Field. */
 export const CONTROL_CLASS =
-  "min-h-11 rounded-lg border-[1.5px] border-line bg-paper px-3 font-normal hover:border-muted aria-invalid:border-fault";
+  "min-h-11 rounded-lg border-[1.5px] border-line bg-paper px-3 text-base font-normal hover:border-muted aria-invalid:border-fault";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;

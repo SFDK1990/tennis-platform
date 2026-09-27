@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useCancelLesson, type Lesson } from "@/modules/lesson/api";
-import { formatDateTime, formatTime } from "@/shared/time";
+import { dateIn, formatDay, formatTime } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
+import { CourtCard } from "@/shared/ui/CourtCard";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
 
 const STATUS: Record<Lesson["status"], string> = {
@@ -20,14 +21,19 @@ export function LessonDetail({ lesson, zone }: { lesson: Lesson; zone: string })
 
   return (
     <section className="flex flex-col gap-3">
-      <h1 className="font-display text-3xl font-semibold first-letter:uppercase">
-        {formatDateTime(lesson.startsAt, zone)}–{formatTime(lesson.endsAt, zone)}
-      </h1>
-      <p className="text-muted">
-        {lesson.type === "INDIVIDUAL" ? "Clase individual" : `Clase de grupo, ${lesson.capacity} plazas`}.{" "}
-        {STATUS[lesson.status]}, con {lesson.bookedCount} {lesson.bookedCount === 1 ? "reserva" : "reservas"}.
-      </p>
-      {lesson.notes ? <p className="rounded-md border border-line bg-paper px-4 py-3">{lesson.notes}</p> : null}
+      <CourtCard label="La clase" tone="navy">
+        <h1 className="flex flex-col gap-2">
+          <span className="text-sm font-semibold text-white/85 first-letter:uppercase">{formatDay(dateIn(lesson.startsAt, zone))}</span>
+          <span className="font-display text-5xl font-semibold leading-none">
+            {formatTime(lesson.startsAt, zone)}–{formatTime(lesson.endsAt, zone)}
+          </span>
+        </h1>
+        <p>
+          {lesson.type === "INDIVIDUAL" ? "Clase individual" : `Clase de grupo, ${lesson.capacity} plazas`}.{" "}
+          {STATUS[lesson.status]}, con {lesson.bookedCount} {lesson.bookedCount === 1 ? "reserva" : "reservas"}.
+        </p>
+      </CourtCard>
+      {lesson.notes ? <p className="rounded-xl border border-line bg-paper px-4 py-3">{lesson.notes}</p> : null}
       {lesson.cancelledAtShortNotice ? (
         <Notice>Se canceló con menos de 24 horas de aviso.</Notice>
       ) : null}
