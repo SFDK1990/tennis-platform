@@ -44,7 +44,10 @@ management:
         include: health,info
   endpoint:
     health:
+      # Only an admin sees the components (database, disk, paths). Without roles,
+      # "when-authorized" meant anyone signed in, students included (26-fase15).
       show-details: when-authorized
+      roles: ADMIN
       probes:
         enabled: true
 

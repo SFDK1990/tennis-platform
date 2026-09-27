@@ -1,5 +1,7 @@
 name: tennis-platform
 
+# Every port is published on 127.0.0.1 only: with the default credentials, publishing on all
+# interfaces opened the database to anyone on the same network (26-fase15-analisis-seguridad.md).
 services:
   postgres:
     image: postgres:16-alpine
@@ -9,7 +11,7 @@ services:
       POSTGRES_USER: ${DB_USER:-tennis_platform}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-tennis_platform}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -24,8 +26,8 @@ services:
     image: axllent/mailpit:latest
     container_name: tennis-mailpit
     ports:
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
-      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
 
   backend:
     build:
@@ -56,7 +58,7 @@ services:
       # The E2E suite raises it: all of it comes from one IP (25-fase14-analisis-cobertura-e2e.md).
       TENNIS_IDENTITY_AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-20}
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
