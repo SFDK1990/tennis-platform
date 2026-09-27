@@ -4,7 +4,6 @@ import com.tennisplatform.error.Problems;
 import com.tennisplatform.identity.domain.AccountNotActiveException;
 import com.tennisplatform.identity.domain.InvalidCredentialsException;
 import com.tennisplatform.identity.domain.InvalidTokenException;
-import com.tennisplatform.identity.domain.TokenReuseDetectedException;
 import com.tennisplatform.identity.domain.WeakPasswordException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -35,16 +34,6 @@ class IdentityExceptionHandler {
     ProblemDetail handleInvalidCredentials(InvalidCredentialsException e) {
         return Problems.of(HttpStatus.UNAUTHORIZED, "Authentication failed",
                 "Email or password is incorrect.", "AUTH_INVALID_CREDENTIALS");
-    }
-
-    /**
-     * Same 401 the client would get for any expired token: it must not learn that theft was
-     * detected, nor that a family was revoked. The server side is what logs and acts on it.
-     */
-    @ExceptionHandler(TokenReuseDetectedException.class)
-    ProblemDetail handleTokenReuse(TokenReuseDetectedException e) {
-        return Problems.of(HttpStatus.UNAUTHORIZED, "Session expired",
-                "Please sign in again.", "AUTH_SESSION_EXPIRED");
     }
 
     @ExceptionHandler(InvalidTokenException.class)

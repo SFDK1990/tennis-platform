@@ -40,6 +40,12 @@ public class User {
                 UserStatus.ACTIVE, now, now);
     }
 
+    /** The bootstrapped administrator, created already verified, like the teacher. */
+    public static User bootstrapAdmin(EmailAddress email, String passwordHash, Instant now) {
+        return new User(UUID.randomUUID(), email, passwordHash, Role.ADMIN,
+                UserStatus.ACTIVE, now, now);
+    }
+
     /** Rehydration from persistence. */
     public static User rehydrate(UUID id, EmailAddress email, String passwordHash, Role role,
                                  UserStatus status, Instant emailVerifiedAt, Instant createdAt) {
@@ -65,6 +71,16 @@ public class User {
 
     public void disable() {
         this.status = UserStatus.DISABLED;
+    }
+
+    /**
+     * Back to what the account was before it was disabled: active if the address had been
+     * verified, pending otherwise. Reactivating must not verify an address nobody confirmed.
+     */
+    public void reactivate() {
+        if (status == UserStatus.DISABLED) {
+            this.status = emailVerifiedAt != null ? UserStatus.ACTIVE : UserStatus.PENDING_VERIFICATION;
+        }
     }
 
     /**

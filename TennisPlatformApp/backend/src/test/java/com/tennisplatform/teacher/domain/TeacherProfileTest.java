@@ -73,6 +73,32 @@ class TeacherProfileTest {
         assertThat(profile.timezone().getId()).isEqualTo("Europe/Madrid");
     }
 
+    /** The columns are 255 and 30 characters; past that the database would fail with a 500. */
+    @Test
+    void refusesADisplayNameOrAPhoneLongerThanTheirColumns() {
+        assertThatThrownBy(() -> profileWith("a".repeat(256), "Europe/Madrid"))
+                .isInstanceOf(InvalidTeacherProfileException.class);
+
+        TeacherProfile profile = profileWith("Ana", "Europe/Madrid");
+        assertThatThrownBy(() -> profile.update(null, "6".repeat(31), null))
+                .isInstanceOf(InvalidTeacherProfileException.class);
+        assertThat(profile.phone()).isNull();
+    }
+
+    /** Unlike the phone, an empty zone cannot mean "clear it": every lesson is shown in it. */
+    @Test
+    void refusesABlankTimeZoneAndOneThatIsNotEvenWellFormed() {
+        TeacherProfile profile = profileWith("Ana", "Europe/Madrid");
+
+        assertThatThrownBy(() -> profile.update(null, null, "  "))
+                .isInstanceOf(InvalidTeacherProfileException.class)
+                .hasMessageContaining("time zone is required");
+        assertThatThrownBy(() -> profile.update(null, null, "Europe/Ma drid!"))
+                .isInstanceOf(InvalidTeacherProfileException.class)
+                .hasMessageContaining("Not a valid IANA time zone");
+        assertThat(profile.timezone().getId()).isEqualTo("Europe/Madrid");
+    }
+
     private TeacherProfile profileWith(String displayName, String timezone) {
         return TeacherProfile.create(USER_ID, displayName, null, timezone, NOW);
     }

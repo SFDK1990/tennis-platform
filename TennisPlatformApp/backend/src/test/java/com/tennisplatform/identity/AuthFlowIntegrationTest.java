@@ -230,7 +230,175 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
                 .isEqualTo(HttpStatus.ACCEPTED);
     }
 
+    /**
+     * Found in the browser in Fase 11: every bearer request deleted the XSRF-TOKEN cookie, so
+     * the next logout went out without it, was refused, and the session survived.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void usingTheApiDoesNotCostTheCsrfCookieSoLogoutStillWorks() {
+        String email = uniqueEmail();
+        register(email);
+        String accessToken = (String) login(email).getBody().get("accessToken");
+        String csrfBefore = jar.get("XSRF-TOKEN");
+
+        HttpHeaders headers = jar.asHeaders();
+        headers.setBearerAuth(accessToken);
+        jar.absorb(rest.exchange("/api/v1/me", HttpMethod.GET, new HttpEntity<>(null, headers), Map.class));
+
+        assertThat(jar.get("XSRF-TOKEN")).isEqualTo(csrfBefore);
+        assertThat(logout().getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(refresh().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    /** A student whose link expired asks for another, and the new one works (Fase 11). */
+    @Test
+    @SuppressWarnings("unchecked")
+    void aSignedInStudentCanAskForANewVerificationLinkAndItWorks() {
+        String email = uniqueEmail();
+        register(email);
+        String accessToken = (String) login(email).getBody().get("accessToken");
+
+        ResponseEntity<String> resent = resendVerification(accessToken);
+
+        assertThat(resent.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.verificationCount()).isEqualTo(2);
+        assertThat(verifyEmail(mailer.lastVerificationToken()).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(get("/api/v1/me", accessToken).getBody()).containsEntry("status", "ACTIVE");
+    }
+
+    @Test
+    void aVerifiedAddressGetsNoNewLink() {
+        String email = uniqueEmail();
+        register(email);
+        verifyEmail(mailer.lastVerificationToken());
+        String accessToken = (String) login(email).getBody().get("accessToken");
+
+        assertThat(resendVerification(accessToken).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.verificationCount()).isEqualTo(1);
+    }
+
+    /** Asking by address would let anyone flood someone else's inbox: only the account holder may ask. */
+    @Test
+    void askingForANewLinkNeedsToBeSignedIn() {
+        ResponseEntity<String> anonymous = rest.postForEntity("/api/v1/auth/verification-email",
+                json(Map.of()), String.class);
+
+        assertThat(anonymous.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void aRegistrationThatBreaksTheRulesIsABadRequestAndCreatesNothing() {
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/register",
+                json(Map.of("email", "not-an-email", "password", "short")), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("code", "VALIDATION_ERROR");
+        assertThat(countUsers("not-an-email")).isZero();
+    }
+
+    /** A verification link works once: the second click is told the link is spent. */
+    @Test
+    void aVerificationLinkThatWasAlreadyUsedIsAConflict() {
+        register(uniqueEmail());
+        String token = mailer.lastVerificationToken();
+        verifyEmail(token);
+
+        ResponseEntity<Map> again = rest.postForEntity("/api/v1/auth/verify-email",
+                json(Map.of("token", token)), Map.class);
+
+        assertThat(again.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(again.getBody()).containsEntry("code", "AUTH_INVALID_TOKEN");
+    }
+
+    @Test
+    void verifyingWithoutATokenIsABadRequest() {
+        assertThat(verifyEmail("").getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void aResetLinkThatIsNotRealIsAConflictAndAShortPasswordIsABadRequest() {
+        ResponseEntity<Map> unknown = rest.postForEntity("/api/v1/auth/reset-password",
+                json(Map.of("token", "not-a-real-token", "newPassword", "another-valid-password")), Map.class);
+        assertThat(unknown.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(unknown.getBody()).containsEntry("code", "AUTH_INVALID_TOKEN");
+
+        ResponseEntity<Map> tooShort = rest.postForEntity("/api/v1/auth/reset-password",
+                json(Map.of("token", "not-a-real-token", "newPassword", "short")), Map.class);
+        assertThat(tooShort.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * The request only checks the length in characters; bcrypt ignores everything past 72
+     * bytes, so a longer password would be accepted and silently cut (Fase 14).
+     */
+    @Test
+    void aPasswordLongerThanBcryptCanHashIsRejectedWithItsOwnCode() {
+        String email = uniqueEmail();
+
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/register",
+                json(Map.of("email", email, "password", "x".repeat(100))), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("code", "AUTH_WEAK_PASSWORD");
+        assertThat(countUsers(email)).isZero();
+    }
+
+    @Test
+    void aVerificationLinkSentBeforeTheAccountWasDisabledNoLongerWorks() {
+        String email = uniqueEmail();
+        register(email);
+        disable(email);
+
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/verify-email",
+                json(Map.of("token", mailer.lastVerificationToken())), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).containsEntry("code", "AUTH_ACCOUNT_NOT_ACTIVE");
+    }
+
+    @Test
+    void aResetLinkSentBeforeTheAccountWasDisabledCannotChangeThePassword() {
+        String email = uniqueEmail();
+        register(email);
+        verifyEmail(mailer.lastVerificationToken());
+        rest.postForEntity("/api/v1/auth/forgot-password", json(Map.of("email", email)), String.class);
+        disable(email);
+
+        ResponseEntity<Map> response = rest.postForEntity("/api/v1/auth/reset-password",
+                json(Map.of("token", mailer.lastResetToken(), "newPassword", "another-valid-password")),
+                Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).containsEntry("code", "AUTH_ACCOUNT_NOT_ACTIVE");
+    }
+
+    /** Same 202 as for anyone, so the address is not revealed, but no link goes out. */
+    @Test
+    void aDisabledAccountIsSentNoResetLink() {
+        String email = uniqueEmail();
+        register(email);
+        disable(email);
+
+        ResponseEntity<String> response = rest.postForEntity("/api/v1/auth/forgot-password",
+                json(Map.of("email", email)), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.resetCount()).isZero();
+    }
+
     // --- helpers ---------------------------------------------------------------
+
+    private void disable(String email) {
+        jdbc.update("UPDATE users SET status = 'DISABLED' WHERE email = ?", email);
+    }
+
+    private ResponseEntity<String> resendVerification(String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        return rest.exchange("/api/v1/auth/verification-email", HttpMethod.POST,
+                new HttpEntity<>(null, headers), String.class);
+    }
 
     private String uniqueEmail() {
         return "student-" + java.util.UUID.randomUUID() + "@example.com";

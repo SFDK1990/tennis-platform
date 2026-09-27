@@ -1,8 +1,15 @@
 # Tennis Platform — Contrato de API
 
-Formaliza la lista de endpoints de `02-arquitectura.md` en un spec OpenAPI 3.0 completo (`../../TennisPlatformApp/openapi.yaml`, en la raíz del proyecto de código — `TennisPlatformApp/`, hermana de esta carpeta `Documentos/`, no dentro de ella — junto a donde ya vive `backend/` e irá `frontend/`), con schemas de request/response reales, para que frontend y backend puedan avanzar en paralelo desde la Fase 1 del roadmap contra un contrato fijo en lugar de contra suposiciones.
+El contrato es `../../TennisPlatformApp/openapi.yaml` (OpenAPI 3.0). Describe lo que el backend
+hace, y eso se comprueba en cada build (Fase 13, `24-fase13-analisis-revision-api.md`):
 
-Durante la implementación, este archivo puede moverse a `docs/openapi.yaml` dentro del monorepo (o generarse desde las anotaciones de los controllers, si se prefiere code-first más adelante) y debe mantenerse como fuente de verdad versionada junto al código.
+- cada respuesta de los tests de integración se valida contra el spec: un estado sin documentar,
+  un campo que no declara o uno que falta hacen fallar el test (`ContractValidation`);
+- las rutas del código y las del spec son el mismo conjunto (`ImplementedRoutesMatchTheContractTest`);
+- los estados comunes están en todas las operaciones (`ContractConventionsTest`, ver abajo);
+- los tipos del frontend se generan del spec, y el CI falla si no coinciden.
+
+Tocar un endpoint es tocar el spec en el mismo cambio.
 
 ## Convenciones generales
 
@@ -14,6 +21,15 @@ Durante la implementación, este archivo puede moverse a `docs/openapi.yaml` den
 - `/calendar` no pagina: se filtra por rango de fechas obligatorio (`from`, `to`), acotado a un máximo razonable (p. ej. 62 días) para no exponer una consulta ilimitada.
 - Todas las fechas/horas son ISO 8601 (`date-time` en UTC, sufijo `Z`); el frontend convierte a hora local del usuario, incluyendo la zona horaria del profesor cuando aplica (decisión ya cerrada en `00-indice-arquitectura.md`).
 - Los errores siempre usan `application/problem+json` (RFC 7807) con el schema `ProblemDetails`, que añade un campo `code` con los códigos de negocio ya definidos en `02-arquitectura.md`.
+- **Estados comunes, documentados en cada operación**: `401` en toda la que exige bearer token,
+  `429` en todo `/auth/*` (el límite por IP cubre el prefijo entero) y `400` en toda la que recibe
+  cuerpo, id o parámetros. Son los que un test rara vez provoca, y por eso los comprueba un test
+  sobre el propio spec.
+- **Las transiciones de estado son acciones** (`POST .../cancel`, `.../manage`, `.../attendance`,
+  `PATCH .../status`), no un `DELETE` ni un `PATCH` genérico: cancelar deja la reserva con su
+  motivo, y cada transición tiene reglas propias (ventana de 24 horas, quién la hace).
+- **Un recurso se escribe por un solo camino.** El perfil de cualquier rol se cambia con
+  `PATCH /me`; `GET /teacher/profile` es de solo lectura.
 
 ## Protección CSRF
 
@@ -41,7 +57,7 @@ depuración durante las pruebas manuales del 19/09/2026.
 
 ## Errores que no los produce un controlador
 
-Tres respuestas nacen en la cadena de filtros de Spring Security, antes de que la petición llegue
+Cuatro respuestas nacen en la cadena de filtros, antes de que la petición llegue
 a ningún controlador, y por tanto fuera del alcance de cualquier `@RestControllerAdvice`. Por
 omisión salían con el formato por defecto del contenedor —o con el cuerpo vacío— incumpliendo la
 regla de que *todos* los errores son `application/problem+json`. Desde la corrección siguen el
@@ -52,6 +68,7 @@ contrato como el resto:
 | `AUTH_UNAUTHENTICATED`      | 401  | No hay bearer token, o no es válido, en un endpoint que lo exige |
 | `AUTH_CSRF_TOKEN_INVALID`   | 403  | Falta `X-XSRF-TOKEN` o no coincide con la cookie                |
 | `AUTH_FORBIDDEN`            | 403  | Denegación de autorización genérica de la cadena de filtros      |
+| `AUTH_RATE_LIMITED`         | 429  | Demasiadas peticiones a `/auth/*` desde la misma IP; `Retry-After` dice cuánto esperar |
 
 `AUTH_UNAUTHENTICATED` es deliberadamente vago: no distingue token ausente de expirado, mal
 formado o firmado por otro. Esa diferencia es justo lo que un atacante necesita para saber cuál
@@ -95,6 +112,8 @@ Códigos añadidos en la Fase 6, con el mismo criterio:
 | `TEACHER_FORBIDDEN`            | 403  | `/teacher/**`                                     | El llamante no es el profesor                                         |
 | `FIELD_NOT_APPLICABLE_TO_ROLE` | 400  | `PATCH /me`                                       | El cuerpo trae un campo de otro rol; se rechaza en vez de ignorarlo   |
 | `AUTH_SESSION_EXPIRED`         | 401  | `POST /auth/refresh`                              | Refresh token ausente, expirado, revocado o reusado: los cuatro casos responden idénticamente |
+| `AUTH_WEAK_PASSWORD`           | 400  | `POST /auth/register`, `POST /auth/reset-password` | Más de 72 bytes: bcrypt ignoraría el resto (Fase 14)                  |
+| `AUTH_ACCOUNT_NOT_ACTIVE`      | 403  | `POST /auth/verify-email`, `POST /auth/reset-password` | Cuenta desactivada después de enviarle el enlace (Fase 14)        |
 
 Códigos añadidos en la Fase 7:
 
@@ -162,14 +181,21 @@ topes distintos para la misma clase de consulta serían peor que cualquiera de l
 pide datos de un alumno con el que no tiene relación: la falta de relación es lo que se niega,
 tanto al reservar como al leer.
 
+Códigos añadidos en la Fase 12:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `ADMIN_TARGET_NOT_ALLOWED` | 403 | `PATCH /admin/users/{id}/status` | La cuenta no es de un alumno: ni el profesor ni un admin se desactivan desde la consola |
+| `USER_NOT_FOUND` | 404 | `PATCH /admin/users/{id}/status` | No existe una cuenta con ese id |
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos
 
-El spec cubre los 24 endpoints ya listados en `02-arquitectura.md` §8, agrupados en los mismos cuatro bloques: `auth`/`me`, `teacher`/`students`, `availability`, `lesson`/`booking`/`calendar`, `administration`. Ver `openapi.yaml` para el detalle de schemas, parámetros y respuestas de error de cada uno.
+32 operaciones, agrupadas por las etiquetas del spec. En la Fase 13 se retiraron
+`PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
+`/calendar`).
 
-## Pendiente al pasar a implementación
+## Pendiente
 
-- Generar el cliente TypeScript tipado del frontend a partir de este spec (p. ej. `openapi-typescript`), en vez de escribir los tipos a mano, para que un cambio de contrato rompa la build en vez de fallar en runtime.
-- Añadir ejemplos (`examples:`) por endpoint una vez haya payloads reales de referencia acordados con QA.
-- Revisar si `PATCH /me` necesita separarse en endpoints específicos por rol (`/teacher/profile` y perfil de alumno ya son independientes) para evitar un DTO demasiado genérico; se deja como está por ahora porque el propio `02-arquitectura.md` ya lo definía así. **Actualización de la Fase 6**: se mantiene el DTO único, pero deja de ser permisivo — un campo que no corresponde al rol se rechaza con `400` en lugar de ignorarse, así que el DTO es genérico en la forma pero no en el comportamiento.
+- Ejemplos (`examples:`) por endpoint, cuando haya payloads de referencia acordados.

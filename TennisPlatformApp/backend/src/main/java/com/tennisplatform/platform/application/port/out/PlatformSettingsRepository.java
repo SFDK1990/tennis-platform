@@ -11,4 +11,6 @@ public interface PlatformSettingsRepository {
      * changeset seeds it, so a running installation always has one.
      */
     Optional<PlatformSettings> find();
+
+    PlatformSettings save(PlatformSettings settings);
 }

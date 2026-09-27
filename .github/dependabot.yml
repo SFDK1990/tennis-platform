@@ -25,6 +25,20 @@ updates:
       backend-minor-and-patch:
         update-types: [minor, patch]
 
+  # Same policy as the backend: a major of Next or React is a decision, not a merge.
+  - package-ecosystem: npm
+    directory: /TennisPlatformApp/frontend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      frontend-minor-and-patch:
+        update-types: [minor, patch]
+
   # Majors are allowed here on purpose, unlike everywhere else: an action's major version is
   # how GitHub retires runner images, the blast radius is the pipeline itself, and the PR's
   # own CI run is a complete test of the change.

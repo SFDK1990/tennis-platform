@@ -183,7 +183,7 @@ mvn verify
 | Spotless | fase `validate` | Imports muertos, espacios finales, salto de línea final | `mvn spotless:apply` |
 | Surefire | fase `test` | La suite completa | Mirar también el contador de **saltados** |
 | SpotBugs | fase `verify` | Análisis estático, umbral `Medium` | Arreglar; excluir es la excepción |
-| JaCoCo | fase `verify` | Informe de cobertura, sin umbral | No rompe el build |
+| JaCoCo | fase `verify` | Cobertura con suelo: 97 % de líneas y 83 % de ramas | Falta un test; el suelo no se baja |
 
 Dos reglas sobre el análisis estático:
 

@@ -139,6 +139,22 @@ class TeacherAvailabilityApiTest extends AbstractIntegrationTest {
         assertThat(write.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(write.getBody()).containsEntry("code", "TEACHER_FORBIDDEN");
         assertThat(rules.findByTeacher(teacherId)).hasSize(1);
+
+        assertThat(postException(studentToken, Map.of("date", "2026-01-05", "type", "BLOCK"))
+                .getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(rest.exchange(AVAILABILITY + "/exceptions/" + UUID.randomUUID(), HttpMethod.DELETE,
+                new HttpEntity<>(bearer(studentToken)), Map.class).getStatusCode())
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    void anExtraHourWithoutTimesIsRejected() {
+        ResponseEntity<Map> response = postException(tokenOf(TEACHER_EMAIL, PASSWORD),
+                Map.of("date", "2026-01-05", "type", "EXTRA"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).containsEntry("code", "AVAILABILITY_INVALID");
     }
 
     @Test

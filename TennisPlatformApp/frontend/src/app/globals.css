@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/*
+ * A hard court seen from above: court blue for what can be done, the green of the surround
+ * for what is confirmed, and the optic yellow of the ball kept for one thing only - a free
+ * seat you can take. Lines are chalk-thin; nothing floats on shadows.
+ */
+@theme {
+  --color-chalk: #f6f7f4;
+  --color-paper: #ffffff;
+  --color-ink: #16213a;
+  --color-muted: #5b6677;
+  --color-line: #d6dce3;
+  --color-court: #24557f;
+  --color-court-deep: #1a3f60;
+  --color-surround: #2e6b4a;
+  --color-ball: #d8e73a;
+  --color-fault: #b42318;
+
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), var(--font-barlow), system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-chalk);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-court);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

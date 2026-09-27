@@ -160,6 +160,10 @@ Los casos de uso principales son:
 
 ## 8. REST API inicial
 
+La lista vigente, con cada respuesta, es `TennisPlatformApp/openapi.yaml`, y los tests
+comprueban que coincide con el código (`11-contrato-api.md`). Esta es la de partida, al día tras
+la Fase 13.
+
 ### Identity
 
 - `POST /api/v1/auth/register`
@@ -167,6 +171,7 @@ Los casos de uso principales son:
 - `POST /api/v1/auth/logout`
 - `POST /api/v1/auth/refresh`
 - `POST /api/v1/auth/verify-email`
+- `POST /api/v1/auth/verification-email`
 - `POST /api/v1/auth/forgot-password`
 - `POST /api/v1/auth/reset-password`
 - `GET /api/v1/me`
@@ -175,7 +180,6 @@ Los casos de uso principales son:
 ### Teacher y students
 
 - `GET /api/v1/teacher/profile`
-- `PATCH /api/v1/teacher/profile`
 - `GET /api/v1/teacher/students`
 - `GET /api/v1/teacher/students/lookup`
 - `GET /api/v1/teacher/students/{userId}`
@@ -219,7 +223,7 @@ añadido: son lo que hacen falta para cumplir los criterios de aceptación acord
 ### Administration
 
 - `GET /api/v1/admin/configuration`
-- `PATCH /api/v1/admin/configuration/student-limit`
+- `PATCH /api/v1/admin/configuration`
 - `GET /api/v1/admin/users`
 - `PATCH /api/v1/admin/users/{id}/status`
 
@@ -344,15 +348,17 @@ Variables sensibles fuera de Git:
 
 ## 17. Frontend
 
-Next.js con TypeScript estricto y Tailwind, organizado por funcionalidad (`authentication`,
-`profile`, `students`, `availability`, `calendar`, `lessons`, `bookings`, `administration`).
+Next.js con TypeScript estricto y Tailwind, en `TennisPlatformApp/frontend`. Se organiza como el
+backend, un módulo por módulo (`src/modules/<modulo>`), más `src/shared` y las páginas de
+`src/app`, que son la raíz de composición. Un módulo no importa de otro; lo vigila el lint
+(`eslint.config.mjs`), como ArchUnit en el backend. El porqué y el detalle, en
+`22-fase11-analisis-frontend.md`.
 
 - **Un único cliente HTTP** añade credenciales, renueva la sesión, normaliza los errores Problem
   Details y tipa las respuestas. Ningún componente llama a la API por su cuenta.
 - El backend es la fuente de verdad de clases, reservas y disponibilidad. Un `409` significa
   "lo que tienes en pantalla está obsoleto": se relee y se vuelve a mostrar.
-- Las fechas se muestran en la hora local del usuario, indicando la zona cuando pueda haber
-  ambigüedad.
+- Las fechas se muestran en la zona del profesor, indicándola en el calendario.
 - La validación en el cliente es comodidad; la que vale es la del backend.
 - Accesibilidad básica: teclado, etiquetas, errores asociados a su campo, confirmación de
   acciones destructivas.

@@ -1,14 +1,13 @@
 openapi: 3.0.3
 info:
   title: Tennis Platform API
-  version: "0.1.0-draft"
+  version: "1.0.0"
   description: >
-    Contrato de API del MVP de Tennis Platform. Borrador de diseño (ver
-    Documentos/_arquitectura/11-contrato-api.md para las convenciones generales
-    y el mapeo de códigos de negocio a HTTP).
+    Contrato de API del MVP de Tennis Platform. Describe lo que el backend hace: los tests de
+    integración validan cada respuesta contra este fichero. Convenciones y códigos de negocio en
+    Documentos/_arquitectura/11-contrato-api.md.
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Local
+  - url: /api/v1
 security:
   - bearerAuth: []
 tags:
@@ -40,12 +39,15 @@ paths:
             cuando se crea y 409 cuando ya existe permitiría enumerar usuarios, que es
             precisamente lo que prohíbe 02-arquitectura.md. Si el email ya estaba
             registrado no se crea nada y se avisa por correo al titular real de la dirección.
-        "400": { $ref: "#/components/responses/ValidationError" }
-        "429":
-          description: Demasiados intentos desde la misma IP
+        "400":
+          description: >-
+            Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña de más de
+            72 bytes (`AUTH_WEAK_PASSWORD`): bcrypt no usa el resto, y aceptarla engañaría a
+            quien la eligió.
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /auth/login:
     post:
@@ -68,6 +70,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401":
           description: >
             Único resultado de cualquier fallo: email inexistente, contraseña incorrecta o
@@ -77,11 +80,7 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
-        "429":
-          description: Demasiados intentos desde la misma IP
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /auth/logout:
     post:
@@ -96,6 +95,7 @@ paths:
       responses:
         "204": { description: Sesión cerrada }
         "403": { $ref: "#/components/responses/CsrfTokenMissing" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /auth/refresh:
     post:
@@ -121,6 +121,7 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "403": { $ref: "#/components/responses/CsrfTokenMissing" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /auth/verify-email:
     post:
@@ -135,11 +136,33 @@ paths:
       responses:
         "204": { description: Email verificado }
         "400": { $ref: "#/components/responses/ValidationError" }
+        "403":
+          description: >-
+            La cuenta está desactivada (`AUTH_ACCOUNT_NOT_ACTIVE`): el enlace se pidió antes de
+            desactivarla.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
           description: Token inválido, expirado o ya usado
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /auth/verification-email:
+    post:
+      tags: [auth]
+      summary: Reenvía el enlace de verificación al usuario autenticado
+      description: >-
+        Para quien perdió el correo o dejó caducar el enlace. Se pide con sesión, nunca por
+        dirección: aceptar un email permitiría inundar el buzón de otro. Cuelga de /auth para
+        que le aplique el límite por IP. Los enlaces anteriores siguen valiendo hasta caducar.
+      responses:
+        "202":
+          description: Enviado, o nada que enviar porque la dirección ya estaba verificada
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /auth/forgot-password:
     post:
@@ -156,6 +179,8 @@ paths:
           description: >
             Siempre 202, exista o no la cuenta, para no permitir enumeración
             de usuarios (ver 02-arquitectura.md).
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /auth/reset-password:
     post:
@@ -169,12 +194,27 @@ paths:
             schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
       responses:
         "204": { description: Contraseña actualizada }
-        "400": { $ref: "#/components/responses/ValidationError" }
+        "400":
+          description: >-
+            Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña de más de
+            72 bytes (`AUTH_WEAK_PASSWORD`): bcrypt no usa el resto, y aceptarla engañaría a
+            quien la eligió.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "403":
+          description: >-
+            La cuenta está desactivada (`AUTH_ACCOUNT_NOT_ACTIVE`): el enlace se pidió antes de
+            desactivarla.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
           description: Token inválido, expirado o ya usado
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /me:
     get:
@@ -215,6 +255,8 @@ paths:
     get:
       tags: [teacher]
       summary: Perfil público/operativo del profesor único
+      description: >-
+        Solo lectura. El profesor cambia su perfil con PATCH /me, como cualquier usuario.
       responses:
         "200":
           description: OK
@@ -222,22 +264,6 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/TeacherProfile" }
         "401": { $ref: "#/components/responses/Unauthorized" }
-    patch:
-      tags: [teacher]
-      summary: Actualiza el perfil del profesor (solo el propio TEACHER)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/UpdateTeacherProfileRequest" }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/TeacherProfile" }
-        "400": { $ref: "#/components/responses/ValidationError" }
-        "403": { $ref: "#/components/responses/Forbidden" }
 
   /teacher/students:
     get:
@@ -260,6 +286,8 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StudentSummaryPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /teacher/students/lookup:
@@ -282,6 +310,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StudentLookup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404":
@@ -305,6 +334,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StudentDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
           description: >-
@@ -329,6 +359,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StudentSummary" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404":
@@ -363,6 +394,7 @@ paths:
         - $ref: "#/components/parameters/UserId"
       responses:
         "204": { description: Alumno desactivado }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
           description: >-
@@ -408,6 +440,7 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /teacher/availability/weekly:
     put:
@@ -440,6 +473,7 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /teacher/availability/exceptions:
@@ -469,6 +503,7 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /teacher/availability/exceptions/{id}:
@@ -479,6 +514,8 @@ paths:
         - $ref: "#/components/parameters/Id"
       responses:
         "204": { description: Eliminada }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404":
           description: >-
@@ -518,6 +555,7 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
           description: AUTH_FORBIDDEN, si quien llama no es profesor ni alumno
           content:
@@ -546,6 +584,7 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409":
           description: LESSON_OVERLAP
@@ -561,36 +600,6 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
-    get:
-      tags: [lessons]
-      summary: Lista las clases del profesor en un rango de fechas
-      description: >-
-        Anadido en la Fase 8. Sin el, el profesor no tiene forma de ver lo que ha creado hasta
-        que exista /calendar. El rango es obligatorio y no puede superar 62 dias, el mismo tope
-        que la lectura de disponibilidad: dos numeros distintos serian una diferencia que nadie
-        decidio. Las fechas se interpretan en la zona del profesor, porque un dia es una idea
-        local. Incluye las clases canceladas.
-      parameters:
-        - name: from
-          in: query
-          required: true
-          schema: { type: string, format: date }
-        - name: to
-          in: query
-          required: true
-          schema: { type: string, format: date }
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/LessonsResponse" }
-        "400":
-          description: "DATE_RANGE_INVALID, o fechas mal formadas (VALIDATION_ERROR)"
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/ProblemDetails" }
-        "403": { $ref: "#/components/responses/Forbidden" }
 
   /lessons/{id}:
     get:
@@ -604,6 +613,8 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
 
   /lessons/{id}/bookings:
@@ -624,6 +635,8 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Booking" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
           description: >-
             STUDENT_NOT_MANAGED: el profesor de la clase no gestiona al alumno, o lo desactivo.
@@ -676,6 +689,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/BookingPage" }
         "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
           description: AUTH_FORBIDDEN, si quien llama no es alumno ni profesor
           content:
@@ -700,7 +714,8 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Booking" }
-        "403": { $ref: "#/components/responses/Forbidden" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "404":
           description: >-
             BOOKING_NOT_FOUND, tambien cuando la reserva existe pero no es de quien llama:
@@ -740,6 +755,8 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409":
@@ -780,6 +797,7 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/Booking" }
         "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
           description: TEACHER_FORBIDDEN
           content:
@@ -811,17 +829,24 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PlatformConfiguration" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-
-  /admin/configuration/student-limit:
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: AUTH_FORBIDDEN, si quien llama no es ADMIN (igual en todo /admin)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
     patch:
       tags: [administration]
-      summary: Actualiza el límite global de alumnos gestionables
+      summary: Cambia el límite de alumnos y la capacidad máxima de grupo
+      description: >-
+        Los dos campos son opcionales: el que no se envía conserva su valor. Bajar el límite por
+        debajo de los alumnos ya gestionados se permite: no echa a nadie, sólo impide gestionar
+        nuevos. Las clases ya creadas conservan su capacidad. Registra updatedAt y updatedBy.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/UpdateStudentLimitRequest" }
+            schema: { $ref: "#/components/schemas/UpdateConfigurationRequest" }
       responses:
         "200":
           description: OK
@@ -829,12 +854,13 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/PlatformConfiguration" }
         "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /admin/users:
     get:
       tags: [administration]
-      summary: Lista de usuarios de la plataforma
+      summary: Lista de usuarios de la plataforma, la más reciente primero
       parameters:
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Size"
@@ -844,18 +870,31 @@ paths:
         - name: status
           in: query
           schema: { $ref: "#/components/schemas/UserStatus" }
+        - name: query
+          in: query
+          description: >-
+            Parte del email, sin distinguir mayúsculas. Al profesor se le niega la búsqueda
+            parcial para que no pueda enumerar cuentas; el admin ya puede verlas todas.
+          schema: { type: string }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AdminUserSummaryPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
   /admin/users/{id}/status:
     patch:
       tags: [administration]
-      summary: Activa o desactiva un usuario
+      summary: Activa o desactiva la cuenta de un alumno
+      description: >-
+        Desactivar cierra sus sesiones (el access token vivo caduca en 15 minutos como mucho),
+        hace que el profesor deje de gestionarlo y cancela sus reservas futuras como
+        CANCELLED_BY_ADMIN. Reactivar devuelve ACTIVE si había verificado el email y
+        PENDING_VERIFICATION si no; no vuelve a quedar gestionado, eso lo decide el profesor.
       parameters:
         - $ref: "#/components/parameters/Id"
       requestBody:
@@ -870,8 +909,20 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AdminUserSummary" }
         "400": { $ref: "#/components/responses/ValidationError" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: >-
+            AUTH_FORBIDDEN si quien llama no es ADMIN; ADMIN_TARGET_NOT_ALLOWED si la cuenta no es
+            de un alumno. Desactivar al único profesor apagaría la plataforma, y un admin que
+            desactiva a otro, o a sí mismo, puede quedarse sin nadie que lo deshaga.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: USER_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
 components:
   securitySchemes:
@@ -937,7 +988,17 @@ components:
         application/problem+json:
           schema: { $ref: "#/components/schemas/ProblemDetails" }
     ValidationError:
-      description: Formato o validación de campos incorrecta
+      description: >-
+        Cuerpo, id o parámetro mal formados, o un campo que no pasa la validación
+        (`VALIDATION_ERROR`)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+    TooManyRequests:
+      description: >-
+        Demasiados intentos desde la misma IP (`AUTH_RATE_LIMITED`). Todo /auth comparte el
+        límite; la cabecera Retry-After dice cuántos segundos esperar.
       content:
         application/problem+json:
           schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -956,6 +1017,15 @@ components:
           description: Código de negocio, ver 11-contrato-api.md
           example: LESSON_FULL
         instance: { type: string }
+        errors:
+          type: array
+          description: Solo en VALIDATION_ERROR de un cuerpo, un elemento por campo rechazado
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
 
     Role:
       type: string
@@ -985,6 +1055,7 @@ components:
 
     UserSummary:
       type: object
+      required: [id, email, role, status]
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email }
@@ -1011,6 +1082,7 @@ components:
 
     LoginResponse:
       type: object
+      required: [accessToken, accessTokenExpiresAt, user]
       properties:
         accessToken: { type: string }
         accessTokenExpiresAt: { type: string, format: date-time }
@@ -1018,6 +1090,7 @@ components:
 
     AccessTokenResponse:
       type: object
+      required: [accessToken, accessTokenExpiresAt]
       properties:
         accessToken: { type: string }
         accessTokenExpiresAt: { type: string, format: date-time }
@@ -1043,6 +1116,7 @@ components:
 
     MeResponse:
       type: object
+      required: [id, email, role, status, emailVerifiedAt, fullName, phone, nationalId, address, displayName, timezone]
       description: >-
         Forma única para todos los roles: los campos que no aplican llegan a `null`. Un alumno
         recién verificado que aún no ha rellenado sus datos recibe `fullName`, `phone`,
@@ -1080,21 +1154,16 @@ components:
 
     TeacherProfile:
       type: object
+      required: [userId, displayName, phone, timezone]
       properties:
         userId: { type: string, format: uuid }
         displayName: { type: string }
         phone: { type: string, nullable: true }
         timezone: { type: string, example: "Europe/Madrid" }
 
-    UpdateTeacherProfileRequest:
-      type: object
-      properties:
-        displayName: { type: string }
-        phone: { type: string }
-        timezone: { type: string }
-
     StudentSummary:
       type: object
+      required: [userId, fullName, email, managedStatus, managedAt]
       properties:
         userId: { type: string, format: uuid }
         fullName: { type: string }
@@ -1104,6 +1173,7 @@ components:
 
     StudentLookup:
       type: object
+      required: [userId, email, fullName, managedStatus]
       description: >-
         Lo mínimo para confirmar a quién se va a asociar. Sin teléfono, DNI ni dirección.
       properties:
@@ -1111,13 +1181,17 @@ components:
         email: { type: string, format: email }
         fullName: { type: string, nullable: true, description: "null si el alumno aún no ha rellenado sus datos" }
         managedStatus:
+          type: string
+          enum: [MANAGED, INACTIVE]
           nullable: true
-          description: "null cuando todavía no existe relación con este profesor"
-          allOf:
-            - $ref: "#/components/schemas/ManagedStatus"
+          description: >-
+            null cuando todavía no existe relación con este profesor. Repite los valores de
+            ManagedStatus en vez de referenciarlo: en OpenAPI 3.0 un nullable junto a un $ref o
+            un allOf no tiene efecto, y el null quedaba fuera del contrato.
 
     StudentDetail:
       type: object
+      required: [userId, email, fullName, phone, nationalId, address, managedStatus, managedAt, deactivatedAt]
       description: >-
         Ficha completa de un alumno gestionado, con los datos restringidos. Nunca se devuelve
         en listados ni búsquedas.
@@ -1136,6 +1210,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/Page"
         - type: object
+          required: [items]
           properties:
             items:
               type: array
@@ -1161,6 +1236,7 @@ components:
 
     WeeklyAvailabilityRule:
       type: object
+      required: [id, dayOfWeek, startTime, endTime, activeFrom, activeUntil]
       properties:
         id: { type: string, format: uuid }
         dayOfWeek: { $ref: "#/components/schemas/DayOfWeek" }
@@ -1194,6 +1270,7 @@ components:
 
     WeeklyAvailabilityResponse:
       type: object
+      required: [rules]
       properties:
         rules:
           type: array
@@ -1201,6 +1278,7 @@ components:
 
     AvailabilityException:
       type: object
+      required: [id, date, startTime, endTime, type]
       properties:
         id: { type: string, format: uuid }
         date: { type: string, format: date }
@@ -1227,6 +1305,7 @@ components:
 
     AvailabilityResponse:
       type: object
+      required: [weeklyRules, exceptions]
       properties:
         weeklyRules:
           type: array
@@ -1237,12 +1316,14 @@ components:
 
     Calendar:
       type: object
+      required: [timezone, availability, lessons]
       properties:
         timezone: { type: string, nullable: true, description: "Zona IANA del profesor; null si el alumno no esta gestionado" }
         availability:
           type: array
           items:
             type: object
+            required: [startsAt, endsAt]
             properties:
               startsAt: { type: string, format: date-time }
               endsAt: { type: string, format: date-time }
@@ -1250,6 +1331,7 @@ components:
           type: array
           items:
             type: object
+            required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, myBooking]
             properties:
               id: { type: string, format: uuid }
               teacherUserId: { type: string, format: uuid }
@@ -1261,6 +1343,7 @@ components:
               status: { $ref: "#/components/schemas/LessonStatus" }
               myBooking:
                 type: object
+                required: [id, status, attendance]
                 nullable: true
                 properties:
                   id: { type: string, format: uuid }
@@ -1288,6 +1371,7 @@ components:
 
     Lesson:
       type: object
+      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes, createdOutsideAvailability, cancelledAt, cancelledAtShortNotice]
       description: >-
         bookedCount es el numero de reservas confirmadas. Se retiro en la Fase 8, cuando solo
         booking podia contarlas y aun no existia, y volvio con la Fase 9.
@@ -1315,15 +1399,9 @@ components:
           type: boolean
           description: Si la cancelacion dejo menos de 24 horas. Derivado de cancelledAt y startsAt.
 
-    LessonsResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/Lesson" }
-
     Booking:
       type: object
+      required: [id, lessonId, studentUserId, status, attendance, bookedAt, cancelledAt, lesson]
       description: >-
         lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia
         clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia.
@@ -1337,6 +1415,7 @@ components:
         cancelledAt: { type: string, format: date-time, nullable: true }
         lesson:
           type: object
+          required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status]
           properties:
             id: { type: string, format: uuid }
             teacherUserId: { type: string, format: uuid }
@@ -1351,6 +1430,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/Page"
         - type: object
+          required: [items]
           properties:
             items:
               type: array
@@ -1371,6 +1451,7 @@ components:
 
     PlatformConfiguration:
       type: object
+      required: [studentLimit, maxGroupCapacity, updatedAt, updatedBy]
       properties:
         studentLimit: { type: integer }
         maxGroupCapacity:
@@ -1382,14 +1463,15 @@ components:
         updatedAt: { type: string, format: date-time }
         updatedBy: { type: string, format: uuid, nullable: true }
 
-    UpdateStudentLimitRequest:
+    UpdateConfigurationRequest:
       type: object
-      required: [studentLimit]
       properties:
         studentLimit: { type: integer, minimum: 1 }
+        maxGroupCapacity: { type: integer, minimum: 1 }
 
     AdminUserSummary:
       type: object
+      required: [id, email, role, status, createdAt]
       properties:
         id: { type: string, format: uuid }
         email: { type: string, format: email }
@@ -1401,6 +1483,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/Page"
         - type: object
+          required: [items]
           properties:
             items:
               type: array
@@ -1414,6 +1497,7 @@ components:
 
     Page:
       type: object
+      required: [page, size, totalItems]
       properties:
         page: { type: integer }
         size: { type: integer }

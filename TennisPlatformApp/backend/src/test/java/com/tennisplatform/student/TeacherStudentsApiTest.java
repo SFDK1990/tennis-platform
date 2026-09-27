@@ -179,6 +179,30 @@ class TeacherStudentsApiTest extends AbstractIntegrationTest {
                 .isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(lookup(nosy.token(), target.email()).getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(stopManaging(nosy.token(), target.id()).getStatusCode())
+                .isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(rest.exchange("/api/v1/teacher/students", HttpMethod.GET,
+                new HttpEntity<>(bearer(nosy.token())), Map.class).getStatusCode())
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void managingAStudentWhoDoesNotExistIsNotFound() {
+        ResponseEntity<Map> response = manage(teacherToken, UUID.randomUUID());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).containsEntry("code", "STUDENT_NOT_FOUND");
+    }
+
+    @Test
+    void theTeacherCannotStopManagingAStudentTheyNeverManaged() {
+        Student stranger = aStudentWithAProfile("Lucia Prieto");
+
+        ResponseEntity<Map> response = rest.exchange("/api/v1/teacher/students/" + stranger.id() + "/manage",
+                HttpMethod.DELETE, new HttpEntity<>(bearer(teacherToken)), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).containsEntry("code", "STUDENT_NOT_MANAGED");
     }
 
     @Test

@@ -84,6 +84,19 @@ public class ManageStudentService implements ManageStudent {
         bookings.cancelUpcomingWith(teacherUserId, studentUserId, now);
     }
 
+    @Override
+    @Transactional
+    public void releaseDisabledAccount(UUID studentUserId) {
+        Instant now = clock.instant();
+        for (UUID teacherUserId : relationships.findManagingTeachers(studentUserId)) {
+            relationships.findByPair(teacherUserId, studentUserId).ifPresent(relationship -> {
+                relationship.deactivate(now);
+                relationships.save(relationship);
+            });
+            bookings.cancelUpcomingOfDisabledAccount(teacherUserId, studentUserId, now);
+        }
+    }
+
     /**
      * Reactivates the existing row instead of creating a second one. The limit applies here
      * too: taking somebody back costs a slot exactly like taking somebody on.

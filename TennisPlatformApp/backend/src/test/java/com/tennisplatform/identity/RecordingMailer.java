@@ -44,6 +44,10 @@ public class RecordingMailer implements IdentityMailer {
         return verificationTokens.size();
     }
 
+    public int resetCount() {
+        return resetTokens.size();
+    }
+
     public int existingAccountWarningCount() {
         return existingAccountWarnings.size();
     }

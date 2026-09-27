@@ -8,7 +8,7 @@ binding, not background reading.
 ## Layout
 
 - `backend/` — Spring Boot 3.5 on Java 21, the modular monolith below.
-- `frontend/` — Next.js (from Fase 11).
+- `frontend/` — Next.js 16 + TypeScript + Tailwind, the structure below.
 - `openapi.yaml` — the API contract. It must describe what the backend does, not what it will do.
 - `compose.yaml`, `.env.example` — the local stack. Each service owns its `Dockerfile`.
 
@@ -60,6 +60,18 @@ To check a role from another module, use `AuthenticatedUser.isTeacher()` / `isSt
 `isAdmin()`; comparing against identity's `Role` imports its domain and the rules reject it.
 Views carry wire values (strings), not domain enums, for the same reason.
 
+## Frontend architecture
+
+It mirrors the backend: `src/modules/<module>` (`api.ts` with the TanStack Query hooks, plus
+`components/`), `src/shared` (the API client, session, generated types, time helpers, UI
+primitives) and `src/app` (routes; the composition root, the only place that combines modules).
+A module imports only `@/shared` and itself, never another module or a parent path: enforced by
+`eslint.config.mjs`. Every call goes through `shared/api/client.ts` (openapi-fetch typed from
+`openapi.yaml`); the access token lives only in memory, and the refresh cookie restores it.
+After any mutation every query is invalidated (`shared/api/query.ts`). Dates are shown in the
+teacher's zone. Decisions: `22-fase11-analisis-frontend.md`. Read `frontend/AGENTS.md` first:
+Next 16 differs from what you may remember.
+
 ## API and errors
 
 REST under `/api/v1`, Problem Details with a `code`. `409` means the client's view is stale and
@@ -85,5 +97,14 @@ last seat is protected by `SELECT ... FOR UPDATE` on the lesson. DDL: `10-diagra
 
 Domain tests without Spring, application tests with mocked ports, API and integration tests
 against real PostgreSQL through Testcontainers (`AbstractIntegrationTest`), concurrency tests
-for the last-seat race, ArchUnit for the boundaries. Test names are sentences
-(`twoStudentsRaceForTheLastSeatAndExactlyOneWins`).
+for the last-seat race, ArchUnit for the boundaries, and the contract tests in
+`src/test/java/com/tennisplatform/contract`: every integration-test response is validated
+against `openapi.yaml`, the routes of the code and of the spec must be the same set, and the
+common statuses (401, 429, 400) must be documented on every operation they apply to. Test names are sentences
+(`twoStudentsRaceForTheLastSeatAndExactlyOneWins`). `mvn verify` fails below 97 % of lines or
+83 % of branches.
+
+The frontend has Vitest unit tests (`src/**/*.test.ts`) and the Playwright flows in `frontend/e2e`
+(Spanish names, one sentence each), which drive the screens by role and accessible name. What a
+test needs beforehand is made through the API (`e2e/support/arrange.ts`) and undone afterwards;
+emails are read from Mailpit.

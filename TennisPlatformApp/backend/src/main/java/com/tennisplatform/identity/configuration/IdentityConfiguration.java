@@ -1,5 +1,6 @@
 package com.tennisplatform.identity.configuration;
 
+import com.tennisplatform.identity.application.port.in.AdministerAccounts;
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.Login;
@@ -8,6 +9,7 @@ import com.tennisplatform.identity.application.port.in.ProvisionTeacherAccount;
 import com.tennisplatform.identity.application.port.in.RefreshSession;
 import com.tennisplatform.identity.application.port.in.RegisterUser;
 import com.tennisplatform.identity.application.port.in.RequestPasswordReset;
+import com.tennisplatform.identity.application.port.in.ResendEmailVerification;
 import com.tennisplatform.identity.application.port.in.ResetPassword;
 import com.tennisplatform.identity.application.port.in.VerifyEmail;
 import com.tennisplatform.identity.application.port.out.AccessTokenIssuer;
@@ -19,14 +21,17 @@ import com.tennisplatform.identity.application.port.out.RefreshTokens;
 import com.tennisplatform.identity.application.port.out.SecureTokenGenerator;
 import com.tennisplatform.identity.application.port.out.TokenHasher;
 import com.tennisplatform.identity.application.port.out.UserRepository;
+import com.tennisplatform.identity.application.service.AdministerAccountsService;
 import com.tennisplatform.identity.application.service.FindUserAccountsService;
 import com.tennisplatform.identity.application.service.GetCurrentUserService;
 import com.tennisplatform.identity.application.service.LoginService;
 import com.tennisplatform.identity.application.service.LogoutService;
+import com.tennisplatform.identity.application.service.ProvisionAdminAccountService;
 import com.tennisplatform.identity.application.service.ProvisionTeacherAccountService;
 import com.tennisplatform.identity.application.service.RefreshSessionService;
 import com.tennisplatform.identity.application.service.RegisterUserService;
 import com.tennisplatform.identity.application.service.RequestPasswordResetService;
+import com.tennisplatform.identity.application.service.ResendEmailVerificationService;
 import com.tennisplatform.identity.application.service.ResetPasswordService;
 import com.tennisplatform.identity.application.service.VerifyEmailService;
 import com.tennisplatform.identity.adapters.in.web.AuthRateLimitFilter;
@@ -73,6 +78,16 @@ public class IdentityConfiguration {
     }
 
     @Bean
+    public ResendEmailVerification resendEmailVerification(UserRepository users,
+                                                           EmailVerificationTokens verificationTokens,
+                                                           SecureTokenGenerator tokenGenerator,
+                                                           TokenHasher tokenHasher, IdentityMailer mailer,
+                                                           Clock clock, IdentityProperties properties) {
+        return new ResendEmailVerificationService(users, verificationTokens, tokenGenerator, tokenHasher,
+                mailer, clock, properties.getEmailVerificationTtl());
+    }
+
+    @Bean
     public VerifyEmail verifyEmail(EmailVerificationTokens verificationTokens, UserRepository users,
                                    TokenHasher tokenHasher, Clock clock) {
         return new VerifyEmailService(verificationTokens, users, tokenHasher, clock);
@@ -102,6 +117,18 @@ public class IdentityConfiguration {
                                                            PasswordHasher passwordHasher,
                                                            Clock clock) {
         return new ProvisionTeacherAccountService(users, passwordHasher, clock);
+    }
+
+    @Bean
+    public ProvisionAdminAccountService provisionAdminAccount(UserRepository users, PasswordHasher passwordHasher,
+                                                              Clock clock) {
+        return new ProvisionAdminAccountService(users, passwordHasher, clock);
+    }
+
+    /** Offered to administration, which decides which accounts the console may touch. */
+    @Bean
+    public AdministerAccounts administerAccounts(UserRepository users, RefreshTokens refreshTokens, Clock clock) {
+        return new AdministerAccountsService(users, refreshTokens, clock);
     }
 
     /**

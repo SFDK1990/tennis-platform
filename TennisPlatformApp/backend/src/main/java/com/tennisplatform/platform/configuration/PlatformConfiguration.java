@@ -1,9 +1,13 @@
 package com.tennisplatform.platform.configuration;
 
 import com.tennisplatform.platform.application.port.out.PlatformSettingsRepository;
+import com.tennisplatform.platform.application.port.in.ManagePlatformSettings;
 import com.tennisplatform.platform.application.service.PlatformLimitsService;
+import com.tennisplatform.platform.application.service.PlatformSettingsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Clock;
 
 /** Wires the use cases by hand, keeping the application layer free of Spring stereotypes. */
 @Configuration
@@ -17,5 +21,10 @@ public class PlatformConfiguration {
     @Bean
     public PlatformLimitsService platformLimits(PlatformSettingsRepository settings) {
         return new PlatformLimitsService(settings);
+    }
+
+    @Bean
+    public ManagePlatformSettings managePlatformSettings(PlatformSettingsRepository settings, Clock clock) {
+        return new PlatformSettingsService(settings, clock);
     }
 }

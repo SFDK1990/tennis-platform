@@ -170,6 +170,20 @@ class ManageStudentServiceTest {
         verify(bookings).cancelUpcomingWith(TEACHER_ID, STUDENT_ID, NOW);
     }
 
+    /** Fase 12: a disabled account is let go by every teacher, and the bookings say who decided. */
+    @Test
+    void aDisabledAccountIsLetGoWithItsBookingsCancelledByTheAdministration() {
+        ManagedStudent existing = ManagedStudent.take(TEACHER_ID, STUDENT_ID, NOW);
+        when(relationships.findManagingTeachers(STUDENT_ID)).thenReturn(List.of(TEACHER_ID));
+        when(relationships.findByPair(TEACHER_ID, STUDENT_ID)).thenReturn(Optional.of(existing));
+
+        service.releaseDisabledAccount(STUDENT_ID);
+
+        assertThat(existing.isManaged()).isFalse();
+        verify(bookings).cancelUpcomingOfDisabledAccount(TEACHER_ID, STUDENT_ID, NOW);
+        verify(bookings, never()).cancelUpcomingWith(any(), any(), any());
+    }
+
     @Test
     void stoppingToManageDeactivatesWithoutDeletingTheRow() {
         ManagedStudent existing = ManagedStudent.take(TEACHER_ID, STUDENT_ID, NOW);
