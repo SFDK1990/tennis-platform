@@ -140,6 +140,10 @@ decir qué pasó, a quién y por qué, sin exponer datos personales.
   excepción de la cadena y todas sus líneas de código, que dicen qué falló y dónde; el
   correlation id dice en qué petición. El precio es que algún fallo cueste más de diagnosticar,
   porque el mensaje suele ser la pista.
+- **Lo que falla en un filtro también se registra sin mensaje.** Ahí no llega el
+  `GlobalExceptionHandler`, y la excepción subía a Tomcat, que la escribe entera: se vio en la
+  mutación, con el email en el log. `UnhandledFailureFilter` la recoge antes, la registra como
+  un 500 y contesta el mismo `INTERNAL_ERROR`.
 - **Hibernate deja de escribir las violaciones de restricción** (`SqlExceptionHelper` en `OFF`).
   Las escribía como ERROR aunque fueran las esperadas (la última plaza, dos clases que se
   pisan, que son un 409), y su mensaje puede citar los valores de la fila. Una que nadie maneja
