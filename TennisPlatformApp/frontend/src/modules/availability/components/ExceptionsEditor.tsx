@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useCreateException, useDeleteException, type AvailabilityException, type NewException } from "@/modules/availability/api";
 import { formatDay, type LocalDate } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
-import { Field } from "@/shared/ui/Field";
+import { CONTROL_CLASS, Field } from "@/shared/ui/Field";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
 const hhmm = (time: string | null) => time?.slice(0, 5) ?? "";
@@ -55,7 +55,7 @@ export function ExceptionsEditor({ exceptions, today }: { exceptions: Availabili
         <label className="flex flex-col gap-1 text-sm font-semibold">
           Tipo
           <select value={type} onChange={(e) => setType(e.target.value as NewException["type"])}
-            className="min-h-10 rounded-md border border-line bg-paper px-3 font-normal">
+            className={CONTROL_CLASS}>
             <option value="BLOCK">No disponible</option>
             <option value="EXTRA">Horas extra</option>
           </select>

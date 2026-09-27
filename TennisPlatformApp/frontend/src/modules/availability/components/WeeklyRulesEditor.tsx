@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSaveWeeklyRules, type WeeklyRule, type WeeklyRuleInput } from "@/modules/availability/api";
 import { Button } from "@/shared/ui/Button";
+import { CONTROL_CLASS } from "@/shared/ui/Field";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
 
 const DAYS: { value: WeeklyRuleInput["dayOfWeek"]; label: string }[] = [
@@ -50,7 +51,7 @@ export function WeeklyRulesEditor({ rules }: { rules: WeeklyRule[] }) {
             <label className="flex flex-col gap-1 text-sm font-semibold">
               Día
               <select value={row.dayOfWeek} onChange={(e) => change(row.key, { dayOfWeek: e.target.value as Row["dayOfWeek"] })}
-                className="min-h-10 rounded-md border border-line bg-paper px-3 font-normal">
+                className={CONTROL_CLASS}>
                 {DAYS.map((day) => <option key={day.value} value={day.value}>{day.label}</option>)}
               </select>
             </label>

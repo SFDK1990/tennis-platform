@@ -55,11 +55,11 @@ export function StudentLessonActions({ lessonId, startsAt, lessonStatus, booking
       {late && confirming ? (
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="max-w-48 text-xs">Empieza en menos de 24 h: si reservas, no podrás cancelar.</span>
-          <Button variant="book" pending={book.isPending} onClick={() => book.mutate(lessonId)}>Reservar igualmente</Button>
+          <Button variant="primary" pending={book.isPending} onClick={() => book.mutate(lessonId)}>Reservar igualmente</Button>
           <Button variant="quiet" onClick={() => setConfirming(false)}>No</Button>
         </div>
       ) : (
-        <Button variant="book" pending={book.isPending} onClick={() => (late ? setConfirming(true) : book.mutate(lessonId))}>
+        <Button variant="primary" pending={book.isPending} onClick={() => (late ? setConfirming(true) : book.mutate(lessonId))}>
           Reservar
         </Button>
       )}
