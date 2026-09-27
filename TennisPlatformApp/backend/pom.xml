@@ -92,6 +92,15 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!--
+            Bounded in-memory maps (rate-limit buckets, email cooldowns) that evict the oldest
+            entry instead of growing or being wiped whole. Version from the Boot BOM.
+        -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- In-memory rate limiting; no Redis while there is a single instance. -->
         <dependency>
             <groupId>com.bucket4j</groupId>

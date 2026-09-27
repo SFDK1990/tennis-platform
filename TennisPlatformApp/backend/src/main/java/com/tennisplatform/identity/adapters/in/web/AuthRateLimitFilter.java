@@ -1,6 +1,8 @@
 package com.tennisplatform.identity.adapters.in.web;
 
 import com.tennisplatform.identity.configuration.IdentityProperties;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
@@ -10,12 +12,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Throttles the authentication endpoints per client IP.
@@ -31,14 +34,29 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final String PROTECTED_PREFIX = "/api/v1/auth/";
 
-    /** Bounds memory: an attacker rotating IPs must not be able to grow the map forever. */
+    /**
+     * Bounds memory: an attacker rotating IPs must not be able to grow the map forever. Past
+     * the bound the least recently seen client is evicted; wiping the whole map, as it used to,
+     * handed that attacker a reset of everybody's counters.
+     */
     private static final int MAX_TRACKED_CLIENTS = 50_000;
 
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    /**
+     * Only a literal address is ever compared: resolving a name the client wrote into the header
+     * would make every request a DNS lookup of the attacker's choosing.
+     */
+    private static final Pattern IP_LITERAL = Pattern.compile("[0-9A-Fa-f.:]{2,45}");
+
+    private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
+            .maximumSize(MAX_TRACKED_CLIENTS)
+            .expireAfterAccess(Duration.ofMinutes(2))
+            .build();
     private final int requestsPerMinute;
+    private final List<IpAddressMatcher> trustedProxies;
 
     public AuthRateLimitFilter(IdentityProperties properties) {
         this.requestsPerMinute = properties.getAuthRateLimitPerMinute();
+        this.trustedProxies = properties.getTrustedProxies().stream().map(IpAddressMatcher::new).toList();
     }
 
     @Override
@@ -64,10 +82,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket bucketFor(String clientIp) {
-        if (buckets.size() > MAX_TRACKED_CLIENTS) {
-            buckets.clear();
-        }
-        return buckets.computeIfAbsent(clientIp, ip -> Bucket.builder()
+        return buckets.get(clientIp, ip -> Bucket.builder()
                 // Intervally, not greedy: "20 per minute" must mean the allowance is
                 // restored as a block once the minute is up, not trickled back one token at a
                 // time - otherwise a slow, patient attacker is never actually throttled.
@@ -79,10 +94,43 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * X-Forwarded-For is only trustworthy behind a proxy that overwrites it. Until the
-     * deployment topology is decided, the socket address is the honest answer.
+     * The browser never reaches the backend: it talks to Next, which forwards /api. The socket
+     * address is therefore the frontend's for every user, and counting by it put all of them
+     * in one bucket - 21 requests a minute from anybody locked everybody out of signing in.
+     *
+     * <p>So when the socket is a trusted proxy, the client is the right-most address in
+     * X-Forwarded-For that is not itself a trusted proxy. Right-most, because each proxy appends
+     * to the header and only what our own proxies wrote can be believed; anything to its left
+     * came from the client. From anywhere else the header is ignored, or any caller could pick
+     * a fresh "IP" per request.
+     *
+     * <p>Next fills the header only when it is absent, so it passes on one sent by the client.
+     * That is why the proxy in front of it must overwrite the header (Fase 17).
      */
-    private String clientIp(HttpServletRequest request) {
-        return request.getRemoteAddr();
+    String clientIp(HttpServletRequest request) {
+        String socket = request.getRemoteAddr();
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded == null || !isTrustedProxy(socket)) {
+            return socket;
+        }
+        String[] hops = forwarded.split(",");
+        for (int i = hops.length - 1; i >= 0; i--) {
+            String hop = hops[i].trim();
+            if (!IP_LITERAL.matcher(hop).matches()) {
+                return socket;
+            }
+            if (!isTrustedProxy(hop)) {
+                return hop;
+            }
+        }
+        return socket;
+    }
+
+    private boolean isTrustedProxy(String address) {
+        try {
+            return trustedProxies.stream().anyMatch(proxy -> proxy.matches(address));
+        } catch (IllegalArgumentException notAnAddress) {
+            return false;
+        }
     }
 }

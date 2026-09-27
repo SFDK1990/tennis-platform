@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
+import java.util.List;
 
 @Validated
 @ConfigurationProperties(prefix = "tennis.identity")
@@ -53,6 +54,15 @@ public class IdentityProperties {
 
     /** Requests per minute per client IP allowed on the authentication endpoints. */
     private int authRateLimitPerMinute = 20;
+
+    /**
+     * Addresses whose X-Forwarded-For is believed (AuthRateLimitFilter). By default loopback and
+     * the private ranges, which is where the frontend lives next to the backend; a public
+     * address never is.
+     */
+    @NotNull
+    private List<String> trustedProxies = List.of(
+            "127.0.0.0/8", "::1/128", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7");
 
     /** The first administrator, created at startup. Blank means none is created. */
     private String adminBootstrapEmail;
@@ -137,6 +147,14 @@ public class IdentityProperties {
 
     public void setAuthRateLimitPerMinute(int authRateLimitPerMinute) {
         this.authRateLimitPerMinute = authRateLimitPerMinute;
+    }
+
+    public List<String> getTrustedProxies() {
+        return List.copyOf(trustedProxies);
+    }
+
+    public void setTrustedProxies(List<String> trustedProxies) {
+        this.trustedProxies = List.copyOf(trustedProxies);
     }
 
     public String getAdminBootstrapEmail() {
