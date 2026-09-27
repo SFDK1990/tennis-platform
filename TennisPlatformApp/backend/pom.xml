@@ -31,7 +31,7 @@
 
         <!-- Build-quality tooling, introduced in Fase 5.1 together with the CI pipeline. -->
         <archunit.version>1.5.0</archunit.version>
-        <swagger-request-validator.version>2.44.9</swagger-request-validator.version>
+        <swagger-request-validator.version>2.46.1</swagger-request-validator.version>
         <spotless.version>3.10.2</spotless.version>
         <spotbugs.version>4.10.4.1</spotbugs.version>
         <jacoco.version>0.8.15</jacoco.version>
