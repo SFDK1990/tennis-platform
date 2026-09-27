@@ -41,7 +41,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # metrics is for the admin only (SecurityConfig); where it is exported to is Fase 17.
+        include: health,info,metrics
   endpoint:
     health:
       # Only an admin sees the components (database, disk, paths). Without roles,
