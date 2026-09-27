@@ -53,6 +53,14 @@ const MESSAGES: Record<string, string> = {
   USER_NOT_FOUND: "Esa cuenta ya no existe.",
 };
 
+/**
+ * A failure of the server says nothing useful to the person, so it gives them what to pass on:
+ * the start of the id the backend logged the request under.
+ */
 export function messageFor(error: ApiError): string {
+  if (error.status >= 500) {
+    const reference = error.correlationId ? ` Código de referencia: ${error.correlationId.slice(0, 8)}.` : "";
+    return `Ha fallado algo. Vuelve a probar en un momento.${reference}`;
+  }
   return (error.code && MESSAGES[error.code]) || error.message;
 }
