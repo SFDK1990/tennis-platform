@@ -27,7 +27,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Siempre 202 y sin cuerpo, exista o no una cuenta con ese email. Devolver 201 cuando se crea y 409 cuando ya existe permitiría enumerar usuarios, que es precisamente lo que prohíbe 02-arquitectura.md. Si el email ya estaba registrado no se crea nada y se avisa por correo al titular real de la dirección. */
+                /** @description Siempre 202 y sin cuerpo, exista o no una cuenta con ese email. Devolver 201 cuando se crea y 409 cuando ya existe permitiría enumerar usuarios, que es precisamente lo que prohíbe 02-arquitectura.md. Si el email ya estaba registrado no se crea nada y se avisa por correo al titular real de la dirección, como mucho una vez cada 5 minutos. */
                 202: {
                     headers: {
                         [name: string]: unknown;
@@ -262,7 +262,7 @@ export interface paths {
         put?: never;
         /**
          * Reenvía el enlace de verificación al usuario autenticado
-         * @description Para quien perdió el correo o dejó caducar el enlace. Se pide con sesión, nunca por dirección: aceptar un email permitiría inundar el buzón de otro. Cuelga de /auth para que le aplique el límite por IP. Los enlaces anteriores siguen valiendo hasta caducar.
+         * @description Para quien perdió el correo o dejó caducar el enlace. Se pide con sesión, nunca por dirección: aceptar un email permitiría inundar el buzón de otro. Cuelga de /auth para que le aplique el límite por IP. Los enlaces anteriores siguen valiendo hasta caducar. Como mucho un reenvío cada 5 minutos; dentro de ese plazo responde igual y no envía nada.
          */
         post: {
             parameters: {
@@ -313,7 +313,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Siempre 202, exista o no la cuenta, para no permitir enumeración de usuarios (ver 02-arquitectura.md). */
+                /** @description Siempre 202, exista o no la cuenta, para no permitir enumeración de usuarios (ver 02-arquitectura.md). Como mucho un correo cada 5 minutos por dirección. Al restablecer la contraseña con un enlace, los demás dejan de valer. */
                 202: {
                     headers: {
                         [name: string]: unknown;
