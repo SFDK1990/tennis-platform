@@ -174,3 +174,30 @@ problema que la Fase 13 resolvió para el contrato.
 - La matriz de acceso cubre todas las operaciones del spec. Comprobado rompiéndolo: quitar la
   comprobación de propiedad de `POST /bookings/{id}/cancel` la hace fallar.
 - `mvn verify`, la suite E2E y el frontend en verde, con 0 saltados.
+
+## Decisiones tomadas al implementar
+
+1. **Tomcat 10.1.60 y pgjdbc 42.7.13**, las últimas del momento y no el mínimo que corrige cada
+   CVE: no tiene sentido fijar una versión que ya tiene sucesora.
+2. **Trivy va como imagen de Docker fijada (`aquasec/trivy:0.74.0`)**, no como action de
+   terceros: es una dependencia menos del CI.
+3. **El reenvío de verificación sólo cuenta los reenvíos**, no el correo del registro. Si el
+   primer correo no llega, quien pide otro al momento lo recibe.
+4. **El límite de correos no cambia la respuesta ni evita crear el enlace**; sólo suprime el
+   envío.
+5. **En `X-Forwarded-For` sólo se compara una IP literal.** Resolver un nombre escrito por el
+   cliente convertiría cada petición en una consulta DNS elegida por él.
+6. **Los errores de protocolo (405, 406, 415) no se repiten en cada operación del spec.**
+   `ContractValidation` exige que lleven el formato de error, y `11-contrato-api.md` los lista
+   entre los códigos comunes.
+7. **La matriz de acceso sólo ejecuta las escrituras que deben rechazarse.** Si ejecutara una
+   escritura permitida, cambiaría los datos sobre los que corre el resto de la matriz, y de
+   esas ya se ocupa el test de su módulo. Las lecturas permitidas sí se ejecutan y tienen que
+   dar 2xx.
+8. **Hallazgos que no estaban en el análisis**:
+   - `main` se había quedado en la Fase 10 porque los PR encadenados se fusionaron en su rama
+     base (#30). A partir de ahora, al fusionar un PR de una cadena, el siguiente se reapunta a
+     `main`.
+   - Una instalación vieja de Claude Code (WinGet) en el equipo de desarrollo. Ya está quitada;
+     no afecta al proyecto.
+

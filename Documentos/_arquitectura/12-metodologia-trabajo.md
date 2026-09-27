@@ -58,7 +58,8 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 12 | Administración (`administration`) | Completada | `23-fase12-analisis-administracion.md`. Sólo `ADMIN` accede; ajusta el límite de alumnos y el estado de cualquier usuario |
 | 13 | Revisión de API | Completada | `24-fase13-analisis-revision-api.md`. Revisión REST completa y `openapi.yaml` sin diferencias con lo implementado |
 | 14 | Cobertura y E2E | Completada | `25-fase14-analisis-cobertura-e2e.md`. Playwright cubre los flujos críticos de los dos roles |
-| 15 | Auditoría de seguridad | **Siguiente** | OWASP Top 10, acceso horizontal, secretos y dependencias revisados |
+| 15 | Auditoría de seguridad | Completada | `26-fase15-analisis-seguridad.md`. OWASP Top 10, acceso horizontal, secretos y dependencias revisados |
+| 15.5 | Experiencia y diseño | **Siguiente** | Maqueta aprobada por Daniel antes de implementar; identidad visual, "Hoy" del profesor, próxima clase del alumno y pantallas vacías que guían. Sólo frontend, con los E2E como red |
 | 16 | Observabilidad | Pendiente | Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |
 | 17 | Endurecimiento y despliegue | Pendiente | PWA completa, accesibilidad, proveedor elegido y política de backups |
 | 18 | Revisión final de arquitectura | Pendiente | Informe con severidades; nada se aplica sin aprobación |
