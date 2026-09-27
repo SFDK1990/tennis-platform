@@ -26,6 +26,14 @@
             test silently skips. Staying on the 1.x line avoids the 2.x breaking changes.
         -->
         <testcontainers.version>1.21.4</testcontainers.version>
+        <!--
+            Ahead of the Boot BOM for known CVEs: Tomcat 10.1.55 (three CRITICAL, fixed in
+            10.1.58) and pgjdbc 42.7.11 (SCRAM downgrade, fixed in 42.7.12). Dependabot does
+            not bump what the BOM manages; Trivy in CI is what catches this. Delete both lines
+            once spring-boot-starter-parent ships these versions or later.
+        -->
+        <tomcat.version>10.1.60</tomcat.version>
+        <postgresql.version>42.7.13</postgresql.version>
         <jjwt.version>0.13.0</jjwt.version>
         <bucket4j.version>8.20.0</bucket4j.version>
 
@@ -82,6 +90,15 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!--
+            Bounded in-memory maps (rate-limit buckets, email cooldowns) that evict the oldest
+            entry instead of growing or being wiped whole. Version from the Boot BOM.
+        -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
 
         <!-- In-memory rate limiting; no Redis while there is a single instance. -->

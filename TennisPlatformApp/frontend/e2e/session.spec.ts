@@ -42,6 +42,8 @@ test("quien olvida la contraseña elige otra con el enlace del correo y entra co
 
   await page.goto("/login");
   await page.getByRole("link", { name: "He olvidado la contraseña" }).click();
+  // The login form has an Email field too: filling before the new screen lands types into it.
+  await expect(page.getByRole("heading", { name: "Recuperar la contraseña" })).toBeVisible();
   await page.getByLabel("Email").fill(student.email);
   await page.getByRole("button", { name: "Enviar enlace" }).click();
   await expect(page.getByRole("status")).toContainText("Si hay una cuenta con ese email");

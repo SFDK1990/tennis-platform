@@ -103,9 +103,11 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   prueba el backend con `Clock` fijo; el test de asistencia crea una clase que empieza a los 15 s.
 - **Los tipos del frontend se generan de `openapi.yaml`** y se versionan. Tocar el contrato sin
   `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
+- **El frontend lleva una CSP con nonce** (`src/proxy.ts`), y por eso todas las páginas se
+  renderizan por petición (`connection()` en el layout raíz). Un `<script>` o un `style={}` en
+  línea sin nonce queda bloqueado en silencio: la página carga, pero no se hidrata.
+- **El rate limiting cuenta por la IP de `X-Forwarded-For`** cuando la petición llega de un proxy
+  de confianza (`tennis.identity.trusted-proxies`). En producción, el proxy de entrada tiene que
+  sobrescribir esa cabecera, no añadirle: Next pasa tal cual la que manda el cliente.
 - **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
   estado de alumnos; el profesor y los admins no se desactivan desde la consola.
-
-## Repositorio
-
-`https://github.com/SFDK1990/tennis-platform` (privado). Rama principal: `main`.

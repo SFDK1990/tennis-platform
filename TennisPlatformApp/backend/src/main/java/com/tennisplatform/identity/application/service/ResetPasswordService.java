@@ -52,6 +52,9 @@ public class ResetPasswordService implements ResetPassword {
 
         user.changePassword(passwordHasher.hash(command.newPassword()));
         users.save(user);
+        // Any other link asked for earlier would still change the password for an hour; the
+        // one that was just used is the only one that should ever have worked.
+        resetTokens.spendAllForUser(user.id(), now);
 
         // A reset usually means the account may be compromised. Leaving existing sessions alive
         // would defeat the purpose, so every one of them is revoked.

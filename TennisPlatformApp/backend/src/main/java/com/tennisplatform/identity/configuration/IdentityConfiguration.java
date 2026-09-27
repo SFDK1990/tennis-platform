@@ -15,6 +15,7 @@ import com.tennisplatform.identity.application.port.in.VerifyEmail;
 import com.tennisplatform.identity.application.port.out.AccessTokenIssuer;
 import com.tennisplatform.identity.application.port.out.EmailVerificationTokens;
 import com.tennisplatform.identity.application.port.out.IdentityMailer;
+import com.tennisplatform.identity.application.port.out.MailCooldown;
 import com.tennisplatform.identity.application.port.out.PasswordHasher;
 import com.tennisplatform.identity.application.port.out.PasswordResetTokens;
 import com.tennisplatform.identity.application.port.out.RefreshTokens;
@@ -71,10 +72,10 @@ public class IdentityConfiguration {
     @Bean
     public RegisterUser registerUser(UserRepository users, EmailVerificationTokens verificationTokens,
                                      PasswordHasher passwordHasher, SecureTokenGenerator tokenGenerator,
-                                     TokenHasher tokenHasher, IdentityMailer mailer, Clock clock,
-                                     IdentityProperties properties) {
+                                     TokenHasher tokenHasher, IdentityMailer mailer, MailCooldown cooldown,
+                                     Clock clock, IdentityProperties properties) {
         return new RegisterUserService(users, verificationTokens, passwordHasher, tokenGenerator,
-                tokenHasher, mailer, clock, properties.getEmailVerificationTtl());
+                tokenHasher, mailer, cooldown, clock, properties.getEmailVerificationTtl());
     }
 
     @Bean
@@ -82,9 +83,10 @@ public class IdentityConfiguration {
                                                            EmailVerificationTokens verificationTokens,
                                                            SecureTokenGenerator tokenGenerator,
                                                            TokenHasher tokenHasher, IdentityMailer mailer,
-                                                           Clock clock, IdentityProperties properties) {
+                                                           MailCooldown cooldown, Clock clock,
+                                                           IdentityProperties properties) {
         return new ResendEmailVerificationService(users, verificationTokens, tokenGenerator, tokenHasher,
-                mailer, clock, properties.getEmailVerificationTtl());
+                mailer, cooldown, clock, properties.getEmailVerificationTtl());
     }
 
     @Bean
@@ -171,9 +173,10 @@ public class IdentityConfiguration {
     public RequestPasswordReset requestPasswordReset(UserRepository users, PasswordResetTokens resetTokens,
                                                      SecureTokenGenerator tokenGenerator,
                                                      TokenHasher tokenHasher, IdentityMailer mailer,
-                                                     Clock clock, IdentityProperties properties) {
+                                                     MailCooldown cooldown, Clock clock,
+                                                     IdentityProperties properties) {
         return new RequestPasswordResetService(users, resetTokens, tokenGenerator, tokenHasher,
-                mailer, clock, properties.getPasswordResetTtl());
+                mailer, cooldown, clock, properties.getPasswordResetTtl());
     }
 
     @Bean

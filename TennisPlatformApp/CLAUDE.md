@@ -5,12 +5,7 @@ phase status and the traps are in `../CLAUDE.md`; the design documents are in
 `../Documentos/_arquitectura/` (Spanish), indexed by `00-indice-arquitectura.md`. They are
 binding, not background reading.
 
-## Layout
-
-- `backend/` — Spring Boot 3.5 on Java 21, the modular monolith below.
-- `frontend/` — Next.js 16 + TypeScript + Tailwind, the structure below.
-- `openapi.yaml` — the API contract. It must describe what the backend does, not what it will do.
-- `compose.yaml`, `.env.example` — the local stack. Each service owns its `Dockerfile`.
+`openapi.yaml` must describe what the backend does, not what it will do.
 
 ## Commands
 
@@ -100,7 +95,8 @@ against real PostgreSQL through Testcontainers (`AbstractIntegrationTest`), conc
 for the last-seat race, ArchUnit for the boundaries, and the contract tests in
 `src/test/java/com/tennisplatform/contract`: every integration-test response is validated
 against `openapi.yaml`, the routes of the code and of the spec must be the same set, and the
-common statuses (401, 429, 400) must be documented on every operation they apply to. Test names are sentences
+common statuses (401, 429, 400) must be documented on every operation they apply to. `AccessMatrixTest`
+calls every operation with six identities; a new operation needs its row there. Test names are sentences
 (`twoStudentsRaceForTheLastSeatAndExactlyOneWins`). `mvn verify` fails below 97 % of lines or
 83 % of branches.
 

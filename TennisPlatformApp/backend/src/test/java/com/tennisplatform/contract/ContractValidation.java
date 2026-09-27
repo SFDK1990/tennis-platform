@@ -43,6 +43,13 @@ public final class ContractValidation implements ClientHttpRequestInterceptor {
     /** Called on purpose to show that an unknown route is closed too; it cannot be in the spec. */
     private static final Set<String> OUTSIDE_THE_CONTRACT = Set.of("/api/v1/anything");
 
+    /**
+     * Protocol errors: a method the route does not have, a body or an Accept it does not speak.
+     * They can happen on any operation, so the spec does not list them one by one; what they
+     * must still follow is the error format (11-contrato-api.md). 406 has no body by design.
+     */
+    private static final Set<Integer> PROTOCOL_ERRORS = Set.of(405, 406, 415);
+
     private static final OpenApiInteractionValidator VALIDATOR = OpenApiInteractionValidator
             .createForSpecificationUrl(SPEC)
             .withBasePathOverride(API)
@@ -80,6 +87,14 @@ public final class ContractValidation implements ClientHttpRequestInterceptor {
 
         byte[] bytes = StreamUtils.copyToByteArray(response.getBody());
         String responseBody = new String(bytes, StandardCharsets.UTF_8);
+        int status = response.getStatusCode().value();
+        if (PROTOCOL_ERRORS.contains(status)) {
+            if (status != 406 && !responseBody.contains("\"code\"")) {
+                throw new AssertionError("%s %s answered %d without the error contract: %s"
+                        .formatted(request.getMethod(), path, status, responseBody));
+            }
+            return new ReadResponse(response, bytes);
+        }
         SimpleResponse.Builder wire = SimpleResponse.Builder.status(response.getStatusCode().value())
                 .withBody(responseBody);
         response.getHeaders().forEach(wire::withHeader);

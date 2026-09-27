@@ -71,6 +71,17 @@ class ResetPasswordServiceTest {
         verify(users).save(user);
     }
 
+    /** Only the link that was used should ever have worked; the others would for an hour. */
+    @Test
+    void resettingSpendsEveryOtherLinkOfTheUser() {
+        OneTimeToken token = OneTimeToken.issue(user.id(), "hashed:valid", NOW.plusSeconds(3600));
+        when(resetTokens.findByTokenHash("hashed:valid")).thenReturn(Optional.of(token));
+
+        service.reset(new ResetPassword.Command("valid", NEW_PASSWORD));
+
+        verify(resetTokens).spendAllForUser(user.id(), NOW);
+    }
+
     @Test
     void theTokenCannotBeUsedTwice() {
         OneTimeToken token = OneTimeToken.issue(user.id(), "hashed:valid", NOW.plusSeconds(3600));

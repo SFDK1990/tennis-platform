@@ -3,6 +3,7 @@ package com.tennisplatform.identity.application;
 import com.tennisplatform.identity.application.port.in.RegisterUser;
 import com.tennisplatform.identity.application.port.out.EmailVerificationTokens;
 import com.tennisplatform.identity.application.port.out.IdentityMailer;
+import com.tennisplatform.identity.application.port.out.MailCooldown;
 import com.tennisplatform.identity.application.port.out.PasswordHasher;
 import com.tennisplatform.identity.application.port.out.SecureTokenGenerator;
 import com.tennisplatform.identity.application.port.out.TokenHasher;
@@ -36,6 +37,7 @@ class RegisterUserServiceTest {
     private UserRepository users;
     private EmailVerificationTokens verificationTokens;
     private IdentityMailer mailer;
+    private MailCooldown cooldown;
     private RegisterUserService service;
 
     @BeforeEach
@@ -43,6 +45,8 @@ class RegisterUserServiceTest {
         users = mock(UserRepository.class);
         verificationTokens = mock(EmailVerificationTokens.class);
         mailer = mock(IdentityMailer.class);
+        cooldown = mock(MailCooldown.class);
+        when(cooldown.tryStart(any(), any(), any())).thenReturn(true);
         PasswordHasher passwordHasher = mock(PasswordHasher.class);
         SecureTokenGenerator generator = mock(SecureTokenGenerator.class);
         TokenHasher hasher = mock(TokenHasher.class);
@@ -53,7 +57,7 @@ class RegisterUserServiceTest {
         when(users.save(any())).thenAnswer(call -> call.getArgument(0));
 
         service = new RegisterUserService(users, verificationTokens, passwordHasher, generator,
-                hasher, mailer, Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofDays(1));
+                hasher, mailer, cooldown, Clock.fixed(NOW, ZoneOffset.UTC), Duration.ofDays(1));
     }
 
     @Test
@@ -84,6 +88,19 @@ class RegisterUserServiceTest {
         verify(verificationTokens, never()).save(any());
         verify(mailer, never()).sendEmailVerification(any(), any());
         verify(mailer).sendRegistrationAttemptOnExistingAccount(new EmailAddress("taken@example.com"));
+    }
+
+    /** Otherwise registering again and again floods the real owner's inbox. */
+    @Test
+    void theOwnerIsNotWarnedAgainWhileTheLastWarningIsRecent() {
+        User existing = User.register(new EmailAddress("taken@example.com"), "hash", NOW);
+        when(users.findByEmail(any())).thenReturn(Optional.of(existing));
+        when(cooldown.tryStart(any(), any(), any())).thenReturn(false);
+
+        assertThatCode(() -> service.register(new RegisterUser.Command("taken@example.com", VALID_PASSWORD)))
+                .doesNotThrowAnyException();
+
+        verify(mailer, never()).sendRegistrationAttemptOnExistingAccount(any());
     }
 
     @Test

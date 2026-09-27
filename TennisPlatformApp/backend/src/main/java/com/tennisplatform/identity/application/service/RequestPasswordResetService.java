@@ -2,6 +2,7 @@ package com.tennisplatform.identity.application.service;
 
 import com.tennisplatform.identity.application.port.in.RequestPasswordReset;
 import com.tennisplatform.identity.application.port.out.IdentityMailer;
+import com.tennisplatform.identity.application.port.out.MailCooldown;
 import com.tennisplatform.identity.application.port.out.PasswordResetTokens;
 import com.tennisplatform.identity.application.port.out.SecureTokenGenerator;
 import com.tennisplatform.identity.application.port.out.TokenHasher;
@@ -23,17 +24,20 @@ public class RequestPasswordResetService implements RequestPasswordReset {
     private final SecureTokenGenerator tokenGenerator;
     private final TokenHasher tokenHasher;
     private final IdentityMailer mailer;
+    private final MailCooldown cooldown;
     private final Clock clock;
     private final Duration resetTokenTtl;
 
     public RequestPasswordResetService(UserRepository users, PasswordResetTokens resetTokens,
                                        SecureTokenGenerator tokenGenerator, TokenHasher tokenHasher,
-                                       IdentityMailer mailer, Clock clock, Duration resetTokenTtl) {
+                                       IdentityMailer mailer, MailCooldown cooldown, Clock clock,
+                                       Duration resetTokenTtl) {
         this.users = users;
         this.resetTokens = resetTokens;
         this.tokenGenerator = tokenGenerator;
         this.tokenHasher = tokenHasher;
         this.mailer = mailer;
+        this.cooldown = cooldown;
         this.clock = clock;
         this.resetTokenTtl = resetTokenTtl;
     }
@@ -53,6 +57,9 @@ public class RequestPasswordResetService implements RequestPasswordReset {
         }
 
         Instant now = clock.instant();
+        if (!cooldown.tryStart(MailCooldown.Kind.PASSWORD_RESET, user.email(), now)) {
+            return;
+        }
         String rawToken = tokenGenerator.generate();
         resetTokens.save(OneTimeToken.issue(
                 user.id(), tokenHasher.hash(rawToken), now.plus(resetTokenTtl)));
