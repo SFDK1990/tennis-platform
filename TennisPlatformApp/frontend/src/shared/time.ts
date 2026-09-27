@@ -76,3 +76,11 @@ export function formatShortWeekday(date: LocalDate): string {
   return new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", weekday: "short", day: "numeric" })
     .format(new Date(`${date}T00:00:00Z`));
 }
+
+/** Minutes since midnight on the wall clock of `zone`: where an instant sits in a day's column. */
+export function minutesIn(instant: string, zone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: zone, hourCycle: "h23", hour: "numeric", minute: "numeric" })
+    .formatToParts(new Date(instant));
+  const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((p) => p.type === type)?.value);
+  return part("hour") * 60 + part("minute");
+}

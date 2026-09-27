@@ -42,7 +42,7 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   await page.getByRole("button", { name: "Cerrar" }).click();
   const lesson = (await dayInCalendar(page, day)).getByRole("listitem").filter({ hasText: "10:00" });
   await expect(lesson).toContainText("2 plazas libres");
-  await lesson.getByRole("link", { name: "Ver clase" }).click();
+  await lesson.getByRole("link").click();
   await expect(page.getByText(student.fullName)).toBeVisible();
   await page.getByRole("button", { name: "Cancelar clase" }).click();
   await page.getByRole("button", { name: "Sí, cancelar la clase" }).click();

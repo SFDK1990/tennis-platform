@@ -1,6 +1,13 @@
 @import "tailwindcss";
 
 /*
+ * The week grid places its blocks with these (modules/calendar/grid.ts): classes rather than
+ * inline styles, which the nonce-based CSP would block. A quarter of an hour per row, from
+ * midnight to midnight.
+ */
+@source inline("row-start-{1..97} row-span-{1..96}");
+
+/*
  * MAS Tennis Academy: the palette of the logo (27-fase15.5, decision 1). Court blue is for what
  * can be done, navy for the frame and the text, white lines for the court drawn under the
  * things that matter most. Every text pair here passes WCAG AA.
