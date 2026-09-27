@@ -135,9 +135,11 @@ decir qué pasó, a quién y por qué, sin exponer datos personales.
 - **El mailer ya no escribe la excepción**, sólo su tipo. Un servidor SMTP que rechaza un
   destinatario cita la dirección en el mensaje; el comentario decía que no se registraba y sí se
   hacía.
-- **La traza de un 500 se sigue escribiendo entera.** Puede llevar un valor que la base cite en
-  su mensaje, pero sin ella un 500 no se puede diagnosticar. Es el único sitio donde puede
-  aparecer un dato, y sólo ante un fallo no previsto.
+- **La traza de un 500 se escribe sin los mensajes** (decisión de Daniel en la revisión del PR).
+  Un mensaje puede citar lo que recibió la base ("(email)=(...)"). Quedan el tipo de cada
+  excepción de la cadena y todas sus líneas de código, que dicen qué falló y dónde; el
+  correlation id dice en qué petición. El precio es que algún fallo cueste más de diagnosticar,
+  porque el mensaje suele ser la pista.
 - **Hibernate deja de escribir las violaciones de restricción** (`SqlExceptionHelper` en `OFF`).
   Las escribía como ERROR aunque fueran las esperadas (la última plaza, dos clases que se
   pisan, que son un 409), y su mensaje puede citar los valores de la fila. Una que nadie maneja

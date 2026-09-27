@@ -87,7 +87,8 @@ browser sends the id (`X-Correlation-Id`), and a 500 shows its first 8 character
 search the log for them. `prod` writes JSON (ECS), `dev` and `test` text. Each API request leaves
 one line (`POST /api/v1/lessons/{id}/bookings 409 LESSON_FULL 12 ms`), and each change of state
 one line with ids only. Never log an email, name, phone, password, token or IP: `RequestLogTest`
-fails if the account and booking flows do. `http.server.requests` is tagged with the error
+fails if the account and booking flows do. A 500 is logged with the type and frames of each
+exception but no messages, which can quote database values (`UnexpectedErrorTest`). `http.server.requests` is tagged with the error
 `code` (`none` on success); `/actuator/metrics` is for `ADMIN` only. Decisions:
 `28-fase16-analisis-observabilidad.md`.
 

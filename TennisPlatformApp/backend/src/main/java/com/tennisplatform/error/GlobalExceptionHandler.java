@@ -124,11 +124,34 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex) {
-        log.error("Unhandled exception", ex);
+        log.error("Unhandled exception", new WithoutMessage(ex, 0));
         // Nothing from the exception reaches the client: its message can name tables, columns
         // or values. The correlation id in the response header is what links it to this log line.
         return Problems.of(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error",
                 "Unexpected error", "INTERNAL_ERROR");
+    }
+
+    /**
+     * The trace of an unexpected failure, with the type of each exception and every frame but
+     * none of their messages. A message can quote what the database was given - "(email)=(...)"
+     * - and the log keeps no personal data (28-fase16-analisis-observabilidad.md). The type and
+     * the frames say what failed and where; the correlation id says which request it was.
+     */
+    static final class WithoutMessage extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+
+        /** A cause chain that loops back on itself must not recurse forever. */
+        private static final int MAX_CAUSES = 20;
+
+        WithoutMessage(Throwable original, int depth) {
+            super(original.getClass().getName(),
+                    original.getCause() == null || depth >= MAX_CAUSES
+                            ? null
+                            : new WithoutMessage(original.getCause(), depth + 1),
+                    false, true);
+            setStackTrace(original.getStackTrace());
+        }
     }
 
     private Map<String, String> toFieldError(FieldError fieldError) {
