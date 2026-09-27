@@ -52,6 +52,10 @@ public class IdentityProperties {
      */
     private boolean cookieSecure = true;
 
+    /** Minimum time between two emails of the same kind to the same address (MailCooldown). */
+    @NotNull
+    private Duration mailCooldown = Duration.ofMinutes(5);
+
     /** Requests per minute per client IP allowed on the authentication endpoints. */
     private int authRateLimitPerMinute = 20;
 
@@ -147,6 +151,14 @@ public class IdentityProperties {
 
     public void setAuthRateLimitPerMinute(int authRateLimitPerMinute) {
         this.authRateLimitPerMinute = authRateLimitPerMinute;
+    }
+
+    public Duration getMailCooldown() {
+        return mailCooldown;
+    }
+
+    public void setMailCooldown(Duration mailCooldown) {
+        this.mailCooldown = mailCooldown;
     }
 
     public List<String> getTrustedProxies() {

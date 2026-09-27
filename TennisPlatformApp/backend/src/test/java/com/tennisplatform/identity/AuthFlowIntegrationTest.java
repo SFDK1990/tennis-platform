@@ -387,6 +387,49 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(mailer.resetCount()).isZero();
     }
 
+    /**
+     * Otherwise anyone could send a stranger one reset email per request. The answer does not
+     * change, so the cooldown reveals nothing about the address (26-fase15-analisis-seguridad.md).
+     */
+    @Test
+    void aSecondResetEmailWithinFiveMinutesIsNotSentAndTheAnswerIsTheSame() {
+        String email = uniqueEmail();
+        register(email);
+
+        ResponseEntity<String> first = rest.postForEntity("/api/v1/auth/forgot-password",
+                json(Map.of("email", email)), String.class);
+        ResponseEntity<String> second = rest.postForEntity("/api/v1/auth/forgot-password",
+                json(Map.of("email", email)), String.class);
+
+        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(mailer.resetCount()).isEqualTo(1);
+    }
+
+    /** Registering with the victim's address and pressing "resend" must not flood their inbox. */
+    @Test
+    void aSecondResendWithinFiveMinutesIsNotSent() {
+        String email = uniqueEmail();
+        register(email);
+        String accessToken = (String) login(email).getBody().get("accessToken");
+
+        assertThat(resendVerification(accessToken).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(resendVerification(accessToken).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+
+        assertThat(mailer.verificationCount()).isEqualTo(2);
+    }
+
+    @Test
+    void registeringAgainAndAgainWarnsTheOwnerOnce() {
+        String email = uniqueEmail();
+        register(email);
+
+        register(email);
+        register(email);
+
+        assertThat(mailer.existingAccountWarningCount()).isEqualTo(1);
+    }
+
     // --- helpers ---------------------------------------------------------------
 
     private void disable(String email) {
