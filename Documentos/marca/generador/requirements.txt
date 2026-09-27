@@ -1,0 +1,3 @@
+fonttools>=4.60
+skia-pathops>=0.9
+uharfbuzz>=0.50
