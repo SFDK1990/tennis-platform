@@ -39,7 +39,12 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
   await booked.getByRole("button", { name: "Reservar" }).click();
   await expect(booked.getByText("Tienes plaza")).toBeVisible();
 
+  // The booking came from another browser, and nothing makes this page read the week again: if
+  // the test's day is in the current week (a fresh CI database hands out days from today + 2),
+  // the agenda keeps the count it had. Only moving to another week fetched it anew. Reloading is
+  // what the teacher would do.
   await page.getByRole("button", { name: "Cerrar" }).click();
+  await page.reload();
   const lesson = (await dayInCalendar(page, day)).getByRole("listitem").filter({ hasText: "10:00" });
   await expect(lesson).toContainText("2 plazas libres");
   // Its row comes from a class generated ahead in globals.css; without it the block drops to the top.
