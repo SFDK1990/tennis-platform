@@ -52,8 +52,10 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       TENNIS_IDENTITY_AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-20}
       JAVA_OPTS: -Xms256m -Xmx768m
+    # Liveness, not the aggregate health: the aggregate includes the SMTP check, and a mail
+    # provider that is down (or not configured yet) must not take the whole stack with it.
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 12
