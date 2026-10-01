@@ -203,3 +203,26 @@ Skills:
 6. Editar.
 7. Frontend, pieza a pieza.
 8. E2E y documentación: `01` §4, la trampa de `DELETED` y `TennisPlatformApp/CLAUDE.md`.
+
+## Decisiones tomadas al implementar
+
+- **`DELETED` es definitivo también en el dominio.** Ni desactivar ni reactivar (422
+  `ACCOUNT_DELETED`), y un enlace de verificación o de restablecimiento pendiente ya no la
+  devuelve: `User` sólo admite esas transiciones desde `ACTIVE` o `PENDING_VERIFICATION`.
+- **El profesor ve a un alumno borrado como «Alumno».** Su lista sólo trae a los alumnos que
+  gestiona, así que un alumno borrado sale como cualquiera al que dejó de gestionar. En la base
+  queda «Alumno eliminado». Enseñar el nombre de los antiguos alumnos encaja en la ficha de la
+  Fase 23.
+- **Borrar la cuenta también cuenta para el límite por IP**, como cambiar la contraseña: las dos
+  comprueban una contraseña con un access token.
+- **El admin ve las notas de una clase igual que hoy: sin ellas.** La respuesta de su cancelación
+  y `GET /lessons/{id}` las reservan al profesor.
+- **Dos tests fijaban la regla anterior** («el admin no tiene calendario» y «no tiene lista de
+  reservas»). Se han quitado; `AdminIncidentsTest` prueba la nueva.
+- **La semana de la agenda pasa a `AgendaWeek`**, en `calendar`, porque la usan el profesor y el
+  admin. Antes estaba entera en la página del profesor.
+- **Tras borrar la cuenta, el login lo confirma** (`/login?cuenta=borrada`). Era el único sitio
+  sin sesión al que llevar al alumno sin crear una página pública nueva.
+- **Los formularios con contraseña llevan el usuario oculto** (`autocomplete="username"`), para que
+  el gestor de contraseñas sepa de qué cuenta es. Lo pedía Chrome en la consola.
+

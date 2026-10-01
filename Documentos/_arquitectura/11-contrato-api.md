@@ -209,7 +209,7 @@ Códigos añadidos en la Fase 19:
 
 ## Endpoints cubiertos
 
-32 operaciones, agrupadas por las etiquetas del spec. En la Fase 13 se retiraron
+37 operaciones, agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. En la Fase 13 se retiraron
 `PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
 `/calendar`).
 
