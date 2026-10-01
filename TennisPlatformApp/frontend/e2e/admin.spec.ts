@@ -46,3 +46,22 @@ test("un alumno desactivado por el admin ya no puede entrar", async ({ page, arr
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "El email o la contraseña no son correctos." })).toBeVisible();
 });
+
+test("el admin cancela una clase y el alumno la ve cancelada por administración", async ({ page, arrange }) => {
+  const student = await arrange.student({ managed: true });
+  const lessonId = await arrange.lesson({ date: await arrange.freeDay(), time: "13:00" });
+  await arrange.book(student, lessonId);
+
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await openFromMenu(page, "Clases");
+  await page.goto(`/admin/lessons/${lessonId}`);
+  await expect(page.getByText(student.email)).toBeVisible();
+  await page.getByRole("button", { name: "Cancelar clase" }).click();
+  await page.getByRole("button", { name: "Sí, cancelar la clase" }).click();
+  await expect(page.getByText(/Cancelada, con/)).toBeVisible();
+
+  await page.getByRole("button", { name: "Salir" }).click();
+  await signIn(page, student.email, student.password);
+  await openFromMenu(page, "Mis reservas");
+  await expect(page.getByRole("listitem").filter({ hasText: "13:00" })).toContainText("Cancelada por administración");
+});

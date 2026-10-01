@@ -19,9 +19,21 @@ export function useCreateLesson() {
   });
 }
 
-export function useCancelLesson() {
+export type EditLesson = components["schemas"]["EditLessonRequest"];
+
+export function useEditLesson(id: string) {
+  return useMutation({
+    mutationFn: async (body: EditLesson) =>
+      unwrap(await api.PATCH("/teacher/lessons/{id}", { params: { path: { id } }, body })),
+  });
+}
+
+/** The teacher cancels through their route; the administrator through theirs, and the bookings say who. */
+export function useCancelLesson(as: "teacher" | "admin" = "teacher") {
   return useMutation({
     mutationFn: async (id: string) =>
-      unwrap(await api.POST("/teacher/lessons/{id}/cancel", { params: { path: { id } } })),
+      unwrap(as === "admin"
+        ? await api.POST("/admin/lessons/{id}/cancel", { params: { path: { id } } })
+        : await api.POST("/teacher/lessons/{id}/cancel", { params: { path: { id } } })),
   });
 }
