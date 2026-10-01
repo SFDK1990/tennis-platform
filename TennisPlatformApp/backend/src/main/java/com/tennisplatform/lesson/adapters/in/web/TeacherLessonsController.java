@@ -2,14 +2,17 @@ package com.tennisplatform.lesson.adapters.in.web;
 
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CreateLessonRequest;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.EditLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.LessonResponse;
 import com.tennisplatform.lesson.application.port.in.CancelLesson;
+import com.tennisplatform.lesson.application.port.in.EditLesson;
 import com.tennisplatform.lesson.application.port.in.NewLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,10 +36,12 @@ class TeacherLessonsController {
 
     private final ScheduleLesson scheduleLesson;
     private final CancelLesson cancelLesson;
+    private final EditLesson editLesson;
 
-    TeacherLessonsController(ScheduleLesson scheduleLesson, CancelLesson cancelLesson) {
+    TeacherLessonsController(ScheduleLesson scheduleLesson, CancelLesson cancelLesson, EditLesson editLesson) {
         this.scheduleLesson = scheduleLesson;
         this.cancelLesson = cancelLesson;
+        this.editLesson = editLesson;
     }
 
     @PostMapping
@@ -47,6 +52,14 @@ class TeacherLessonsController {
         return LessonResponse.from(scheduleLesson.schedule(caller.id(),
                 new NewLesson(request.type(), request.startsAt(), request.endsAt(), request.capacity(),
                         request.notes(), request.overrideAvailability())), true);
+    }
+
+    @PatchMapping("/{id}")
+    LessonResponse edit(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id,
+                        @Valid @RequestBody EditLessonRequest request) {
+        requireTeacher(caller);
+        return LessonResponse.from(editLesson.edit(caller.id(), id,
+                new EditLesson.Changes(request.notes(), request.capacity())), true);
     }
 
     @PostMapping("/{id}/cancel")

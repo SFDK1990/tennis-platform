@@ -1516,6 +1516,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/lessons/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Cambia las notas o la capacidad de una clase que no ha empezado
+         * @description La hora no se cambia: los alumnos reservaron esa hora, y moverla es cancelar y crear otra. La capacidad sigue la regla de la creación (1 en una individual, hasta max_group_capacity en una grupal) y no baja de las reservas confirmadas. Bloquea la clase como una reserva antes de contar, para que una reserva simultánea no se quede sin plaza. Un campo ausente no cambia; unas notas en blanco se borran.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EditLessonRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Lesson"];
+                    };
+                };
+                /** @description VALIDATION_ERROR, o LESSON_INVALID si la capacidad no cabe en el tipo de clase */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description LESSON_ALREADY_CANCELLED, o LESSON_CAPACITY_BELOW_BOOKINGS: ya hay más alumnos reservados que la capacidad pedida. Si alguno cancela, releer puede cambiar la respuesta. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_ALREADY_STARTED, la clase ya empezó */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/teacher/lessons/{id}/cancel": {
         parameters: {
             query?: never;
@@ -2015,6 +2090,10 @@ export interface components {
             exportedAt: string;
             account: components["schemas"]["MeResponse"];
             bookings: components["schemas"]["Booking"][];
+        };
+        EditLessonRequest: {
+            notes?: string | null;
+            capacity?: number | null;
         };
         DeleteAccountRequest: {
             /** Format: password */

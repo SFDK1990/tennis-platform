@@ -830,6 +830,50 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /teacher/lessons/{id}:
+    patch:
+      tags: [lessons]
+      summary: Cambia las notas o la capacidad de una clase que no ha empezado
+      description: >-
+        La hora no se cambia: los alumnos reservaron esa hora, y moverla es cancelar y crear otra.
+        La capacidad sigue la regla de la creación (1 en una individual, hasta
+        max_group_capacity en una grupal) y no baja de las reservas confirmadas. Bloquea la clase
+        como una reserva antes de contar, para que una reserva simultánea no se quede sin plaza.
+        Un campo ausente no cambia; unas notas en blanco se borran.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EditLessonRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400":
+          description: VALIDATION_ERROR, o LESSON_INVALID si la capacidad no cabe en el tipo de clase
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: >-
+            LESSON_ALREADY_CANCELLED, o LESSON_CAPACITY_BELOW_BOOKINGS: ya hay más alumnos
+            reservados que la capacidad pedida. Si alguno cancela, releer puede cambiar la respuesta.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_ALREADY_STARTED, la clase ya empezó
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
   /teacher/lessons/{id}/cancel:
     post:
       tags: [lessons]
@@ -1259,6 +1303,12 @@ components:
         bookings:
           type: array
           items: { $ref: "#/components/schemas/Booking" }
+
+    EditLessonRequest:
+      type: object
+      properties:
+        notes: { type: string, nullable: true, maxLength: 2000 }
+        capacity: { type: integer, minimum: 1, nullable: true }
 
     DeleteAccountRequest:
       type: object

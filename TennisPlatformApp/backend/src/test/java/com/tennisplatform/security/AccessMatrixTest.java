@@ -103,6 +103,7 @@ class AccessMatrixTest extends AbstractBookingTest {
         row("GET", "/bookings", none,                                            401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         // Somebody else's booking does not exist for them.
         row("POST", "/bookings/{bookingId}/cancel", none,                        401, 404, ALLOWED, 404, ALLOWED, ALLOWED);
+        row("PATCH", "/teacher/lessons/{lessonId}", Map.of("capacity", 5),       401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/cancel", none,                  401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/attendance",
                 Map.of("entries", List.of(Map.of("bookingId", "{bookingId}", "status", "ATTENDED"))),

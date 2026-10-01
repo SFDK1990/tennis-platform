@@ -132,6 +132,35 @@ public class Lesson {
     }
 
     /**
+     * Changes the notes and the capacity, the only two things that may change
+     * (30-fase19-analisis-cierre-mvp.md): the time cannot, because the students booked that time.
+     * A null leaves the value as it is; blank notes clear them.
+     *
+     * <p>The count must come from a read made under the lesson's lock, or a booking that got in
+     * meanwhile would be left without a seat.
+     */
+    public Lesson edit(String newNotes, Integer newCapacity, int confirmedBookings, Instant now,
+                       int maxGroupCapacity) {
+        if (cancelledAt != null) {
+            throw new LessonAlreadyCancelledException("A cancelled lesson cannot be changed");
+        }
+        if (!period.startsAt().isAfter(now)) {
+            throw new LessonAlreadyStartedException("The lesson has started and can no longer be changed");
+        }
+        int capacityAfter = newCapacity == null ? capacity : newCapacity;
+        if (newCapacity != null) {
+            requireCapacityFor(type, capacityAfter, maxGroupCapacity);
+            if (capacityAfter < confirmedBookings) {
+                throw new LessonCapacityBelowBookingsException("The lesson already has " + confirmedBookings
+                        + " students booked, more than " + capacityAfter + " seats");
+            }
+        }
+        String notesAfter = newNotes == null ? notes : normalise(newNotes);
+        return new Lesson(id, teacherUserId, type, period, capacityAfter, notesAfter, createdOutsideAvailability,
+                cancelledAt);
+    }
+
+    /**
      * What the lesson looks like right now, given how many confirmed bookings it has.
      *
      * <p>The order matters and is deliberate: a lesson that was cancelled reads {@code

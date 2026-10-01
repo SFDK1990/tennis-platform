@@ -201,6 +201,9 @@ Códigos añadidos en la Fase 19:
 |---|---|---|---|
 | `CURRENT_PASSWORD_INCORRECT` | 422 | `POST /me/password`, `POST /me/deletion` | La contraseña actual no es la de la cuenta. Puede decirlo: quien llama ya inició sesión |
 | `ACCOUNT_DELETED` | 422 | `PATCH /admin/users/{id}/status` | El alumno borró su cuenta. Es definitivo: ni se reactiva ni se desactiva |
+| `LESSON_CAPACITY_BELOW_BOOKINGS` | 409 | `PATCH /teacher/lessons/{id}` | Ya hay más alumnos reservados que la capacidad pedida; si alguno cancela, releer puede cambiar la respuesta |
+
+`LESSON_ALREADY_STARTED` (422) y `LESSON_ALREADY_CANCELLED` (409) responden también a `PATCH /teacher/lessons/{id}`.
 
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
