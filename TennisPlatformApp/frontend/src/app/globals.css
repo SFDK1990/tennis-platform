@@ -8,11 +8,13 @@
 @source inline("row-start-{1..97} row-span-{1..96}");
 
 /*
- * MAS Tennis Academy: the palette of the logo (27-fase15.5, decision 1). Court blue is for what
+ * Oasis Papagayo (30-fase31, decision 1), on the palette of 27-fase15.5. Court blue is for what
  * can be done, navy for the frame and the text, white lines for the court drawn under the
- * things that matter most. Every text pair here passes WCAG AA.
+ * things that matter most. Every text pair here passes WCAG AA. Ball yellow belongs to the mark
+ * and to the trial-class button, always under navy text: on white it is unreadable.
  */
 @theme {
+  --color-ball: #e4f03c;
   --color-ground: #eef2f7;
   --color-paper: #ffffff;
   --color-ink: #0b1e3f;

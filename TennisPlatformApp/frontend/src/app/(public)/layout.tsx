@@ -7,8 +7,11 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
     <main className="flex min-h-screen flex-col items-center justify-center bg-navy px-4 py-12">
       <div className="w-full max-w-md">
         <div className="relative mb-8 flex flex-col items-center gap-3 border-b-[3px] border-white/85 pb-6 text-white">
-          <Logo className="h-14 w-auto" />
-          <p className="font-display text-2xl font-medium">Tennis Academy</p>
+          <Logo className="h-16 w-16" onDark label="" />
+          <p className="flex flex-col items-center">
+            <span className="font-display text-3xl font-semibold leading-none">Oasis Papagayo</span>
+            <span className="text-sm text-on-navy">Escuela de tenis</span>
+          </p>
           {/* The centre mark of a baseline. */}
           <span aria-hidden className="absolute -bottom-[3px] left-1/2 h-3.5 w-[3px] -translate-x-1/2 bg-white/85" />
         </div>

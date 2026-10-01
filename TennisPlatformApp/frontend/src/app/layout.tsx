@@ -9,12 +9,12 @@ const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: [
 const barlowCondensed = Barlow_Condensed({
   variable: "--font-barlow-condensed",
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "MAS Tennis Academy",
-  description: "Clases de tenis con Marcos Asencio: reservas, horario y asistencia.",
+  title: "Oasis Papagayo",
+  description: "Escuela de tenis Oasis Papagayo: reservas, horario y asistencia de las clases con Marcos.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

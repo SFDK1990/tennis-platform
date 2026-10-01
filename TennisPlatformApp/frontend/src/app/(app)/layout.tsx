@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import type { Me, Role } from "@/modules/identity/api";
+import { homeFor, type Me, type Role } from "@/modules/identity/api";
 import { AccountNotices } from "@/modules/identity/components/AccountNotices";
 import { RequireAccount } from "@/modules/identity/components/RequireAccount";
 import { SignOutButton } from "@/modules/identity/components/SignOutButton";
@@ -59,7 +59,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <Sidebar me={me} items={items} current={current} />
             <div className="flex min-h-screen flex-col lg:pl-64">
               <header className="flex items-center px-5 pb-1 pt-4 lg:hidden">
-                <Link href="/" className="text-court" aria-label="Inicio"><Logo className="h-7 w-auto" /></Link>
+                {/* The role's home: "/" is now the public website (30-fase31, decision 2). */}
+                <Link href={homeFor(me.role)} className="flex items-center gap-2.5" aria-label="Inicio">
+                  <Logo className="h-9 w-9" label="" />
+                  <span className="font-display text-xl font-semibold">Oasis Papagayo</span>
+                </Link>
               </header>
               <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pb-28 pt-3 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10">
                 {SCREENS_WITH_THEIR_OWN_NOTICES.includes(pathname) ? null : <AccountNotices me={me} />}
@@ -81,9 +85,9 @@ function isCurrent(item: NavItem, pathname: string): boolean {
 function Sidebar({ me, items, current }: { me: Me; items: NavItem[]; current?: string }) {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-navy px-3.5 py-6 text-white lg:flex">
-      <Link href="/" className="mb-7 flex items-center gap-3 px-2.5">
-        <Logo className="h-8 w-auto" />
-        <span className="font-display text-lg font-medium leading-none">Tennis<br />Academy</span>
+      <Link href={homeFor(me.role)} className="mb-7 flex items-center gap-3 px-2.5">
+        <Logo className="h-10 w-10" onDark label="" />
+        <span className="font-display text-xl font-semibold leading-none">Oasis<br />Papagayo</span>
       </Link>
       <nav aria-label="Principal" className="flex flex-col gap-1">
         {items.map((item) => (
