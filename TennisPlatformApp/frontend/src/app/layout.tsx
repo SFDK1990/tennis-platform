@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
 import { connection } from "next/server";
 import { Providers } from "@/app/providers";
+import { siteUrl } from "@/app/site-url";
 import "./globals.css";
 
 const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -13,6 +14,7 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
+  metadataBase: siteUrl(),
   title: "Oasis Papagayo",
   description: "Escuela de tenis Oasis Papagayo: reservas, horario y asistencia de las clases con Marcos.",
 };
