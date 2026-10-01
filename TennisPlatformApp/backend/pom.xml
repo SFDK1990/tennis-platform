@@ -29,13 +29,15 @@
         <!--
             Ahead of the Boot BOM for known CVEs: Tomcat 10.1.55 (three CRITICAL, fixed in
             10.1.58), pgjdbc 42.7.11 (SCRAM downgrade, fixed in 42.7.12) and jackson-databind
-            2.21.4 (CVE-2026-68497, CPU exhaustion parsing numbers, fixed in 2.21.6). Dependabot
+            2.21.4 (CVE-2026-68497, CPU exhaustion parsing numbers, fixed in 2.21.6; then
+            CVE-2026-91776 and CVE-2026-91777, polymorphic typing and @JsonIdentityInfo, fixed
+            in 2.21.7). Dependabot
             does not bump what the BOM manages; Trivy in CI is what catches this. Delete each line
             once spring-boot-starter-parent ships that version or later.
         -->
         <tomcat.version>10.1.60</tomcat.version>
         <postgresql.version>42.7.13</postgresql.version>
-        <jackson-bom.version>2.21.6</jackson-bom.version>
+        <jackson-bom.version>2.21.7</jackson-bom.version>
         <jjwt.version>0.13.0</jjwt.version>
         <bucket4j.version>8.20.0</bucket4j.version>
 
