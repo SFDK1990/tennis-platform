@@ -467,6 +467,79 @@ export interface paths {
         };
         trace?: never;
     };
+    "/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cambia la contraseña propia y cierra las demás sesiones
+         * @description Pide la contraseña actual, para que un access token robado no baste para quedarse con la cuenta. Revoca todas las sesiones de la cuenta y abre una nueva en este navegador: responde como el login, con el access token en el cuerpo y una cookie de refresco nueva. Cuenta para el límite de peticiones por IP, como `/auth/*`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangePasswordRequest"];
+                };
+            };
+            responses: {
+                /** @description Contraseña cambiada; nueva sesión en este navegador (`Set-Cookie`) */
+                200: {
+                    headers: {
+                        "Set-Cookie"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LoginResponse"];
+                    };
+                };
+                /** @description Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña nueva de más de 72 bytes (`AUTH_WEAK_PASSWORD`). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description La cuenta se desactivó con el access token aún vivo (`AUTH_ACCOUNT_NOT_ACTIVE`). */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description La contraseña actual no es la de la cuenta (`CURRENT_PASSWORD_INCORRECT`) */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teacher/profile": {
         parameters: {
             query?: never;
@@ -1774,6 +1847,12 @@ export interface components {
         };
         ResetPasswordRequest: {
             token: string;
+            /** Format: password */
+            newPassword: string;
+        };
+        ChangePasswordRequest: {
+            /** Format: password */
+            currentPassword: string;
             /** Format: password */
             newPassword: string;
         };

@@ -2,6 +2,7 @@ package com.tennisplatform.identity.adapters.in.web;
 
 import com.tennisplatform.error.Problems;
 import com.tennisplatform.identity.domain.AccountNotActiveException;
+import com.tennisplatform.identity.domain.CurrentPasswordIncorrectException;
 import com.tennisplatform.identity.domain.InvalidCredentialsException;
 import com.tennisplatform.identity.domain.InvalidTokenException;
 import com.tennisplatform.identity.domain.WeakPasswordException;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * Maps identity failures to Problem Details.
  *
- * <p>Every message here is deliberately vague. The service layer knows exactly what went
+ * <p>Every message here is deliberately vague, except for callers who already proved who they are. The service layer knows exactly what went
  * wrong - unknown email, wrong password, disabled account, expired token, reused token - and
  * none of that reaches the client, because the difference between those answers is precisely
  * what an attacker needs to map accounts and tokens.
@@ -46,6 +47,13 @@ class IdentityExceptionHandler {
     ProblemDetail handleAccountNotActive(AccountNotActiveException e) {
         return Problems.of(HttpStatus.FORBIDDEN, "Account not active",
                 "This account cannot perform that action.", "AUTH_ACCOUNT_NOT_ACTIVE");
+    }
+
+    /** The caller is already signed in, so saying which half was wrong reveals nothing. */
+    @ExceptionHandler(CurrentPasswordIncorrectException.class)
+    ProblemDetail handleCurrentPasswordIncorrect(CurrentPasswordIncorrectException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Current password incorrect",
+                "The current password is not the one this account has.", "CURRENT_PASSWORD_INCORRECT");
     }
 
     /** The only one that may be specific: the user needs to know what to fix. */

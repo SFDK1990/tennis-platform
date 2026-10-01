@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -86,6 +87,36 @@ class AuthRateLimitTest extends AbstractIntegrationTest {
         }
 
         assertThat(attemptFrom("198.51.100.99, 203.0.113.30", 3).getStatusCode())
+                .isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    /**
+     * The one route outside {@code /auth} that checks a password: with a stolen access token it
+     * would otherwise be a place to guess the current one without limit.
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void guessingTheCurrentPasswordIsThrottledToo() {
+        String email = "student-" + UUID.randomUUID() + "@example.com";
+        HttpHeaders account = new HttpHeaders();
+        account.set("X-Forwarded-For", "203.0.113.40");
+        rest.postForEntity("/api/v1/auth/register",
+                new HttpEntity<>(Map.of("email", email, "password", "a-valid-password"), account), String.class);
+        String token = (String) rest.postForEntity("/api/v1/auth/login",
+                new HttpEntity<>(Map.of("email", email, "password", "a-valid-password"), account), Map.class)
+                .getBody().get("accessToken");
+
+        HttpHeaders guesser = new HttpHeaders();
+        guesser.set("X-Forwarded-For", "203.0.113.50");
+        guesser.setBearerAuth(token);
+        HttpEntity<Map<String, String>> guess = new HttpEntity<>(
+                Map.of("currentPassword", "a-wrong-guess", "newPassword", "another-valid-password"), guesser);
+        for (int i = 0; i < 3; i++) {
+            assertThat(rest.postForEntity("/api/v1/me/password", guess, String.class).getStatusCode())
+                    .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
+        assertThat(rest.postForEntity("/api/v1/me/password", guess, String.class).getStatusCode())
                 .isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
     }
 
