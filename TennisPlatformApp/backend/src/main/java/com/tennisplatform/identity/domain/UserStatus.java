@@ -9,5 +9,11 @@ public enum UserStatus {
     ACTIVE,
 
     /** Deactivated by an administrator. May not sign in at all. */
-    DISABLED
+    DISABLED,
+
+    /**
+     * The student deleted their account: the address and the password are gone, so nobody can
+     * sign in, and unlike {@link #DISABLED} there is nobody to give it back to. Final.
+     */
+    DELETED
 }

@@ -12,6 +12,7 @@ const STATUS: Record<AdminUser["status"], string> = {
   PENDING_VERIFICATION: "Sin verificar",
   ACTIVE: "Activa",
   DISABLED: "Desactivada",
+  DELETED: "Eliminada",
 };
 
 const selectClass = CONTROL_CLASS;
@@ -78,22 +79,26 @@ export function UsersList({ zone }: { zone: string }) {
   );
 }
 
-/** Only student accounts can be switched; the backend refuses the rest, and the row says why not. */
+/**
+ * Only student accounts can be switched; the backend refuses the rest, and the row says why not.
+ * A deleted one is final and its address is made up, so the row says so instead of showing it.
+ */
 function UserRow({ user, zone }: { user: AdminUser; zone: string }) {
   const change = useChangeUserStatus();
   const [confirming, setConfirming] = useState(false);
   const disabled = user.status === "DISABLED";
+  const deleted = user.status === "DELETED";
 
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="min-w-0">
-          <span className="block truncate font-semibold">{user.email}</span>
+          <span className="block truncate font-semibold">{deleted ? "Cuenta eliminada por su alumno" : user.email}</span>
           <span className="text-sm text-muted">
             {ROLE[user.role]}, {STATUS[user.status].toLowerCase()}. Alta el {formatDay(dateIn(user.createdAt, zone))}.
           </span>
         </span>
-        {user.role !== "STUDENT" ? null : disabled ? (
+        {user.role !== "STUDENT" || deleted ? null : disabled ? (
           <Button variant="quiet" pending={change.isPending} onClick={() => change.mutate({ id: user.id, status: "ACTIVE" })}>
             Reactivar
           </Button>

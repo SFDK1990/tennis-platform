@@ -9,6 +9,9 @@ import com.tennisplatform.student.application.port.spi.StudentBookings;
 import com.tennisplatform.student.application.service.GetManagedStudentsService;
 import com.tennisplatform.student.application.service.ManageStudentService;
 import com.tennisplatform.student.application.service.StudentProfileService;
+import com.tennisplatform.identity.application.port.in.CloseAccount;
+import com.tennisplatform.student.application.port.in.DeleteMyAccount;
+import com.tennisplatform.student.application.service.DeleteMyAccountService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -45,6 +48,13 @@ public class StudentConfiguration {
      * Declared by its concrete type, like {@link #studentProfileService}: it implements both
      * {@code GetManagedStudents} and {@code QueryManagedStudent}, and one bean serves both.
      */
+    @Bean
+    public DeleteMyAccount deleteMyAccount(CloseAccount accounts, ManagedStudentRepository relationships,
+                                           StudentProfileRepository profiles, StudentBookings bookings,
+                                           Clock clock) {
+        return new DeleteMyAccountService(accounts, relationships, profiles, bookings, clock);
+    }
+
     @Bean
     public GetManagedStudentsService getManagedStudents(ManagedStudentRepository relationships,
                                                         StudentProfileRepository profiles,

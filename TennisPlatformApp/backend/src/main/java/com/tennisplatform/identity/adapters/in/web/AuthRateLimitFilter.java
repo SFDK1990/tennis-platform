@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Throttles the authentication endpoints per client IP, and the one outside them that also
- * checks a password: without it, a stolen access token would be a place to guess the current
+ * Throttles the authentication endpoints per client IP, and the two outside them that also
+ * check a password: without it, a stolen access token would be a place to guess the current
  * password without limit.
  *
  * <p>In memory on purpose: a single instance needs no shared state, and adding Redis now would
@@ -38,6 +38,9 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     private static final String PROTECTED_PREFIX = "/api/v1/auth/";
 
     public static final String CHANGE_PASSWORD = "/api/v1/me/password";
+
+    /** Served by {@code student}, which deletes the account; the password check is identity's. */
+    public static final String DELETE_ACCOUNT = "/api/v1/me/deletion";
 
     /**
      * Bounds memory: an attacker rotating IPs must not be able to grow the map forever. Past
@@ -67,7 +70,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return !uri.startsWith(PROTECTED_PREFIX) && !uri.equals(CHANGE_PASSWORD);
+        return !uri.startsWith(PROTECTED_PREFIX) && !uri.equals(CHANGE_PASSWORD) && !uri.equals(DELETE_ACCOUNT);
     }
 
     @Override

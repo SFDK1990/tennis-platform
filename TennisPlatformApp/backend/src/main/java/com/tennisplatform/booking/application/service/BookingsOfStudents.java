@@ -13,8 +13,9 @@ import java.util.UUID;
  * {@code student}'s request to cancel the upcoming bookings of a student it has let go.
  *
  * <p>{@code CANCELLED_BY_TEACHER} when the teacher ended the relationship, {@code CANCELLED_BY_ADMIN}
- * when an administrator disabled the account. No 24-hour window in either case: it protects the
- * teacher, and neither of them is a student changing their mind.
+ * when an administrator disabled the account, {@code CANCELLED_BY_STUDENT} when the student deleted
+ * it. No 24-hour window in any case: it protects the teacher from a change of mind, and none of
+ * these is one.
  */
 public class BookingsOfStudents implements StudentBookings {
 
@@ -34,5 +35,11 @@ public class BookingsOfStudents implements StudentBookings {
     @Transactional(propagation = Propagation.MANDATORY)
     public void cancelUpcomingOfDisabledAccount(UUID teacherUserId, UUID studentUserId, Instant at) {
         bookings.cancelUpcoming(teacherUserId, studentUserId, BookingStatus.CANCELLED_BY_ADMIN, at);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void cancelUpcomingOfDeletedAccount(UUID teacherUserId, UUID studentUserId, Instant at) {
+        bookings.cancelUpcoming(teacherUserId, studentUserId, BookingStatus.CANCELLED_BY_STUDENT, at);
     }
 }

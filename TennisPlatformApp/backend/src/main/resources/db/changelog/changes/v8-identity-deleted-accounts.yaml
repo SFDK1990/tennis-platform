@@ -1,0 +1,24 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v8-identity-deleted-status
+      author: tennis-platform
+      comment: >-
+        A student can delete their account (30-fase19-analisis-cierre-mvp.md). The row stays,
+        because past bookings point at it, with nothing in it that identifies anybody and a
+        status of its own: DELETED is final, unlike DISABLED, which an administrator can undo.
+        The CHECK was declared inline in v1-identity, so it carries PostgreSQL's default name.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE users DROP CONSTRAINT users_status_check;
+              ALTER TABLE users ADD CONSTRAINT ck_users_status
+                  CHECK (status IN ('PENDING_VERIFICATION','ACTIVE','DISABLED','DELETED'));
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE users DROP CONSTRAINT ck_users_status;
+              ALTER TABLE users ADD CONSTRAINT users_status_check
+                  CHECK (status IN ('PENDING_VERIFICATION','ACTIVE','DISABLED'));

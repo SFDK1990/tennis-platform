@@ -508,6 +508,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * El alumno borra su cuenta
+         * @description Pide la contraseña: no se puede deshacer. En una transacción, la cuenta pierde su email y su contraseña (el email real queda libre para registrarse de nuevo), el profesor deja de gestionarlo, sus reservas futuras se cancelan como CANCELLED_BY_STUDENT y su perfil se vacía. Las reservas pasadas se quedan, a nombre de "Alumno eliminado". Todas sus sesiones se cierran. Cuenta para el límite de peticiones por IP, como `/auth/*`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DeleteAccountRequest"];
+                };
+            };
+            responses: {
+                /** @description Cuenta borrada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description AUTH_FORBIDDEN: quien llama no es alumno. El profesor y el admin los crea el bootstrap y no se borran desde la app. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description La contraseña no es la de la cuenta (`CURRENT_PASSWORD_INCORRECT`) */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/password": {
         parameters: {
             query?: never;
@@ -1801,6 +1863,15 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                /** @description ACCOUNT_DELETED: el alumno borró su cuenta. Es definitivo; no hay nadie a quien devolvérsela. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         trace?: never;
@@ -1832,8 +1903,11 @@ export interface components {
         };
         /** @enum {string} */
         Role: "ADMIN" | "TEACHER" | "STUDENT";
-        /** @enum {string} */
-        UserStatus: "PENDING_VERIFICATION" | "ACTIVE" | "DISABLED";
+        /**
+         * @description DELETED: el alumno borró su cuenta. El email es uno inventado (`deleted-<id>@account.invalid`) y el perfil se llama "Alumno eliminado"; es definitivo.
+         * @enum {string}
+         */
+        UserStatus: "PENDING_VERIFICATION" | "ACTIVE" | "DISABLED" | "DELETED";
         /** @enum {string} */
         LessonType: "INDIVIDUAL" | "GROUP";
         /** @enum {string} */
@@ -1896,6 +1970,10 @@ export interface components {
             exportedAt: string;
             account: components["schemas"]["MeResponse"];
             bookings: components["schemas"]["Booking"][];
+        };
+        DeleteAccountRequest: {
+            /** Format: password */
+            password: string;
         };
         ChangePasswordRequest: {
             /** Format: password */

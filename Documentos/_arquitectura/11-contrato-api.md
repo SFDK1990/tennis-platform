@@ -22,7 +22,7 @@ Tocar un endpoint es tocar el spec en el mismo cambio.
 - Todas las fechas/horas son ISO 8601 (`date-time` en UTC, sufijo `Z`); el frontend convierte a hora local del usuario, incluyendo la zona horaria del profesor cuando aplica (decisión ya cerrada en `00-indice-arquitectura.md`).
 - Los errores siempre usan `application/problem+json` (RFC 7807) con el schema `ProblemDetails`, que añade un campo `code` con los códigos de negocio ya definidos en `02-arquitectura.md`.
 - **Estados comunes, documentados en cada operación**: `401` en toda la que exige bearer token,
-  `429` en todo `/auth/*` y en `POST /me/password` (el límite por IP cubre el prefijo entero y la otra ruta que comprueba una contraseña) y `400` en toda la que recibe
+  `429` en todo `/auth/*`, en `POST /me/password` y en `POST /me/deletion` (el límite por IP cubre el prefijo entero y las dos rutas que comprueban una contraseña) y `400` en toda la que recibe
   cuerpo, id o parámetros. Son los que un test rara vez provoca, y por eso los comprueba un test
   sobre el propio spec.
 - **Las transiciones de estado son acciones** (`POST .../cancel`, `.../manage`, `.../attendance`,
@@ -68,7 +68,7 @@ contrato como el resto:
 | `AUTH_UNAUTHENTICATED`      | 401  | No hay bearer token, o no es válido, en un endpoint que lo exige |
 | `AUTH_CSRF_TOKEN_INVALID`   | 403  | Falta `X-XSRF-TOKEN` o no coincide con la cookie                |
 | `AUTH_FORBIDDEN`            | 403  | Denegación de autorización genérica de la cadena de filtros      |
-| `AUTH_RATE_LIMITED`         | 429  | Demasiadas peticiones a `/auth/*` o a `POST /me/password` desde la misma IP; `Retry-After` dice cuánto esperar |
+| `AUTH_RATE_LIMITED`         | 429  | Demasiadas peticiones a `/auth/*`, `POST /me/password` o `POST /me/deletion` desde la misma IP; `Retry-After` dice cuánto esperar |
 
 `AUTH_UNAUTHENTICATED` es deliberadamente vago: no distingue token ausente de expirado, mal
 formado o firmado por otro. Esa diferencia es justo lo que un atacante necesita para saber cuál
@@ -199,7 +199,8 @@ Códigos añadidos en la Fase 19:
 
 | Código | HTTP | Endpoint típico | Motivo |
 |---|---|---|---|
-| `CURRENT_PASSWORD_INCORRECT` | 422 | `POST /me/password` | La contraseña actual no es la de la cuenta. Puede decirlo: quien llama ya inició sesión |
+| `CURRENT_PASSWORD_INCORRECT` | 422 | `POST /me/password`, `POST /me/deletion` | La contraseña actual no es la de la cuenta. Puede decirlo: quien llama ya inició sesión |
+| `ACCOUNT_DELETED` | 422 | `PATCH /admin/users/{id}/status` | El alumno borró su cuenta. Es definitivo: ni se reactiva ni se desactiva |
 
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 

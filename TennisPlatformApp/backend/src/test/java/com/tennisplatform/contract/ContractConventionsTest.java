@@ -29,12 +29,12 @@ class ContractConventionsTest {
 
     /**
      * {@code AuthRateLimitFilter} throttles the whole prefix, logout and refresh included, and the
-     * one route outside it that checks a password.
+     * two routes outside it that check a password.
      */
     @Test
     void everyAuthenticationOperationDocumentsTheRateLimit() {
         assertThat(operationsMissing("429", (path, item, operation) -> path.startsWith("/auth/")
-                || path.equals("/me/password"))).isEmpty();
+                || path.equals("/me/password") || path.equals("/me/deletion"))).isEmpty();
     }
 
     /** A malformed body, id or query parameter is a 400, never a 500. */

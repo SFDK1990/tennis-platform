@@ -1,6 +1,7 @@
 package com.tennisplatform.identity.adapters.in.web;
 
 import com.tennisplatform.error.Problems;
+import com.tennisplatform.identity.domain.AccountDeletedException;
 import com.tennisplatform.identity.domain.AccountNotActiveException;
 import com.tennisplatform.identity.domain.CurrentPasswordIncorrectException;
 import com.tennisplatform.identity.domain.InvalidCredentialsException;
@@ -47,6 +48,13 @@ class IdentityExceptionHandler {
     ProblemDetail handleAccountNotActive(AccountNotActiveException e) {
         return Problems.of(HttpStatus.FORBIDDEN, "Account not active",
                 "This account cannot perform that action.", "AUTH_ACCOUNT_NOT_ACTIVE");
+    }
+
+    /** Nobody is left to give a deleted account back to, and disabling it again means nothing. */
+    @ExceptionHandler(AccountDeletedException.class)
+    ProblemDetail handleAccountDeleted(AccountDeletedException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Account deleted",
+                "This account was deleted by its owner and can no longer change.", "ACCOUNT_DELETED");
     }
 
     /** The caller is already signed in, so saying which half was wrong reveals nothing. */
