@@ -66,6 +66,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 15.5 | Experiencia y diseño | Completada | `27-fase15.5-analisis-experiencia-diseno.md`. Maqueta aprobada por Daniel antes de implementar; identidad visual, "Hoy" del profesor, próxima clase del alumno y pantallas vacías que guían. Sólo frontend, con los E2E como red |
 | 16 | Observabilidad | Completada | `28-fase16-analisis-observabilidad.md`. Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |
 | 17 | Endurecimiento y despliegue | Aparcada | `29-fase17-analisis-endurecimiento-despliegue.md`. Se retoma con el producto completo: hasta entonces se sigue en local y no se paga nada. La PWA y la accesibilidad pasan a la 30 |
+| 31 | Web pública | **En curso** | `30-fase31-analisis-web-publica.md`. La web de la escuela en `/`, en claro y en oscuro, con la clase de prueba por WhatsApp; la app entera pasa a Oasis Papagayo |
 | 19 | Cierre del MVP | **Siguiente** | Cambiar la contraseña, exportar y borrar la cuenta; el admin lista reservas y cancela clases; editar las notas y la capacidad de una clase |
 | 20 | Avisos y calendario | Pendiente | Correos de reserva y cancelación al alumno y aviso a Marcos; `.ics`; cancelar un día entero por lluvia |
 | 21 | Lista de espera | Pendiente | Una plaza liberada se reserva sola al primero de la lista |
@@ -81,7 +82,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 18 | Revisión final de arquitectura | Pendiente | Informe con severidades; nada se aplica sin aprobación. Va la última |
 
 Las reglas de producto de las fases 19–29 ya decididas están en `01-analisis-funcional.md` §18.
-Aparcado hasta que Daniel diga: web pública y clase de prueba, idiomas, pago online y facturas,
+Aparcado hasta que Daniel diga: reservar la clase de prueba desde la web, idiomas, pago online y facturas,
 varios profesores o pistas, torneos, alquiler de pista y valoraciones.
 
 ## Decisiones de proceso resueltas
