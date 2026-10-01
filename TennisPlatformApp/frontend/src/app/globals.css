@@ -105,10 +105,13 @@ body {
   }
 }
 
-/* The one moment of motion: the front page settles in once (decision 11). */
+/*
+ * The one moment of motion: the front page settles in once (decision 11). Only movement, never
+ * fading in: text at opacity 0 does not count as painted, and the largest paint of the page
+ * waited for the animation to end on a slow phone.
+ */
 @keyframes site-rise {
   from {
-    opacity: 0;
     transform: translateY(16px);
   }
 }

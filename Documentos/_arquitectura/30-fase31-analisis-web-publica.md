@@ -116,3 +116,29 @@ backend.
   si usa su número o uno de la escuela.
 - **La cookie del tema no es esencial**, pero tampoco rastrea: es una preferencia que pide el
   propio visitante, así que no necesita aviso de cookies.
+
+## Decisiones tomadas al implementar
+
+- **El JSON-LD va sin nonce.** El navegador no ejecuta un bloque `application/ld+json`, así que
+  la CSP no tiene nada que bloquear, y el nonce en un `<script>` hidratado puede dar avisos de
+  hidratación. Corrige la decisión 10.
+- **La entrada de la portada sólo se mueve, no aparece desde transparente.** Un texto con
+  opacidad 0 no cuenta como pintado: el título tardaba en contar como el elemento más grande de
+  la página hasta que acababa la animación.
+- **En el móvil, el botón de la prueba vive sólo en la barra de abajo**, que no se va al hacer
+  scroll. Los de la portada y del final se ven a partir de 1024 px: si no, la primera pantalla
+  del móvil lo enseñaba dos veces.
+- **El logo de la app lleva al inicio de cada rol**, no a `/`: `/` es ahora la web.
+- **Sin número de WhatsApp en `school.ts`, el botón lleva a la sección de contacto** (`#donde`);
+  con número, a `wa.me`. Lo cubren el test unitario y el E2E.
+- **`robots.txt` y `sitemap.xml` se generan al compilar**, así que `SITE_URL` tiene que estar en
+  el entorno de la build de producción, no sólo en el de ejecución.
+- **Lighthouse en el móvil queda por debajo de 90 en rendimiento** (entre 60 y 87 según la
+  pasada, con la máquina compartida con otra sesión). En escritorio: 99, 100, 96 y 100. Lo que
+  pesa es el JavaScript que se ejecuta antes del primer fotograma (React y el runtime de Next, el
+  mismo en toda la app), que Lighthouse proyecta sobre un móvil cuatro veces más lento. El 96 de
+  buenas prácticas es el 401 que da en la consola el intento de recuperar la sesión en cada
+  visita anónima. El criterio 8 se vuelve a medir con la máquina libre; si no llega, se trata en
+  la Fase 30 (PWA y accesibilidad), que es donde se decide qué carga la app en el móvil.
+- **Faltan el aviso legal y la política de privacidad.** La web no recoge datos personales, pero
+  la app sí; tienen que existir antes de desplegar (Fase 17).
