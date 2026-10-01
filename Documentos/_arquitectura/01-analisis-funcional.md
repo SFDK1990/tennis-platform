@@ -223,9 +223,9 @@ La asistencia se modela separadamente como `PENDING`, `ATTENDED` o `NO_SHOW`.
 
 ## 16. Fuera del MVP
 
-- Pagos.
+- Pagos online (los bonos y las mensualidades se apuntan, no se cobran: §18).
 - Penalizaciones.
-- Notificaciones externas.
+- Notificaciones push. Los avisos por correo sí entran (§18).
 - Integración con Google Calendar o Apple Calendar.
 - Múltiples profesores.
 - Multi-tenant.
@@ -249,4 +249,28 @@ La asistencia se modela separadamente como `PENDING`, `ATTENDED` o `NO_SHOW`.
 - **No se crean clases que ya hayan empezado.**
 - **Email verificado para reservar.** El login lo acepta sin verificar; la reserva no.
 
-Pendiente: la política legal de eliminación y anonimización de datos.
+## 18. Después del MVP: reglas decididas
+
+Daniel las eligió el 30/09/2026, antes de las fases 19–29 (`12-metodologia-trabajo.md`). Cada
+análisis de fase las desarrolla; no las vuelve a preguntar.
+
+- **Borrar la cuenta anonimiza.** Se borran nombre, email, teléfono, DNI y dirección; las
+  reservas pasadas quedan como "Alumno eliminado", para que resúmenes y bonos cuadren. Sus
+  reservas futuras se cancelan.
+- **Correos:** al alumno, la reserva confirmada (con `.ics`) y la cancelación de su clase o su
+  reserva por el profesor o el admin; a Marcos, cada reserva y cancelación de un alumno. Sin
+  recordatorio previo.
+- **Lista de espera:** una plaza liberada se reserva sola al primero de la lista, que recibe el
+  correo. Si no puede ir, cancela como cualquier reserva.
+- **Clases que se repiten:** antes de crearlas se muestran las fechas que chocan (con otra clase
+  o fuera del horario), y Marcos decide si salta esas o cambia algo.
+- **Niveles:** los define Marcos, empezando por iniciación, intermedio, avanzado y competición.
+  El alumno ve todas las clases, pero sólo reserva las de su nivel o las abiertas a todos.
+- **Mensajes de Marcos** a un grupo, un nivel o todos: por correo y en un tablón de la app.
+- **Familias:** los hijos son perfiles dentro de la cuenta de un adulto, que reserva por ellos.
+  El niño no tiene email ni contraseña.
+- **Bonos:** la clase se descuenta al reservar y se devuelve si se cancela a tiempo (más de
+  24 horas); si no viene, se pierde. Sin saldo no se reserva. Cada tipo de bono tiene el precio
+  y la caducidad (o ninguna) que ponga Marcos.
+- **Mensualidades:** por grupo fijo. El alumno se apunta al grupo, paga la cuota del mes y sus
+  clases del grupo quedan reservadas.
