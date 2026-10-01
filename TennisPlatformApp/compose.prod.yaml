@@ -1,0 +1,102 @@
+name: tennis-prod
+
+# Production on the Raspberry Pi (29-fase17-analisis-endurecimiento-despliegue.md, 17.1).
+# No service publishes a port: the only way in is cloudflared, which dials out to Cloudflare.
+# Docker's published ports bypass ufw, so a "ports:" here would open a hole in the firewall.
+# Secrets come from .env next to this file (deploy/.env.prod.example), mode 600, never in Git.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:?}
+      POSTGRES_USER: ${DB_USER:?}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      SERVER_SHUTDOWN: graceful
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?}
+      FRONTEND_BASE_URL: https://app.${DOMAIN:?}
+      MAIL_HOST: ${MAIL_HOST:?}
+      MAIL_PORT: ${MAIL_PORT:?}
+      MAIL_USERNAME: ${MAIL_USERNAME:?}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?}
+      MAIL_FROM: ${MAIL_FROM:?}
+      TEACHER_EMAIL: ${TEACHER_EMAIL:-}
+      TEACHER_PASSWORD: ${TEACHER_PASSWORD:-}
+      TEACHER_DISPLAY_NAME: ${TEACHER_DISPLAY_NAME:-}
+      TEACHER_TIMEZONE: ${TEACHER_TIMEZONE:-Europe/Madrid}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      TENNIS_IDENTITY_AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-20}
+      JAVA_OPTS: -Xms256m -Xmx768m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+    mem_limit: 1g
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked in at build time: see the comment in frontend/Dockerfile.
+        BACKEND_URL: http://backend:8080
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 512m
+
+  # The entrance. It serves the public site and passes the app to the frontend, overwriting
+  # X-Forwarded-For with the client address Cloudflare saw (requirement of Fase 15).
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/site:/srv/site:ro
+      - caddy-data:/data
+    mem_limit: 128m
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?}
+    depends_on:
+      - caddy
+    mem_limit: 128m
+
+volumes:
+  postgres-data:
+  caddy-data:

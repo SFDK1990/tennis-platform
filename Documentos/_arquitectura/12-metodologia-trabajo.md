@@ -65,7 +65,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 15 | Auditoría de seguridad | Completada | `26-fase15-analisis-seguridad.md`. OWASP Top 10, acceso horizontal, secretos y dependencias revisados |
 | 15.5 | Experiencia y diseño | Completada | `27-fase15.5-analisis-experiencia-diseno.md`. Maqueta aprobada por Daniel antes de implementar; identidad visual, "Hoy" del profesor, próxima clase del alumno y pantallas vacías que guían. Sólo frontend, con los E2E como red |
 | 16 | Observabilidad | Completada | `28-fase16-analisis-observabilidad.md`. Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |
-| 17 | Endurecimiento y despliegue | Aparcada | `29-fase17-analisis-endurecimiento-despliegue.md`. Se retoma con el producto completo: hasta entonces se sigue en local y no se paga nada. La PWA y la accesibilidad pasan a la 30 |
+| 17 | Endurecimiento y despliegue | 17.1 en curso | `29-fase17-analisis-endurecimiento-despliegue.md`. La 17.1 (despliegue y backups) se retoma en una Raspberry Pi con Cloudflare Tunnel, sin coste de servidor. La PWA y la accesibilidad pasan a la 30 |
 | 19 | Cierre del MVP | **Siguiente** | Cambiar la contraseña, exportar y borrar la cuenta; el admin lista reservas y cancela clases; editar las notas y la capacidad de una clase |
 | 20 | Avisos y calendario | Pendiente | Correos de reserva y cancelación al alumno y aviso a Marcos; `.ics`; cancelar un día entero por lluvia |
 | 21 | Lista de espera | Pendiente | Una plaza liberada se reserva sola al primero de la lista |

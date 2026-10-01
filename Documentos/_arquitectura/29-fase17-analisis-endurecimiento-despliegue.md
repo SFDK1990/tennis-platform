@@ -4,6 +4,20 @@
 sigue en local. La parte de PWA y accesibilidad pasa a la Fase 30; lo demás espera tal cual, y
 las decisiones que dice "tuyas" siguen abiertas.
 
+**17.1 retomada en una Raspberry Pi (01/10/2026).** Daniel tiene una Raspberry Pi 4 de 8 GB y un
+disco duro USB con alimentación propia: el servidor no cuesta nada y sustituye al VPS de la
+decisión 1. Lo demás se mantiene, con dos cambios:
+
+- **Entrada por Cloudflare Tunnel** en lugar de abrir 80 y 443. Funciona aunque la conexión
+  use CGNAT, no abre puertos ni expone la IP del servidor, y Cloudflare pone el HTTPS. Caddy sigue dentro, sin certificado propio, y **sobrescribe** `X-Forwarded-For` con
+  `CF-Connecting-IP`: sólo se llega a Caddy por el túnel, así que esa cabecera no la puede
+  inventar un cliente. Probado: un `X-Forwarded-For` falso no pasa.
+- **Administración por Tailscale** (SSH y `/actuator`), con `ufw` cerrando todo lo demás. Ningún
+  servicio de `compose.prod.yaml` publica puertos: Docker se los saltaría a `ufw`.
+
+El único gasto es el dominio (unos 10 €/año). Los ficheros están en `compose.prod.yaml` y
+`TennisPlatformApp/deploy/`. La guía paso a paso de la Pi vive fuera del repositorio.
+
 Criterio de salida (`12-metodologia-trabajo.md`): PWA completa, accesibilidad, proveedor elegido
 y política de backups. Es la última fase antes de que la usen alumnos de verdad. Por eso decide
 dónde viven sus datos, cuánto tiempo y cómo se recuperan.

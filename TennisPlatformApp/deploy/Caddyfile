@@ -1,0 +1,28 @@
+{
+	# Cloudflare terminates HTTPS in front of the tunnel: Caddy speaks plain HTTP inside the
+	# Docker network and needs no certificate of its own.
+	auto_https off
+	admin off
+}
+
+# The public website: static files in deploy/site.
+http://{$DOMAIN}, http://www.{$DOMAIN} {
+	root * /srv/site
+	encode zstd gzip
+	file_server
+}
+
+# The application.
+http://app.{$DOMAIN} {
+	encode zstd gzip
+
+	# Metrics and health are read through Tailscale/SSH, never from the internet (Fase 17, 10).
+	respond /actuator* 404
+
+	reverse_proxy frontend:3000 {
+		# Overwrite, never append: the only address the rate limiting may believe is the one
+		# Cloudflare saw. Nothing reaches Caddy except through cloudflared, so the header
+		# cannot be forged by a client (AuthRateLimitFilter, 26-fase15-analisis-seguridad.md).
+		header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+	}
+}
