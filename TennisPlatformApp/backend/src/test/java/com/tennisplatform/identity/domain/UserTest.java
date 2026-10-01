@@ -89,4 +89,31 @@ class UserTest {
         assertThat(teacher.status()).isEqualTo(UserStatus.ACTIVE);
         assertThat(teacher.isEmailVerified()).isTrue();
     }
+
+    /** Nothing that identifies the student is left, and the real address is free again. */
+    @Test
+    void closingAnAccountLeavesNothingThatIdentifiesItsOwner() {
+        User user = User.register(EMAIL, "hash", NOW);
+
+        user.close("unusable");
+
+        assertThat(user.status()).isEqualTo(UserStatus.DELETED);
+        assertThat(user.email().value()).isEqualTo("deleted-" + user.id() + "@account.invalid");
+        assertThat(user.passwordHash()).isEqualTo("unusable");
+        assertThat(user.canAuthenticate()).isFalse();
+    }
+
+    /** DELETED is final: a pending link or the console must not bring the account back. */
+    @Test
+    void aDeletedAccountCanBeNeitherVerifiedNorDisabledNorReactivatedNorClosedAgain() {
+        User user = User.register(EMAIL, "hash", NOW);
+        user.close("unusable");
+
+        assertThatThrownBy(() -> user.verifyEmail(NOW)).isInstanceOf(AccountNotActiveException.class);
+        assertThatThrownBy(() -> user.changePassword("other")).isInstanceOf(AccountNotActiveException.class);
+        assertThatThrownBy(user::disable).isInstanceOf(AccountDeletedException.class);
+        assertThatThrownBy(user::reactivate).isInstanceOf(AccountDeletedException.class);
+        assertThatThrownBy(() -> user.close("again")).isInstanceOf(AccountDeletedException.class);
+        assertThat(user.status()).isEqualTo(UserStatus.DELETED);
+    }
 }

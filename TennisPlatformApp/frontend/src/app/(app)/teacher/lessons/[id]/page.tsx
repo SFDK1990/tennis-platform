@@ -17,6 +17,7 @@ export default function LessonPage() {
   const zone = useTeacherZone();
   const nameOf = useStudentNames();
   const now = useNow();
+  const started = lesson.data ? new Date(lesson.data.startsAt).getTime() <= now : false;
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
@@ -24,10 +25,10 @@ export default function LessonPage() {
       <ErrorNotice error={lesson.error} />
       {lesson.data && zone ? (
         <>
-          <LessonDetail lesson={lesson.data} zone={zone} />
+          <LessonDetail lesson={lesson.data} zone={zone} started={started} />
           <section className="flex flex-col gap-3">
             <h2 className="font-display text-2xl font-semibold">Alumnos</h2>
-            <LessonAttendance lessonId={id} started={new Date(lesson.data.startsAt).getTime() <= now} nameOf={nameOf} />
+            <LessonAttendance lessonId={id} started={started} nameOf={nameOf} />
           </section>
         </>
       ) : (

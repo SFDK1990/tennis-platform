@@ -41,7 +41,10 @@ El perfil debe permitir gestionar:
 - Email.
 - Zona horaria.
 
-El cambio de email queda fuera del MVP inicial. El usuario podrá exportar sus datos y solicitar la eliminación de su cuenta.
+El cambio de email queda fuera del MVP inicial. Cualquier usuario puede cambiar su contraseña y
+descargar sus datos. El alumno puede borrar su cuenta (§18); el profesor y el admin, que crea el
+bootstrap, no. Las notas de las clases son texto libre del profesor y el borrado no las toca, así que
+no deben llevar datos de alumnos.
 
 ## 5. Gestión de alumnos
 

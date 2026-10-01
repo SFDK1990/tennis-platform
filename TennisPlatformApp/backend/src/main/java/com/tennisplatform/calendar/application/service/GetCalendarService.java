@@ -96,6 +96,12 @@ public class GetCalendarService implements GetCalendar {
                         (earlier, later) -> later));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public CalendarView forAdministration(LocalDate from, LocalDate to) {
+        return forTeacher(teacherProfiles.get().userId(), from, to);
+    }
+
     private ZoneId zoneOf(UUID teacherUserId) {
         return teacherProfiles.byUserId(teacherUserId)
                 .map(profile -> ZoneId.of(profile.timezone()))

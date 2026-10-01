@@ -21,6 +21,9 @@ import java.util.UUID;
  */
 public class StudentProfile {
 
+    /** What a deleted student is called wherever their past bookings still show. */
+    public static final String DELETED_STUDENT_NAME = "Alumno eliminado";
+
     private static final int MAX_FULL_NAME_LENGTH = 255;
     private static final int MAX_PHONE_LENGTH = 30;
     private static final int MAX_NATIONAL_ID_LENGTH = 30;
@@ -77,6 +80,17 @@ public class StudentProfile {
         if (newAddress != null) {
             this.address = optional(newAddress, MAX_ADDRESS_LENGTH, "address");
         }
+    }
+
+    /**
+     * The student deleted their account: the profile stays, so their past bookings still have a
+     * name to show, but nothing in it identifies them any more (01-analisis-funcional.md §18).
+     */
+    public void anonymize() {
+        this.fullName = DELETED_STUDENT_NAME;
+        this.phone = null;
+        this.nationalId = null;
+        this.address = null;
     }
 
     private static String requiredFullName(String value) {

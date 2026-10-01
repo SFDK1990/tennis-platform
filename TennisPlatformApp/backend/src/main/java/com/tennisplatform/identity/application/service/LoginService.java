@@ -2,7 +2,6 @@ package com.tennisplatform.identity.application.service;
 
 import com.tennisplatform.identity.application.port.in.AuthenticationResult;
 import com.tennisplatform.identity.application.port.in.Login;
-import com.tennisplatform.identity.application.port.in.UserSummary;
 import com.tennisplatform.identity.application.port.out.AccessTokenIssuer;
 import com.tennisplatform.identity.application.port.out.PasswordHasher;
 import com.tennisplatform.identity.application.port.out.RefreshTokens;
@@ -11,37 +10,26 @@ import com.tennisplatform.identity.application.port.out.TokenHasher;
 import com.tennisplatform.identity.application.port.out.UserRepository;
 import com.tennisplatform.identity.domain.EmailAddress;
 import com.tennisplatform.identity.domain.InvalidCredentialsException;
-import com.tennisplatform.identity.domain.RefreshToken;
 import com.tennisplatform.identity.domain.User;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Optional;
 
 public class LoginService implements Login {
 
     private final UserRepository users;
-    private final RefreshTokens refreshTokens;
     private final PasswordHasher passwordHasher;
-    private final SecureTokenGenerator tokenGenerator;
-    private final TokenHasher tokenHasher;
-    private final AccessTokenIssuer accessTokenIssuer;
-    private final Clock clock;
-    private final Duration refreshTokenTtl;
+    private final SessionIssuer sessions;
 
     public LoginService(UserRepository users, RefreshTokens refreshTokens, PasswordHasher passwordHasher,
                         SecureTokenGenerator tokenGenerator, TokenHasher tokenHasher,
                         AccessTokenIssuer accessTokenIssuer, Clock clock, Duration refreshTokenTtl) {
         this.users = users;
-        this.refreshTokens = refreshTokens;
         this.passwordHasher = passwordHasher;
-        this.tokenGenerator = tokenGenerator;
-        this.tokenHasher = tokenHasher;
-        this.accessTokenIssuer = accessTokenIssuer;
-        this.clock = clock;
-        this.refreshTokenTtl = refreshTokenTtl;
+        this.sessions = new SessionIssuer(refreshTokens, tokenGenerator, tokenHasher, accessTokenIssuer,
+                clock, refreshTokenTtl);
     }
 
     @Override
@@ -65,23 +53,7 @@ public class LoginService implements Login {
             throw new InvalidCredentialsException();
         }
 
-        return issueSession(user);
-    }
-
-    private AuthenticationResult issueSession(User user) {
-        Instant now = clock.instant();
-        Instant expiresAt = now.plus(refreshTokenTtl);
-        String rawRefreshToken = tokenGenerator.generate();
-
-        refreshTokens.save(RefreshToken.startFamily(
-                user.id(), tokenHasher.hash(rawRefreshToken), now, expiresAt));
-
-        return new AuthenticationResult(
-                accessTokenIssuer.issue(user),
-                now.plus(accessTokenIssuer.lifetime()),
-                rawRefreshToken,
-                expiresAt,
-                UserSummary.of(user));
+        return sessions.issueFor(user);
     }
 
     /** A malformed address is a failed login, not a validation error: same response either way. */

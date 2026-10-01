@@ -4,6 +4,8 @@ import com.tennisplatform.error.Problems;
 import com.tennisplatform.lesson.domain.InvalidLessonException;
 import com.tennisplatform.lesson.domain.LessonAlreadyCancelledException;
 import com.tennisplatform.lesson.domain.LessonAlreadyFinishedException;
+import com.tennisplatform.lesson.domain.LessonAlreadyStartedException;
+import com.tennisplatform.lesson.domain.LessonCapacityBelowBookingsException;
 import com.tennisplatform.lesson.domain.LessonInThePastException;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
@@ -53,6 +55,19 @@ class LessonExceptionHandler {
     ProblemDetail handleAlreadyFinished(LessonAlreadyFinishedException e) {
         return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Lesson already finished", e.getMessage(),
                 "LESSON_ALREADY_FINISHED");
+    }
+
+    /** The same code booking answers when a seat is taken or given up after the start. */
+    @ExceptionHandler(LessonAlreadyStartedException.class)
+    ProblemDetail handleAlreadyStarted(LessonAlreadyStartedException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Lesson already started", e.getMessage(),
+                "LESSON_ALREADY_STARTED");
+    }
+
+    @ExceptionHandler(LessonCapacityBelowBookingsException.class)
+    ProblemDetail handleCapacityBelowBookings(LessonCapacityBelowBookingsException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Fewer seats than bookings", e.getMessage(),
+                "LESSON_CAPACITY_BELOW_BOOKINGS");
     }
 
     @ExceptionHandler(LessonInThePastException.class)

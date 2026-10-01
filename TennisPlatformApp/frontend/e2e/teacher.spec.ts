@@ -86,3 +86,18 @@ test("el profesor pasa lista desde Hoy en cuanto la clase empieza", async ({ pag
   await openFromMenu(page, "Mis reservas");
   await expect(page.getByText("Asististe")).toBeVisible();
 });
+
+test("el profesor sube las plazas de una clase de grupo y le añade notas", async ({ page, arrange }) => {
+  const lessonId = await arrange.lesson({ date: await arrange.freeDay(), time: "12:00", capacity: 3 });
+
+  await signIn(page, TEACHER.email, TEACHER.password);
+  await page.goto(`/teacher/lessons/${lessonId}`);
+  await page.getByRole("button", { name: "Editar" }).click();
+  const form = page.getByRole("form", { name: "Editar la clase" });
+  await form.getByLabel("Plazas").fill("5");
+  await form.getByLabel("Notas").fill("Traed agua");
+  await form.getByRole("button", { name: "Guardar cambios" }).click();
+
+  await expect(page.getByText("Clase de grupo, 5 plazas")).toBeVisible();
+  await expect(page.getByText("Traed agua")).toBeVisible();
+});

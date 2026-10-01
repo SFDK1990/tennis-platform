@@ -2,12 +2,14 @@ package com.tennisplatform.lesson.configuration;
 
 import com.tennisplatform.availability.application.port.in.QueryAvailability;
 import com.tennisplatform.lesson.application.port.in.CancelLesson;
+import com.tennisplatform.lesson.application.port.in.EditLesson;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.application.service.CancelLessonService;
+import com.tennisplatform.lesson.application.service.EditLessonService;
 import com.tennisplatform.lesson.application.service.GetLessonService;
 import com.tennisplatform.lesson.application.service.LockLessonService;
 import com.tennisplatform.lesson.application.service.ScheduleLessonService;
@@ -36,6 +38,12 @@ public class LessonConfiguration {
     public GetLesson getLesson(LessonRepository lessons, LessonBookings bookings,
                                GetTeacherProfile teacherProfile, Clock clock) {
         return new GetLessonService(lessons, bookings, teacherProfile, clock);
+    }
+
+    @Bean
+    public EditLesson editLesson(LessonRepository lessons, LessonBookings bookings,
+                                 GetMaxGroupCapacity groupCapacity, GetTeacherProfile teacherProfile, Clock clock) {
+        return new EditLessonService(lessons, bookings, groupCapacity, teacherProfile, clock);
     }
 
     @Bean

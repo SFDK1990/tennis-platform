@@ -10,13 +10,16 @@ interface LessonAttendanceProps {
   started: boolean;
   /** Bookings only carry the student's id; the page knows the names. */
   nameOf: (studentUserId: string) => string;
+  /** The administrator takes a seat back to resolve an incident; the attendance is the teacher's. */
+  as?: "teacher" | "admin";
 }
 
 /**
  * The teacher's view of who is coming. Before the lesson they can take a seat back; once it
  * has started, they mark who came, all at once, as the backend applies it.
  */
-export function LessonAttendance({ lessonId, started, nameOf }: LessonAttendanceProps) {
+export function LessonAttendance({ lessonId, started, nameOf, as = "teacher" }: LessonAttendanceProps) {
+  const marking = started && as === "teacher";
   const bookings = useLessonBookings(lessonId);
   const mark = useMarkAttendance(lessonId);
   const cancel = useCancelBooking();
@@ -47,7 +50,7 @@ export function LessonAttendance({ lessonId, started, nameOf }: LessonAttendance
         {confirmed.map((booking) => (
           <li key={booking.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <span className="font-semibold">{nameOf(booking.studentUserId)}</span>
-            {started ? (
+            {marking ? (
               <fieldset className="flex gap-2">
                 <legend className="sr-only">Asistencia de {nameOf(booking.studentUserId)}</legend>
                 {(["ATTENDED", "NO_SHOW"] as const).map((status) => (
@@ -66,7 +69,7 @@ export function LessonAttendance({ lessonId, started, nameOf }: LessonAttendance
                   </label>
                 ))}
               </fieldset>
-            ) : (
+            ) : started ? null : (
               <Button variant="danger" pending={cancel.isPending && cancel.variables === booking.id}
                 onClick={() => cancel.mutate(booking.id)}>
                 Quitar plaza
@@ -77,7 +80,7 @@ export function LessonAttendance({ lessonId, started, nameOf }: LessonAttendance
       </ul>
       <ErrorNotice error={mark.error ?? cancel.error} />
       {mark.isSuccess ? <Notice tone="success">Asistencia guardada.</Notice> : null}
-      {started ? (
+      {as === "admin" ? null : started ? (
         <Button className="self-start" disabled={entries.length === 0} pending={mark.isPending}
           onClick={() => mark.mutate(entries)}>
           Guardar asistencia

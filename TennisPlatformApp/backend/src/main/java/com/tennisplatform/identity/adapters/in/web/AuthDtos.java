@@ -42,6 +42,11 @@ final class AuthDtos {
             @NotBlank @Size(min = PasswordPolicy.MIN_LENGTH, max = 200) String newPassword) {
     }
 
+    record ChangePasswordRequest(
+            @NotBlank String currentPassword,
+            @NotBlank @Size(min = PasswordPolicy.MIN_LENGTH, max = 200) String newPassword) {
+    }
+
     record UserSummaryResponse(UUID id, String email, String role, String status) {
 
         static UserSummaryResponse from(UserSummary summary) {

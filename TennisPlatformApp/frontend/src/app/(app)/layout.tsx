@@ -34,6 +34,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   ADMIN: [
     { href: "/admin", label: "Configuración", icon: "settings" },
+    { href: "/admin/lessons", label: "Clases", icon: "calendar", also: ["/admin/lessons/"] },
     { href: "/admin/users", label: "Usuarios", icon: "users" },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],

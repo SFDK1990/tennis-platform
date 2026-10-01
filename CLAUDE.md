@@ -120,3 +120,10 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   `ProblemDetailWriter` y `AuthRateLimitFilter`, o se contará como `none`.
 - **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
   estado de alumnos; el profesor y los admins no se desactivan desde la consola.
+- **Un alumno borrado no desaparece: su fila se vacía** (`DELETED`, email inventado, perfil «Alumno
+  eliminado»), porque sus reservas pasadas la apuntan. Una columna nueva que copie un dato personal
+  del alumno lo dejaría tras el borrado: `DeleteMyAccountTest` recorre todas las columnas de texto y
+  falla.
+- **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
+  contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
+  `ContractConventionsTest`.
