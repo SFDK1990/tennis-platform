@@ -467,6 +467,47 @@ export interface paths {
         };
         trace?: never;
     };
+    "/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Descarga todo lo que la plataforma guarda del usuario autenticado
+         * @description Un JSON para descargar (`Content-Disposition: attachment`): la cuenta y el perfil, como `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia. El profesor y el admin reciben la lista de reservas vacía.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        "Content-Disposition"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MyDataExport"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/password": {
         parameters: {
             query?: never;
@@ -1849,6 +1890,12 @@ export interface components {
             token: string;
             /** Format: password */
             newPassword: string;
+        };
+        MyDataExport: {
+            /** Format: date-time */
+            exportedAt: string;
+            account: components["schemas"]["MeResponse"];
+            bookings: components["schemas"]["Booking"][];
         };
         ChangePasswordRequest: {
             /** Format: password */

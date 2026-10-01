@@ -254,6 +254,27 @@ paths:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
+  /me/export:
+    get:
+      tags: [me]
+      summary: Descarga todo lo que la plataforma guarda del usuario autenticado
+      description: >-
+        Un JSON para descargar (`Content-Disposition: attachment`): la cuenta y el perfil, como
+        `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia. El profesor y
+        el admin reciben la lista de reservas vacía.
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="mis-datos.json"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyDataExport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
   /me/password:
     post:
       tags: [me]
@@ -1162,6 +1183,16 @@ components:
       properties:
         token: { type: string }
         newPassword: { type: string, format: password, minLength: 10 }
+
+    MyDataExport:
+      type: object
+      required: [exportedAt, account, bookings]
+      properties:
+        exportedAt: { type: string, format: date-time }
+        account: { $ref: "#/components/schemas/MeResponse" }
+        bookings:
+          type: array
+          items: { $ref: "#/components/schemas/Booking" }
 
     ChangePasswordRequest:
       type: object

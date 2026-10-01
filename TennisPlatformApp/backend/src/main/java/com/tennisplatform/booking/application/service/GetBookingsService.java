@@ -9,11 +9,14 @@ import com.tennisplatform.booking.domain.BookingStatus;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 public class GetBookingsService implements GetBookings {
+
+    private static final int EXPORT_PAGE_SIZE = 100;
 
     private final BookingRepository bookings;
     private final BookingViews views;
@@ -28,6 +31,20 @@ public class GetBookingsService implements GetBookings {
     public ResultPage<BookingView> forStudent(UUID studentUserId, String status, int page, int size) {
         Slice slice = bookings.findForStudent(studentUserId, BookingStatus.filter(status), page, size);
         return new ResultPage<BookingView>(views.of(slice.items()), page, size, slice.total());
+    }
+
+    /** Read in pages, so a student with years of history never costs one unbounded query. */
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingView> allOfStudent(UUID studentUserId) {
+        List<BookingView> all = new ArrayList<>();
+        for (int page = 0; ; page++) {
+            Slice slice = bookings.findForStudent(studentUserId, null, page, EXPORT_PAGE_SIZE);
+            all.addAll(views.of(slice.items()));
+            if (slice.items().size() < EXPORT_PAGE_SIZE || all.size() >= slice.total()) {
+                return all;
+            }
+        }
     }
 
     @Override

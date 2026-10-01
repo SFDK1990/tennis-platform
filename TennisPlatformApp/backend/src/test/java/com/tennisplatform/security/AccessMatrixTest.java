@@ -77,6 +77,7 @@ class AccessMatrixTest extends AbstractBookingTest {
 
         row("GET", "/me", none,                                                  401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("PATCH", "/me", Map.of("phone", "600000000"),                        401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        row("GET", "/me/export", none,                                           401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("POST", "/me/password", Map.of("currentPassword", PASSWORD, "newPassword", "another-valid-password"),
                                                                                  401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("GET", "/teacher/profile", none,                                     401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
