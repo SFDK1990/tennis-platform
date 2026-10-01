@@ -23,4 +23,7 @@ public interface LessonBookings {
 
     /** Cancels every confirmed booking of a lesson the teacher has just cancelled. */
     void cancelAllOf(UUID lessonId, Instant cancelledAt);
+
+    /** The same, when it was an administrator: the student should know who decided. */
+    void cancelAllOfCancelledByAdmin(UUID lessonId, Instant cancelledAt);
 }

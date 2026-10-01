@@ -1166,8 +1166,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Calendario de un rango de dias, para el profesor o para el alumno
-         * @description Las fechas se leen en la zona del profesor (timezone en la respuesta), con el tope comun de 62 dias. El profesor recibe su disponibilidad resuelta en intervalos y todas sus clases, canceladas incluidas. El alumno recibe las clases de los profesores que lo gestionan, sin las canceladas salvo que tuviera reserva en ellas, y en cada una su propia reserva (myBooking). Un alumno no gestionado recibe listas vacias. Sin notes para nadie.
+         * Calendario de un rango de dias, para el profesor, el alumno o el admin
+         * @description Las fechas se leen en la zona del profesor (timezone en la respuesta), con el tope comun de 62 dias. El profesor recibe su disponibilidad resuelta en intervalos y todas sus clases, canceladas incluidas. El alumno recibe las clases de los profesores que lo gestionan, sin las canceladas salvo que tuviera reserva en ellas, y en cada una su propia reserva (myBooking). Un alumno no gestionado recibe listas vacias. El admin recibe lo mismo que el profesor, para resolver incidencias. Sin notes para nadie.
          */
         get: {
             parameters: {
@@ -1200,15 +1200,6 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthorized"];
-                /** @description AUTH_FORBIDDEN, si quien llama no es profesor ni alumno */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
             };
         };
         put?: never;
@@ -1416,8 +1407,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Reservas del alumno autenticado, o de las clases del profesor si lo consulta el profesor
-         * @description Ordenadas por la clase mas reciente primero. El profesor puede filtrar por lessonId, que es lo que construye la pantalla de asistencia. Un lessonId de una clase ajena devuelve una pagina vacia, no las reservas de otro.
+         * Reservas del alumno autenticado, de las clases del profesor, o todas para el admin
+         * @description Ordenadas por la clase mas reciente primero. El profesor puede filtrar por lessonId, que es lo que construye la pantalla de asistencia. Un lessonId de una clase ajena devuelve una pagina vacia, no las reservas de otro. El admin ve todas, con los mismos filtros, para resolver incidencias.
          */
         get: {
             parameters: {
@@ -1425,7 +1416,7 @@ export interface paths {
                     page?: components["parameters"]["Page"];
                     size?: components["parameters"]["Size"];
                     status?: components["schemas"]["BookingStatus"];
-                    /** @description Solo para el profesor; el alumno ya ve unicamente las suyas. */
+                    /** @description Para el profesor y el admin; el alumno ya ve unicamente las suyas. */
                     lessonId?: string;
                 };
                 header?: never;
@@ -1445,15 +1436,6 @@ export interface paths {
                 };
                 400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
-                /** @description AUTH_FORBIDDEN, si quien llama no es alumno ni profesor */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
             };
         };
         put?: never;
@@ -1581,6 +1563,69 @@ export interface paths {
                     };
                 };
                 /** @description LESSON_ALREADY_FINISHED: la clase ya termino. Cancelar algo que ya ocurrio es reescribir el pasado. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/lessons/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * El admin cancela una clase para resolver una incidencia
+         * @description Como la cancelación del profesor, sin ventana de 24 horas, pero sus reservas confirmadas pasan a CANCELLED_BY_ADMIN, para que el alumno sepa quién lo decidió. Una ruta propia y no la del profesor: el prefijo dice quién puede llamarla.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cancelada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Lesson"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description LESSON_ALREADY_CANCELLED: ya estaba cancelada, casi siempre una pantalla obsoleta */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_ALREADY_FINISHED, la clase ya terminó */
                 422: {
                     headers: {
                         [name: string]: unknown;

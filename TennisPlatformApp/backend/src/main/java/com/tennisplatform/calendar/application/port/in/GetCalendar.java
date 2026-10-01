@@ -14,4 +14,10 @@ public interface GetCalendar {
      * if there is one. Cancelled lessons only when the student had a booking in them.
      */
     CalendarView forStudent(UUID studentUserId, LocalDate from, LocalDate to);
+
+    /**
+     * What the administrator sees to resolve an incident: the teacher's own view, since there is
+     * a single teacher (30-fase19-analisis-cierre-mvp.md).
+     */
+    CalendarView forAdministration(LocalDate from, LocalDate to);
 }

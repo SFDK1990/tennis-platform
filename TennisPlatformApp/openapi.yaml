@@ -631,13 +631,14 @@ paths:
   /calendar:
     get:
       tags: [calendar]
-      summary: Calendario de un rango de dias, para el profesor o para el alumno
+      summary: Calendario de un rango de dias, para el profesor, el alumno o el admin
       description: >-
         Las fechas se leen en la zona del profesor (timezone en la respuesta), con el tope comun
         de 62 dias. El profesor recibe su disponibilidad resuelta en intervalos y todas sus
         clases, canceladas incluidas. El alumno recibe las clases de los profesores que lo
         gestionan, sin las canceladas salvo que tuviera reserva en ellas, y en cada una su propia
-        reserva (myBooking). Un alumno no gestionado recibe listas vacias. Sin notes para nadie.
+        reserva (myBooking). Un alumno no gestionado recibe listas vacias. El admin recibe lo
+        mismo que el profesor, para resolver incidencias. Sin notes para nadie.
       parameters:
         - name: from
           in: query
@@ -659,11 +660,6 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "401": { $ref: "#/components/responses/Unauthorized" }
-        "403":
-          description: AUTH_FORBIDDEN, si quien llama no es profesor ni alumno
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /teacher/lessons:
     post:
@@ -770,11 +766,12 @@ paths:
   /bookings:
     get:
       tags: [bookings]
-      summary: Reservas del alumno autenticado, o de las clases del profesor si lo consulta el profesor
+      summary: Reservas del alumno autenticado, de las clases del profesor, o todas para el admin
       description: >-
         Ordenadas por la clase mas reciente primero. El profesor puede filtrar por lessonId,
         que es lo que construye la pantalla de asistencia. Un lessonId de una clase ajena
-        devuelve una pagina vacia, no las reservas de otro.
+        devuelve una pagina vacia, no las reservas de otro. El admin ve todas, con los mismos
+        filtros, para resolver incidencias.
       parameters:
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Size"
@@ -783,7 +780,7 @@ paths:
           schema: { $ref: "#/components/schemas/BookingStatus" }
         - name: lessonId
           in: query
-          description: Solo para el profesor; el alumno ya ve unicamente las suyas.
+          description: Para el profesor y el admin; el alumno ya ve unicamente las suyas.
           schema: { type: string, format: uuid }
       responses:
         "200":
@@ -793,11 +790,6 @@ paths:
               schema: { $ref: "#/components/schemas/BookingPage" }
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
-        "403":
-          description: AUTH_FORBIDDEN, si quien llama no es alumno ni profesor
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /bookings/{id}/cancel:
     post:
@@ -871,6 +863,37 @@ paths:
           description: >-
             LESSON_ALREADY_FINISHED: la clase ya termino. Cancelar algo que ya ocurrio es
             reescribir el pasado.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /admin/lessons/{id}/cancel:
+    post:
+      tags: [administration]
+      summary: El admin cancela una clase para resolver una incidencia
+      description: >-
+        Como la cancelación del profesor, sin ventana de 24 horas, pero sus reservas confirmadas
+        pasan a CANCELLED_BY_ADMIN, para que el alumno sepa quién lo decidió. Una ruta propia y no
+        la del profesor: el prefijo dice quién puede llamarla.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Cancelada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "LESSON_ALREADY_CANCELLED: ya estaba cancelada, casi siempre una pantalla obsoleta"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_ALREADY_FINISHED, la clase ya terminó
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }

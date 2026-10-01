@@ -58,6 +58,13 @@ public class GetBookingsService implements GetBookings {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ResultPage<BookingView> forAdministration(UUID lessonId, String status, int page, int size) {
+        Slice slice = bookings.findAll(lessonId, BookingStatus.filter(status), page, size);
+        return new ResultPage<BookingView>(views.of(slice.items()), page, size, slice.total());
+    }
+
     /**
      * Ownership is in the query itself: it only ever reads rows whose teacher is the caller, so a
      * {@code lessonId} of somebody else's lesson returns an empty page rather than their bookings.

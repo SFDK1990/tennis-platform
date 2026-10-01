@@ -91,18 +91,6 @@ class CalendarApiTest extends AbstractBookingTest {
         assertThat(refused.getBody()).containsEntry("code", "DATE_RANGE_INVALID");
     }
 
-    @Test
-    @SuppressWarnings("rawtypes")
-    void anAdminHasNoCalendar() {
-        Student account = aStudentWithAProfile();
-        jdbc.update("UPDATE users SET role = 'ADMIN' WHERE id = ?", account.id());
-
-        ResponseEntity<Map> refused = calendar(tokenOf(account.email(), PASSWORD), today(), today());
-
-        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(refused.getBody()).containsEntry("code", "AUTH_FORBIDDEN");
-    }
-
     private LocalDate today() {
         return LocalDate.now(clock.withZone(MADRID));
     }

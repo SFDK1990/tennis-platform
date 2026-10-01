@@ -56,6 +56,18 @@ public class CancelLessonService implements CancelLesson {
         return LessonView.from(cancelled, now, 0);
     }
 
+    @Override
+    @Transactional
+    public LessonView cancelAsAdmin(UUID lessonId) {
+        Lesson lesson = lessons.findById(lessonId).orElseThrow(() -> notFound(lessonId));
+
+        Instant now = clock.instant();
+        Lesson cancelled = lessons.save(lesson.cancel(now));
+        bookings.cancelAllOfCancelledByAdmin(cancelled.id(), now);
+        log.info("Lesson {} cancelled by an admin with its bookings", lessonId);
+        return LessonView.from(cancelled, now, 0);
+    }
+
     private static LessonNotFoundException notFound(UUID lessonId) {
         return new LessonNotFoundException("No lesson with id " + lessonId);
     }

@@ -95,12 +95,12 @@ class AccessMatrixTest extends AbstractBookingTest {
                                                                                  401, 403, 403, 403, ALLOWED, 403);
         row("DELETE", "/teacher/availability/exceptions/{exceptionId}", none,    401, 403, 403, 403, ALLOWED, 403);
 
-        row("GET", "/calendar?from=" + day + "&to=" + day, none,                 401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, 403);
+        row("GET", "/calendar?from=" + day + "&to=" + day, none,                 401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("POST", "/teacher/lessons", Map.of("type", "INDIVIDUAL", "capacity", 1,
                 "startsAt", day + "T10:00:00Z", "endsAt", day + "T11:00:00Z"),   401, 403, 403, 403, ALLOWED, 403);
         row("GET", "/lessons/{lessonId}", none,                                  401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("POST", "/lessons/{lessonId}/bookings", none,                        401, 403, ALLOWED, ALLOWED, 403, 403);
-        row("GET", "/bookings", none,                                            401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, 403);
+        row("GET", "/bookings", none,                                            401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         // Somebody else's booking does not exist for them.
         row("POST", "/bookings/{bookingId}/cancel", none,                        401, 404, ALLOWED, 404, ALLOWED, ALLOWED);
         row("POST", "/teacher/lessons/{lessonId}/cancel", none,                  401, 403, 403, 403, ALLOWED, 403);
@@ -110,6 +110,7 @@ class AccessMatrixTest extends AbstractBookingTest {
 
         row("GET", "/admin/configuration", none,                                 401, 403, 403, 403, 403, ALLOWED);
         row("PATCH", "/admin/configuration", Map.of("studentLimit", 40),         401, 403, 403, 403, 403, ALLOWED);
+        row("POST", "/admin/lessons/{lessonId}/cancel", none,                   401, 403, 403, 403, 403, ALLOWED);
         row("GET", "/admin/users", none,                                         401, 403, 403, 403, 403, ALLOWED);
         row("PATCH", "/admin/users/{studentId}/status", Map.of("status", "DISABLED"),
                                                                                  401, 403, 403, 403, 403, ALLOWED);

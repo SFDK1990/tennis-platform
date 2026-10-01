@@ -24,5 +24,8 @@ public interface GetBookings {
      * The bookings of the teacher's lessons. Filtering by one lesson is what builds the attendance
      * screen, which needs precisely the booking ids of that lesson.
      */
+    /** Every booking of the platform, to resolve an incident. The filters are the teacher's. */
+    ResultPage<BookingView> forAdministration(UUID lessonId, String status, int page, int size);
+
     ResultPage<BookingView> forTeacher(UUID teacherUserId, UUID lessonId, String status, int page, int size);
 }
