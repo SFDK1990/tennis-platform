@@ -40,4 +40,10 @@ public class BookingsOfLessons implements LessonBookings {
     public void cancelAllOf(UUID lessonId, Instant cancelledAt) {
         bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_TEACHER, cancelledAt);
     }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void cancelAllOfCancelledByAdmin(UUID lessonId, Instant cancelledAt) {
+        bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_ADMIN, cancelledAt);
+    }
 }

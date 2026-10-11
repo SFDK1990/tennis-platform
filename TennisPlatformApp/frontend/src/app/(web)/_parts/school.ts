@@ -1,5 +1,5 @@
 /**
- * Everything the public website says about the school, in one place (30-fase31, decision 5).
+ * Everything the public website says about the school, in one place (31-fase31, decision 5).
  * What Daniel has not given yet stays as a visible [placeholder], never as a figure that could
  * pass for a real one. What it says about the app is only what the app does today.
  */

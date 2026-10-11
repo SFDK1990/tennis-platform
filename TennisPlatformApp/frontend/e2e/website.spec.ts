@@ -4,7 +4,7 @@ import { trialHref } from "@/app/(web)/_parts/school";
 import { expect, signIn, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
-/** The public website of 30-fase31-analisis-web-publica.md. */
+/** The public website of 31-fase31-analisis-web-publica.md. */
 
 /** Criterion 1. */
 test("sin sesión, la portada es la web de la escuela y lleva a pedir la clase de prueba", async ({ page }) => {

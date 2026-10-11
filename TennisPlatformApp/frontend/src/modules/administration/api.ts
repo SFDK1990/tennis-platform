@@ -36,6 +36,20 @@ export function useUsers(filters: UserFilters, page: number) {
   });
 }
 
+/**
+ * Bookings carry only a student id; the administrator knows students by their address, which
+ * the console already shows. A deleted account's address is made up, so it says so instead.
+ */
+export function useStudentEmails(): (userId: string) => string {
+  const students = useQuery({
+    queryKey: ["admin", "users", "students"],
+    queryFn: async () => unwrap(await api.GET("/admin/users", { params: { query: { role: "STUDENT", size: 100 } } })),
+  });
+  const emails = new Map(students.data?.items.map((user) =>
+    [user.id, user.status === "DELETED" ? "Cuenta eliminada" : user.email]));
+  return (userId) => emails.get(userId) ?? "Alumno";
+}
+
 export function useChangeUserStatus() {
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "ACTIVE" | "DISABLED" }) =>

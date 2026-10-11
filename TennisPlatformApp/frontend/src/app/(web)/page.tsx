@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: { type: "website", locale: "es_ES", siteName: school.name, title: school.name, description: DESCRIPTION },
 };
 
-/** The school's public page (30-fase31): direction A, "Pista", of the approved mock-up. */
+/** The school's public page (31-fase31): direction A, "Pista", of the approved mock-up. */
 export default function WebsitePage() {
   const trial = trialHref();
   return (

@@ -1,5 +1,5 @@
 /**
- * The Oasis Papagayo mark (30-fase31, decision 1): a tennis ball with a parrot's beak, eye and
+ * The Oasis Papagayo mark (31-fase31, decision 1): a tennis ball with a parrot's beak, eye and
  * blue crest. It keeps its own colours wherever it goes; on navy the beak gets a light edge, or
  * its tip disappears into the background.
  *

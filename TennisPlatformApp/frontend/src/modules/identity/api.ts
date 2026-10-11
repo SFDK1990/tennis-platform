@@ -96,6 +96,45 @@ export function useResetPassword() {
   });
 }
 
+/** The other sessions end; this one goes on with the token that comes back. */
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (body: { currentPassword: string; newPassword: string }) => {
+      const result = unwrap(await api.POST("/me/password", { body }));
+      startSession(result.accessToken);
+    },
+  });
+}
+
+/** Everything the platform keeps about the caller, saved as a file in the browser. */
+export function useDownloadMyData() {
+  return useMutation({
+    mutationFn: async () => {
+      const data = unwrap(await api.GET("/me/export"));
+      const file = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "mis-datos.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+}
+
+/** Cannot be undone. Nothing of the account may stay in this browser afterwards. */
+export function useDeleteMyAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (password: string) => {
+      unwrap(await api.POST("/me/deletion", { body: { password } }));
+      await signOut();
+    },
+    // Like signing out: the same pattern, so the caller's own onSuccess still runs.
+    onSuccess: () => queryClient.clear(),
+  });
+}
+
 export function useUpdateMe() {
   return useMutation({
     mutationFn: async (body: UpdateMe) => unwrap(await api.PATCH("/me", { body })),

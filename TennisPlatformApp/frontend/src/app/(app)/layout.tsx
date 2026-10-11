@@ -34,6 +34,7 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   ADMIN: [
     { href: "/admin", label: "Configuración", icon: "settings" },
+    { href: "/admin/lessons", label: "Clases", icon: "calendar", also: ["/admin/lessons/"] },
     { href: "/admin/users", label: "Usuarios", icon: "users" },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],
@@ -59,7 +60,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <Sidebar me={me} items={items} current={current} />
             <div className="flex min-h-screen flex-col lg:pl-64">
               <header className="flex items-center px-5 pb-1 pt-4 lg:hidden">
-                {/* The role's home: "/" is now the public website (30-fase31, decision 2). */}
+                {/* The role's home: "/" is now the public website (31-fase31, decision 2). */}
                 <Link href={homeFor(me.role)} className="flex items-center gap-2.5" aria-label="Inicio">
                   <Logo className="h-9 w-9" label="" />
                   <span className="font-display text-xl font-semibold">Oasis Papagayo</span>

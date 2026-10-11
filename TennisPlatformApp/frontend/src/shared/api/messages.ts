@@ -16,6 +16,7 @@ const MESSAGES: Record<string, string> = {
   VALIDATION_ERROR: "Revisa los datos marcados.",
   DATE_RANGE_INVALID: "El rango de fechas no es válido.",
   FIELD_NOT_APPLICABLE_TO_ROLE: "Ese dato no corresponde a tu tipo de cuenta.",
+  CURRENT_PASSWORD_INCORRECT: "La contraseña actual no es correcta.",
   EMAIL_NOT_VERIFIED: "Verifica tu email antes de reservar. Busca el correo que te enviamos.",
 
   STUDENT_NOT_FOUND: "No hay ningún alumno con ese email.",
@@ -39,6 +40,7 @@ const MESSAGES: Record<string, string> = {
   LESSON_ALREADY_CANCELLED: "La clase ya estaba cancelada.",
   LESSON_ALREADY_FINISHED: "La clase ya ha terminado.",
   LESSON_ALREADY_STARTED: "La clase ya ha empezado.",
+  LESSON_CAPACITY_BELOW_BOOKINGS: "Ya hay más alumnos apuntados que esas plazas.",
   LESSON_FULL: "Alguien ha cogido la última plaza. La lista está actualizada.",
   LESSON_NOT_BOOKABLE: "La clase se ha cancelado. La lista está actualizada.",
 
@@ -51,6 +53,7 @@ const MESSAGES: Record<string, string> = {
 
   ADMIN_TARGET_NOT_ALLOWED: "Sólo se pueden activar o desactivar cuentas de alumnos.",
   USER_NOT_FOUND: "Esa cuenta ya no existe.",
+  ACCOUNT_DELETED: "El alumno borró su cuenta: ya no se puede activar ni desactivar.",
 };
 
 /**

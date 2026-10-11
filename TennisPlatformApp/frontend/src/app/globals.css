@@ -8,7 +8,7 @@
 @source inline("row-start-{1..97} row-span-{1..96}");
 
 /*
- * Oasis Papagayo (30-fase31, decision 1), on the palette of 27-fase15.5. Court blue is for what
+ * Oasis Papagayo (31-fase31, decision 1), on the palette of 27-fase15.5. Court blue is for what
  * can be done, navy for the frame and the text, white lines for the court drawn under the
  * things that matter most. Every text pair here passes WCAG AA. Ball yellow belongs to the mark
  * and to the trial-class button, always under navy text: on white it is unreadable.
@@ -58,7 +58,7 @@ body {
 }
 
 /*
- * The public website's two themes (30-fase31, decision 8). Each colour is written once with
+ * The public website's two themes (31-fase31, decision 8). Each colour is written once with
  * its light and dark value, and light-dark() picks one from the colour scheme in force: the
  * system's while the visitor has not chosen, the data-theme the server rendered once they have.
  * These are meant to become the app's own dark theme later, not a second palette.

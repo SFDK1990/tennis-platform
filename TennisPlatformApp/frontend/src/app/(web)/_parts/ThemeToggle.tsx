@@ -6,7 +6,7 @@ import { THEME_COOKIE } from "./theme";
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
 /**
- * Switches the website between light and dark (30-fase31, decision 8). Which icon and label
+ * Switches the website between light and dark (31-fase31, decision 8). Which icon and label
  * show is left to CSS, which already knows the system's preference: deciding it here would
  * need that preference during the server render, where it does not exist.
  */
