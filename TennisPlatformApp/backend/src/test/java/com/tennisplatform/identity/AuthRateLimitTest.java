@@ -113,7 +113,7 @@ class AuthRateLimitTest extends AbstractIntegrationTest {
                 Map.of("currentPassword", "a-wrong-guess", "newPassword", "another-valid-password"), guesser);
         for (int i = 0; i < 3; i++) {
             assertThat(rest.postForEntity("/api/v1/me/password", guess, String.class).getStatusCode())
-                    .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+                    .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         }
 
         assertThat(rest.postForEntity("/api/v1/me/password", guess, String.class).getStatusCode())

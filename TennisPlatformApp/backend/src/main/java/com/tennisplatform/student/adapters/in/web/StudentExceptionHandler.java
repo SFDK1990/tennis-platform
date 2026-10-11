@@ -58,13 +58,13 @@ class StudentExceptionHandler {
 
     @ExceptionHandler(StudentLimitReachedException.class)
     ProblemDetail handleLimitReached(StudentLimitReachedException e) {
-        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Student limit reached", e.getMessage(),
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Student limit reached", e.getMessage(),
                 "STUDENT_LIMIT_REACHED");
     }
 
     @ExceptionHandler(StudentProfileIncompleteException.class)
     ProblemDetail handleIncompleteProfile(StudentProfileIncompleteException e) {
-        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Student profile incomplete",
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Student profile incomplete",
                 e.getMessage(), "STUDENT_PROFILE_INCOMPLETE");
     }
 

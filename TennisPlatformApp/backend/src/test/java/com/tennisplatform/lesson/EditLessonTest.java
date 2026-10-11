@@ -71,7 +71,7 @@ class EditLessonTest extends AbstractBookingTest {
         ResponseEntity<Map> afterStart = edit(started, "tarde", null);
         ResponseEntity<Map> afterCancel = edit(cancelled, "tarde", null);
 
-        assertThat(afterStart.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(afterStart.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(afterStart.getBody()).containsEntry("code", "LESSON_ALREADY_STARTED");
         assertThat(afterCancel.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(afterCancel.getBody()).containsEntry("code", "LESSON_ALREADY_CANCELLED");

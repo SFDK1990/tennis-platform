@@ -114,7 +114,7 @@ class DeleteMyAccountTest extends AbstractBookingTest {
         ResponseEntity<Map> refused = rest.exchange("/api/v1/me/deletion", HttpMethod.POST,
                 new HttpEntity<>(Map.of("password", "not-" + PASSWORD), jsonBearer(student.token())), Map.class);
 
-        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(refused.getBody()).containsEntry("code", "CURRENT_PASSWORD_INCORRECT");
         assertThat(login(student.email(), PASSWORD).getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(statusOfBookingIn(upcoming)).isEqualTo("CONFIRMED");
@@ -139,7 +139,7 @@ class DeleteMyAccountTest extends AbstractBookingTest {
         ResponseEntity<Map> reactivated = rest.exchange("/api/v1/admin/users/" + student.id() + "/status",
                 HttpMethod.PATCH, new HttpEntity<>(Map.of("status", "ACTIVE"), jsonBearer(adminToken)), Map.class);
 
-        assertThat(reactivated.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(reactivated.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(reactivated.getBody()).containsEntry("code", "ACCOUNT_DELETED");
     }
 
