@@ -299,16 +299,6 @@ class BookingsApiTest extends AbstractBookingTest {
         assertThat(cancelled.getBody()).containsEntry("code", "BOOKING_ALREADY_CANCELLED");
     }
 
-    /** An admin cancels bookings but has no list of them: that is a student's or the teacher's. */
-    @Test
-    @SuppressWarnings("rawtypes")
-    void anAdminHasNoListOfBookings() {
-        ResponseEntity<Map> response = list(anAdminToken(), "");
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(response.getBody()).containsEntry("code", "AUTH_FORBIDDEN");
-    }
-
     /** The attendance screen needs exactly the bookings of one lesson, which is what lessonId gives it. */
     @Test
     @SuppressWarnings({"rawtypes", "unchecked"})

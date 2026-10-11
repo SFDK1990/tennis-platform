@@ -27,10 +27,14 @@ class ContractConventionsTest {
         assertThat(operationsMissing("401", this::needsABearerToken)).isEmpty();
     }
 
-    /** {@code AuthRateLimitFilter} throttles the whole prefix, logout and refresh included. */
+    /**
+     * {@code AuthRateLimitFilter} throttles the whole prefix, logout and refresh included, and the
+     * two routes outside it that check a password.
+     */
     @Test
     void everyAuthenticationOperationDocumentsTheRateLimit() {
-        assertThat(operationsMissing("429", (path, item, operation) -> path.startsWith("/auth/"))).isEmpty();
+        assertThat(operationsMissing("429", (path, item, operation) -> path.startsWith("/auth/")
+                || path.equals("/me/password") || path.equals("/me/deletion"))).isEmpty();
     }
 
     /** A malformed body, id or query parameter is a 400, never a 500. */

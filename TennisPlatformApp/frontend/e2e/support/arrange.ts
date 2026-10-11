@@ -141,6 +141,14 @@ export class Arrange {
     ok(await client.POST("/lessons/{id}/bookings", { params: { path: { id: lessonId } } }), "booking");
   }
 
+  /** Seats taken in a lesson, read as the teacher sees them. */
+  async confirmedBookingsOf(lessonId: string): Promise<number> {
+    const teacher = await this.teacher();
+    const bookings = ok(await teacher.GET("/bookings", { params: { query: { lessonId, status: "CONFIRMED" } } }),
+      "bookings");
+    return bookings.totalItems;
+  }
+
   /** Runs whatever the test left behind, newest first; a step that no longer applies is fine. */
   async cleanUp(): Promise<void> {
     for (const step of this.undo.reverse()) {

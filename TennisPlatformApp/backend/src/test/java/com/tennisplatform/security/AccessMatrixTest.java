@@ -77,6 +77,10 @@ class AccessMatrixTest extends AbstractBookingTest {
 
         row("GET", "/me", none,                                                  401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("PATCH", "/me", Map.of("phone", "600000000"),                        401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        row("GET", "/me/export", none,                                           401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        row("POST", "/me/deletion", Map.of("password", PASSWORD),                401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+        row("POST", "/me/password", Map.of("currentPassword", PASSWORD, "newPassword", "another-valid-password"),
+                                                                                 401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("GET", "/teacher/profile", none,                                     401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
 
         row("GET", "/teacher/students", none,                                    401, 403, 403, 403, ALLOWED, 403);
@@ -91,14 +95,15 @@ class AccessMatrixTest extends AbstractBookingTest {
                                                                                  401, 403, 403, 403, ALLOWED, 403);
         row("DELETE", "/teacher/availability/exceptions/{exceptionId}", none,    401, 403, 403, 403, ALLOWED, 403);
 
-        row("GET", "/calendar?from=" + day + "&to=" + day, none,                 401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, 403);
+        row("GET", "/calendar?from=" + day + "&to=" + day, none,                 401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("POST", "/teacher/lessons", Map.of("type", "INDIVIDUAL", "capacity", 1,
                 "startsAt", day + "T10:00:00Z", "endsAt", day + "T11:00:00Z"),   401, 403, 403, 403, ALLOWED, 403);
         row("GET", "/lessons/{lessonId}", none,                                  401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("POST", "/lessons/{lessonId}/bookings", none,                        401, 403, ALLOWED, ALLOWED, 403, 403);
-        row("GET", "/bookings", none,                                            401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, 403);
+        row("GET", "/bookings", none,                                            401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         // Somebody else's booking does not exist for them.
         row("POST", "/bookings/{bookingId}/cancel", none,                        401, 404, ALLOWED, 404, ALLOWED, ALLOWED);
+        row("PATCH", "/teacher/lessons/{lessonId}", Map.of("capacity", 5),       401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/cancel", none,                  401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/attendance",
                 Map.of("entries", List.of(Map.of("bookingId", "{bookingId}", "status", "ATTENDED"))),
@@ -106,6 +111,7 @@ class AccessMatrixTest extends AbstractBookingTest {
 
         row("GET", "/admin/configuration", none,                                 401, 403, 403, 403, 403, ALLOWED);
         row("PATCH", "/admin/configuration", Map.of("studentLimit", 40),         401, 403, 403, 403, 403, ALLOWED);
+        row("POST", "/admin/lessons/{lessonId}/cancel", none,                   401, 403, 403, 403, 403, ALLOWED);
         row("GET", "/admin/users", none,                                         401, 403, 403, 403, 403, ALLOWED);
         row("PATCH", "/admin/users/{studentId}/status", Map.of("status", "DISABLED"),
                                                                                  401, 403, 403, 403, 403, ALLOWED);
