@@ -70,7 +70,7 @@ class AdministrationApiTest extends AbstractBookingTest {
         assertThat(changed.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(changed.getBody()).containsEntry("studentLimit", 1).containsEntry("maxGroupCapacity", 8);
         assertThat(changed.getBody().get("updatedBy")).isEqualTo(idOf(adminToken));
-        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(refused.getBody()).containsEntry("code", "STUDENT_LIMIT_REACHED");
     }
 

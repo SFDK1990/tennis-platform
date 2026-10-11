@@ -82,3 +82,39 @@ test("desde Inicio, un alumno reserva una clase con plazas, la ve como su próxi
   await next.getByRole("button", { name: "Sí, cancelar" }).click();
   await expect(page.getByRole("heading", { name: "Todavía no tienes clases reservadas" })).toBeVisible();
 });
+
+test("un alumno cambia su contraseña desde el perfil y entra con la nueva", async ({ page, arrange }) => {
+  const student = await arrange.student();
+  const newPassword = "otra-contrasena-e2e";
+
+  await signIn(page, student.email, student.password);
+  await openFromMenu(page, "Perfil");
+  await page.getByLabel("Contraseña actual").fill(student.password);
+  await page.getByLabel("Contraseña nueva").fill(newPassword);
+  await page.getByRole("button", { name: "Cambiar contraseña" }).click();
+  await expect(page.getByText("Contraseña cambiada.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Salir" }).click();
+  await signIn(page, student.email, newPassword);
+});
+
+test("un alumno borra su cuenta: pierde su plaza y ya no puede entrar", async ({ page, arrange }) => {
+  const student = await arrange.student({ managed: true });
+  const lessonId = await arrange.lesson({ date: await arrange.freeDay(), time: "11:00" });
+  await arrange.book(student, lessonId);
+
+  await signIn(page, student.email, student.password);
+  await openFromMenu(page, "Perfil");
+  await page.getByRole("button", { name: "Borrar mi cuenta" }).click();
+  await expect(page.getByText("No se puede deshacer.")).toBeVisible();
+  await page.getByLabel("Tu contraseña").fill(student.password);
+  await page.getByRole("button", { name: "Sí, borrar mi cuenta" }).click();
+
+  await expect(page).toHaveURL(/\/login\?cuenta=borrada/);
+  await expect(page.getByText("Hemos borrado tu cuenta y tus datos.")).toBeVisible();
+  expect(await arrange.confirmedBookingsOf(lessonId)).toBe(0);
+  await page.getByLabel("Email").fill(student.email);
+  await page.getByLabel("Contraseña").fill(student.password);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "El email o la contraseña no son correctos." })).toBeVisible();
+});

@@ -251,6 +251,24 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(refresh().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    /**
+     * The login response itself carries the CSRF cookie next to the refresh one. Spring
+     * Framework 7 let a Set-Cookie on the ResponseEntity replace the one the security chain had
+     * written, and a browser signing in for the first time had nothing to send on its first
+     * refresh (RefreshTokenCookie).
+     */
+    @Test
+    void theLoginAnswersWithTheCsrfCookieAsWellAsTheRefreshOne() {
+        String email = uniqueEmail();
+        register(email);
+
+        jar = new CookieJar();
+        login(email);
+
+        assertThat(jar.has("XSRF-TOKEN")).isTrue();
+        assertThat(jar.has("refresh_token")).isTrue();
+    }
+
     /** A student whose link expired asks for another, and the new one works (Fase 11). */
     @Test
     @SuppressWarnings("unchecked")

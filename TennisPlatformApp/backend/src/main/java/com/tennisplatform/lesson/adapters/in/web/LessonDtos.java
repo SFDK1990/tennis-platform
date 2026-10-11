@@ -2,6 +2,8 @@ package com.tennisplatform.lesson.adapters.in.web;
 
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -16,6 +18,10 @@ import java.util.UUID;
 final class LessonDtos {
 
     private LessonDtos() {
+    }
+
+    /** Every field optional: this is a PATCH, and null means "leave as it is". */
+    record EditLessonRequest(@Size(max = 2000) String notes, @Positive Integer capacity) {
     }
 
     record CreateLessonRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,

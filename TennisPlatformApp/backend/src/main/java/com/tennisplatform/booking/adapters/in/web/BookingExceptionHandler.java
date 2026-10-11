@@ -61,19 +61,19 @@ class BookingExceptionHandler {
 
     @ExceptionHandler(LessonAlreadyStartedException.class)
     ProblemDetail handleAlreadyStarted(LessonAlreadyStartedException e) {
-        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Lesson already started", e.getMessage(),
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Lesson already started", e.getMessage(),
                 "LESSON_ALREADY_STARTED");
     }
 
     @ExceptionHandler(CancellationWindowExpiredException.class)
     ProblemDetail handleWindowExpired(CancellationWindowExpiredException e) {
-        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Too late to cancel", e.getMessage(),
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Too late to cancel", e.getMessage(),
                 "CANCELLATION_WINDOW_EXPIRED");
     }
 
     @ExceptionHandler(AttendanceNotYetOpenException.class)
     ProblemDetail handleAttendanceTooEarly(AttendanceNotYetOpenException e) {
-        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Too early for attendance", e.getMessage(),
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Too early for attendance", e.getMessage(),
                 "ATTENDANCE_NOT_YET_OPEN");
     }
 

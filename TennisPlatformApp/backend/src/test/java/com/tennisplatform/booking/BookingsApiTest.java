@@ -147,7 +147,7 @@ class BookingsApiTest extends AbstractBookingTest {
 
         assertThat(cancelled.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(cancelled.getBody()).containsEntry("code", "LESSON_NOT_BOOKABLE");
-        assertThat(started.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(started.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(started.getBody()).containsEntry("code", "LESSON_ALREADY_STARTED");
     }
 
@@ -171,7 +171,7 @@ class BookingsApiTest extends AbstractBookingTest {
         String secondBooking = idOf(book(student.token(), second));
 
         ResponseEntity<Map> byStudent = cancel(student.token(), firstBooking);
-        assertThat(byStudent.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(byStudent.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(byStudent.getBody()).containsEntry("code", "CANCELLATION_WINDOW_EXPIRED");
 
         ResponseEntity<Map> byTeacher = cancel(teacherToken, firstBooking);
@@ -249,7 +249,7 @@ class BookingsApiTest extends AbstractBookingTest {
         UUID future = anIndividualLessonIn(IN_A_MONTH);
         String futureBooking = idOf(book(student.token(), future));
         ResponseEntity<Map> tooEarly = markAttendanceAsMap(future, futureBooking, "ATTENDED");
-        assertThat(tooEarly.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(tooEarly.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(tooEarly.getBody()).containsEntry("code", "ATTENDANCE_NOT_YET_OPEN");
 
         UUID started = anIndividualLessonIn(Duration.ofMinutes(-30));
@@ -297,16 +297,6 @@ class BookingsApiTest extends AbstractBookingTest {
         ResponseEntity<Map> cancelled = markAttendanceAsMap(started, booking.id().toString(), "ATTENDED");
         assertThat(cancelled.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(cancelled.getBody()).containsEntry("code", "BOOKING_ALREADY_CANCELLED");
-    }
-
-    /** An admin cancels bookings but has no list of them: that is a student's or the teacher's. */
-    @Test
-    @SuppressWarnings("rawtypes")
-    void anAdminHasNoListOfBookings() {
-        ResponseEntity<Map> response = list(anAdminToken(), "");
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(response.getBody()).containsEntry("code", "AUTH_FORBIDDEN");
     }
 
     /** The attendance screen needs exactly the bookings of one lesson, which is what lessonId gives it. */

@@ -20,6 +20,11 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
+  jackson:
+    deserialization:
+      # Jackson 3 turned this on: a request that leaves out an optional boolean or number, such
+      # as overrideAvailability, would get a 400 instead of the field's default (openapi.yaml).
+      fail-on-null-for-primitives: false
 
 server:
   port: ${SERVER_PORT:8080}

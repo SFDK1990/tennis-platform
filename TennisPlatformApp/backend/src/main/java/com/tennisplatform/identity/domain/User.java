@@ -10,7 +10,7 @@ import java.util.UUID;
 public class User {
 
     private final UUID id;
-    private final EmailAddress email;
+    private EmailAddress email;
     private String passwordHash;
     private final Role role;
     private UserStatus status;
@@ -53,7 +53,7 @@ public class User {
     }
 
     public void verifyEmail(Instant now) {
-        if (status == UserStatus.DISABLED) {
+        if (!canAuthenticate()) {
             throw new AccountNotActiveException("A disabled account cannot be verified");
         }
         if (emailVerifiedAt == null) {
@@ -63,14 +63,28 @@ public class User {
     }
 
     public void changePassword(String newPasswordHash) {
-        if (status == UserStatus.DISABLED) {
+        if (!canAuthenticate()) {
             throw new AccountNotActiveException("A disabled account cannot change its password");
         }
         this.passwordHash = newPasswordHash;
     }
 
     public void disable() {
+        refuseIfDeleted();
         this.status = UserStatus.DISABLED;
+    }
+
+    /**
+     * The student deleted their account (30-fase19-analisis-cierre-mvp.md). The row survives,
+     * because past bookings point at it, but nothing in it identifies anybody any more: the
+     * address becomes one that cannot exist and frees the real one for a new registration, and
+     * the password hash becomes one no password matches.
+     */
+    public void close(String unusablePasswordHash) {
+        refuseIfDeleted();
+        this.email = new EmailAddress("deleted-" + id + "@account.invalid");
+        this.passwordHash = unusablePasswordHash;
+        this.status = UserStatus.DELETED;
     }
 
     /**
@@ -78,6 +92,7 @@ public class User {
      * verified, pending otherwise. Reactivating must not verify an address nobody confirmed.
      */
     public void reactivate() {
+        refuseIfDeleted();
         if (status == UserStatus.DISABLED) {
             this.status = emailVerifiedAt != null ? UserStatus.ACTIVE : UserStatus.PENDING_VERIFICATION;
         }
@@ -89,7 +104,17 @@ public class User {
      * lock the user out entirely.
      */
     public boolean canAuthenticate() {
-        return status != UserStatus.DISABLED;
+        return status == UserStatus.ACTIVE || status == UserStatus.PENDING_VERIFICATION;
+    }
+
+    public boolean isDeleted() {
+        return status == UserStatus.DELETED;
+    }
+
+    private void refuseIfDeleted() {
+        if (isDeleted()) {
+            throw new AccountDeletedException();
+        }
     }
 
     public boolean isEmailVerified() {

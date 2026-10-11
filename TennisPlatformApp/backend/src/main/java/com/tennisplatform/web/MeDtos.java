@@ -2,7 +2,11 @@ package com.tennisplatform.web;
 
 import jakarta.validation.constraints.Size;
 
+import com.tennisplatform.booking.application.port.in.BookingView;
+import com.tennisplatform.lesson.application.port.in.LessonView;
+
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /** Wire representations of {@code /me}. */
@@ -40,5 +44,33 @@ final class MeDtos {
             @Size(max = 255) String address,
             @Size(max = 255) String displayName,
             @Size(max = 60) String timezone) {
+    }
+
+    /**
+     * Everything the platform keeps about the caller, as one downloadable file
+     * (30-fase19-analisis-cierre-mvp.md). The bookings carry their lesson, so the file can be
+     * read without the application; they are empty for the teacher and the administrator.
+     */
+    record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings) {
+    }
+
+    record ExportedBooking(UUID id, UUID lessonId, UUID studentUserId, String status, String attendance,
+                           Instant bookedAt, Instant cancelledAt, ExportedLesson lesson) {
+
+        static ExportedBooking from(BookingView booking) {
+            return new ExportedBooking(booking.id(), booking.lessonId(), booking.studentUserId(), booking.status(),
+                    booking.attendance(), booking.bookedAt(), booking.cancelledAt(),
+                    ExportedLesson.from(booking.lesson()));
+        }
+    }
+
+    /** The lesson as it travels inside a booking: without the teacher's notes, as everywhere else. */
+    record ExportedLesson(UUID id, UUID teacherUserId, String type, Instant startsAt, Instant endsAt,
+                          int capacity, int bookedCount, String status) {
+
+        static ExportedLesson from(LessonView lesson) {
+            return new ExportedLesson(lesson.id(), lesson.teacherUserId(), lesson.type(), lesson.startsAt(),
+                    lesson.endsAt(), lesson.capacity(), lesson.bookedCount(), lesson.status());
+        }
     }
 }

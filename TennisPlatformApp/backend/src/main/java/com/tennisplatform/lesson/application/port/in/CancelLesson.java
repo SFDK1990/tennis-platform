@@ -15,4 +15,10 @@ import java.util.UUID;
 public interface CancelLesson {
 
     LessonView cancel(UUID teacherUserId, UUID lessonId);
+
+    /**
+     * An administrator resolves an incident (01-analisis-funcional.md §17): any lesson, with no
+     * window either, and its bookings say the administration decided.
+     */
+    LessonView cancelAsAdmin(UUID lessonId);
 }
