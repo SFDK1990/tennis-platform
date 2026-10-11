@@ -3,6 +3,15 @@ spring:
     name: tennis-platform-backend
   profiles:
     default: dev
+  datasource:
+    hikari:
+      data-source-properties:
+        # PostgreSQL quotes the row in a constraint violation ("Key (email)=(...) already
+        # exists") and the driver copies it into the exception message, which reaches the log
+        # with every unhandled error - a startup failure printed the teacher's address. The
+        # constraint name and the SQLState are still there. Here and not in the JDBC URL so that
+        # every profile, and the Testcontainers connection the tests use, gets it.
+        logServerErrorDetail: false
   jpa:
     open-in-view: false
     properties:

@@ -35,9 +35,15 @@ public class ProvisionTeacherAccountService implements ProvisionTeacherAccount {
     }
 
     private UUID create(String email, String rawPassword) {
+        EmailAddress address = new EmailAddress(email);
+        // Without this the unique index answers, and the startup failure names the constraint
+        // instead of the variable to fix. The address itself stays out of the message.
+        if (users.findByEmail(address).isPresent()) {
+            throw new IllegalStateException("TEACHER_EMAIL already belongs to another account");
+        }
         PasswordPolicy.validate(rawPassword);
         User teacher = users.save(User.bootstrapTeacher(
-                new EmailAddress(email),
+                address,
                 passwordHasher.hash(rawPassword),
                 clock.instant()));
         return teacher.id();
