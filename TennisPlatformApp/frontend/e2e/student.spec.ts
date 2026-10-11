@@ -15,6 +15,9 @@ test("un alumno se registra, verifica su email con el enlace del correo y comple
   await page.goto(await linkSentTo(email, "/verify-email"));
   await page.getByRole("button", { name: "Verificar mi email" }).click();
   await expect(page.getByRole("status")).toContainText("Email verificado");
+  // "/" is the public website now: continuing goes into the app, through the login.
+  await page.getByRole("link", { name: "Continuar" }).click();
+  await expect(page).toHaveURL(/\/login$/);
 
   await signIn(page, email, STUDENT_PASSWORD);
   const steps = page.getByRole("region", { name: "Tres pasos para reservar" });
