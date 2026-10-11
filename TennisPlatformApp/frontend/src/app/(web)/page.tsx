@@ -86,18 +86,20 @@ function Hero({ trial }: { trial: string }) {
   );
 }
 
-/** Until the real photo arrives, the court's lines frame a description of the one that goes here. */
+/** Marcos sits left of centre in the frame, so the crop follows him on the narrow boxes. */
 function CourtPhoto() {
   return (
     <figure className="site-rise relative m-0 h-80 overflow-hidden rounded bg-(--site-band-photo) [animation-delay:150ms] sm:h-[460px] lg:h-[560px]">
-      <svg viewBox="0 0 400 560" preserveAspectRatio="none" aria-hidden className="absolute inset-0 size-full fill-none stroke-white/55">
-        <rect x="28" y="28" width="344" height="504" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-        <path d="M70 28v504M330 28v504M70 150h260M70 410h260M200 150v260" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-        <path d="M14 280h372" className="stroke-white" strokeWidth="3" vectorEffect="non-scaling-stroke" />
-      </svg>
-      <figcaption className="absolute inset-x-8 bottom-8 text-sm text-on-navy">
-        <Copy text="[Foto cenital o desde el fondo de la pista: Marcos dando clase a un grupo]" />
-      </figcaption>
+      <Photo
+        src="/web/marcos-golpe-800.webp"
+        srcSet="/web/marcos-golpe-800.webp 800w, /web/marcos-golpe-1400.webp 1400w"
+        sizes="(min-width: 1024px) 45vw, 100vw"
+        width={1400}
+        height={788}
+        alt={school.photos.action}
+        className="object-[24%_center]"
+        priority
+      />
     </figure>
   );
 }
@@ -139,7 +141,7 @@ const STEPS = [
   },
   {
     title: "Prueba una clase",
-    text: `Conoces la pista, el grupo y su forma de trabajar. Precio de la prueba: ${school.prices.at(-1)?.amount}.`,
+    text: `Conoces la pista, el grupo y su forma de trabajar. La clase de prueba: ${school.prices.at(-1)?.amount.toLowerCase()}.`,
   },
   {
     title: "Reserva desde la app",
@@ -170,7 +172,18 @@ function Teacher() {
   return (
     <section aria-labelledby="h-marcos" className="bg-(--site-surface)">
       <div className={`${WRAP} grid items-center gap-12 py-24 lg:grid-cols-[440px_1fr] lg:gap-20`}>
-        <PhotoSlot description="[Retrato de Marcos en la pista, de medio cuerpo, sin posar]" className="h-96 lg:h-[520px]" />
+        <figure className="m-0 flex flex-col gap-3">
+          <div className="h-96 overflow-hidden rounded bg-(--site-photo) lg:h-[520px]">
+            <Photo
+              src="/web/marcos-campeonato-600.webp"
+              width={600}
+              height={680}
+              alt=""
+              className="object-[center_30%]"
+            />
+          </div>
+          <figcaption className="text-sm text-(--site-muted)">{school.photos.championship}</figcaption>
+        </figure>
         <div className="flex max-w-2xl flex-col gap-5">
           <h2 id="h-marcos" className={SECTION_TITLE}><Copy text={school.teacher.name} /></h2>
           <p className="text-lg leading-relaxed sm:text-xl"><Copy text={school.teacher.background} /></p>
@@ -288,11 +301,32 @@ function TrialButton({ href, wide = false, desktopOnly = false }: { href: string
   );
 }
 
-function PhotoSlot({ description, className }: { description: string; className: string }) {
+type PhotoProps = {
+  src: string;
+  srcSet?: string;
+  sizes?: string;
+  width: number;
+  height: number;
+  alt: string;
+  className: string;
+  priority?: boolean;
+};
+
+/**
+ * A plain img, not next/image: that one writes a style attribute, which the CSP blocks without
+ * a word. The files are already sized and in webp (public/web), so there is nothing to optimise.
+ */
+function Photo({ priority = false, className, alt, ...image }: PhotoProps) {
   return (
-    <div className={`flex items-end rounded bg-(--site-photo) p-7 text-sm text-(--site-muted) ${className}`}>
-      <Copy text={description} />
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element -- see above: next/image breaks the CSP.
+    <img
+      {...image}
+      alt={alt}
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
+      decoding="async"
+      className={`size-full object-cover ${className}`}
+    />
   );
 }
 

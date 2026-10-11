@@ -1,35 +1,53 @@
 /**
  * Everything the public website says about the school, in one place (31-fase31, decision 5).
- * What Daniel has not given yet stays as a visible [placeholder], never as a figure that could
- * pass for a real one. What it says about the app is only what the app does today.
+ * What is still missing stays as a visible [placeholder], never as a figure that could pass for a
+ * real one. What it says about the app is only what the app does today.
+ *
+ * The values marked DEMO are invented to show the site while it is tested: they have to be
+ * replaced before deploying (Fase 17), like any placeholder.
  */
 export const school = {
   name: "Oasis Papagayo",
-  area: "[barrio, ciudad]",
-  /** International format, digits only (34600111222). Until it exists, the trial button points at the contact details. */
+  area: "Corralejo, Fuerteventura",
+  /**
+   * International format, digits only (34600111222). Until it exists, the trial button points at
+   * the contact details. DEMO: left empty on purpose, so the button never opens a chat with
+   * whoever owns an invented number.
+   */
   whatsapp: null as string | null,
-  phone: "[Teléfono]",
-  email: "[Correo]",
-  address: "[Dirección de la pista]",
+  /** DEMO */
+  phone: "+34 600 000 000",
+  /** DEMO: a reserved domain, so nothing sent there reaches anyone. */
+  email: "hola@oasispapagayo.example",
+  address: "Pista de tenis del Oasis Papagayo, Corralejo, La Oliva (Fuerteventura)",
   /** A link to the court on a map. */
-  mapsUrl: null as string | null,
+  mapsUrl: "https://www.google.com/maps/search/?api=1&query=Oasis+Papagayo+Corralejo" as string | null,
   teacher: {
-    name: "Marcos [apellido]",
-    background: "[Titulación de entrenador, dónde se formó y cuántos años lleva enseñando.]",
-    approach: "[Cómo entiende las clases: qué busca en un niño que empieza y en un adulto que vuelve a la pista.]",
+    name: "Marcos Asencio Scattolo",
+    background:
+      "Lleva muchos años jugando al tenis y compitiendo en Fuerteventura. Este año se ha sacado el título de profesor.",
+    /** DEMO: a first draft, until Marcos says it in his own words. */
+    approach:
+      "Con quien empieza, lo primero es pasarlo bien y que la pelota pase la red. Con quien ya juega, corregir lo que le frena y llevarlo al partido.",
+  },
+  photos: {
+    action: "Marcos golpea una derecha en salto en la pista",
+    championship: "Marcos en el Campeonato de Fuerteventura 2026",
   },
   classes: [
     {
       name: "Niños",
-      summary: "[Edades]. Aprenden jugando, en grupos de su edad y su nivel.",
-      when: "[Días y horas]",
-      group: "Hasta [n] alumnos",
+      summary: "De 4 a 14 años. Aprenden jugando, en grupos de su edad y su nivel: minitenis hasta los 7 y escuela a partir de los 8.",
+      /** DEMO */
+      when: "Lunes y miércoles, de 17:00 a 18:00",
+      group: "Hasta 6 alumnos",
     },
     {
       name: "Adultos",
       summary: "Empiezas de cero o vuelves después de años. Grupos por nivel, sin prisa.",
-      when: "[Días y horas]",
-      group: "Hasta [n] alumnos",
+      /** DEMO */
+      when: "Martes y jueves, de 19:00 a 20:00",
+      group: "Hasta 4 alumnos",
     },
     {
       name: "Particulares",
@@ -39,15 +57,15 @@ export const school = {
     },
   ],
   prices: [
-    { label: "Grupo, un día a la semana", amount: "[€] al mes" },
-    { label: "Grupo, dos días a la semana", amount: "[€] al mes" },
-    { label: "Clase particular", amount: "[€] la hora" },
-    { label: "Clase de prueba", amount: "[Gratis / €]" },
+    { label: "Grupo, un día a la semana", amount: "100 € al mes" },
+    { label: "Grupo, dos días a la semana", amount: "150 € al mes" },
+    { label: "Clase particular", amount: "30 € la hora" },
+    { label: "Clase de prueba", amount: "Gratis" },
   ],
   faq: [
     {
       question: "¿Necesito raqueta para la prueba?",
-      answer: "[Respuesta de Marcos: si presta raqueta y pelotas el primer día.]",
+      answer: "No. El día de la prueba Marcos te presta una raqueta; tú solo trae ropa y calzado de deporte.",
     },
     {
       question: "¿Y si un día no puedo ir?",
@@ -55,7 +73,7 @@ export const school = {
     },
     {
       question: "¿Qué pasa si llueve?",
-      answer: "[Qué hace Marcos: si la clase se recupera y cómo avisa.]",
+      answer: "La clase se aplaza. Marcos te avisa y te propone otro día.",
     },
     {
       question: "¿Cómo apunto a mi hijo?",
@@ -63,6 +81,7 @@ export const school = {
     },
   ],
 };
+
 
 export const TRIAL_MESSAGE = "Hola, Marcos. Me gustaría probar una clase de tenis.";
 

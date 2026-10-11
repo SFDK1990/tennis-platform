@@ -142,3 +142,13 @@ backend.
   la Fase 30 (PWA y accesibilidad), que es donde se decide qué carga la app en el móvil.
 - **Faltan el aviso legal y la política de privacidad.** La web no recoge datos personales, pero
   la app sí; tienen que existir antes de desplegar (Fase 17).
+- **Datos de prueba mientras se enseña la web.** Por decisión de Daniel, el teléfono, el correo,
+  los horarios y el enfoque de Marcos son inventados y van marcados `DEMO` en `school.ts`; el
+  resto (zona, precios, nombre, respuestas) es real. Corrige la decisión 5 hasta desplegar: el
+  riesgo de los marcadores se amplía a ellos. El WhatsApp sigue vacío, para que el botón no abra
+  un chat con quien tenga un número inventado, y el correo usa un dominio reservado (`.example`).
+- **Las fotos son de Marcos jugando**, no de una clase: la de la portada y un recorte de la del
+  Campeonato de Fuerteventura 2026 sin el cartel ni los patrocinadores. Van ya redimensionadas en
+  webp en `public/web`.
+- **`<img>` en vez de `next/image`.** `next/image` escribe un atributo `style`, que la CSP bloquea
+  y el E2E de la CSP detecta. Corrige la decisión 12.
