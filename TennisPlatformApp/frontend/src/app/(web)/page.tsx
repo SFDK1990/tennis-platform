@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { preload } from "react-dom";
 import { Logo } from "@/shared/ui/Logo";
 import { AccountLink } from "./_parts/AccountLink";
 import { placeholderParts, school, trialHref } from "./_parts/school";
@@ -86,14 +87,21 @@ function Hero({ trial }: { trial: string }) {
   );
 }
 
+const HERO = {
+  src: "/web/marcos-golpe-800.webp",
+  srcSet: "/web/marcos-golpe-800.webp 800w, /web/marcos-golpe-1400.webp 1400w",
+  sizes: "(min-width: 1024px) 45vw, 100vw",
+};
+
 /** Marcos sits left of centre in the frame, so the crop follows him on the narrow boxes. */
 function CourtPhoto() {
+  // The largest paint of the page on a phone: asked for from the <head>, not when the parser
+  // reaches the img.
+  preload(HERO.src, { as: "image", imageSrcSet: HERO.srcSet, imageSizes: HERO.sizes, fetchPriority: "high" });
   return (
     <figure className="site-rise relative m-0 h-80 overflow-hidden rounded bg-(--site-band-photo) [animation-delay:150ms] sm:h-[460px] lg:h-[560px]">
       <Photo
-        src="/web/marcos-golpe-800.webp"
-        srcSet="/web/marcos-golpe-800.webp 800w, /web/marcos-golpe-1400.webp 1400w"
-        sizes="(min-width: 1024px) 45vw, 100vw"
+        {...HERO}
         width={1400}
         height={788}
         alt={school.photos.action}

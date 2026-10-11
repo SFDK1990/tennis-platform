@@ -133,13 +133,14 @@ backend.
   con número, a `wa.me`. Lo cubren el test unitario y el E2E.
 - **`robots.txt` y `sitemap.xml` se generan al compilar**, así que `SITE_URL` tiene que estar en
   el entorno de la build de producción, no sólo en el de ejecución.
-- **Lighthouse en el móvil queda por debajo de 90 en rendimiento** (entre 60 y 87 según la
-  pasada, con la máquina compartida con otra sesión). En escritorio: 99, 100, 96 y 100. Lo que
-  pesa es el JavaScript que se ejecuta antes del primer fotograma (React y el runtime de Next, el
-  mismo en toda la app), que Lighthouse proyecta sobre un móvil cuatro veces más lento. El 96 de
-  buenas prácticas es el 401 que da en la consola el intento de recuperar la sesión en cada
-  visita anónima. El criterio 8 se vuelve a medir con la máquina libre; si no llega, se trata en
-  la Fase 30 (PWA y accesibilidad), que es donde se decide qué carga la app en el móvil.
+- **Lighthouse en el móvil, con la máquina libre** (12 de octubre, cinco pasadas sobre la build de
+  producción): rendimiento entre 86 y 93, mediana 90; accesibilidad 100, buenas prácticas 96, SEO
+  100. En escritorio: 99, 100, 96 y 100. Con las fotos, el LCP del móvil es la de la portada, y se
+  precarga desde el `<head>` (`preload` de `react-dom`): bajó el retraso de carga de 480 a 110 ms.
+  Lo que queda (3,3 s de LCP) es que Lighthouse no da la imagen por pintada hasta ejecutar el
+  JavaScript de React y Next con la CPU del móvil simulado cuatro veces más lenta; reducirlo es de
+  la Fase 30. El 96 de buenas prácticas es el 403 y el 401 que deja en la consola el intento de
+  recuperar la sesión en cada visita anónima.
 - **Faltan el aviso legal y la política de privacidad.** La web no recoge datos personales, pero
   la app sí; tienen que existir antes de desplegar (Fase 17).
 - **Datos de prueba mientras se enseña la web.** Por decisión de Daniel, el teléfono, el correo,
