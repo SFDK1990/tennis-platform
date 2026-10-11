@@ -6,8 +6,8 @@ import com.tennisplatform.identity.adapters.in.web.AuthDtos.UserSummaryResponse;
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.identity.application.port.in.AuthenticationResult;
 import com.tennisplatform.identity.application.port.in.ChangePassword;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,14 +39,14 @@ class MyPasswordController {
 
     @PostMapping(AuthRateLimitFilter.CHANGE_PASSWORD)
     ResponseEntity<LoginResponse> change(@AuthenticationPrincipal AuthenticatedUser caller,
-                                         @Valid @RequestBody ChangePasswordRequest request) {
+                                         @Valid @RequestBody ChangePasswordRequest request,
+                                         HttpServletResponse httpResponse) {
         AuthenticationResult result = changePassword.change(
                 new ChangePassword.Command(caller.id(), request.currentPassword(), request.newPassword()));
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.issue(result.refreshToken(),
-                        Duration.between(clock.instant(), result.refreshTokenExpiresAt())))
-                .body(new LoginResponse(result.accessToken(), result.accessTokenExpiresAt(),
-                        UserSummaryResponse.from(result.user())));
+        refreshCookie.issue(httpResponse, result.refreshToken(),
+                Duration.between(clock.instant(), result.refreshTokenExpiresAt()));
+        return ResponseEntity.ok(new LoginResponse(result.accessToken(), result.accessTokenExpiresAt(),
+                UserSummaryResponse.from(result.user())));
     }
 }

@@ -19,8 +19,8 @@ import com.tennisplatform.identity.application.port.in.VerifyEmail;
 import com.tennisplatform.identity.domain.InvalidTokenException;
 import com.tennisplatform.identity.domain.TokenReuseDetectedException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -74,13 +74,13 @@ class AuthController {
     }
 
     @PostMapping("/login")
-    ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
+                                        HttpServletResponse httpResponse) {
         AuthenticationResult result = login.login(new Login.Command(request.email(), request.password()));
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieFor(result))
-                .body(new LoginResponse(result.accessToken(), result.accessTokenExpiresAt(),
-                        UserSummaryResponse.from(result.user())));
+        issueCookie(httpResponse, result);
+        return ResponseEntity.ok(new LoginResponse(result.accessToken(), result.accessTokenExpiresAt(),
+                UserSummaryResponse.from(result.user())));
     }
 
     /**
@@ -93,46 +93,44 @@ class AuthController {
      * error contract and told a caller which of the two had happened.
      */
     @PostMapping("/refresh")
-    ResponseEntity<Object> refresh(HttpServletRequest httpRequest) {
+    ResponseEntity<Object> refresh(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         String presented = refreshCookie.readFrom(httpRequest).orElse(null);
         if (presented == null) {
-            return sessionExpired();
+            return sessionExpired(httpResponse);
         }
 
         AuthenticationResult result;
         try {
             result = refreshSession.refresh(new RefreshSession.Command(presented));
         } catch (InvalidTokenException | TokenReuseDetectedException e) {
-            return sessionExpired();
+            return sessionExpired(httpResponse);
         }
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookieFor(result))
-                .body(new AccessTokenResponse(result.accessToken(), result.accessTokenExpiresAt()));
+        issueCookie(httpResponse, result);
+        return ResponseEntity.ok(new AccessTokenResponse(result.accessToken(), result.accessTokenExpiresAt()));
     }
 
     /** Clears the dead cookie so the browser stops presenting it, and says why in the contract. */
-    private ResponseEntity<Object> sessionExpired() {
+    private ResponseEntity<Object> sessionExpired(HttpServletResponse httpResponse) {
         ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
         problem.setTitle("Session expired");
         problem.setDetail("Please sign in again.");
         problem.setProperty("code", "AUTH_SESSION_EXPIRED");
 
+        refreshCookie.clear(httpResponse);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.clear())
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .body(problem);
     }
 
     /** Clears the cookie even when the token was unknown, so the browser never keeps a dead one. */
     @PostMapping("/logout")
-    ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
+    ResponseEntity<Void> logout(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         refreshCookie.readFrom(httpRequest)
                 .ifPresent(token -> logout.logout(new Logout.Command(token)));
 
-        return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.clear())
-                .build();
+        refreshCookie.clear(httpResponse);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/verify-email")
@@ -149,17 +147,17 @@ class AuthController {
     }
 
     @PostMapping("/reset-password")
-    ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request,
+                                       HttpServletResponse httpResponse) {
         resetPassword.reset(new ResetPassword.Command(request.token(), request.newPassword()));
 
         // Every session was just revoked, so the cookie in this browser is dead too.
-        return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.clear())
-                .build();
+        refreshCookie.clear(httpResponse);
+        return ResponseEntity.noContent().build();
     }
 
-    private String cookieFor(AuthenticationResult result) {
-        return refreshCookie.issue(result.refreshToken(),
+    private void issueCookie(HttpServletResponse httpResponse, AuthenticationResult result) {
+        refreshCookie.issue(httpResponse, result.refreshToken(),
                 Duration.between(clock.instant(), result.refreshTokenExpiresAt()));
     }
 }
