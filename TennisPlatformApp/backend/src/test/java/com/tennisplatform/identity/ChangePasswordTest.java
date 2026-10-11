@@ -57,7 +57,7 @@ class ChangePasswordTest extends AbstractIntegrationTest {
 
         ResponseEntity<Map> refused = phone.changePassword("not-" + PASSWORD, NEW_PASSWORD);
 
-        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(refused.getBody()).containsEntry("code", "CURRENT_PASSWORD_INCORRECT");
         assertThat(laptop.refresh().getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(login(PASSWORD).getStatusCode()).isEqualTo(HttpStatus.OK);

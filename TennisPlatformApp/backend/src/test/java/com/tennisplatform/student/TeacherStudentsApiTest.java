@@ -217,7 +217,7 @@ class TeacherStudentsApiTest extends AbstractIntegrationTest {
 
         ResponseEntity<Map> response = manage(teacherToken, student.id());
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(response.getBody()).containsEntry("code", "STUDENT_PROFILE_INCOMPLETE");
     }
 

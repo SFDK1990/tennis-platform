@@ -97,7 +97,7 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
         openTheWorkingDay(token);
 
         ResponseEntity<Map> refused = create(token, lesson("INDIVIDUAL", 1, 20, 21, false));
-        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(refused.getBody().get("code")).isEqualTo("LESSON_OUTSIDE_AVAILABILITY");
 
         ResponseEntity<Map> forced = create(token, lesson("INDIVIDUAL", 1, 20, 21, true));
@@ -195,7 +195,7 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
 
         ResponseEntity<Map> refused = cancel(token, id);
 
-        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(refused.getBody().get("code")).isEqualTo("LESSON_ALREADY_FINISHED");
     }
 
@@ -208,7 +208,7 @@ class TeacherLessonsApiTest extends AbstractIntegrationTest {
 
         ResponseEntity<Map> refused = create(token, lessonOn(lastMonth, "INDIVIDUAL", 1, 10, 11, true));
 
-        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
         assertThat(refused.getBody().get("code")).isEqualTo("LESSON_IN_THE_PAST");
     }
 

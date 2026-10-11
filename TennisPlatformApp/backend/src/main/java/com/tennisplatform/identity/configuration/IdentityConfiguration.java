@@ -40,7 +40,7 @@ import com.tennisplatform.identity.application.service.ResendEmailVerificationSe
 import com.tennisplatform.identity.application.service.ResetPasswordService;
 import com.tennisplatform.identity.application.service.VerifyEmailService;
 import com.tennisplatform.identity.adapters.in.web.AuthRateLimitFilter;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -148,7 +148,7 @@ public class IdentityConfiguration {
                 new FilterRegistrationBean<>(new AuthRateLimitFilter(properties));
         registration.addUrlPatterns("/api/v1/auth/*", AuthRateLimitFilter.CHANGE_PASSWORD,
                 AuthRateLimitFilter.DELETE_ACCOUNT);
-        registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER - 10);
+        registration.setOrder(SecurityFilterProperties.DEFAULT_FILTER_ORDER - 10);
         return registration;
     }
 

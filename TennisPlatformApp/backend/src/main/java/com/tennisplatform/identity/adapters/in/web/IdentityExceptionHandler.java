@@ -53,14 +53,14 @@ class IdentityExceptionHandler {
     /** Nobody is left to give a deleted account back to, and disabling it again means nothing. */
     @ExceptionHandler(AccountDeletedException.class)
     ProblemDetail handleAccountDeleted(AccountDeletedException e) {
-        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Account deleted",
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Account deleted",
                 "This account was deleted by its owner and can no longer change.", "ACCOUNT_DELETED");
     }
 
     /** The caller is already signed in, so saying which half was wrong reveals nothing. */
     @ExceptionHandler(CurrentPasswordIncorrectException.class)
     ProblemDetail handleCurrentPasswordIncorrect(CurrentPasswordIncorrectException e) {
-        return Problems.of(HttpStatus.UNPROCESSABLE_ENTITY, "Current password incorrect",
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Current password incorrect",
                 "The current password is not the one this account has.", "CURRENT_PASSWORD_INCORRECT");
     }
 
