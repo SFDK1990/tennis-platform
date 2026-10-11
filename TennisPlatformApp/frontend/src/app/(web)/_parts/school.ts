@@ -25,7 +25,7 @@ export const school = {
   teacher: {
     name: "Marcos Asencio Scattolo",
     background:
-      "Lleva muchos años jugando al tenis y compitiendo en Fuerteventura. Este año se ha sacado el título de profesor.",
+      "Jugador de competición con muchos años de experiencia en los torneos de Fuerteventura. En 2026 obtuvo la titulación de profesor de tenis y hoy dirige la escuela del Oasis Papagayo, donde enseña lo que ha aprendido compitiendo.",
     /** DEMO: a first draft, until Marcos says it in his own words. */
     approach:
       "Con quien empieza, lo primero es pasarlo bien y que la pelota pase la red. Con quien ya juega, corregir lo que le frena y llevarlo al partido.",
