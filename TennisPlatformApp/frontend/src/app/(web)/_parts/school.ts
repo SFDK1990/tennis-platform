@@ -6,6 +6,14 @@
  * The values marked DEMO are invented to show the site while it is tested: they have to be
  * replaced before deploying (Fase 17), like any placeholder.
  */
+/** Each price once: the class cards and the price list both read them from here. */
+const PRICES = {
+  groupOneDay: "100 € al mes",
+  groupTwoDays: "150 € al mes",
+  private: "30 € la hora",
+  trial: "Gratis",
+};
+
 export const school = {
   name: "Oasis Papagayo",
   area: "Corralejo, Fuerteventura",
@@ -53,6 +61,7 @@ export const school = {
       /** DEMO */
       when: "Lunes y miércoles, de 17:00 a 18:00",
       group: "Hasta 6 alumnos",
+      price: `Desde ${PRICES.groupOneDay}`,
     },
     {
       name: "Adultos",
@@ -60,24 +69,31 @@ export const school = {
       /** DEMO */
       when: "Martes y jueves, de 19:00 a 20:00",
       group: "Hasta 4 alumnos",
+      price: `Desde ${PRICES.groupOneDay}`,
     },
     {
       name: "Particulares",
       summary: "Una hora solo para ti: corregir un golpe, preparar un partido o avanzar más rápido.",
       when: "Según los huecos de Marcos",
       group: "Tú solo, o con un amigo",
+      price: PRICES.private,
     },
   ],
   prices: [
-    { label: "Grupo, un día a la semana", amount: "100 € al mes" },
-    { label: "Grupo, dos días a la semana", amount: "150 € al mes" },
-    { label: "Clase particular", amount: "30 € la hora" },
-    { label: "Clase de prueba", amount: "Gratis" },
+    { label: "Grupo, un día a la semana", amount: PRICES.groupOneDay },
+    { label: "Grupo, dos días a la semana", amount: PRICES.groupTwoDays },
+    { label: "Clase particular", amount: PRICES.private },
+    { label: "Clase de prueba", amount: PRICES.trial },
   ],
+  trialPrice: PRICES.trial,
   faq: [
     {
       question: "¿Necesito raqueta para la prueba?",
-      answer: "No. El día de la prueba Marcos te presta una raqueta; tú solo trae ropa y calzado de deporte.",
+      answer: "No. El día de la prueba Marcos te presta una.",
+    },
+    {
+      question: "¿Qué tengo que traer?",
+      answer: "Ropa y calzado de deporte, y agua. Si tienes raqueta, tráela; si no, el primer día te la presta Marcos.",
     },
     {
       question: "¿Y si un día no puedo ir?",
@@ -93,7 +109,6 @@ export const school = {
     },
   ],
 };
-
 
 export const TRIAL_MESSAGE = "Hola, Marcos. Me gustaría probar una clase de tenis.";
 
