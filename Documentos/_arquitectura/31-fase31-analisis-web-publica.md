@@ -178,3 +178,18 @@ Criterios:
   webp en `public/web`.
 - **`<img>` en vez de `next/image`.** `next/image` escribe un atributo `style`, que la CSP bloquea
   y el E2E de la CSP detecta. Corrige la decisión 12.
+
+## Mejoras tras el cierre
+
+Del repaso de academias conocidas (Nadal, Mouratoglou, IMG, Ferrero, MyTennisLessons), validadas
+por Daniel el 12 de octubre de 2026:
+
+- **La barra de arriba se queda fija en el ordenador**, con "Pedir clase de prueba"; en el móvil
+  ya lo hace la barra de abajo. "Entrar" pasa a botón con borde, para que se vea sin competir
+  con el amarillo. Los enlaces a las secciones sólo caben en pantalla grande.
+- **Cada tarjeta de clase lleva su precio.** Cada cifra se escribe una vez en `school.ts`, y la
+  leen las tarjetas y la tabla de precios.
+- **"¿Qué tengo que traer?"** pasa a ser una pregunta propia.
+- Quedan fuera: las plazas libres en vivo (necesitan un endpoint público, decisión 6), las
+  opiniones (hasta tener tres reales) y el mensaje de Marcos en primera persona (lo escribe él).
+

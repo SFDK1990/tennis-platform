@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { preload } from "react-dom";
-import { placeholderParts, school, trialHref } from "./_parts/school";
+import { placeholderParts, school } from "./_parts/school";
 import { SiteFooter, SiteNav, WRAP } from "./_parts/SiteNav";
+import { TrialButton } from "./_parts/TrialButton";
 
 const DESCRIPTION =
   "Clases de tenis para niños y adultos, en grupos reducidos o particulares. Las da siempre Marcos, en la misma pista, y las plazas se reservan desde el móvil.";
@@ -16,11 +17,11 @@ export const metadata: Metadata = {
 
 /** The school's public page (31-fase31): direction A, "Pista", of the approved mock-up. */
 export default function WebsitePage() {
-  const trial = trialHref();
   return (
     <>
       <StructuredData />
-      <Hero trial={trial} />
+      <SiteNav />
+      <Hero />
       <main>
         <Classes />
         <Steps />
@@ -28,20 +29,18 @@ export default function WebsitePage() {
         <Prices />
         <Questions />
       </main>
-      <Contact trial={trial} />
+      <Contact />
       <SiteFooter underTrialBar />
-      <TrialBar trial={trial} />
+      <TrialBar />
     </>
   );
 }
 
 const SECTION_TITLE = "font-display text-5xl font-bold leading-none sm:text-6xl";
 
-function Hero({ trial }: { trial: string }) {
+function Hero() {
   return (
     <header className="bg-(--site-band) text-white">
-      <SiteNav />
-
       <div className={`${WRAP} grid items-center gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pb-24 lg:pt-10`}>
         <div className="site-rise flex flex-col gap-7">
           <h1 className="font-display text-6xl font-bold leading-[0.92] sm:text-7xl lg:text-[88px]">
@@ -52,7 +51,7 @@ function Hero({ trial }: { trial: string }) {
             misma pista, y tu plaza la reservas desde el móvil.
           </p>
           <div className="flex flex-wrap items-center gap-5">
-            <TrialButton href={trial} desktopOnly />
+            <TrialButton layout="desktop" />
             <a href="#empezar" className="font-semibold text-white underline-offset-4 hover:underline">Cómo funciona</a>
           </div>
         </div>
@@ -89,7 +88,7 @@ function CourtPhoto() {
 
 function Classes() {
   return (
-    <section id="clases" aria-labelledby="h-clases" className={`${WRAP} pb-24 pt-24 lg:pt-28`}>
+    <section id="clases" aria-labelledby="h-clases" className={`lg:scroll-mt-22 ${WRAP} pb-24 pt-24 lg:pt-28`}>
       <div className="mb-12 grid items-end gap-6 lg:grid-cols-2 lg:gap-12">
         <h2 id="h-clases" className={SECTION_TITLE}>Clases para cada edad y nivel</h2>
         <p className="text-lg leading-relaxed text-(--site-muted)">
@@ -109,6 +108,8 @@ function Classes() {
               <dd><Copy text={lesson.when} /></dd>
               <dt className="text-(--site-muted)">Grupo</dt>
               <dd><Copy text={lesson.group} /></dd>
+              <dt className="text-(--site-muted)">Precio</dt>
+              <dd className="font-semibold"><Copy text={lesson.price} /></dd>
             </dl>
           </article>
         ))}
@@ -124,7 +125,7 @@ const STEPS = [
   },
   {
     title: "Prueba una clase",
-    text: `Conoces la pista, el grupo y su forma de trabajar. La clase de prueba: ${school.prices.at(-1)?.amount.toLowerCase()}.`,
+    text: `Conoces la pista, el grupo y su forma de trabajar. La clase de prueba: ${school.trialPrice.toLowerCase()}.`,
   },
   {
     title: "Reserva desde la app",
@@ -134,7 +135,7 @@ const STEPS = [
 
 function Steps() {
   return (
-    <section id="empezar" aria-labelledby="h-empezar" className="bg-(--site-steps) text-white">
+    <section id="empezar" aria-labelledby="h-empezar" className="lg:scroll-mt-22 bg-(--site-steps) text-white">
       <div className={`${WRAP} py-24`}>
         <h2 id="h-empezar" className={`${SECTION_TITLE} mb-14`}>Cómo empezar</h2>
         <ol className="grid gap-12 lg:grid-cols-3">
@@ -182,7 +183,7 @@ function Teacher() {
 
 function Prices() {
   return (
-    <section id="precios" aria-labelledby="h-precios" className={`${WRAP} grid gap-10 pb-24 pt-24 lg:grid-cols-[1fr_1.2fr] lg:gap-20 lg:pt-28`}>
+    <section id="precios" aria-labelledby="h-precios" className={`lg:scroll-mt-22 ${WRAP} grid gap-10 pb-24 pt-24 lg:grid-cols-[1fr_1.2fr] lg:gap-20 lg:pt-28`}>
       <div className="flex flex-col gap-4">
         <h2 id="h-precios" className={SECTION_TITLE}>Precios</h2>
         <p className="text-lg leading-relaxed text-(--site-muted)">
@@ -203,7 +204,7 @@ function Prices() {
 
 function Questions() {
   return (
-    <section id="preguntas" aria-labelledby="h-preguntas" className={`${WRAP} grid gap-10 pb-28 lg:grid-cols-[1fr_1.2fr] lg:gap-20`}>
+    <section id="preguntas" aria-labelledby="h-preguntas" className={`lg:scroll-mt-22 ${WRAP} grid gap-10 pb-28 lg:grid-cols-[1fr_1.2fr] lg:gap-20`}>
       <h2 id="h-preguntas" className={SECTION_TITLE}>Preguntas</h2>
       <div>
         {school.faq.map((item, index) => (
@@ -222,9 +223,9 @@ function Questions() {
   );
 }
 
-function Contact({ trial }: { trial: string }) {
+function Contact() {
   return (
-    <section id="donde" aria-labelledby="h-donde" className="bg-(--site-band) text-white">
+    <section id="donde" aria-labelledby="h-donde" className="lg:scroll-mt-22 bg-(--site-band) text-white">
       <div className={`${WRAP} grid items-center gap-12 py-24 lg:grid-cols-2 lg:gap-20`}>
         <div className="flex flex-col gap-5">
           <h2 id="h-donde" className={SECTION_TITLE}>Ven a probar una clase</h2>
@@ -232,7 +233,7 @@ function Contact({ trial }: { trial: string }) {
             Escríbele a Marcos por WhatsApp y te propone un día. Si ya eres alumno, reserva en la app.
           </p>
           <div className="flex flex-wrap items-center gap-5 pt-2">
-            <TrialButton href={trial} desktopOnly />
+            <TrialButton layout="desktop" />
             <Link href="/login" className="font-semibold text-white underline-offset-4 hover:underline">Entrar en la app</Link>
           </div>
         </div>
@@ -250,27 +251,11 @@ function Contact({ trial }: { trial: string }) {
 }
 
 /** On a phone the trial button stays at hand while scrolling (the approved mobile mock-up). */
-function TrialBar({ trial }: { trial: string }) {
+function TrialBar() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-10 border-t border-white/20 bg-(--site-band) px-4 pb-5 pt-3 lg:hidden">
-      <TrialButton href={trial} wide />
+      <TrialButton layout="wide" />
     </div>
-  );
-}
-
-/** On a phone only the bar at the bottom carries it, so the first screen does not show it twice. */
-function TrialButton({ href, wide = false, desktopOnly = false }: { href: string; wide?: boolean; desktopOnly?: boolean }) {
-  const layout = wide ? "flex w-full" : desktopOnly ? "hidden lg:inline-flex" : "inline-flex";
-  return (
-    <a
-      href={href}
-      className={`${layout} min-h-13 items-center justify-center gap-2.5 rounded-lg bg-ball px-6 text-[17px] font-semibold text-navy hover:bg-white`}
-    >
-      <svg viewBox="0 0 24 24" aria-hidden className="size-5.5 fill-none stroke-current stroke-[1.8]">
-        <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z" strokeLinejoin="round" />
-      </svg>
-      Pedir clase de prueba
-    </a>
   );
 }
 
