@@ -8,9 +8,9 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "tennis.notification")
 public class NotificationProperties {
 
-    /** Signs every email and names the sender. */
+    /** Signs every email and names the sender: {@code tennis.school-name}. */
     @NotBlank
-    private String schoolName = "Escuela de Tenis Oasis Papagayo";
+    private String schoolName;
 
     @NotBlank
     private String mailFrom = "no-reply@tennis-platform.local";

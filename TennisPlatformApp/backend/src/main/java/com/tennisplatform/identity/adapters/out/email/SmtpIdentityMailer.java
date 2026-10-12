@@ -3,6 +3,7 @@ package com.tennisplatform.identity.adapters.out.email;
 import com.tennisplatform.identity.application.port.out.IdentityMailer;
 import com.tennisplatform.identity.configuration.IdentityProperties;
 import com.tennisplatform.identity.domain.EmailAddress;
+import jakarta.mail.internet.InternetAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.NestedExceptionUtils;
@@ -11,6 +12,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -30,7 +32,7 @@ class SmtpIdentityMailer implements IdentityMailer {
     @Override
     public void sendEmailVerification(EmailAddress recipient, String rawToken) {
         send(recipient, "Confirma tu correo",
-                "Confirma tu cuenta en Tennis Platform abriendo este enlace:\n\n"
+                "Confirma tu cuenta en " + properties.getSchoolName() + " abriendo este enlace:\n\n"
                         + link("/verify-email", rawToken)
                         + "\n\nSi no has creado ninguna cuenta, ignora este mensaje.");
     }
@@ -48,7 +50,7 @@ class SmtpIdentityMailer implements IdentityMailer {
     @Override
     public void sendRegistrationAttemptOnExistingAccount(EmailAddress recipient) {
         send(recipient, "Intento de registro con tu correo",
-                "Alguien ha intentado crear una cuenta en Tennis Platform con esta dirección, "
+                "Alguien ha intentado crear una cuenta en " + properties.getSchoolName() + " con esta dirección, "
                         + "que ya está registrada. No se ha creado ninguna cuenta nueva ni se ha "
                         + "modificado la tuya.\n\nSi has sido tú, puedes iniciar sesión con normalidad "
                         + "o restablecer tu contraseña si no la recuerdas.");
@@ -59,9 +61,19 @@ class SmtpIdentityMailer implements IdentityMailer {
                 + URLEncoder.encode(rawToken, StandardCharsets.UTF_8);
     }
 
+    /** The school's name next to the address, as the booking emails show it. */
+    private String sender() {
+        try {
+            return new InternetAddress(properties.getMailFrom(), properties.getSchoolName(),
+                    StandardCharsets.UTF_8.name()).toString();
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException("UTF-8 is always supported", e);
+        }
+    }
+
     private void send(EmailAddress recipient, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(properties.getMailFrom());
+        message.setFrom(sender());
         message.setTo(recipient.value());
         message.setSubject(subject);
         message.setText(body);

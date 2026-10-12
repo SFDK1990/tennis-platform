@@ -41,6 +41,7 @@ class SmtpMailerTest {
         meters = new SimpleMeterRegistry();
         NotificationProperties properties = new NotificationProperties();
         properties.setMailFrom("no-reply@example.com");
+        properties.setSchoolName("Escuela de Tenis Oasis Papagayo");
         mailer = new SmtpMailer(sender, properties, meters);
     }
 

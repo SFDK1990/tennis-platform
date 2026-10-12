@@ -45,6 +45,10 @@ public class IdentityProperties {
     @NotBlank
     private String mailFrom = "no-reply@tennis-platform.local";
 
+    /** Names the sender and the school in the emails: {@code tennis.school-name}. */
+    @NotBlank
+    private String schoolName;
+
     /**
      * Secure flag of the refresh cookie. Defaults to true and is only turned off for local
      * development, where there is no HTTPS - a browser silently drops a Secure cookie on
@@ -131,6 +135,14 @@ public class IdentityProperties {
 
     public String getMailFrom() {
         return mailFrom;
+    }
+
+    public String getSchoolName() {
+        return schoolName;
+    }
+
+    public void setSchoolName(String schoolName) {
+        this.schoolName = schoolName;
     }
 
     public void setMailFrom(String mailFrom) {
