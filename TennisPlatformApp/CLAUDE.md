@@ -35,6 +35,7 @@ Allowed dependencies, one-directional:
 | `lesson` | `teacher`, `availability`, `identity`, `platform` |
 | `booking` | `student`, `lesson`, `identity` |
 | `administration` | `identity`, `teacher`, `student`, `platform` |
+| `notification` | `booking`, `lesson`, `teacher`, `student`, `identity`; nobody depends on it |
 | `calendar` | query ports only (`Get*`, `Find*`, `Query*`); it never writes |
 
 Every module may also use `shared.domain`: technical primitives only (`DateRange`,
