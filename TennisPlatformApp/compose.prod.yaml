@@ -38,7 +38,7 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?}
-      FRONTEND_BASE_URL: https://app.${DOMAIN:?}
+      FRONTEND_BASE_URL: https://${DOMAIN:?}
       MAIL_HOST: ${MAIL_HOST:?}
       MAIL_PORT: ${MAIL_PORT:?}
       MAIL_USERNAME: ${MAIL_USERNAME:?}
@@ -68,14 +68,18 @@ services:
       args:
         # Baked in at build time: see the comment in frontend/Dockerfile.
         BACKEND_URL: http://backend:8080
+        SITE_URL: https://${DOMAIN:?}
     restart: unless-stopped
+    environment:
+      # Also at run time: the Open Graph links are resolved per request.
+      SITE_URL: https://${DOMAIN:?}
     depends_on:
       backend:
         condition: service_healthy
     mem_limit: 512m
 
-  # The entrance. It serves the public site and passes the app to the frontend, overwriting
-  # X-Forwarded-For with the client address Cloudflare saw (requirement of Fase 15).
+  # The entrance. It passes everything to the frontend, overwriting X-Forwarded-For with the
+  # client address Cloudflare saw (requirement of Fase 15).
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -85,7 +89,6 @@ services:
       DOMAIN: ${DOMAIN}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./deploy/site:/srv/site:ro
       - caddy-data:/data
     mem_limit: 128m
 
