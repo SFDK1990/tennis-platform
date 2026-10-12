@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -18,6 +20,17 @@ import java.util.UUID;
 final class LessonDtos {
 
     private LessonDtos() {
+    }
+
+    /** The reason goes to the students' email and is not stored (Fase 20). */
+    record CancelLessonRequest(@Size(max = 200) String reason) {
+    }
+
+    /** A day in the teacher's zone, and the reason for the students. */
+    record CancelDayRequest(@NotNull LocalDate date, @Size(max = 200) String reason) {
+    }
+
+    record CancelledDayResponse(List<LessonResponse> lessons) {
     }
 
     /** Every field optional: this is a PATCH, and null means "leave as it is". */

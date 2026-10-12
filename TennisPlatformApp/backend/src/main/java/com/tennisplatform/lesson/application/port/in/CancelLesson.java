@@ -1,5 +1,7 @@
 package com.tennisplatform.lesson.application.port.in;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -14,7 +16,17 @@ import java.util.UUID;
  */
 public interface CancelLesson {
 
-    LessonView cancel(UUID teacherUserId, UUID lessonId);
+    /** {@code reason} is what the teacher wrote, or null: it reaches the students and is not stored. */
+    LessonView cancel(UUID teacherUserId, UUID lessonId, String reason);
+
+    /**
+     * Cancels every lesson of the teacher that starts on {@code day} in the teacher's zone and has
+     * neither started nor been cancelled, each with its bookings, in one transaction: a rainy day
+     * is cancelled whole or not at all (32-fase20-analisis-avisos-calendario.md).
+     *
+     * @return the lessons cancelled, empty when there were none
+     */
+    List<LessonView> cancelDay(UUID teacherUserId, LocalDate day, String reason);
 
     /**
      * An administrator resolves an incident (01-analisis-funcional.md §17): any lesson, with no

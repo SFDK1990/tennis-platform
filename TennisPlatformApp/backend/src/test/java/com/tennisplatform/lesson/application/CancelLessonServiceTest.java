@@ -64,7 +64,7 @@ class CancelLessonServiceTest {
     void cancelsAtShortNoticeAndSaysSo() {
         when(lessons.findById(LESSON_ID)).thenReturn(Optional.of(lessonOf(TEACHER_ID)));
 
-        LessonView cancelled = service.cancel(TEACHER_ID, LESSON_ID);
+        LessonView cancelled = service.cancel(TEACHER_ID, LESSON_ID, null);
 
         assertThat(cancelled.status()).isEqualTo("CANCELLED");
         assertThat(cancelled.cancelledAt()).isEqualTo(NOW);
@@ -73,19 +73,19 @@ class CancelLessonServiceTest {
 
     /** The cascade runs inside the same use case, with the same instant, so nothing can separate the two. */
     @Test
-    void cancellingALessonCancelsItsBookingsAtTheSameInstant() {
+    void cancellingALessonCancelsItsBookingsAtTheSameInstantWithTheTeachersReason() {
         when(lessons.findById(LESSON_ID)).thenReturn(Optional.of(lessonOf(TEACHER_ID)));
 
-        service.cancel(TEACHER_ID, LESSON_ID);
+        service.cancel(TEACHER_ID, LESSON_ID, "Estoy enfermo");
 
-        verify(bookings).cancelAllOf(LESSON_ID, NOW, null);
+        verify(bookings).cancelAllOf(LESSON_ID, NOW, "Estoy enfermo");
     }
 
     @Test
     void failsWhenThereIsNoSuchLesson() {
         when(lessons.findById(LESSON_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.cancel(TEACHER_ID, LESSON_ID))
+        assertThatThrownBy(() -> service.cancel(TEACHER_ID, LESSON_ID, null))
                 .isInstanceOf(LessonNotFoundException.class);
     }
 
@@ -98,7 +98,7 @@ class CancelLessonServiceTest {
     void treatsAnotherTeachersLessonAsNotFound() {
         when(lessons.findById(LESSON_ID)).thenReturn(Optional.of(lessonOf(UUID.randomUUID())));
 
-        assertThatThrownBy(() -> service.cancel(TEACHER_ID, LESSON_ID))
+        assertThatThrownBy(() -> service.cancel(TEACHER_ID, LESSON_ID, null))
                 .isInstanceOf(LessonNotFoundException.class);
 
         verify(lessons, never()).save(any());
@@ -106,7 +106,7 @@ class CancelLessonServiceTest {
 
     @Test
     void refusesACallerWhoIsNotTheTeacher() {
-        assertThatThrownBy(() -> service.cancel(UUID.randomUUID(), LESSON_ID))
+        assertThatThrownBy(() -> service.cancel(UUID.randomUUID(), LESSON_ID, null))
                 .isInstanceOf(ForbiddenOperationException.class);
 
         verify(lessons, never()).findById(any());
