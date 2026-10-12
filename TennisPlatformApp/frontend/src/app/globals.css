@@ -8,11 +8,13 @@
 @source inline("row-start-{1..97} row-span-{1..96}");
 
 /*
- * MAS Tennis Academy: the palette of the logo (27-fase15.5, decision 1). Court blue is for what
+ * Oasis Papagayo (31-fase31, decision 1), on the palette of 27-fase15.5. Court blue is for what
  * can be done, navy for the frame and the text, white lines for the court drawn under the
- * things that matter most. Every text pair here passes WCAG AA.
+ * things that matter most. Every text pair here passes WCAG AA. Ball yellow belongs to the mark
+ * and to the trial-class button, always under navy text: on white it is unreadable.
  */
 @theme {
+  --color-ball: #e4f03c;
   --color-ground: #eef2f7;
   --color-paper: #ffffff;
   --color-ink: #0b1e3f;
@@ -53,4 +55,67 @@ body {
     transition: none !important;
     animation: none !important;
   }
+}
+
+/*
+ * The public website's two themes (31-fase31, decision 8). Each colour is written once with
+ * its light and dark value, and light-dark() picks one from the colour scheme in force: the
+ * system's while the visitor has not chosen, the data-theme the server rendered once they have.
+ * These are meant to become the app's own dark theme later, not a second palette.
+ */
+[data-site] {
+  color-scheme: light dark;
+  --site-bg: light-dark(#ffffff, #0a1730);
+  --site-surface: light-dark(#eef2f7, #0f2347);
+  --site-text: light-dark(#0b1e3f, #eef2f7);
+  --site-muted: light-dark(#4e5d78, #a9b8d0);
+  --site-line: light-dark(#d3dbe7, #24395f);
+  --site-link: light-dark(#1f5fb8, #8fb3e6);
+  --site-photo: light-dark(#d3dbe7, #1a3260);
+  --site-band: light-dark(#0b1e3f, #06112a);
+  --site-band-photo: light-dark(#16407e, #1a3260);
+  --site-steps: light-dark(#1f5fb8, #174a91);
+}
+
+[data-site][data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-site][data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* The theme button shows where it goes, which depends on the scheme in force. */
+[data-site] .theme-to-light,
+[data-site][data-theme="dark"] .theme-to-dark {
+  display: none;
+}
+
+[data-site][data-theme="dark"] .theme-to-light {
+  display: flex;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-site]:not([data-theme="light"]) .theme-to-dark {
+    display: none;
+  }
+
+  [data-site]:not([data-theme="light"]) .theme-to-light {
+    display: flex;
+  }
+}
+
+/*
+ * The one moment of motion: the front page settles in once (decision 11). Only movement, never
+ * fading in: text at opacity 0 does not count as painted, and the largest paint of the page
+ * waited for the animation to end on a slow phone.
+ */
+@keyframes site-rise {
+  from {
+    transform: translateY(16px);
+  }
+}
+
+.site-rise {
+  animation: site-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }

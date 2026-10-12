@@ -38,6 +38,11 @@ export function RegisterForm() {
         hint="Al menos 10 caracteres." error={fieldErrorOf(register.error, "password")} />
       <ErrorNotice error={register.error} />
       <Button type="submit" pending={register.isPending}>Crear cuenta</Button>
+      {/* It informs, it does not ask: the data is needed to give the classes (31-fase31, decisions 15-16). */}
+      <p className="text-sm text-muted">
+        Las cuentas son para mayores de 14 años. Qué hacemos con tus datos lo explica
+        la <Link href="/privacidad" className="text-court underline">política de privacidad</Link>.
+      </p>
       <p className="text-sm">
         ¿Ya tienes cuenta? <Link href="/login" className="text-court underline">Entra</Link>
       </p>

@@ -20,7 +20,7 @@ export function VerifyEmailPanel({ token }: { token: string | null }) {
     return (
       <div className="flex flex-col gap-4">
         <Notice tone="success">Email verificado. Ya puedes reservar clases.</Notice>
-        <Link href="/" className="text-court underline">Continuar</Link>
+        <Link href="/home" className="text-court underline">Continuar</Link>
       </div>
     );
   }
