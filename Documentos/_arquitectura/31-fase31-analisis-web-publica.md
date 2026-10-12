@@ -164,7 +164,7 @@ Criterios:
   precarga desde el `<head>` (`preload` de `react-dom`): bajó el retraso de carga de 480 a 110 ms.
   Lo que queda (3,3 s de LCP) es que Lighthouse no da la imagen por pintada hasta ejecutar el
   JavaScript de React y Next con la CPU del móvil simulado cuatro veces más lenta; reducirlo es de
-  la Fase 30. El 96 de buenas prácticas es el 403 y el 401 que deja en la consola el intento de
+  la Fase 30, y Daniel da el criterio 8 por cumplido con esa mediana. El 96 de buenas prácticas es el 403 y el 401 que deja en la consola el intento de
   recuperar la sesión en cada visita anónima.
 - **Faltan el aviso legal y la política de privacidad.** La web no recoge datos personales, pero
   la app sí; tienen que existir antes de desplegar (Fase 17).

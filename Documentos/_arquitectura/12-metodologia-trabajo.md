@@ -67,7 +67,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 16 | Observabilidad | Completada | `28-fase16-analisis-observabilidad.md`. Logs estructurados, métricas de reservas y conflictos, correlation id de punta a punta |
 | 17 | Endurecimiento y despliegue | 17.1 en curso | `29-fase17-analisis-endurecimiento-despliegue.md`. La 17.1 (despliegue y backups) se retoma en una Raspberry Pi con Cloudflare Tunnel, sin coste de servidor. La PWA y la accesibilidad pasan a la 30 |
 | 19 | Cierre del MVP | Completada | `30-fase19-analisis-cierre-mvp.md`. Cambiar la contraseña, exportar y borrar la cuenta; el admin lista reservas y cancela clases; editar las notas y la capacidad de una clase |
-| 31 | Web pública | **En curso** | `31-fase31-analisis-web-publica.md`. La web de la escuela en `/`, en claro y en oscuro, con la clase de prueba por WhatsApp; la app entera pasa a Oasis Papagayo |
+| 31 | Web pública | Completada (PR #45) | `31-fase31-analisis-web-publica.md`. La web de la escuela en `/`, en claro y en oscuro, con la clase de prueba por WhatsApp; la app entera pasa a Oasis Papagayo |
 | 20 | Avisos y calendario | **Siguiente** | Correos de reserva y cancelación al alumno y aviso a Marcos; `.ics`; cancelar un día entero por lluvia |
 | 21 | Lista de espera | Pendiente | Una plaza liberada se reserva sola al primero de la lista |
 | 22 | Clases que se repiten | Pendiente | La misma clase durante varias semanas de una vez |
