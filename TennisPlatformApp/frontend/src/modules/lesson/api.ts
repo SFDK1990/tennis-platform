@@ -28,12 +28,24 @@ export function useEditLesson(id: string) {
   });
 }
 
-/** The teacher cancels through their route; the administrator through theirs, and the bookings say who. */
+/**
+ * The teacher cancels through their route, with the reason the students will read; the
+ * administrator through theirs, and the bookings say who.
+ */
 export function useCancelLesson(as: "teacher" | "admin" = "teacher") {
   return useMutation({
-    mutationFn: async (id: string) =>
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) =>
       unwrap(as === "admin"
         ? await api.POST("/admin/lessons/{id}/cancel", { params: { path: { id } } })
-        : await api.POST("/teacher/lessons/{id}/cancel", { params: { path: { id } } })),
+        : await api.POST("/teacher/lessons/{id}/cancel", { params: { path: { id } }, body: { reason } })),
+  });
+}
+
+export type CancelDay = components["schemas"]["CancelDayRequest"];
+
+/** Every lesson of a day in the teacher's zone, cancelled whole or not at all. */
+export function useCancelDay() {
+  return useMutation({
+    mutationFn: async (body: CancelDay) => unwrap(await api.POST("/teacher/lessons/cancellations", { body })),
   });
 }
