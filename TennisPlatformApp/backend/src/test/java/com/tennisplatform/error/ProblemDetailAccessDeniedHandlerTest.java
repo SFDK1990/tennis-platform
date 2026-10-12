@@ -1,11 +1,13 @@
 package com.tennisplatform.error;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.json.ProblemDetailJacksonMixin;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.csrf.MissingCsrfTokenException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 
@@ -20,11 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ProblemDetailAccessDeniedHandlerTest {
 
-    // Built the way Spring Boot builds the application's own mapper, which is what registers
-    // the ProblemDetail mixin: a plain ObjectMapper nests the extra fields under "properties"
-    // and the assertions below would pass while the real payload was the wrong shape.
+    // With the ProblemDetail mixin, as Spring Boot registers it on the application's own
+    // mapper: a plain JsonMapper nests the extra fields under "properties" and the assertions
+    // below would pass while the real payload was the wrong shape.
     private final ProblemDetailAccessDeniedHandler handler = new ProblemDetailAccessDeniedHandler(
-            new ProblemDetailWriter(Jackson2ObjectMapperBuilder.json().build()));
+            new ProblemDetailWriter(JsonMapper.builder()
+                    .addMixIn(ProblemDetail.class, ProblemDetailJacksonMixin.class).build()));
 
     @Test
     void aCsrfRejectionNamesTheHeaderTheCallerIsMissing() throws IOException {

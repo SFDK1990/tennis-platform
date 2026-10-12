@@ -22,7 +22,7 @@ Tocar un endpoint es tocar el spec en el mismo cambio.
 - Todas las fechas/horas son ISO 8601 (`date-time` en UTC, sufijo `Z`); el frontend convierte a hora local del usuario, incluyendo la zona horaria del profesor cuando aplica (decisión ya cerrada en `00-indice-arquitectura.md`).
 - Los errores siempre usan `application/problem+json` (RFC 7807) con el schema `ProblemDetails`, que añade un campo `code` con los códigos de negocio ya definidos en `02-arquitectura.md`.
 - **Estados comunes, documentados en cada operación**: `401` en toda la que exige bearer token,
-  `429` en todo `/auth/*` (el límite por IP cubre el prefijo entero) y `400` en toda la que recibe
+  `429` en todo `/auth/*`, en `POST /me/password` y en `POST /me/deletion` (el límite por IP cubre el prefijo entero y las dos rutas que comprueban una contraseña) y `400` en toda la que recibe
   cuerpo, id o parámetros. Son los que un test rara vez provoca, y por eso los comprueba un test
   sobre el propio spec.
 - **Las transiciones de estado son acciones** (`POST .../cancel`, `.../manage`, `.../attendance`,
@@ -68,7 +68,7 @@ contrato como el resto:
 | `AUTH_UNAUTHENTICATED`      | 401  | No hay bearer token, o no es válido, en un endpoint que lo exige |
 | `AUTH_CSRF_TOKEN_INVALID`   | 403  | Falta `X-XSRF-TOKEN` o no coincide con la cookie                |
 | `AUTH_FORBIDDEN`            | 403  | Denegación de autorización genérica de la cadena de filtros      |
-| `AUTH_RATE_LIMITED`         | 429  | Demasiadas peticiones a `/auth/*` desde la misma IP; `Retry-After` dice cuánto esperar |
+| `AUTH_RATE_LIMITED`         | 429  | Demasiadas peticiones a `/auth/*`, `POST /me/password` o `POST /me/deletion` desde la misma IP; `Retry-After` dice cuánto esperar |
 
 `AUTH_UNAUTHENTICATED` es deliberadamente vago: no distingue token ausente de expirado, mal
 formado o firmado por otro. Esa diferencia es justo lo que un atacante necesita para saber cuál
@@ -195,11 +195,21 @@ Códigos añadidos en la Fase 12:
 | `ADMIN_TARGET_NOT_ALLOWED` | 403 | `PATCH /admin/users/{id}/status` | La cuenta no es de un alumno: ni el profesor ni un admin se desactivan desde la consola |
 | `USER_NOT_FOUND` | 404 | `PATCH /admin/users/{id}/status` | No existe una cuenta con ese id |
 
+Códigos añadidos en la Fase 19:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `CURRENT_PASSWORD_INCORRECT` | 422 | `POST /me/password`, `POST /me/deletion` | La contraseña actual no es la de la cuenta. Puede decirlo: quien llama ya inició sesión |
+| `ACCOUNT_DELETED` | 422 | `PATCH /admin/users/{id}/status` | El alumno borró su cuenta. Es definitivo: ni se reactiva ni se desactiva |
+| `LESSON_CAPACITY_BELOW_BOOKINGS` | 409 | `PATCH /teacher/lessons/{id}` | Ya hay más alumnos reservados que la capacidad pedida; si alguno cancela, releer puede cambiar la respuesta |
+
+`LESSON_ALREADY_STARTED` (422) y `LESSON_ALREADY_CANCELLED` (409) responden también a `PATCH /teacher/lessons/{id}`.
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos
 
-32 operaciones, agrupadas por las etiquetas del spec. En la Fase 13 se retiraron
+37 operaciones, agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. En la Fase 13 se retiraron
 `PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
 `/calendar`).
 

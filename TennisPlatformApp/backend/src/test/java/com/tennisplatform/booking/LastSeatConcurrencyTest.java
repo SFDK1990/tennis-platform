@@ -3,6 +3,8 @@ package com.tennisplatform.booking;
 import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -85,6 +87,32 @@ class LastSeatConcurrencyTest extends AbstractBookingTest {
         assertThat(answers).extracting(ResponseEntity::getStatusCode)
                 .containsExactlyInAnyOrder(HttpStatus.CREATED, HttpStatus.CONFLICT);
         assertThat(confirmedBookingsOf(lessonId)).isEqualTo(1);
+    }
+
+    /**
+     * The teacher lowers the capacity to one while two students book (30-fase19-analisis-cierre-mvp.md).
+     * Whatever order the lock lets them through in, the lesson never ends with more confirmed
+     * bookings than seats, and nobody gets a 500. Without the lock in the edit, the capacity was
+     * written from a count taken before the bookings, and two students sat in a lesson of one.
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void loweringTheCapacityWhileStudentsBookNeverLeavesMoreBookingsThanSeats() throws Exception {
+        for (int round = 0; round < ROUNDS; round++) {
+            UUID lessonId = aLessonStartingIn(Duration.ofDays(40).plusHours(2L * round),
+                    com.tennisplatform.lesson.domain.LessonType.GROUP, 3);
+            String first = aStudentWhoMayBook().token();
+            String second = aStudentWhoMayBook().token();
+
+            List<ResponseEntity<Map>> answers = simultaneously(
+                    () -> rest.exchange("/api/v1/teacher/lessons/" + lessonId, HttpMethod.PATCH,
+                            new HttpEntity<>(Map.of("capacity", 1), jsonBearer(teacherToken)), Map.class),
+                    () -> book(first, lessonId), () -> book(second, lessonId));
+
+            assertThat(answers).allSatisfy(answer -> assertThat(answer.getStatusCode().is5xxServerError()).isFalse());
+            Integer capacity = jdbc.queryForObject("SELECT capacity FROM lessons WHERE id = ?", Integer.class, lessonId);
+            assertThat(confirmedBookingsOf(lessonId)).isLessThanOrEqualTo(capacity);
+        }
     }
 
     @SafeVarargs

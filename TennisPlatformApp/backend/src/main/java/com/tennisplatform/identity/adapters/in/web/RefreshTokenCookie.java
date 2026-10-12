@@ -2,6 +2,8 @@ package com.tennisplatform.identity.adapters.in.web;
 
 import com.tennisplatform.identity.configuration.IdentityProperties;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,11 @@ import java.util.Optional;
  * <p>HttpOnly so no script can read it, SameSite=Strict so browsers never attach it to
  * cross-site requests, and scoped to the auth path so it is not sent on every API call the
  * application makes - a token that travels less is a token that leaks less.
+ *
+ * <p>Added straight to the servlet response, never as a {@code ResponseEntity} header: since
+ * Spring Framework 7 those replace the Set-Cookie already on the response, and the one there
+ * is the XSRF-TOKEN that {@code SecurityConfig} writes. The browser then signed in with no
+ * CSRF cookie, and its first refresh got a 403.
  */
 @Component
 public class RefreshTokenCookie {
@@ -28,13 +35,17 @@ public class RefreshTokenCookie {
         this.properties = properties;
     }
 
-    public String issue(String rawToken, Duration maxAge) {
-        return base(rawToken).maxAge(maxAge).build().toString();
+    public void issue(HttpServletResponse response, String rawToken, Duration maxAge) {
+        add(response, base(rawToken).maxAge(maxAge).build());
     }
 
     /** An already expired, empty cookie: the standard way to delete one. */
-    public String clear() {
-        return base("").maxAge(Duration.ZERO).build().toString();
+    public void clear(HttpServletResponse response) {
+        add(response, base("").maxAge(Duration.ZERO).build());
+    }
+
+    private static void add(HttpServletResponse response, ResponseCookie cookie) {
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     private ResponseCookie.ResponseCookieBuilder base(String value) {

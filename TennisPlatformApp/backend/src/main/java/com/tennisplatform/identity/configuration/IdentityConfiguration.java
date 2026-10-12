@@ -3,6 +3,8 @@ package com.tennisplatform.identity.configuration;
 import com.tennisplatform.identity.application.port.in.AdministerAccounts;
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
+import com.tennisplatform.identity.application.port.in.ChangePassword;
+import com.tennisplatform.identity.application.port.in.CloseAccount;
 import com.tennisplatform.identity.application.port.in.Login;
 import com.tennisplatform.identity.application.port.in.Logout;
 import com.tennisplatform.identity.application.port.in.ProvisionTeacherAccount;
@@ -25,6 +27,8 @@ import com.tennisplatform.identity.application.port.out.UserRepository;
 import com.tennisplatform.identity.application.service.AdministerAccountsService;
 import com.tennisplatform.identity.application.service.FindUserAccountsService;
 import com.tennisplatform.identity.application.service.GetCurrentUserService;
+import com.tennisplatform.identity.application.service.ChangePasswordService;
+import com.tennisplatform.identity.application.service.CloseAccountService;
 import com.tennisplatform.identity.application.service.LoginService;
 import com.tennisplatform.identity.application.service.LogoutService;
 import com.tennisplatform.identity.application.service.ProvisionAdminAccountService;
@@ -36,7 +40,7 @@ import com.tennisplatform.identity.application.service.ResendEmailVerificationSe
 import com.tennisplatform.identity.application.service.ResetPasswordService;
 import com.tennisplatform.identity.application.service.VerifyEmailService;
 import com.tennisplatform.identity.adapters.in.web.AuthRateLimitFilter;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -142,8 +146,9 @@ public class IdentityConfiguration {
     public FilterRegistrationBean<AuthRateLimitFilter> authRateLimitFilter(IdentityProperties properties) {
         FilterRegistrationBean<AuthRateLimitFilter> registration =
                 new FilterRegistrationBean<>(new AuthRateLimitFilter(properties));
-        registration.addUrlPatterns("/api/v1/auth/*");
-        registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER - 10);
+        registration.addUrlPatterns("/api/v1/auth/*", AuthRateLimitFilter.CHANGE_PASSWORD,
+                AuthRateLimitFilter.DELETE_ACCOUNT);
+        registration.setOrder(SecurityFilterProperties.DEFAULT_FILTER_ORDER - 10);
         return registration;
     }
 
@@ -153,6 +158,22 @@ public class IdentityConfiguration {
                        AccessTokenIssuer accessTokenIssuer, Clock clock, IdentityProperties properties) {
         return new LoginService(users, refreshTokens, passwordHasher, tokenGenerator, tokenHasher,
                 accessTokenIssuer, clock, properties.getRefreshTokenTtl());
+    }
+
+    @Bean
+    public ChangePassword changePassword(UserRepository users, RefreshTokens refreshTokens,
+                                         PasswordHasher passwordHasher, SecureTokenGenerator tokenGenerator,
+                                         TokenHasher tokenHasher, AccessTokenIssuer accessTokenIssuer,
+                                         Clock clock, IdentityProperties properties) {
+        return new ChangePasswordService(users, refreshTokens, passwordHasher, tokenGenerator, tokenHasher,
+                accessTokenIssuer, clock, properties.getRefreshTokenTtl());
+    }
+
+    @Bean
+    public CloseAccount closeAccount(UserRepository users, RefreshTokens refreshTokens,
+                                     PasswordResetTokens resetTokens, PasswordHasher passwordHasher,
+                                     SecureTokenGenerator tokenGenerator, Clock clock) {
+        return new CloseAccountService(users, refreshTokens, resetTokens, passwordHasher, tokenGenerator, clock);
     }
 
     @Bean

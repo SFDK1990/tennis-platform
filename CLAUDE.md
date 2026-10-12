@@ -57,8 +57,9 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
 
 ## Trampas que fallan en silencio
 
-- **`testcontainers.version` está fijada en `pom.xml`**: con la del BOM, Docker Engine 29 hace
-  que los tests de integración se **salten** con el build en verde.
+- **Conviven dos Jackson.** Spring Boot 4 usa Jackson 3 (`tools.jackson`); jjwt y el validador
+  del contrato, Jackson 2 (`com.fasterxml.jackson`). Para fijar el de ellos por un CVE la
+  propiedad es `jackson-2-bom.version`: `jackson-bom.version` es la de Jackson 3.
 - **`AbstractIntegrationTest` usa un contenedor singleton.** Con `@Container` la base se apaga
   tras la primera clase de test.
 - **`AbstractIntegrationTest` vacía la base antes de cada test.** Una tabla nueva va a la lista
@@ -91,6 +92,9 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
 - **`:param is null or ...` con un UUID falla en PostgreSQL.** Los filtros opcionales, con
   `Specification`.
 - **El perfil del alumno nace en `PATCH /me`**, y sin perfil el profesor no puede gestionarlo.
+- **Un `Set-Cookie` puesto en un `ResponseEntity` reemplaza los que ya lleva la respuesta**
+  (Spring 7), entre ellos el `XSRF-TOKEN`. Las cookies se añaden a la respuesta del servlet, como
+  hace `RefreshTokenCookie`.
 - **Con sesiones sin estado, la estrategia CSRF por defecto borra la cookie `XSRF-TOKEN` en cada
   petición con bearer**, y el logout siguiente falla con 403 dejando viva la sesión. Por eso
   `SecurityConfig` pone `NullAuthenticatedSessionStrategy`; no quitarlo.
@@ -120,3 +124,10 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   `ProblemDetailWriter` y `AuthRateLimitFilter`, o se contará como `none`.
 - **El admin también lo crea el bootstrap**, con `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Sólo cambia el
   estado de alumnos; el profesor y los admins no se desactivan desde la consola.
+- **Un alumno borrado no desaparece: su fila se vacía** (`DELETED`, email inventado, perfil «Alumno
+  eliminado»), porque sus reservas pasadas la apuntan. Una columna nueva que copie un dato personal
+  del alumno lo dejaría tras el borrado: `DeleteMyAccountTest` recorre todas las columnas de texto y
+  falla.
+- **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
+  contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
+  `ContractConventionsTest`.

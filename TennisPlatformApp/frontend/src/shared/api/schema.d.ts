@@ -467,6 +467,182 @@ export interface paths {
         };
         trace?: never;
     };
+    "/me/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Descarga todo lo que la plataforma guarda del usuario autenticado
+         * @description Un JSON para descargar (`Content-Disposition: attachment`): la cuenta y el perfil, como `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia. El profesor y el admin reciben la lista de reservas vacía.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        "Content-Disposition"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MyDataExport"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * El alumno borra su cuenta
+         * @description Pide la contraseña: no se puede deshacer. En una transacción, la cuenta pierde su email y su contraseña (el email real queda libre para registrarse de nuevo), el profesor deja de gestionarlo, sus reservas futuras se cancelan como CANCELLED_BY_STUDENT y su perfil se vacía. Las reservas pasadas se quedan, a nombre de "Alumno eliminado". Todas sus sesiones se cierran. Cuenta para el límite de peticiones por IP, como `/auth/*`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["DeleteAccountRequest"];
+                };
+            };
+            responses: {
+                /** @description Cuenta borrada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description AUTH_FORBIDDEN: quien llama no es alumno. El profesor y el admin los crea el bootstrap y no se borran desde la app. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description La contraseña no es la de la cuenta (`CURRENT_PASSWORD_INCORRECT`) */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cambia la contraseña propia y cierra las demás sesiones
+         * @description Pide la contraseña actual, para que un access token robado no baste para quedarse con la cuenta. Revoca todas las sesiones de la cuenta y abre una nueva en este navegador: responde como el login, con el access token en el cuerpo y una cookie de refresco nueva. Cuenta para el límite de peticiones por IP, como `/auth/*`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangePasswordRequest"];
+                };
+            };
+            responses: {
+                /** @description Contraseña cambiada; nueva sesión en este navegador (`Set-Cookie`) */
+                200: {
+                    headers: {
+                        "Set-Cookie"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LoginResponse"];
+                    };
+                };
+                /** @description Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña nueva de más de 72 bytes (`AUTH_WEAK_PASSWORD`). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description La cuenta se desactivó con el access token aún vivo (`AUTH_ACCOUNT_NOT_ACTIVE`). */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description La contraseña actual no es la de la cuenta (`CURRENT_PASSWORD_INCORRECT`) */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teacher/profile": {
         parameters: {
             query?: never;
@@ -990,8 +1166,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Calendario de un rango de dias, para el profesor o para el alumno
-         * @description Las fechas se leen en la zona del profesor (timezone en la respuesta), con el tope comun de 62 dias. El profesor recibe su disponibilidad resuelta en intervalos y todas sus clases, canceladas incluidas. El alumno recibe las clases de los profesores que lo gestionan, sin las canceladas salvo que tuviera reserva en ellas, y en cada una su propia reserva (myBooking). Un alumno no gestionado recibe listas vacias. Sin notes para nadie.
+         * Calendario de un rango de dias, para el profesor, el alumno o el admin
+         * @description Las fechas se leen en la zona del profesor (timezone en la respuesta), con el tope comun de 62 dias. El profesor recibe su disponibilidad resuelta en intervalos y todas sus clases, canceladas incluidas. El alumno recibe las clases de los profesores que lo gestionan, sin las canceladas salvo que tuviera reserva en ellas, y en cada una su propia reserva (myBooking). Un alumno no gestionado recibe listas vacias. El admin recibe lo mismo que el profesor, para resolver incidencias. Sin notes para nadie.
          */
         get: {
             parameters: {
@@ -1024,15 +1200,6 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthorized"];
-                /** @description AUTH_FORBIDDEN, si quien llama no es profesor ni alumno */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
             };
         };
         put?: never;
@@ -1240,8 +1407,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Reservas del alumno autenticado, o de las clases del profesor si lo consulta el profesor
-         * @description Ordenadas por la clase mas reciente primero. El profesor puede filtrar por lessonId, que es lo que construye la pantalla de asistencia. Un lessonId de una clase ajena devuelve una pagina vacia, no las reservas de otro.
+         * Reservas del alumno autenticado, de las clases del profesor, o todas para el admin
+         * @description Ordenadas por la clase mas reciente primero. El profesor puede filtrar por lessonId, que es lo que construye la pantalla de asistencia. Un lessonId de una clase ajena devuelve una pagina vacia, no las reservas de otro. El admin ve todas, con los mismos filtros, para resolver incidencias.
          */
         get: {
             parameters: {
@@ -1249,7 +1416,7 @@ export interface paths {
                     page?: components["parameters"]["Page"];
                     size?: components["parameters"]["Size"];
                     status?: components["schemas"]["BookingStatus"];
-                    /** @description Solo para el profesor; el alumno ya ve unicamente las suyas. */
+                    /** @description Para el profesor y el admin; el alumno ya ve unicamente las suyas. */
                     lessonId?: string;
                 };
                 header?: never;
@@ -1269,15 +1436,6 @@ export interface paths {
                 };
                 400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
-                /** @description AUTH_FORBIDDEN, si quien llama no es alumno ni profesor */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/problem+json": components["schemas"]["ProblemDetails"];
-                    };
-                };
             };
         };
         put?: never;
@@ -1358,6 +1516,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/lessons/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Cambia las notas o la capacidad de una clase que no ha empezado
+         * @description La hora no se cambia: los alumnos reservaron esa hora, y moverla es cancelar y crear otra. La capacidad sigue la regla de la creación (1 en una individual, hasta max_group_capacity en una grupal) y no baja de las reservas confirmadas. Bloquea la clase como una reserva antes de contar, para que una reserva simultánea no se quede sin plaza. Un campo ausente no cambia; unas notas en blanco se borran.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EditLessonRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Lesson"];
+                    };
+                };
+                /** @description VALIDATION_ERROR, o LESSON_INVALID si la capacidad no cabe en el tipo de clase */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description LESSON_ALREADY_CANCELLED, o LESSON_CAPACITY_BELOW_BOOKINGS: ya hay más alumnos reservados que la capacidad pedida. Si alguno cancela, releer puede cambiar la respuesta. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_ALREADY_STARTED, la clase ya empezó */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/teacher/lessons/{id}/cancel": {
         parameters: {
             query?: never;
@@ -1405,6 +1638,69 @@ export interface paths {
                     };
                 };
                 /** @description LESSON_ALREADY_FINISHED: la clase ya termino. Cancelar algo que ya ocurrio es reescribir el pasado. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/lessons/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * El admin cancela una clase para resolver una incidencia
+         * @description Como la cancelación del profesor, sin ventana de 24 horas, pero sus reservas confirmadas pasan a CANCELLED_BY_ADMIN, para que el alumno sepa quién lo decidió. Una ruta propia y no la del profesor: el prefijo dice quién puede llamarla.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cancelada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Lesson"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description LESSON_ALREADY_CANCELLED: ya estaba cancelada, casi siempre una pantalla obsoleta */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_ALREADY_FINISHED, la clase ya terminó */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -1687,6 +1983,15 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                /** @description ACCOUNT_DELETED: el alumno borró su cuenta. Es definitivo; no hay nadie a quien devolvérsela. */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         trace?: never;
@@ -1718,8 +2023,11 @@ export interface components {
         };
         /** @enum {string} */
         Role: "ADMIN" | "TEACHER" | "STUDENT";
-        /** @enum {string} */
-        UserStatus: "PENDING_VERIFICATION" | "ACTIVE" | "DISABLED";
+        /**
+         * @description DELETED: el alumno borró su cuenta. El email es uno inventado (`deleted-<id>@account.invalid`) y el perfil se llama "Alumno eliminado"; es definitivo.
+         * @enum {string}
+         */
+        UserStatus: "PENDING_VERIFICATION" | "ACTIVE" | "DISABLED" | "DELETED";
         /** @enum {string} */
         LessonType: "INDIVIDUAL" | "GROUP";
         /** @enum {string} */
@@ -1774,6 +2082,26 @@ export interface components {
         };
         ResetPasswordRequest: {
             token: string;
+            /** Format: password */
+            newPassword: string;
+        };
+        MyDataExport: {
+            /** Format: date-time */
+            exportedAt: string;
+            account: components["schemas"]["MeResponse"];
+            bookings: components["schemas"]["Booking"][];
+        };
+        EditLessonRequest: {
+            notes?: string | null;
+            capacity?: number | null;
+        };
+        DeleteAccountRequest: {
+            /** Format: password */
+            password: string;
+        };
+        ChangePasswordRequest: {
+            /** Format: password */
+            currentPassword: string;
             /** Format: password */
             newPassword: string;
         };

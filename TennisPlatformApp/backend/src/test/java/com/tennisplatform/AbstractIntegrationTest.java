@@ -1,20 +1,24 @@
 package com.tennisplatform;
 
 import com.tennisplatform.contract.ContractValidation;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.Map;
 import java.util.UUID;
@@ -33,13 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Docker daemon.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 @ActiveProfiles("test")
 @EnabledIf(value = "com.tennisplatform.AbstractIntegrationTest#dockerAvailable",
            disabledReason = "No Docker daemon available")
 public abstract class AbstractIntegrationTest {
 
     @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
 
     static {
         if (dockerAvailable()) {
@@ -50,12 +55,22 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected TestRestTemplate rest;
 
+    /**
+     * A client that keeps no cookies. The tests that need them carry their own (CookieJar), as
+     * a browser would; one the client kept by itself is replayed in every later test, beside
+     * the one a test sends on purpose, and the CSRF filter sees two XSRF-TOKEN values and
+     * answers 403. Spring Boot 3 configured TestRestTemplate like this; Boot 4 no longer does.
+     */
+    private static final ClientHttpRequestFactory NO_COOKIES = new HttpComponentsClientHttpRequestFactory(
+            HttpClients.custom().disableCookieManagement().build());
+
     @Autowired
     private JdbcTemplate jdbc;
 
-    /** Every response a test gets is checked against openapi.yaml (see {@link ContractValidation}). */
+    /** No cookies kept, and every response checked against openapi.yaml (see {@link ContractValidation}). */
     @BeforeEach
-    void checkEveryResponseAgainstTheContract() {
+    void prepareTheClient() {
+        rest.getRestTemplate().setRequestFactory(NO_COOKIES);
         ContractValidation.installOn(rest.getRestTemplate());
     }
 

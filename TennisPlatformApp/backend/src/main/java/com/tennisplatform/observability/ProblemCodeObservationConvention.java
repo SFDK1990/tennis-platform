@@ -2,6 +2,7 @@ package com.tennisplatform.observability;
 
 import com.tennisplatform.error.ProblemCode;
 import io.micrometer.common.KeyValues;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.server.observation.DefaultServerRequestObservationConvention;
 import org.springframework.http.server.observation.ServerRequestObservationContext;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,9 @@ class ProblemCodeObservationConvention extends DefaultServerRequestObservationCo
 
     @Override
     public KeyValues getLowCardinalityKeyValues(ServerRequestObservationContext context) {
-        return super.getLowCardinalityKeyValues(context).and("code", ProblemCode.of(context.getCarrier()));
+        // Nullable in Spring 7's signature, although a server request always carries one.
+        HttpServletRequest request = context.getCarrier();
+        String code = request == null ? ProblemCode.NONE : ProblemCode.of(request);
+        return super.getLowCardinalityKeyValues(context).and("code", code);
     }
 }

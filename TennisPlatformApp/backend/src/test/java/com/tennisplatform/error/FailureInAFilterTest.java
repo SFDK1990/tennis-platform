@@ -4,7 +4,7 @@ import com.tennisplatform.AbstractIntegrationTest;
 import jakarta.servlet.Filter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -43,7 +43,7 @@ class FailureInAFilterTest extends AbstractIntegrationTest {
                 throw new IllegalStateException("no row for " + PERSONAL_DATA);
             });
             registration.addUrlPatterns("/api/v1/failing");
-            registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER - 20);
+            registration.setOrder(SecurityFilterProperties.DEFAULT_FILTER_ORDER - 20);
             return registration;
         }
     }

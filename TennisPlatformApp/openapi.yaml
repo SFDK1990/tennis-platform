@@ -254,6 +254,106 @@ paths:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
+  /me/export:
+    get:
+      tags: [me]
+      summary: Descarga todo lo que la plataforma guarda del usuario autenticado
+      description: >-
+        Un JSON para descargar (`Content-Disposition: attachment`): la cuenta y el perfil, como
+        `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia. El profesor y
+        el admin reciben la lista de reservas vacía.
+      responses:
+        "200":
+          description: OK
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="mis-datos.json"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyDataExport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /me/deletion:
+    post:
+      tags: [me]
+      summary: El alumno borra su cuenta
+      description: >-
+        Pide la contraseña: no se puede deshacer. En una transacción, la cuenta pierde su email y
+        su contraseña (el email real queda libre para registrarse de nuevo), el profesor deja de
+        gestionarlo, sus reservas futuras se cancelan como CANCELLED_BY_STUDENT y su perfil se
+        vacía. Las reservas pasadas se quedan, a nombre de "Alumno eliminado". Todas sus sesiones
+        se cierran. Cuenta para el límite de peticiones por IP, como `/auth/*`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeleteAccountRequest" }
+      responses:
+        "204": { description: Cuenta borrada }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: >-
+            AUTH_FORBIDDEN: quien llama no es alumno. El profesor y el admin los crea el
+            bootstrap y no se borran desde la app.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: La contraseña no es la de la cuenta (`CURRENT_PASSWORD_INCORRECT`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /me/password:
+    post:
+      tags: [me]
+      summary: Cambia la contraseña propia y cierra las demás sesiones
+      description: >-
+        Pide la contraseña actual, para que un access token robado no baste para quedarse con la
+        cuenta. Revoca todas las sesiones de la cuenta y abre una nueva en este navegador:
+        responde como el login, con el access token en el cuerpo y una cookie de refresco nueva.
+        Cuenta para el límite de peticiones por IP, como `/auth/*`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordRequest" }
+      responses:
+        "200":
+          description: Contraseña cambiada; nueva sesión en este navegador (`Set-Cookie`)
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: refreshToken=...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400":
+          description: >-
+            Cuerpo que no pasa la validación (`VALIDATION_ERROR`), o una contraseña nueva de más
+            de 72 bytes (`AUTH_WEAK_PASSWORD`).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: >-
+            La cuenta se desactivó con el access token aún vivo (`AUTH_ACCOUNT_NOT_ACTIVE`).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: La contraseña actual no es la de la cuenta (`CURRENT_PASSWORD_INCORRECT`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
   /teacher/profile:
     get:
       tags: [teacher]
@@ -531,13 +631,14 @@ paths:
   /calendar:
     get:
       tags: [calendar]
-      summary: Calendario de un rango de dias, para el profesor o para el alumno
+      summary: Calendario de un rango de dias, para el profesor, el alumno o el admin
       description: >-
         Las fechas se leen en la zona del profesor (timezone en la respuesta), con el tope comun
         de 62 dias. El profesor recibe su disponibilidad resuelta en intervalos y todas sus
         clases, canceladas incluidas. El alumno recibe las clases de los profesores que lo
         gestionan, sin las canceladas salvo que tuviera reserva en ellas, y en cada una su propia
-        reserva (myBooking). Un alumno no gestionado recibe listas vacias. Sin notes para nadie.
+        reserva (myBooking). Un alumno no gestionado recibe listas vacias. El admin recibe lo
+        mismo que el profesor, para resolver incidencias. Sin notes para nadie.
       parameters:
         - name: from
           in: query
@@ -559,11 +660,6 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "401": { $ref: "#/components/responses/Unauthorized" }
-        "403":
-          description: AUTH_FORBIDDEN, si quien llama no es profesor ni alumno
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /teacher/lessons:
     post:
@@ -670,11 +766,12 @@ paths:
   /bookings:
     get:
       tags: [bookings]
-      summary: Reservas del alumno autenticado, o de las clases del profesor si lo consulta el profesor
+      summary: Reservas del alumno autenticado, de las clases del profesor, o todas para el admin
       description: >-
         Ordenadas por la clase mas reciente primero. El profesor puede filtrar por lessonId,
         que es lo que construye la pantalla de asistencia. Un lessonId de una clase ajena
-        devuelve una pagina vacia, no las reservas de otro.
+        devuelve una pagina vacia, no las reservas de otro. El admin ve todas, con los mismos
+        filtros, para resolver incidencias.
       parameters:
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Size"
@@ -683,7 +780,7 @@ paths:
           schema: { $ref: "#/components/schemas/BookingStatus" }
         - name: lessonId
           in: query
-          description: Solo para el profesor; el alumno ya ve unicamente las suyas.
+          description: Para el profesor y el admin; el alumno ya ve unicamente las suyas.
           schema: { type: string, format: uuid }
       responses:
         "200":
@@ -693,11 +790,6 @@ paths:
               schema: { $ref: "#/components/schemas/BookingPage" }
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
-        "403":
-          description: AUTH_FORBIDDEN, si quien llama no es alumno ni profesor
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /bookings/{id}/cancel:
     post:
@@ -738,6 +830,50 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /teacher/lessons/{id}:
+    patch:
+      tags: [lessons]
+      summary: Cambia las notas o la capacidad de una clase que no ha empezado
+      description: >-
+        La hora no se cambia: los alumnos reservaron esa hora, y moverla es cancelar y crear otra.
+        La capacidad sigue la regla de la creación (1 en una individual, hasta
+        max_group_capacity en una grupal) y no baja de las reservas confirmadas. Bloquea la clase
+        como una reserva antes de contar, para que una reserva simultánea no se quede sin plaza.
+        Un campo ausente no cambia; unas notas en blanco se borran.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EditLessonRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400":
+          description: VALIDATION_ERROR, o LESSON_INVALID si la capacidad no cabe en el tipo de clase
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: >-
+            LESSON_ALREADY_CANCELLED, o LESSON_CAPACITY_BELOW_BOOKINGS: ya hay más alumnos
+            reservados que la capacidad pedida. Si alguno cancela, releer puede cambiar la respuesta.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_ALREADY_STARTED, la clase ya empezó
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
   /teacher/lessons/{id}/cancel:
     post:
       tags: [lessons]
@@ -771,6 +907,37 @@ paths:
           description: >-
             LESSON_ALREADY_FINISHED: la clase ya termino. Cancelar algo que ya ocurrio es
             reescribir el pasado.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /admin/lessons/{id}/cancel:
+    post:
+      tags: [administration]
+      summary: El admin cancela una clase para resolver una incidencia
+      description: >-
+        Como la cancelación del profesor, sin ventana de 24 horas, pero sus reservas confirmadas
+        pasan a CANCELLED_BY_ADMIN, para que el alumno sepa quién lo decidió. Una ruta propia y no
+        la del profesor: el prefijo dice quién puede llamarla.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Cancelada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "LESSON_ALREADY_CANCELLED: ya estaba cancelada, casi siempre una pantalla obsoleta"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_ALREADY_FINISHED, la clase ya terminó
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -926,6 +1093,13 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: >-
+            ACCOUNT_DELETED: el alumno borró su cuenta. Es definitivo; no hay nadie a quien
+            devolvérsela.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
 components:
   securitySchemes:
@@ -1035,7 +1209,10 @@ components:
       enum: [ADMIN, TEACHER, STUDENT]
     UserStatus:
       type: string
-      enum: [PENDING_VERIFICATION, ACTIVE, DISABLED]
+      enum: [PENDING_VERIFICATION, ACTIVE, DISABLED, DELETED]
+      description: >-
+        DELETED: el alumno borró su cuenta. El email es uno inventado (`deleted-<id>@account.invalid`)
+        y el perfil se llama "Alumno eliminado"; es definitivo.
     LessonType:
       type: string
       enum: [INDIVIDUAL, GROUP]
@@ -1115,6 +1292,35 @@ components:
       required: [token, newPassword]
       properties:
         token: { type: string }
+        newPassword: { type: string, format: password, minLength: 10 }
+
+    MyDataExport:
+      type: object
+      required: [exportedAt, account, bookings]
+      properties:
+        exportedAt: { type: string, format: date-time }
+        account: { $ref: "#/components/schemas/MeResponse" }
+        bookings:
+          type: array
+          items: { $ref: "#/components/schemas/Booking" }
+
+    EditLessonRequest:
+      type: object
+      properties:
+        notes: { type: string, nullable: true, maxLength: 2000 }
+        capacity: { type: integer, minimum: 1, nullable: true }
+
+    DeleteAccountRequest:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, format: password }
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string, format: password }
         newPassword: { type: string, format: password, minLength: 10 }
 
     MeResponse:

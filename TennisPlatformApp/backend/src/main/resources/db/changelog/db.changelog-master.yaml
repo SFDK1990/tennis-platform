@@ -17,3 +17,5 @@ databaseChangeLog:
       file: db/changelog/changes/v6-lesson.yaml
   - include:
       file: db/changelog/changes/v7-booking.yaml
+  - include:
+      file: db/changelog/changes/v8-identity-deleted-accounts.yaml

@@ -64,7 +64,10 @@ class BookingsController {
             return BookingPageResponse.from(
                     getBookings.forTeacher(caller.id(), lessonId, status, safePage, safeSize));
         }
-        throw ForbiddenOperationException.roleNotAllowed("Bookings are listed for a student or for the teacher");
+        if (caller.isAdmin()) {
+            return BookingPageResponse.from(getBookings.forAdministration(lessonId, status, safePage, safeSize));
+        }
+        throw ForbiddenOperationException.roleNotAllowed("Bookings are listed for a student, the teacher or the administrator");
     }
 
     @PostMapping("/bookings/{id}/cancel")

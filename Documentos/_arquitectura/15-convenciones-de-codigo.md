@@ -42,12 +42,12 @@ Bueno — explica un fallo silencioso que nadie deduciría leyendo la línea:
 
 ```xml
 <!--
-    Overrides the version managed by the Spring Boot BOM. Docker Engine 29 dropped
-    support for old Docker API versions, which the older docker-java shipped with
-    Boot 3.3.x still negotiates - it fails with HTTP 400 and every Testcontainers
-    test silently skips.
+    Ahead of the Boot BOM for known CVEs: jackson-databind 2.21.5, the Jackson 2 that
+    jjwt-jackson and the contract validator still use (CVE-2026-91776 and
+    CVE-2026-91777, polymorphic typing and @JsonIdentityInfo, fixed in 2.21.7).
+    Delete the line once spring-boot-starter-parent ships that version or later.
 -->
-<testcontainers.version>1.21.4</testcontainers.version>
+<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
 ```
 
 Bueno — justifica una decisión de diseño y advierte de la consecuencia de deshacerla:

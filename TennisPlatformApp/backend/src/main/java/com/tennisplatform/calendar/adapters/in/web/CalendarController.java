@@ -32,6 +32,9 @@ class CalendarController {
         if (caller.isStudent()) {
             return getCalendar.forStudent(caller.id(), from, to);
         }
-        throw ForbiddenOperationException.roleNotAllowed("Only the teacher and students have a calendar");
+        if (caller.isAdmin()) {
+            return getCalendar.forAdministration(from, to);
+        }
+        throw ForbiddenOperationException.roleNotAllowed("Only the teacher, students and the administrator have a calendar");
     }
 }

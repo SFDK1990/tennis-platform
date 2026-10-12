@@ -27,4 +27,11 @@ public interface StudentBookings {
      * should know whether it was their teacher or the administration.
      */
     void cancelUpcomingOfDisabledAccount(UUID teacherUserId, UUID studentUserId, Instant at);
+
+    /**
+     * The same, when the student deleted their own account. It is the student's decision, so the
+     * bookings say so - but without the 24-hour window, which protects the teacher from a change
+     * of mind and has nothing to hold on to once the account is gone.
+     */
+    void cancelUpcomingOfDeletedAccount(UUID teacherUserId, UUID studentUserId, Instant at);
 }
