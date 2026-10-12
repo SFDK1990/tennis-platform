@@ -14,6 +14,11 @@ decisión 1. Lo demás se mantiene, con dos cambios:
   inventar un cliente. Probado: un `X-Forwarded-For` falso no pasa.
 - **Administración por Tailscale** (SSH y `/actuator`), con `ufw` cerrando todo lo demás. Ningún
   servicio de `compose.prod.yaml` publica puertos: Docker se los saltaría a `ufw`.
+- **Un solo dominio (12/10/2026).** La web y la app se sirven en `https://<dominio>`, porque
+  desde la Fase 31 la web es parte del frontend; `www` y `app` redirigen allí. Con la app en
+  `app.` la cookie de sesión se quedaría en ese subdominio, y la web ofrecería "Entrar" a quien ya
+  tiene sesión. La build del frontend recibe `SITE_URL`, o el sitemap y `robots.txt` apuntarían
+  a `localhost`.
 
 El único gasto es el dominio (unos 10 €/año). Los ficheros están en `compose.prod.yaml` y
 `TennisPlatformApp/deploy/`. La guía paso a paso de la Pi vive fuera del repositorio.
