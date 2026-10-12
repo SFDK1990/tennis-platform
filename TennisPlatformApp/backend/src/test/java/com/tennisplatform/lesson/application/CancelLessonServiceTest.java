@@ -78,7 +78,7 @@ class CancelLessonServiceTest {
 
         service.cancel(TEACHER_ID, LESSON_ID);
 
-        verify(bookings).cancelAllOf(LESSON_ID, NOW);
+        verify(bookings).cancelAllOf(LESSON_ID, NOW, null);
     }
 
     @Test

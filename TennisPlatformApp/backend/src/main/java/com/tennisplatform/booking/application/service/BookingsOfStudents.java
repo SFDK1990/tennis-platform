@@ -3,6 +3,7 @@ package com.tennisplatform.booking.application.service;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.domain.BookingStatus;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,26 +21,31 @@ import java.util.UUID;
 public class BookingsOfStudents implements StudentBookings {
 
     private final BookingRepository bookings;
+    private final BookingEvents events;
 
-    public BookingsOfStudents(BookingRepository bookings) {
+    public BookingsOfStudents(BookingRepository bookings, ApplicationEventPublisher publisher) {
         this.bookings = bookings;
+        this.events = new BookingEvents(publisher);
     }
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void cancelUpcomingWith(UUID teacherUserId, UUID studentUserId, Instant at) {
-        bookings.cancelUpcoming(teacherUserId, studentUserId, BookingStatus.CANCELLED_BY_TEACHER, at);
+        events.cancelled(bookings.cancelUpcoming(teacherUserId, studentUserId, BookingStatus.CANCELLED_BY_TEACHER, at),
+                BookingStatus.CANCELLED_BY_TEACHER, null);
     }
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void cancelUpcomingOfDisabledAccount(UUID teacherUserId, UUID studentUserId, Instant at) {
-        bookings.cancelUpcoming(teacherUserId, studentUserId, BookingStatus.CANCELLED_BY_ADMIN, at);
+        events.cancelled(bookings.cancelUpcoming(teacherUserId, studentUserId, BookingStatus.CANCELLED_BY_ADMIN, at),
+                BookingStatus.CANCELLED_BY_ADMIN, null);
     }
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void cancelUpcomingOfDeletedAccount(UUID teacherUserId, UUID studentUserId, Instant at) {
+        // Nobody is told: the address is about to be wiped, and the student is the one leaving.
         bookings.cancelUpcoming(teacherUserId, studentUserId, BookingStatus.CANCELLED_BY_STUDENT, at);
     }
 }

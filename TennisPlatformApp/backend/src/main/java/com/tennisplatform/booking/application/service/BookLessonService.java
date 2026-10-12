@@ -17,6 +17,7 @@ import com.tennisplatform.lesson.application.port.in.LockLesson;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -43,14 +44,16 @@ public class BookLessonService implements BookLesson {
     private final GetLesson getLesson;
     private final QueryManagedStudent managedStudents;
     private final Clock clock;
+    private final BookingEvents events;
 
     public BookLessonService(BookingRepository bookings, LockLesson lockLesson, GetLesson getLesson,
-                             QueryManagedStudent managedStudents, Clock clock) {
+                             QueryManagedStudent managedStudents, Clock clock, ApplicationEventPublisher publisher) {
         this.bookings = bookings;
         this.lockLesson = lockLesson;
         this.getLesson = getLesson;
         this.managedStudents = managedStudents;
         this.clock = clock;
+        this.events = new BookingEvents(publisher);
     }
 
     @Override
@@ -94,6 +97,7 @@ public class BookLessonService implements BookLesson {
         Booking saved = bookings.save(Booking.confirm(lessonId, lesson.teacherUserId(), studentUserId,
                 lesson.startsAt(), lesson.endsAt(), now));
         log.info("Booking {} created in lesson {} for student {}", saved.id(), lessonId, studentUserId);
+        events.confirmed(saved);
 
         // Read again rather than adjusted by hand, so whether the lesson is now FULL is decided
         // in one place only - Lesson.statusAt - and the count includes the row just inserted.

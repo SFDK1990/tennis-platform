@@ -45,10 +45,10 @@ cada cancelación de un alumno. Sin recordatorio previo.
 **La alternativa descartada**, que `booking` llame a un puerto `Notifier`, envía dentro de la
 transacción: un correo de "reserva confirmada" para una reserva que luego se deshace.
 
-**Lo que se acepta perder** (decisión tuya): si el servidor se cae entre el commit y el envío,
+**Lo que se acepta perder** (aceptado por Daniel): si el servidor se cae entre el commit y el envío,
 ese correo no sale. Evitarlo pide un *outbox* (una tabla de correos pendientes y reintentos).
-Con un profesor, una pista y sin recordatorios, propongo no hacerlo ahora: la reserva queda bien
-hecha y el alumno la ve en la app.
+Con un profesor, una pista y sin recordatorios, no se hace ahora: la reserva queda bien hecha y
+el alumno la ve en la app.
 
 ### 2. Qué correo sale y a quién
 
@@ -57,10 +57,12 @@ hecha y el alumno la ve en la app.
 | Reserva confirmada | Sí, con `.ics` | Sí |
 | El alumno cancela | No: lo acaba de hacer él | Sí |
 | El profesor cancela la reserva o la clase | Sí, con `.ics` de cancelación | No: lo hizo él |
-| El admin cancela la reserva o la clase | Sí, con `.ics` de cancelación | Sí |
+| El admin cancela la reserva o la clase | Sí, con `.ics` de cancelación | No |
 | El profesor deja de gestionar al alumno, o el admin lo desactiva | Sí, una por reserva cancelada | No |
 | El alumno borra su cuenta | No: ya no hay a quién | No |
 
+- **A Marcos, sólo lo que hacen los alumnos**, como dice `01` §18: así cada correo depende sólo
+  de quién canceló.
 - **Un correo por reserva**, no un resumen: cada uno lleva su `.ics` y su hora.
 - **Texto plano, en español**, con la fecha y la hora de pared del profesor ("martes 14 de
   octubre, de 10:00 a 11:00"), como las ve el alumno en la app.
@@ -89,8 +91,8 @@ hecha y el alumno la ve en la app.
 - Responde las clases canceladas, para que la pantalla diga cuántas y a cuántos alumnos se ha
   avisado.
 - **El motivo va en el correo y no se guarda.** Es texto libre de Marcos y no hace falta después.
-- **La cancelación de una sola clase acepta también el motivo** (decisión tuya): si Marcos se
-  pone enfermo, quiere decirlo igual que con la lluvia.
+- **La cancelación de una sola clase acepta también el motivo** (aceptado por Daniel): si Marcos
+  se pone enfermo, quiere decirlo igual que con la lluvia.
 - No crea una excepción de disponibilidad: si escampa, Marcos puede volver a abrir clases ese
   día.
 

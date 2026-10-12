@@ -51,7 +51,7 @@ public class CancelLessonService implements CancelLesson {
 
         // Same transaction on purpose: if the bookings cannot be cancelled, the lesson is not
         // cancelled either, and nobody is left holding a seat in a lesson that no longer runs.
-        bookings.cancelAllOf(cancelled.id(), now);
+        bookings.cancelAllOf(cancelled.id(), now, null);
         log.info("Lesson {} cancelled with its bookings", lessonId);
         return LessonView.from(cancelled, now, 0);
     }
