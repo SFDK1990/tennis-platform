@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/shared/ui/Logo";
 
@@ -16,6 +17,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           <span aria-hidden className="absolute -bottom-[3px] left-1/2 h-3.5 w-[3px] -translate-x-1/2 bg-white/85" />
         </div>
         <div className="rounded-xl bg-paper p-6 sm:p-7">{children}</div>
+        <nav aria-label="Legal" className="mt-6 flex justify-center gap-6 text-sm">
+          <Link href="/aviso-legal" className="text-on-navy underline underline-offset-4 hover:text-white">Aviso legal</Link>
+          <Link href="/privacidad" className="text-on-navy underline underline-offset-4 hover:text-white">Privacidad</Link>
+        </nav>
       </div>
     </main>
   );

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { preload } from "react-dom";
-import { Logo } from "@/shared/ui/Logo";
-import { AccountLink } from "./_parts/AccountLink";
 import { placeholderParts, school, trialHref } from "./_parts/school";
-import { ThemeToggle } from "./_parts/ThemeToggle";
+import { SiteFooter, SiteNav, WRAP } from "./_parts/SiteNav";
 
 const DESCRIPTION =
   "Clases de tenis para niños y adultos, en grupos reducidos o particulares. Las da siempre Marcos, en la misma pista, y las plazas se reservan desde el móvil.";
@@ -31,41 +29,18 @@ export default function WebsitePage() {
         <Questions />
       </main>
       <Contact trial={trial} />
-      <Footer />
+      <SiteFooter underTrialBar />
       <TrialBar trial={trial} />
     </>
   );
 }
 
-const WRAP = "mx-auto w-full max-w-6xl px-4 sm:px-10";
 const SECTION_TITLE = "font-display text-5xl font-bold leading-none sm:text-6xl";
 
 function Hero({ trial }: { trial: string }) {
   return (
     <header className="bg-(--site-band) text-white">
-      <nav aria-label="Principal" className={`${WRAP} flex min-h-22 items-center gap-6`}>
-        <Link href="/" className="flex items-center gap-3">
-          <Logo className="size-11" onDark label="" />
-          <span className="flex flex-col">
-            <span className="font-display text-2xl font-bold leading-none">{school.name}</span>
-            <span className="text-sm text-on-navy">Escuela de tenis</span>
-          </span>
-        </Link>
-        <div className="ml-6 hidden gap-7 lg:flex">
-          {[
-            ["#clases", "Clases"],
-            ["#empezar", "Cómo empezar"],
-            ["#precios", "Precios"],
-            ["#preguntas", "Preguntas"],
-          ].map(([href, label]) => (
-            <a key={href} href={href} className="font-medium text-on-navy hover:text-white">{label}</a>
-          ))}
-        </div>
-        <div className="ml-auto flex items-center gap-4">
-          <ThemeToggle />
-          <AccountLink className="font-semibold text-white hover:text-ball" />
-        </div>
-      </nav>
+      <SiteNav />
 
       <div className={`${WRAP} grid items-center gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pb-24 lg:pt-10`}>
         <div className="site-rise flex flex-col gap-7">
@@ -271,16 +246,6 @@ function Contact({ trial }: { trial: string }) {
         </address>
       </div>
     </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className={`${WRAP} flex flex-wrap items-center gap-6 pb-28 pt-9 text-[15px] lg:pb-9`}>
-      <Logo className="size-9" label={school.name} />
-      <span className="text-(--site-muted)">© {school.name}, escuela de tenis</span>
-      <Link href="/login" className="ml-auto text-(--site-link) underline-offset-4 hover:underline">Entrar en la app</Link>
-    </footer>
   );
 }
 

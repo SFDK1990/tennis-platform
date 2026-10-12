@@ -85,6 +85,31 @@ backend.
     marcador con la descripción de la foto que va en ese sitio. Sin mapa incrustado (cookies de
     terceros y `frame-src`): dirección y un enlace "Cómo llegar".
 
+## Ampliación: aviso legal y privacidad
+
+Validada por Daniel el 12 de octubre de 2026. Hacen falta antes de abrir a alumnos reales: la app
+recoge datos personales. Corrige `29-fase17`, que dejaba el contenido a Daniel.
+
+13. **Dos páginas de la web**, `/aviso-legal` (LSSI, art. 10) y `/privacidad` (RGPD, art. 13),
+    enlazadas desde el pie de la web y desde las pantallas de acceso.
+14. **El titular es Marcos, como autónomo.** Sus datos (NIF, domicilio, correo de privacidad)
+    viven en `school.ts`; hasta tenerlos, inventados y marcados `DEMO`.
+15. **El registro informa, no pide consentimiento**: una línea bajo "Crear cuenta" enlaza a la
+    política. Los datos se tratan para dar el servicio contratado (art. 6.1.b), así que una
+    casilla de "acepto" sería incorrecta.
+16. **Cuentas para mayores de 14 años** (LOPDGDD, art. 7). A los niños los apuntan sus padres
+    hablando con Marcos, hasta la Fase 26 (familias).
+17. **Sin aviso de cookies.** Sólo hay técnicas (sesión, XSRF) y la del tema, que pide el propio
+    visitante; la política las explica.
+18. **El texto lo escribe el agente y lo revisa un profesional** antes de abrir a alumnos reales.
+
+Criterios:
+
+10. Desde el pie de la web y desde el login se llega a las dos páginas, y el registro enlaza a la
+    política de privacidad (E2E).
+11. axe sin fallos `serious` ni `critical` en las dos páginas, en claro y en oscuro, y ninguna
+    violación de CSP (E2E).
+
 ## Lo que no entra
 
 - El vídeo de cabecera: cuando haya grabaciones. Irá servido desde este origen (no YouTube),

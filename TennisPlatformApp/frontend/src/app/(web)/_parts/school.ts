@@ -30,6 +30,18 @@ export const school = {
     approach:
       "Con quien empieza, lo primero es pasarlo bien y que la pelota pase la red. Con quien ya juega, corregir lo que le frena y llevarlo al partido.",
   },
+  /** Who answers for the website and the students' data: Marcos, as a self-employed teacher. */
+  owner: {
+    name: "Marcos Asencio Scattolo",
+    /** DEMO */
+    taxId: "00000000T",
+    /** DEMO */
+    address: "Calle de Ejemplo 1, 35660 Corralejo, La Oliva (Las Palmas)",
+    /** DEMO: a reserved domain, like the contact email. */
+    privacyEmail: "privacidad@oasispapagayo.example",
+  },
+  /** The date the legal texts last changed, as they show it. */
+  legalUpdated: "12 de octubre de 2026",
   photos: {
     action: "Marcos golpea una derecha en salto en la pista",
     championship: "Marcos en el Campeonato de Fuerteventura 2026",

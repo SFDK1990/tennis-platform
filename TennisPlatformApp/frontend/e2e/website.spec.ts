@@ -6,6 +6,8 @@ import { TEACHER } from "./support/stack";
 
 /** The public website of 31-fase31-analisis-web-publica.md. */
 
+const LEGAL_PAGES = ["/aviso-legal", "/privacidad"];
+
 /** Criterion 1. */
 test("sin sesión, la portada es la web de la escuela y lleva a pedir la clase de prueba", async ({ page }) => {
   await page.goto("/");
@@ -67,7 +69,29 @@ test("ni la web ni el registro chocan con la CSP", async ({ page }) => {
 
   await page.goto("/register");
   await expect(page.getByRole("button", { name: "Crear cuenta" })).toBeVisible();
+  // Criterion 11: the legal pages too.
+  for (const path of LEGAL_PAGES) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  }
   expect(violations).toEqual([]);
+});
+
+/** Criterion 10: the legal texts are one click away from wherever data is asked for or shown. */
+test("desde la web, el login y el registro se llega al aviso legal y a la privacidad", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("contentinfo").getByRole("link", { name: "Aviso legal" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Aviso legal" })).toBeVisible();
+  await page.getByRole("contentinfo").getByRole("link", { name: "Privacidad" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Privacidad" })).toBeVisible();
+
+  await page.goto("/login");
+  await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Aviso legal" }).click();
+  await expect(page).toHaveURL(/\/aviso-legal$/);
+
+  await page.goto("/register");
+  await page.getByRole("link", { name: "política de privacidad" }).click();
+  await expect(page).toHaveURL(/\/privacidad$/);
 });
 
 /** Criterion 6. */
@@ -88,9 +112,12 @@ for (const colorScheme of ["light", "dark"] as const) {
     test.describe(`en ${size}, tema ${colorScheme === "light" ? "claro" : "oscuro"}`, () => {
       test.use({ colorScheme, viewport });
 
+      /** And criterion 11 for the legal pages. */
       test("axe no encuentra fallos graves en la web", async ({ page }) => {
-        await page.goto("/");
-        expect(await seriousViolations(page)).toEqual([]);
+        for (const path of ["/", ...LEGAL_PAGES]) {
+          await page.goto(path);
+          expect(await seriousViolations(page), path).toEqual([]);
+        }
       });
     });
   }
