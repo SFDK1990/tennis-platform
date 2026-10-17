@@ -56,9 +56,9 @@ export const school = {
    */
   heroVideo: {
     /** DEMO: a Pexels clip (free for commercial use, no credit needed), until there is one of Marcos. */
-    src: "/web/portada-720.mp4",
+    src: "/web/portada.mp4",
     poster: "/web/portada-poster.webp",
-    description: "Una niña devuelve la pelota en una pista de tenis",
+    description: "Pelotas de tenis encajadas en la valla de una pista",
   } as { src: string; poster: string; description: string } | null,
   photos: {
     action: "Marcos golpea una derecha en salto en la pista",

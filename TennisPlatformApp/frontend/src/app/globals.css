@@ -201,6 +201,24 @@ body {
   }
 }
 
+/*
+ * The veil over the front page's video (31-fase31, decision 23), the same on a phone and a
+ * computer. Its colour is the band's (navy in dark, white in light), so the text keeps its
+ * contrast. To show more video, lower the theme's percentage; to read the text more easily,
+ * raise it. White hides less than navy, so light needs a little more.
+ */
+[data-site] {
+  --site-veil-dark: 55%;
+  --site-veil-light: 68%;
+}
+
+.site-veil {
+  background: light-dark(
+    color-mix(in srgb, var(--site-band) var(--site-veil-light), transparent),
+    color-mix(in srgb, var(--site-band) var(--site-veil-dark), transparent)
+  );
+}
+
 /* What answers the visitor moves (31-fase31, decisions 21 and 22). */
 .site-appear {
   transition:

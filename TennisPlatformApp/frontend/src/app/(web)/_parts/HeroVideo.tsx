@@ -42,7 +42,7 @@ export function HeroVideo({ src, poster, description }: { src: string; poster: s
         onPause={() => setPlaying(false)}
         className="absolute inset-0 -z-10 size-full object-cover"
       />
-      <div aria-hidden className="absolute inset-0 -z-10 bg-(--site-band)/80 lg:bg-linear-to-r lg:from-(--site-band)/90 lg:via-(--site-band)/75 lg:to-(--site-band)/45" />
+      <div aria-hidden className="site-veil absolute inset-0 -z-10" />
       <button
         type="button"
         onClick={toggle}
