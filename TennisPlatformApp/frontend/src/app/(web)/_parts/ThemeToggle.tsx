@@ -31,7 +31,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="flex size-11 items-center justify-center rounded-full border border-white/40 text-white hover:border-white"
+      className="flex size-11 items-center justify-center rounded-full border border-(--site-band-line) text-(--site-band-text) hover:border-(--site-band-text)"
     >
       <span className="theme-to-dark flex items-center">
         <span className="sr-only">Cambiar a modo oscuro</span>

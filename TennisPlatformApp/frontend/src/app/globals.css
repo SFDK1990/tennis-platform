@@ -61,20 +61,29 @@ body {
  * The public website's two themes (31-fase31, decision 8). Each colour is written once with
  * its light and dark value, and light-dark() picks one from the colour scheme in force: the
  * system's while the visitor has not chosen, the data-theme the server rendered once they have.
+ * Dark is a range of navies; light, a range of cool whites with the same navy for the text,
+ * never pure white (decision 24). The bands (top bar, front page, steps, contact) follow the
+ * theme too, so their text and lines have tokens of their own.
  * These are meant to become the app's own dark theme later, not a second palette.
  */
 [data-site] {
   color-scheme: light dark;
-  --site-bg: light-dark(#ffffff, #0a1730);
-  --site-surface: light-dark(#eef2f7, #0f2347);
+  --site-bg: light-dark(#f8fafc, #0a1730);
+  --site-surface: light-dark(#eef3f8, #0f2347);
   --site-text: light-dark(#0b1e3f, #eef2f7);
-  --site-muted: light-dark(#4e5d78, #a9b8d0);
-  --site-line: light-dark(#d3dbe7, #24395f);
+  --site-muted: light-dark(#4a5973, #a9b8d0);
+  --site-line: light-dark(#d6dfea, #24395f);
   --site-link: light-dark(#1f5fb8, #8fb3e6);
-  --site-photo: light-dark(#d3dbe7, #1a3260);
-  --site-band: light-dark(#0b1e3f, #06112a);
-  --site-band-photo: light-dark(#16407e, #1a3260);
-  --site-steps: light-dark(#1f5fb8, #174a91);
+  --site-photo: light-dark(#d6dfea, #1a3260);
+  --site-band: light-dark(#edf2f8, #06112a);
+  --site-band-text: light-dark(#0b1e3f, #ffffff);
+  --site-band-muted: light-dark(#44536d, #c9d6ea);
+  --site-band-line: light-dark(rgb(11 30 63 / 0.22), rgb(255 255 255 / 0.4));
+  --site-band-photo: light-dark(#d6dfea, #1a3260);
+  --site-steps: light-dark(#e3ecf8, #174a91);
+  --site-steps-muted: light-dark(#44536d, #e3ecf9);
+  /* The step numbers and the ball's trajectory: the ball's yellow only on navy (decision 1). */
+  --site-accent: light-dark(#1f5fb8, #e4f03c);
 }
 
 [data-site][data-theme="light"] {

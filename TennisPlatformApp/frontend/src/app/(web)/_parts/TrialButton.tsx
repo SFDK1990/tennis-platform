@@ -13,7 +13,7 @@ export function TrialButton({ layout }: { layout: keyof typeof LAYOUT }) {
   return (
     <a
       href={trialHref()}
-      className={`${LAYOUT[layout]} items-center justify-center gap-2.5 rounded-lg bg-ball font-semibold text-navy hover:bg-white`}
+      className={`${LAYOUT[layout]} items-center justify-center gap-2.5 rounded-lg bg-ball font-semibold text-navy hover:bg-(--site-band-text) hover:text-(--site-band)`}
     >
       <svg viewBox="0 0 24 24" aria-hidden className="size-5.5 fill-none stroke-current stroke-[1.8]">
         <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z" strokeLinejoin="round" />

@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * The front page's background loop (31-fase31, decision 23), under a navy veil that keeps the
- * white text readable. Muted and without controls, so it starts on its own, and only after
+ * The front page's background loop (31-fase31, decision 23), under a veil of the band's colour that keeps the
+ * text readable in either theme. Muted and without controls, so it starts on its own, and only after
  * hydration: it never competes with the photo for the largest paint. It does not start if the
  * visitor asked for less motion, and the button pauses it for anyone it bothers.
  */
@@ -47,7 +47,7 @@ export function HeroVideo({ src, poster, description }: { src: string; poster: s
         type="button"
         onClick={toggle}
         aria-pressed={!playing}
-        className="absolute bottom-5 right-5 z-10 flex size-11 items-center justify-center rounded-full bg-navy/70 text-white hover:bg-navy"
+        className="absolute bottom-5 right-5 z-10 flex size-11 items-center justify-center rounded-full border border-(--site-band-line) bg-(--site-band)/70 text-(--site-band-text) hover:border-(--site-band-text)"
       >
         <span className="sr-only">Pausar el vídeo</span>
         <svg viewBox="0 0 24 24" aria-hidden className="size-5 fill-current">

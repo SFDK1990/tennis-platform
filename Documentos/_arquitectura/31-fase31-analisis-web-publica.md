@@ -216,3 +216,8 @@ Pedida por Daniel el 17 de octubre de 2026. Corrige la decisión 11, que permit�
     LCP. Mientras Marcos no tenga uno suyo, un clip de Pexels (gratis para uso comercial, sin
     atribución) marcado `DEMO`. Ningún partido profesional: tiene derechos de terceros, marcas y
     parecería que es de la escuela.
+24. **El tema claro es una gama de blancos fríos**, no blanco puro, con el navy de siempre para el
+    texto; el oscuro, la gama de azules que ya había. Las bandas (barra de arriba, portada, pasos
+    y contacto) también cambian con el tema: antes seguían en navy en el claro. En claro, los
+    números de los pasos y la trayectoria van en el azul de la pista, porque el amarillo no se
+    lee sobre blanco (decisión 1).
