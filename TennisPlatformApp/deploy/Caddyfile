@@ -1,6 +1,6 @@
 {
-	# Cloudflare terminates HTTPS in front of the tunnel: Caddy speaks plain HTTP inside the
-	# Docker network and needs no certificate of its own.
+	# Tailscale Funnel terminates HTTPS on the Pi and passes plain HTTP to Caddy on loopback:
+	# Caddy needs no certificate of its own.
 	auto_https off
 	admin off
 }
@@ -16,9 +16,10 @@ http://{$DOMAIN} {
 
 	reverse_proxy frontend:3000 {
 		# Overwrite, never append: the only address the rate limiting may believe is the one
-		# Cloudflare saw. Nothing reaches Caddy except through cloudflared, so the header
-		# cannot be forged by a client (AuthRateLimitFilter, 26-fase15-analisis-seguridad.md).
-		header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+		# Funnel saw. tailscaled drops the client's X-Forwarded-For and sets its own, and
+		# nothing reaches Caddy except through tailscaled on loopback, so the header cannot be
+		# forged by a client (AuthRateLimitFilter, 26-fase15-analisis-seguridad.md).
+		header_up X-Forwarded-For {http.request.header.X-Forwarded-For}
 	}
 }
 
