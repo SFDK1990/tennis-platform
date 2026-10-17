@@ -144,10 +144,13 @@ la 15.5. **react-best-practices**: el registro del worker no bloquea la hidratac
 
 5. **Backups sí, automáticos, pese a 01 §16.** Perder las reservas de todos es peor que un
    `cron`, y cuesta poco. Se corrige 01. La política:
-   - un `pg_dump` diario lo hace un servicio de la composición;
+   - un `pg_dump` diario lo hace un `cron` del servidor (`backup.sh`), sin dueños, para que
+     valga en otro servidor;
    - se **cifra** con `age` antes de salir del servidor;
-   - se copia **fuera** del servidor, a almacenamiento de objetos en la UE;
-   - se borra al cumplir la retención.
+   - se copia **fuera** del servidor: tu PC lo trae por Tailscale (`pull-backups.ps1`). Es
+     gratis, y el servidor no guarda ninguna credencial del PC, así que quien entre en él no
+     puede borrar las copias. Si el PC está apagado, la copia se hace al encenderlo;
+   - se borra al cumplir la retención, en los dos sitios.
    - Un `restore.sh` lo devuelve a una base vacía. **Se ensaya una vez antes de abrir**, con la
      evidencia pegada: un backup que no se ha restaurado nunca no es un backup.
 6. **Imagen del frontend** con `output: "standalone"`, sin root como la del backend, y también
@@ -170,7 +173,7 @@ la 15.5. **react-best-practices**: el registro del worker no bloquea la hidratac
 11. **CI arranca también la composición de producción**, con valores de prueba, y comprueba el
     health y una página. El perfil `prod` no tiene valores por defecto, y así una variable
     nueva que falte se ve en el PR, no al desplegar.
-12. **Un documento de operación** (`30-operacion.md`), corto: desplegar, restaurar, rotar un
+12. **Un documento de operación** (`32-operacion.md`), corto: desplegar, restaurar, rotar un
     secreto y dónde mirar los logs. Es lo único que se consulta con prisa.
 
 ### Lo que haces tú
