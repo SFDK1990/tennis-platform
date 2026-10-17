@@ -212,6 +212,27 @@ body {
   --site-veil-light: 68%;
 }
 
+/*
+ * Which part of the video stays in view when the box crops it: across, then down (0% is the
+ * left or top edge, 100% the right or bottom one). The clip is upright, so on a wide screen
+ * only a strip of it shows; 64% down keeps the balls in the fence in that strip.
+ */
+.site-video {
+  object-position: 50% 64%;
+}
+
+/*
+ * On a phone the front page is taller than the clip, so it would only crop the sides and the
+ * balls would end up behind the photo. There the video covers just the text and fades out
+ * before the photo.
+ */
+@media (width < 64rem) {
+  .site-video {
+    height: 36rem;
+    mask-image: linear-gradient(to bottom, black 70%, transparent);
+  }
+}
+
 .site-veil {
   background: light-dark(
     color-mix(in srgb, var(--site-band) var(--site-veil-light), transparent),
