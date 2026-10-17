@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { preload } from "react-dom";
+import { ClassFinder } from "./_parts/ClassFinder";
+import { Copy } from "./_parts/Copy";
 import { placeholderParts, school } from "./_parts/school";
 import { SiteFooter, SiteNav, WRAP } from "./_parts/SiteNav";
 import { TrialButton } from "./_parts/TrialButton";
@@ -114,6 +116,7 @@ function Classes() {
           </article>
         ))}
       </div>
+      <ClassFinder />
     </section>
   );
 }
@@ -138,10 +141,12 @@ function Steps() {
     <section id="empezar" aria-labelledby="h-empezar" className="lg:scroll-mt-22 bg-(--site-steps) text-white">
       <div className={`${WRAP} py-24`}>
         <h2 id="h-empezar" className={`${SECTION_TITLE} mb-14`}>Cómo empezar</h2>
-        <ol className="grid gap-12 lg:grid-cols-3">
+        <ol className="site-steps relative grid gap-12 lg:grid-cols-3 lg:pt-24">
+          <Trajectory />
           {STEPS.map((step, index) => (
-            <li key={step.title} className="flex flex-col gap-3 border-t-2 border-white/50 pt-6">
-              <span aria-hidden className="font-display text-[88px] font-bold leading-[0.8] text-ball">{index + 1}</span>
+            <li key={step.title} className="relative flex flex-col gap-3 border-t-2 border-white/50 pl-20 pt-6 lg:pl-0">
+              {index < STEPS.length - 1 ? <TrajectoryStretch /> : null}
+              <span aria-hidden className="absolute left-0 top-6 w-12 bg-(--site-steps) pb-2 text-center font-display text-[88px] font-bold leading-[0.8] text-ball lg:static lg:w-auto lg:pb-0 lg:text-left">{index + 1}</span>
               <h3 className="font-display text-3xl font-bold">{step.title}</h3>
               <p className="text-[17px] leading-relaxed text-court-tint"><Copy text={step.text} /></p>
             </li>
@@ -151,6 +156,42 @@ function Steps() {
     </section>
   );
 }
+
+/**
+ * The ball's way from one step to the next (decision 20), drawn as the section scrolls in. On a
+ * computer it bounces on each step's line; on a phone, where the steps stack, it runs down
+ * beside the numbers. Without scroll-driven animations it is simply there, already drawn.
+ */
+function Trajectory() {
+  return (
+    <svg
+        viewBox="0 0 1072 96"
+        preserveAspectRatio="none"
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 hidden h-24 w-full overflow-visible lg:block"
+      >
+        <path d={BALL_PATH} className="fill-none stroke-white/35 stroke-2 [stroke-dasharray:2_8]" vectorEffect="non-scaling-stroke" />
+        <path d={BALL_PATH} pathLength={1} className="site-trajectory fill-none stroke-ball stroke-[3]" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+        {BOUNCES.map((x, index) => (
+          <ellipse key={x} cx={x} cy={92} rx={11} ry={3.5} className={`site-bounce site-bounce-${index + 1} fill-ball`} />
+        ))}
+    </svg>
+  );
+}
+
+/** On a phone, the stretch of the ball's way from one step's number down to the next one. */
+function TrajectoryStretch() {
+  return (
+    <>
+      <span aria-hidden className="absolute -bottom-18 left-6 top-28 border-l-2 border-dashed border-white/35 lg:hidden" />
+      <span aria-hidden className="site-steps-line absolute -bottom-18 left-[23px] top-28 w-[3px] origin-top rounded-full bg-ball lg:hidden" />
+    </>
+  );
+}
+
+/** Lands on each step's number, then flies on towards the app. Units: the 1072px of the widest layout. */
+const BALL_PATH = "M20 92Q206 -70 393 92Q580 -70 767 92Q900 -20 1072 30";
+const BOUNCES = [20, 393, 767];
 
 function Teacher() {
   return (
@@ -285,19 +326,6 @@ function Photo({ priority = false, className, alt, ...image }: PhotoProps) {
       decoding="async"
       className={`size-full object-cover ${className}`}
     />
-  );
-}
-
-/** A text whose [placeholders] look unfinished on purpose, so none is published by mistake. */
-function Copy({ text }: { text: string }) {
-  return placeholderParts(text).map((part, index) =>
-    part.pending ? (
-      <mark key={index} className="bg-transparent text-inherit underline decoration-dashed decoration-2 underline-offset-4">
-        {part.text}
-      </mark>
-    ) : (
-      part.text
-    ),
   );
 }
 

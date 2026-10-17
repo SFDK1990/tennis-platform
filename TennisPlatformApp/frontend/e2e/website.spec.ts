@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
-import { trialHref } from "@/app/(web)/_parts/school";
+import { recommendClass, trialHref } from "@/app/(web)/_parts/school";
 import { expect, signIn, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
@@ -14,6 +14,20 @@ test("sin sesión, la portada es la web de la escuela y lleva a pedir la clase d
   await expect(page.getByRole("heading", { level: 1, name: /Clases de tenis en/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "Pedir clase de prueba" }).first()).toHaveAttribute("href", trialHref());
   await expect(page.getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
+});
+
+/** Decision 21: two answers suggest a class, and the trial button asks for that one. */
+test("«¿Qué clase es para mí?» recomienda una clase y pide su prueba", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("radio", { name: "Para mi hijo o hija" }).check({ force: true });
+  await page.getByRole("radio", { name: "En grupo" }).check({ force: true });
+  await expect(page.getByRole("link", { name: "Pedir la prueba de niños" })).toHaveAttribute(
+    "href",
+    trialHref(undefined, recommendClass("child", "group").message),
+  );
+
+  await page.getByRole("radio", { name: "Clase particular" }).check({ force: true });
+  await expect(page.getByRole("link", { name: "Pedir la prueba de particulares" })).toBeVisible();
 });
 
 /** Criterion 2: nobody is redirected away from the website; the link changes instead. */

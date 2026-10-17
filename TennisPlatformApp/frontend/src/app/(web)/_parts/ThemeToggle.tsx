@@ -20,7 +20,9 @@ export function ThemeToggle() {
       ? site.dataset.theme === "dark"
       : matchMedia("(prefers-color-scheme: dark)").matches;
     const next = dark ? "light" : "dark";
-    site.dataset.theme = next;
+    spreadFrom(event.currentTarget, () => {
+      site.dataset.theme = next;
+    });
     const secure = location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `${THEME_COOKIE}=${next}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax${secure}`;
   }
@@ -49,4 +51,26 @@ export function ThemeToggle() {
       </span>
     </button>
   );
+}
+
+/**
+ * The new theme spreads out from the button (decision 22). A Web Animation on the View
+ * Transition, not a style attribute, so the CSP has nothing to block; where either is missing,
+ * or the visitor asked for less motion, the theme simply changes.
+ */
+function spreadFrom(button: HTMLElement, change: () => void) {
+  if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    change();
+    return;
+  }
+  const { left, top, width, height } = button.getBoundingClientRect();
+  const x = left + width / 2;
+  const y = top + height / 2;
+  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  document.startViewTransition(change).ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: [`circle(0 at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+      { duration: 550, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", pseudoElement: "::view-transition-new(root)" },
+    );
+  });
 }

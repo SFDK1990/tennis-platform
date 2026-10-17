@@ -121,8 +121,26 @@ export function whatsappUrl(number: string, message: string): string {
 }
 
 /** Where the trial-class button goes: WhatsApp once there is a number, the contact details until then. */
-export function trialHref(number: string | null = school.whatsapp): string {
-  return number ? whatsappUrl(number, TRIAL_MESSAGE) : "#donde";
+export function trialHref(number: string | null = school.whatsapp, message: string = TRIAL_MESSAGE): string {
+  return number ? whatsappUrl(number, message) : "#donde";
+}
+
+export type Learner = "me" | "child";
+export type Format = "group" | "private";
+
+/**
+ * "¿Qué clase es para mí?" (decision 21): the class to suggest, and the WhatsApp message that
+ * asks Marcos for its trial already saying what was chosen.
+ */
+export function recommendClass(learner: Learner, format: Format) {
+  const name = format === "private" ? "Particulares" : learner === "child" ? "Niños" : "Adultos";
+  const lesson = school.classes.find((candidate) => candidate.name === name);
+  if (!lesson) {
+    throw new Error(`There is no "${name}" class in school.ts.`);
+  }
+  const who = learner === "child" ? "que mi hijo o hija probara" : "probar";
+  const what = format === "private" ? "una clase particular de tenis" : `una clase de tenis en el grupo de ${name.toLowerCase()}`;
+  return { lesson, message: `Hola, Marcos. Me gustaría ${who} ${what}.` };
 }
 
 /** Splits a text into plain parts and the [placeholders] still waiting for real content. */
