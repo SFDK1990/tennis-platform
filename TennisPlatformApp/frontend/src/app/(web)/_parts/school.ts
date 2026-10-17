@@ -51,10 +51,15 @@ export const school = {
   /** The date the legal texts last changed, as they show it. */
   legalUpdated: "12 de octubre de 2026",
   /**
-   * The front page's loop (decision 23), served from public/web: muted, a few seconds, already
-   * compressed. Until there is one, the front page shows the photo.
+   * The front page's background loop (decision 23), served from public/web: muted, a few
+   * seconds, already compressed. Without one, the front page is plain navy.
    */
-  heroVideo: null as { src: string; description: string } | null,
+  heroVideo: {
+    /** DEMO: a Pexels clip (free for commercial use, no credit needed), until there is one of Marcos. */
+    src: "/web/portada-720.mp4",
+    poster: "/web/portada-poster.webp",
+    description: "Una niña devuelve la pelota en una pista de tenis",
+  } as { src: string; poster: string; description: string } | null,
   photos: {
     action: "Marcos golpea una derecha en salto en la pista",
     championship: "Marcos en el Campeonato de Fuerteventura 2026",

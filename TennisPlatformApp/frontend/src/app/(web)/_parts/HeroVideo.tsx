@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * The front page's loop (31-fase31, decision 23). Muted and without controls, so it starts on
- * its own; the photo is its poster until it plays. It only starts if the visitor has not asked
- * for less motion, and the button pauses it for anyone it bothers.
+ * The front page's background loop (31-fase31, decision 23), under a navy veil that keeps the
+ * white text readable. Muted and without controls, so it starts on its own, and only after
+ * hydration: it never competes with the photo for the largest paint. It does not start if the
+ * visitor asked for less motion, and the button pauses it for anyone it bothers.
  */
 export function HeroVideo({ src, poster, description }: { src: string; poster: string; description: string }) {
   const video = useRef<HTMLVideoElement>(null);
@@ -35,17 +36,18 @@ export function HeroVideo({ src, poster, description }: { src: string; poster: s
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="none"
         aria-label={description}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        className="size-full object-cover"
+        className="absolute inset-0 -z-10 size-full object-cover"
       />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-(--site-band)/80 lg:bg-linear-to-r lg:from-(--site-band)/90 lg:via-(--site-band)/75 lg:to-(--site-band)/45" />
       <button
         type="button"
         onClick={toggle}
         aria-pressed={!playing}
-        className="absolute bottom-4 right-4 flex size-11 items-center justify-center rounded-full bg-navy/70 text-white hover:bg-navy"
+        className="absolute bottom-5 right-5 z-10 flex size-11 items-center justify-center rounded-full bg-navy/70 text-white hover:bg-navy"
       >
         <span className="sr-only">Pausar el vídeo</span>
         <svg viewBox="0 0 24 24" aria-hidden className="size-5 fill-current">

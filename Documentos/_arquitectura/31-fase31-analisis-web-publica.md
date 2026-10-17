@@ -210,7 +210,9 @@ Pedida por Daniel el 17 de octubre de 2026. Corrige la decisión 11, que permit�
     mensaje de WhatsApp con lo elegido. No guarda nada ni llama al backend.
 22. **Lo que responde al visitante se mueve**: las preguntas se abren con suavidad y el cambio de
     tema se extiende desde el botón (View Transition).
-23. **Vídeo en la portada**, en bucle, silenciado, desde este origen, con la foto actual de
-    portada y botón de pausa. Mientras Marcos no tenga uno suyo, un clip de Pexels (licencia
-    gratuita para uso comercial, sin atribución) marcado `DEMO`. Ningún tenista conocido: tiene
-    derechos y parecería que es de la escuela.
+23. **Vídeo de fondo en la portada**, bajo un velo del color de la banda que deja leer el texto;
+    la foto de Marcos sigue en su sitio. En bucle, silenciado, desde este origen, a 720p (unos
+    500 KB), con botón de pausa, y arranca tras hidratar, para no competir con la foto por el
+    LCP. Mientras Marcos no tenga uno suyo, un clip de Pexels (gratis para uso comercial, sin
+    atribución) marcado `DEMO`. Ningún partido profesional: tiene derechos de terceros, marcas y
+    parecería que es de la escuela.

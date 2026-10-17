@@ -43,8 +43,9 @@ const SECTION_TITLE = "font-display text-5xl font-bold leading-none sm:text-6xl"
 
 function Hero() {
   return (
-    <header className="bg-(--site-band) text-white">
-      <div className={`${WRAP} grid items-center gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pb-24 lg:pt-10`}>
+    <header className="relative isolate overflow-hidden bg-(--site-band) text-white">
+      {school.heroVideo ? <HeroVideo {...school.heroVideo} /> : null}
+      <div className={`${WRAP} relative grid items-center gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pb-24 lg:pt-10`}>
         <div className="site-rise flex flex-col gap-7">
           <h1 className="font-display text-6xl font-bold leading-[0.92] sm:text-7xl lg:text-[88px]">
             Clases de tenis en <Copy text={school.area} />
@@ -77,18 +78,14 @@ function CourtPhoto() {
   preload(HERO.src, { as: "image", imageSrcSet: HERO.srcSet, imageSizes: HERO.sizes, fetchPriority: "high" });
   return (
     <figure className="site-rise relative m-0 h-80 overflow-hidden rounded bg-(--site-band-photo) [animation-delay:150ms] sm:h-[460px] lg:h-[560px]">
-      {school.heroVideo ? (
-        <HeroVideo src={school.heroVideo.src} poster={HERO.src} description={school.heroVideo.description} />
-      ) : (
-        <Photo
-          {...HERO}
-          width={1400}
-          height={788}
-          alt={school.photos.action}
-          className="object-[24%_center]"
-          priority
-        />
-      )}
+      <Photo
+        {...HERO}
+        width={1400}
+        height={788}
+        alt={school.photos.action}
+        className="object-[24%_center]"
+        priority
+      />
     </figure>
   );
 }
