@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { preload } from "react-dom";
+import { ClassFinder } from "./_parts/ClassFinder";
+import { Copy } from "./_parts/Copy";
+import { HeroVideo } from "./_parts/HeroVideo";
 import { placeholderParts, school } from "./_parts/school";
 import { SiteFooter, SiteNav, WRAP } from "./_parts/SiteNav";
 import { TrialButton } from "./_parts/TrialButton";
@@ -40,19 +43,20 @@ const SECTION_TITLE = "font-display text-5xl font-bold leading-none sm:text-6xl"
 
 function Hero() {
   return (
-    <header className="bg-(--site-band) text-white">
-      <div className={`${WRAP} grid items-center gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pb-24 lg:pt-10`}>
+    <header className="relative isolate overflow-hidden bg-(--site-band) text-(--site-band-text)">
+      {school.heroVideo ? <HeroVideo {...school.heroVideo} /> : null}
+      <div className={`${WRAP} relative grid items-center gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pb-24 lg:pt-10`}>
         <div className="site-rise flex flex-col gap-7">
           <h1 className="font-display text-6xl font-bold leading-[0.92] sm:text-7xl lg:text-[88px]">
             Clases de tenis en <Copy text={school.area} />
           </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-on-navy sm:text-xl">
+          <p className="max-w-xl text-lg leading-relaxed text-(--site-band-muted) sm:text-xl">
             Grupos reducidos y clases particulares, para niños y adultos. Las da siempre Marcos, en la
             misma pista, y tu plaza la reservas desde el móvil.
           </p>
           <div className="flex flex-wrap items-center gap-5">
             <TrialButton layout="desktop" />
-            <a href="#empezar" className="font-semibold text-white underline-offset-4 hover:underline">Cómo funciona</a>
+            <a href="#empezar" className="font-semibold text-(--site-band-text) underline-offset-4 hover:underline">Cómo funciona</a>
           </div>
         </div>
         <CourtPhoto />
@@ -114,6 +118,7 @@ function Classes() {
           </article>
         ))}
       </div>
+      <ClassFinder />
     </section>
   );
 }
@@ -135,15 +140,17 @@ const STEPS = [
 
 function Steps() {
   return (
-    <section id="empezar" aria-labelledby="h-empezar" className="lg:scroll-mt-22 bg-(--site-steps) text-white">
+    <section id="empezar" aria-labelledby="h-empezar" className="lg:scroll-mt-22 bg-(--site-steps) text-(--site-band-text)">
       <div className={`${WRAP} py-24`}>
         <h2 id="h-empezar" className={`${SECTION_TITLE} mb-14`}>Cómo empezar</h2>
-        <ol className="grid gap-12 lg:grid-cols-3">
+        <ol className="site-steps relative grid gap-12 lg:grid-cols-3 lg:pt-24">
+          <Trajectory />
           {STEPS.map((step, index) => (
-            <li key={step.title} className="flex flex-col gap-3 border-t-2 border-white/50 pt-6">
-              <span aria-hidden className="font-display text-[88px] font-bold leading-[0.8] text-ball">{index + 1}</span>
+            <li key={step.title} className="relative flex flex-col gap-3 border-t-2 border-(--site-band-line) pl-20 pt-6 lg:pl-0">
+              {index < STEPS.length - 1 ? <TrajectoryStretch /> : null}
+              <span aria-hidden className="absolute left-0 top-6 w-12 bg-(--site-steps) pb-2 text-center font-display text-[88px] font-bold leading-[0.8] text-(--site-accent) lg:static lg:w-auto lg:pb-0 lg:text-left">{index + 1}</span>
               <h3 className="font-display text-3xl font-bold">{step.title}</h3>
-              <p className="text-[17px] leading-relaxed text-court-tint"><Copy text={step.text} /></p>
+              <p className="text-[17px] leading-relaxed text-(--site-steps-muted)"><Copy text={step.text} /></p>
             </li>
           ))}
         </ol>
@@ -151,6 +158,42 @@ function Steps() {
     </section>
   );
 }
+
+/**
+ * The ball's way from one step to the next (decision 20), drawn as the section scrolls in. On a
+ * computer it bounces on each step's line; on a phone, where the steps stack, it runs down
+ * beside the numbers. Without scroll-driven animations it is simply there, already drawn.
+ */
+function Trajectory() {
+  return (
+    <svg
+        viewBox="0 0 1072 96"
+        preserveAspectRatio="none"
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 hidden h-24 w-full overflow-visible lg:block"
+      >
+        <path d={BALL_PATH} className="fill-none stroke-(--site-band-line) stroke-2 [stroke-dasharray:2_8]" vectorEffect="non-scaling-stroke" />
+        <path d={BALL_PATH} pathLength={1} className="site-trajectory fill-none stroke-(--site-accent) stroke-[3]" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+        {BOUNCES.map((x, index) => (
+          <ellipse key={x} cx={x} cy={92} rx={11} ry={3.5} className={`site-bounce site-bounce-${index + 1} fill-(--site-accent)`} />
+        ))}
+    </svg>
+  );
+}
+
+/** On a phone, the stretch of the ball's way from one step's number down to the next one. */
+function TrajectoryStretch() {
+  return (
+    <>
+      <span aria-hidden className="absolute -bottom-18 left-6 top-28 border-l-2 border-dashed border-(--site-band-line) lg:hidden" />
+      <span aria-hidden className="site-steps-line absolute -bottom-18 left-[23px] top-28 w-[3px] origin-top rounded-full bg-(--site-accent) lg:hidden" />
+    </>
+  );
+}
+
+/** Lands on each step's number, then flies on towards the app. Units: the 1072px of the widest layout. */
+const BALL_PATH = "M20 92Q206 -70 393 92Q580 -70 767 92Q900 -20 1072 30";
+const BOUNCES = [20, 393, 767];
 
 function Teacher() {
   return (
@@ -225,24 +268,24 @@ function Questions() {
 
 function Contact() {
   return (
-    <section id="donde" aria-labelledby="h-donde" className="lg:scroll-mt-22 bg-(--site-band) text-white">
+    <section id="donde" aria-labelledby="h-donde" className="lg:scroll-mt-22 bg-(--site-band) text-(--site-band-text)">
       <div className={`${WRAP} grid items-center gap-12 py-24 lg:grid-cols-2 lg:gap-20`}>
         <div className="flex flex-col gap-5">
           <h2 id="h-donde" className={SECTION_TITLE}>Ven a probar una clase</h2>
-          <p className="max-w-lg text-lg leading-relaxed text-on-navy sm:text-xl">
+          <p className="max-w-lg text-lg leading-relaxed text-(--site-band-muted) sm:text-xl">
             Escríbele a Marcos por WhatsApp y te propone un día. Si ya eres alumno, reserva en la app.
           </p>
           <div className="flex flex-wrap items-center gap-5 pt-2">
             <TrialButton layout="desktop" />
-            <Link href="/login" className="font-semibold text-white underline-offset-4 hover:underline">Entrar en la app</Link>
+            <Link href="/login" className="font-semibold text-(--site-band-text) underline-offset-4 hover:underline">Entrar en la app</Link>
           </div>
         </div>
         <address className="flex flex-col gap-2 text-lg not-italic">
           <span className="font-display text-3xl font-bold">Dónde está la pista</span>
           <span><Copy text={school.address} /></span>
-          <span className="text-on-navy"><Copy text={school.phone} /> · <Copy text={school.email} /></span>
+          <span className="text-(--site-band-muted)"><Copy text={school.phone} /> · <Copy text={school.email} /></span>
           {school.mapsUrl ? (
-            <a href={school.mapsUrl} className="mt-2 font-semibold text-white underline underline-offset-4">Cómo llegar</a>
+            <a href={school.mapsUrl} className="mt-2 font-semibold text-(--site-band-text) underline underline-offset-4">Cómo llegar</a>
           ) : null}
         </address>
       </div>
@@ -253,7 +296,7 @@ function Contact() {
 /** On a phone the trial button stays at hand while scrolling (the approved mobile mock-up). */
 function TrialBar() {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-10 border-t border-white/20 bg-(--site-band) px-4 pb-5 pt-3 lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-10 border-t border-(--site-band-line) bg-(--site-band) px-4 pb-5 pt-3 lg:hidden">
       <TrialButton layout="wide" />
     </div>
   );
@@ -285,19 +328,6 @@ function Photo({ priority = false, className, alt, ...image }: PhotoProps) {
       decoding="async"
       className={`size-full object-cover ${className}`}
     />
-  );
-}
-
-/** A text whose [placeholders] look unfinished on purpose, so none is published by mistake. */
-function Copy({ text }: { text: string }) {
-  return placeholderParts(text).map((part, index) =>
-    part.pending ? (
-      <mark key={index} className="bg-transparent text-inherit underline decoration-dashed decoration-2 underline-offset-4">
-        {part.text}
-      </mark>
-    ) : (
-      part.text
-    ),
   );
 }
 

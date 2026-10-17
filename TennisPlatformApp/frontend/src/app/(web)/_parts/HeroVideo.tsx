@@ -1,0 +1,59 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+/**
+ * The front page's background loop (31-fase31, decision 23), under a veil of the band's colour that keeps the
+ * text readable in either theme. Muted and without controls, so it starts on its own, and only after
+ * hydration: it never competes with the photo for the largest paint. It does not start if the
+ * visitor asked for less motion, and the button pauses it for anyone it bothers.
+ */
+export function HeroVideo({ src, poster, description }: { src: string; poster: string; description: string }) {
+  const video = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      // A browser that refuses autoplay leaves the poster, which is enough.
+      video.current?.play().catch(() => undefined);
+    }
+  }, []);
+
+  function toggle() {
+    if (video.current?.paused) {
+      video.current.play().catch(() => undefined);
+    } else {
+      video.current?.pause();
+    }
+  }
+
+  return (
+    <>
+      <video
+        ref={video}
+        src={src}
+        poster={poster}
+        muted
+        loop
+        playsInline
+        preload="none"
+        aria-label={description}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        className="site-video absolute inset-0 -z-10 size-full object-cover"
+      />
+      <div aria-hidden className="site-veil absolute inset-0 -z-10" />
+      <button
+        type="button"
+        onClick={toggle}
+        aria-pressed={!playing}
+        className="absolute bottom-5 right-5 z-10 flex size-11 items-center justify-center rounded-full border border-(--site-band-line) bg-(--site-band)/70 text-(--site-band-text) hover:border-(--site-band-text)"
+      >
+        <span className="sr-only">Pausar el vídeo</span>
+        <svg viewBox="0 0 24 24" aria-hidden className="size-5 fill-current">
+          {playing ? <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /> : <path d="M8 5.5v13l10.5-6.5z" />}
+        </svg>
+      </button>
+    </>
+  );
+}

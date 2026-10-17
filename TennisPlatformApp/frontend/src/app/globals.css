@@ -61,20 +61,29 @@ body {
  * The public website's two themes (31-fase31, decision 8). Each colour is written once with
  * its light and dark value, and light-dark() picks one from the colour scheme in force: the
  * system's while the visitor has not chosen, the data-theme the server rendered once they have.
+ * Dark is a range of navies; light, a range of cool whites with the same navy for the text,
+ * never pure white (decision 24). The bands (top bar, front page, steps, contact) follow the
+ * theme too, so their text and lines have tokens of their own.
  * These are meant to become the app's own dark theme later, not a second palette.
  */
 [data-site] {
   color-scheme: light dark;
-  --site-bg: light-dark(#ffffff, #0a1730);
-  --site-surface: light-dark(#eef2f7, #0f2347);
+  --site-bg: light-dark(#f8fafc, #0a1730);
+  --site-surface: light-dark(#eef3f8, #0f2347);
   --site-text: light-dark(#0b1e3f, #eef2f7);
-  --site-muted: light-dark(#4e5d78, #a9b8d0);
-  --site-line: light-dark(#d3dbe7, #24395f);
+  --site-muted: light-dark(#4a5973, #a9b8d0);
+  --site-line: light-dark(#d6dfea, #24395f);
   --site-link: light-dark(#1f5fb8, #8fb3e6);
-  --site-photo: light-dark(#d3dbe7, #1a3260);
-  --site-band: light-dark(#0b1e3f, #06112a);
-  --site-band-photo: light-dark(#16407e, #1a3260);
-  --site-steps: light-dark(#1f5fb8, #174a91);
+  --site-photo: light-dark(#d6dfea, #1a3260);
+  --site-band: light-dark(#edf2f8, #06112a);
+  --site-band-text: light-dark(#0b1e3f, #ffffff);
+  --site-band-muted: light-dark(#44536d, #c9d6ea);
+  --site-band-line: light-dark(rgb(11 30 63 / 0.22), rgb(255 255 255 / 0.4));
+  --site-band-photo: light-dark(#d6dfea, #1a3260);
+  --site-steps: light-dark(#e3ecf8, #174a91);
+  --site-steps-muted: light-dark(#44536d, #e3ecf9);
+  /* The step numbers and the ball's trajectory: the ball's yellow only on navy (decision 1). */
+  --site-accent: light-dark(#1f5fb8, #e4f03c);
 }
 
 [data-site][data-theme="light"] {
@@ -118,4 +127,150 @@ body {
 
 .site-rise {
   animation: site-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/*
+ * The ball's trajectory in "Cómo empezar" (31-fase31, decision 20), tied to the section's
+ * scroll. Where the browser has no scroll-driven animations, it stays drawn and still.
+ */
+.site-steps {
+  view-timeline-name: --steps;
+}
+
+.site-bounce {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes site-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes site-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes site-land-2 {
+  0%,
+  38% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+@keyframes site-land-3 {
+  0%,
+  72% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+.site-trajectory {
+  stroke-dasharray: 1;
+}
+
+@supports (animation-timeline: view()) {
+  .site-trajectory,
+  .site-bounce-2,
+  .site-bounce-3 {
+    animation: site-draw linear both;
+    animation-timeline: --steps;
+    animation-range: entry 60% cover 55%;
+  }
+
+  .site-bounce-2 {
+    animation-name: site-land-2;
+  }
+
+  .site-bounce-3 {
+    animation-name: site-land-3;
+  }
+
+  .site-steps-line {
+    animation: site-grow linear both;
+    animation-timeline: view();
+    animation-range: cover 25% cover 60%;
+  }
+}
+
+/*
+ * The veil over the front page's video (31-fase31, decision 23), the same on a phone and a
+ * computer. Its colour is the band's (navy in dark, white in light), so the text keeps its
+ * contrast. To show more video, lower the theme's percentage; to read the text more easily,
+ * raise it. White hides less than navy, so light needs a little more.
+ */
+[data-site] {
+  --site-veil-dark: 55%;
+  --site-veil-light: 68%;
+}
+
+/*
+ * Which part of the video stays in view when the box crops it: across, then down (0% is the
+ * left or top edge, 100% the right or bottom one). The clip is upright, so on a wide screen
+ * only a strip of it shows; 64% down keeps the balls in the fence in that strip.
+ */
+.site-video {
+  object-position: 50% 64%;
+}
+
+/*
+ * On a phone the front page is taller than the clip, so it would only crop the sides and the
+ * balls would end up behind the photo. There the video covers just the text and fades out
+ * before the photo.
+ */
+@media (width < 64rem) {
+  .site-video {
+    height: 36rem;
+    mask-image: linear-gradient(to bottom, black 70%, transparent);
+  }
+}
+
+.site-veil {
+  background: light-dark(
+    color-mix(in srgb, var(--site-band) var(--site-veil-light), transparent),
+    color-mix(in srgb, var(--site-band) var(--site-veil-dark), transparent)
+  );
+}
+
+/* What answers the visitor moves (31-fase31, decisions 21 and 22). */
+.site-appear {
+  transition:
+    opacity 0.35s ease,
+    translate 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  @starting-style {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+[data-site] {
+  interpolate-size: allow-keywords;
+}
+
+[data-site] details::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size 0.3s ease,
+    content-visibility 0.3s allow-discrete;
+}
+
+[data-site] details[open]::details-content {
+  block-size: auto;
+}
+
+/* The theme change draws its own circle (ThemeToggle); the default cross-fade would blur it. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }

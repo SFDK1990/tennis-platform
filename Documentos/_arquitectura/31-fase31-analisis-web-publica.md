@@ -193,3 +193,31 @@ por Daniel el 12 de octubre de 2026:
 - Quedan fuera: las plazas libres en vivo (necesitan un endpoint público, decisión 6), las
   opiniones (hasta tener tres reales) y el mensaje de Marcos en primera persona (lo escribe él).
 
+
+## Ampliación: una web más interactiva
+
+Pedida por Daniel el 17 de octubre de 2026. Corrige la decisión 11, que permitía un solo movimiento.
+
+19. **Con CSS, sin librerías de animación.** Framer Motion escribe el estado inicial como atributo
+    `style` en el HTML del servidor, que la CSP bloquea, y añade unos 35 KB a un móvil que ya va
+    justo de rendimiento. Lo que se usa: animaciones ligadas al scroll (`animation-timeline`),
+    `@starting-style`, `interpolate-size` y View Transitions. Donde el navegador no las conoce, el
+    contenido sale quieto y completo. «Reducir movimiento» las apaga todas.
+20. **Una pelota dibuja su trayectoria en "Cómo empezar"**, de un paso al siguiente, a medida que
+    la sección entra en pantalla. Va ahí porque es la única secuencia de la página.
+21. **"¿Qué clase es para mí?"**: dos preguntas (para quién es y si en grupo o solo) recomiendan
+    una de las clases de `school.ts`, con su horario y su precio, y el botón de la prueba lleva el
+    mensaje de WhatsApp con lo elegido. No guarda nada ni llama al backend.
+22. **Lo que responde al visitante se mueve**: las preguntas se abren con suavidad y el cambio de
+    tema se extiende desde el botón (View Transition).
+23. **Vídeo de fondo en la portada**, bajo un velo del color de la banda que deja leer el texto;
+    la foto de Marcos sigue en su sitio. En bucle, silenciado, desde este origen, a 720p (unos
+    500 KB), con botón de pausa, y arranca tras hidratar, para no competir con la foto por el
+    LCP. Mientras Marcos no tenga uno suyo, un clip de Pexels (gratis para uso comercial, sin
+    atribución) marcado `DEMO`. Ningún partido profesional: tiene derechos de terceros, marcas y
+    parecería que es de la escuela.
+24. **El tema claro es una gama de blancos fríos**, no blanco puro, con el navy de siempre para el
+    texto; el oscuro, la gama de azules que ya había. Las bandas (barra de arriba, portada, pasos
+    y contacto) también cambian con el tema: antes seguían en navy en el claro. En claro, los
+    números de los pasos y la trayectoria van en el azul de la pista, porque el amarillo no se
+    lee sobre blanco (decisión 1).
