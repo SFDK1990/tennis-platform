@@ -50,6 +50,11 @@ export const school = {
   },
   /** The date the legal texts last changed, as they show it. */
   legalUpdated: "12 de octubre de 2026",
+  /**
+   * The front page's loop (decision 23), served from public/web: muted, a few seconds, already
+   * compressed. Until there is one, the front page shows the photo.
+   */
+  heroVideo: null as { src: string; description: string } | null,
   photos: {
     action: "Marcos golpea una derecha en salto en la pista",
     championship: "Marcos en el Campeonato de Fuerteventura 2026",

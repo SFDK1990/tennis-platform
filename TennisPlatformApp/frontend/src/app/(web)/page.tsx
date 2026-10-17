@@ -3,6 +3,7 @@ import Link from "next/link";
 import { preload } from "react-dom";
 import { ClassFinder } from "./_parts/ClassFinder";
 import { Copy } from "./_parts/Copy";
+import { HeroVideo } from "./_parts/HeroVideo";
 import { placeholderParts, school } from "./_parts/school";
 import { SiteFooter, SiteNav, WRAP } from "./_parts/SiteNav";
 import { TrialButton } from "./_parts/TrialButton";
@@ -76,14 +77,18 @@ function CourtPhoto() {
   preload(HERO.src, { as: "image", imageSrcSet: HERO.srcSet, imageSizes: HERO.sizes, fetchPriority: "high" });
   return (
     <figure className="site-rise relative m-0 h-80 overflow-hidden rounded bg-(--site-band-photo) [animation-delay:150ms] sm:h-[460px] lg:h-[560px]">
-      <Photo
-        {...HERO}
-        width={1400}
-        height={788}
-        alt={school.photos.action}
-        className="object-[24%_center]"
-        priority
-      />
+      {school.heroVideo ? (
+        <HeroVideo src={school.heroVideo.src} poster={HERO.src} description={school.heroVideo.description} />
+      ) : (
+        <Photo
+          {...HERO}
+          width={1400}
+          height={788}
+          alt={school.photos.action}
+          className="object-[24%_center]"
+          priority
+        />
+      )}
     </figure>
   );
 }
