@@ -40,7 +40,7 @@ export function HeroVideo({ src, poster, description }: { src: string; poster: s
         aria-label={description}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        className="absolute inset-0 -z-10 size-full object-cover"
+        className="site-video absolute inset-0 -z-10 size-full object-cover"
       />
       <div aria-hidden className="site-veil absolute inset-0 -z-10" />
       <button
