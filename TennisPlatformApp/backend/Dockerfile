@@ -15,6 +15,10 @@ RUN mvn -B clean package -DskipTests
 # ---- runtime stage -----------------------------------------------------------
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
+# Alpine publishes a fixed package before the base image is rebuilt with it; without the
+# upgrade, trivy fails the build on a CVE that already has a fix (CVE-2026-77214, libexpat).
+RUN apk upgrade --no-cache
+
 # Never run the application as root.
 RUN addgroup -S app && adduser -S -G app app
 
