@@ -33,17 +33,20 @@ crontab -e   # 30 3 * * * /srv/tennis-platform/TennisPlatformApp/deploy/backup.s
 vez en el PC con `age-keygen -o clave.txt`, se guarda en el gestor de contraseñas y el fichero
 se borra.
 
-En el PC, una vez, en PowerShell:
+En el PC, una vez, en PowerShell. El script se copia fuera del repositorio, porque una rama que
+no lo tenga dejaría la tarea sin él:
 
 ```powershell
-$script = "$env:USERPROFILE\Desktop\Casa\Proyectos Paginas Web\Tennis Platform\TennisPlatformApp\deploy\pull-backups.ps1"
+$script = "$env:USERPROFILE\Backups\pull-backups.ps1"
+Copy-Item TennisPlatformApp\deploy\pull-backups.ps1 $script
 $action = New-ScheduledTaskAction -Execute powershell.exe -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$script`""
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 10)
 Register-ScheduledTask -TaskName 'Tennis Platform backups' -Action $action -Settings $settings -Trigger (New-ScheduledTaskTrigger -Daily -At 10am)
 ```
 
 `StartWhenAvailable` hace que, si el PC estaba apagado a esa hora, la copia se haga al encenderlo.
-Si la tarea aparece como fallida en el Programador de tareas, el servidor no está haciendo backups.
+Si la tarea aparece como fallida en el Programador de tareas, el servidor no está haciendo backups
+o Tailscale SSH está esperando a que lo apruebes (el límite de 10 minutos corta esa espera).
 
 ## Restaurar
 
