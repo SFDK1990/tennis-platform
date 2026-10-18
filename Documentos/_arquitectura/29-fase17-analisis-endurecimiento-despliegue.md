@@ -140,6 +140,10 @@ la 15.5. **react-best-practices**: el registro del worker no bloquea la hidratac
    - logs, **14 días** en el propio servidor, con rotación de Docker.
    Son datos personales: se guardan lo justo para recuperarse de un error y no más.
 
+   Al implementarlo: Docker rota por tamaño, no por días. `compose.prod.yaml` pone un tope de
+   5 ficheros de 10 MB por servicio, que al ritmo de hoy (menos de 25 KB al día) son años. Basta
+   porque los logs no llevan datos personales (28): ni IP ni email, sólo UUID.
+
 ### Decisiones propuestas
 
 5. **Backups sí, automáticos, pese a 01 §16.** Perder las reservas de todos es peor que un
