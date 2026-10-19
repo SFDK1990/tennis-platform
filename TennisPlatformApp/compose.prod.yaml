@@ -5,6 +5,15 @@ name: tennis-prod
 # to Caddy on loopback. Docker's published ports bypass ufw, so nothing is published on any
 # other address: a "ports:" without 127.0.0.1 would open a hole in the firewall.
 # Secrets come from .env next to this file (deploy/.env.prod.example), mode 600, never in Git.
+
+# Docker keeps logs forever by default, and it rotates by size, not by age: at most 5 files of
+# 10 MB per service. The logs carry no personal data (28-fase16), so a cap is enough (29-fase17, 4).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -21,6 +30,7 @@ services:
       timeout: 5s
       retries: 10
     mem_limit: 512m
+    logging: *logging
 
   backend:
     build:
@@ -62,6 +72,7 @@ services:
       retries: 12
       start_period: 90s
     mem_limit: 1g
+    logging: *logging
 
   frontend:
     build:
@@ -78,6 +89,7 @@ services:
       backend:
         condition: service_healthy
     mem_limit: 512m
+    logging: *logging
 
   # The entrance. It passes everything to the frontend, overwriting X-Forwarded-For with the
   # client address Funnel saw (requirement of Fase 15).
@@ -94,6 +106,7 @@ services:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
     mem_limit: 128m
+    logging: *logging
 
 volumes:
   postgres-data:
