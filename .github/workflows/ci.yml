@@ -226,3 +226,57 @@ jobs:
       - name: Tear the stack down
         if: always()
         run: docker compose down -v
+
+  production-stack:
+    name: Production composition starts behind Caddy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: TennisPlatformApp
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The prod profile has no defaults, so a variable a change adds without adding it here
+      # stops the backend in the PR, not on the server (29-fase17, 11). Throwaway values.
+      - name: Write a throwaway .env
+        run: |
+          cat > .env <<'ENV'
+          DOMAIN=ci.localhost
+          DB_NAME=tennis_platform
+          DB_USER=tennis_platform
+          DB_PASSWORD=ci-database-password
+          JWT_SECRET=ci-only-jwt-secret-that-is-long-enough-for-hs256-signing
+          MAIL_HOST=localhost
+          MAIL_PORT=587
+          MAIL_USERNAME=ci
+          MAIL_PASSWORD=ci
+          MAIL_FROM=no-reply@ci.localhost
+          ENV
+
+      - name: Build and start the production composition
+        run: docker compose -f compose.prod.yaml up -d --build --wait --wait-timeout 300
+
+      # Through Caddy, as Funnel reaches it: the website, a page of the app, and /actuator
+      # closed to the internet.
+      - name: Caddy serves the website and the app, not the actuator
+        run: |
+          check() {
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              --header 'Host: ci.localhost' "http://127.0.0.1:8090$1")
+            echo "$1 -> $code"
+            [ "$code" = "$2" ]
+          }
+          check / 200
+          check /login 200
+          check /actuator/health 404
+          docker compose -f compose.prod.yaml exec -T backend \
+            wget -qO- http://localhost:8080/actuator/health/liveness
+
+      - name: Dump logs when something went wrong
+        if: failure()
+        run: docker compose -f compose.prod.yaml logs --no-color
+
+      - name: Tear the stack down
+        if: always()
+        run: docker compose -f compose.prod.yaml down -v
