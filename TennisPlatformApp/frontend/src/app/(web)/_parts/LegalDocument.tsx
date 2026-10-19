@@ -9,12 +9,12 @@ import { SiteFooter, SiteNav, WRAP } from "./SiteNav";
 export function LegalDocument({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
   return (
     <>
-      <header className="bg-(--site-band) text-white">
-        <SiteNav />
+      <SiteNav />
+      <header className="bg-(--site-band) text-(--site-band-text)">
         <div className={`${WRAP} flex flex-col gap-4 pb-16 pt-8`}>
           <h1 className="font-display text-6xl font-bold leading-[0.92] sm:text-7xl">{title}</h1>
-          <p className="max-w-2xl text-lg leading-relaxed text-on-navy">{intro}</p>
-          <p className="text-sm text-on-navy">Actualizado el {school.legalUpdated}</p>
+          <p className="max-w-2xl text-lg leading-relaxed text-(--site-band-muted)">{intro}</p>
+          <p className="text-sm text-(--site-band-muted)">Actualizado el {school.legalUpdated}</p>
         </div>
       </header>
       <main className={`${WRAP} py-16`}>

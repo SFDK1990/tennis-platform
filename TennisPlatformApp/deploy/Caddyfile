@@ -1,19 +1,14 @@
 {
-	# Cloudflare terminates HTTPS in front of the tunnel: Caddy speaks plain HTTP inside the
-	# Docker network and needs no certificate of its own.
+	# Tailscale Funnel terminates HTTPS on the Pi and passes plain HTTP to Caddy on loopback:
+	# Caddy needs no certificate of its own.
 	auto_https off
 	admin off
 }
 
-# The public website: static files in deploy/site.
-http://{$DOMAIN}, http://www.{$DOMAIN} {
-	root * /srv/site
-	encode zstd gzip
-	file_server
-}
-
-# The application.
-http://app.{$DOMAIN} {
+# One origin for everything: the frontend serves the website at / and the app on its own paths
+# (31-fase31). With the app on a subdomain its session cookie would stay there, and the website
+# would offer "Entrar" to someone already signed in.
+http://{$DOMAIN} {
 	encode zstd gzip
 
 	# Metrics and health are read through Tailscale/SSH, never from the internet (Fase 17, 10).
@@ -21,8 +16,14 @@ http://app.{$DOMAIN} {
 
 	reverse_proxy frontend:3000 {
 		# Overwrite, never append: the only address the rate limiting may believe is the one
-		# Cloudflare saw. Nothing reaches Caddy except through cloudflared, so the header
-		# cannot be forged by a client (AuthRateLimitFilter, 26-fase15-analisis-seguridad.md).
-		header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+		# Funnel saw. tailscaled drops the client's X-Forwarded-For and sets its own, and
+		# nothing reaches Caddy except through tailscaled on loopback, so the header cannot be
+		# forged by a client (AuthRateLimitFilter, 26-fase15-analisis-seguridad.md).
+		header_up X-Forwarded-For {http.request.header.X-Forwarded-For}
 	}
+}
+
+# www and the old app address keep working: a link already sent lands on the same page.
+http://www.{$DOMAIN}, http://app.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
 }

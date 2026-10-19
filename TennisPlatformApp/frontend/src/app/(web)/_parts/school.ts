@@ -6,6 +6,14 @@
  * The values marked DEMO are invented to show the site while it is tested: they have to be
  * replaced before deploying (Fase 17), like any placeholder.
  */
+/** Each price once: the class cards and the price list both read them from here. */
+const PRICES = {
+  groupOneDay: "100 € al mes",
+  groupTwoDays: "150 € al mes",
+  private: "30 € la hora",
+  trial: "Gratis",
+};
+
 export const school = {
   name: "Oasis Papagayo",
   area: "Corralejo, Fuerteventura",
@@ -42,6 +50,16 @@ export const school = {
   },
   /** The date the legal texts last changed, as they show it. */
   legalUpdated: "12 de octubre de 2026",
+  /**
+   * The front page's background loop (decision 23), served from public/web: muted, a few
+   * seconds, already compressed. Without one, the front page is plain navy.
+   */
+  heroVideo: {
+    /** DEMO: a Pexels clip (free for commercial use, no credit needed), until there is one of Marcos. */
+    src: "/web/portada.mp4",
+    poster: "/web/portada-poster.webp",
+    description: "Pelotas de tenis encajadas en la valla de una pista",
+  } as { src: string; poster: string; description: string } | null,
   photos: {
     action: "Marcos golpea una derecha en salto en la pista",
     championship: "Marcos en el Campeonato de Fuerteventura 2026",
@@ -53,6 +71,7 @@ export const school = {
       /** DEMO */
       when: "Lunes y miércoles, de 17:00 a 18:00",
       group: "Hasta 6 alumnos",
+      price: `Desde ${PRICES.groupOneDay}`,
     },
     {
       name: "Adultos",
@@ -60,24 +79,31 @@ export const school = {
       /** DEMO */
       when: "Martes y jueves, de 19:00 a 20:00",
       group: "Hasta 4 alumnos",
+      price: `Desde ${PRICES.groupOneDay}`,
     },
     {
       name: "Particulares",
       summary: "Una hora solo para ti: corregir un golpe, preparar un partido o avanzar más rápido.",
       when: "Según los huecos de Marcos",
       group: "Tú solo, o con un amigo",
+      price: PRICES.private,
     },
   ],
   prices: [
-    { label: "Grupo, un día a la semana", amount: "100 € al mes" },
-    { label: "Grupo, dos días a la semana", amount: "150 € al mes" },
-    { label: "Clase particular", amount: "30 € la hora" },
-    { label: "Clase de prueba", amount: "Gratis" },
+    { label: "Grupo, un día a la semana", amount: PRICES.groupOneDay },
+    { label: "Grupo, dos días a la semana", amount: PRICES.groupTwoDays },
+    { label: "Clase particular", amount: PRICES.private },
+    { label: "Clase de prueba", amount: PRICES.trial },
   ],
+  trialPrice: PRICES.trial,
   faq: [
     {
       question: "¿Necesito raqueta para la prueba?",
-      answer: "No. El día de la prueba Marcos te presta una raqueta; tú solo trae ropa y calzado de deporte.",
+      answer: "No. El día de la prueba Marcos te presta una.",
+    },
+    {
+      question: "¿Qué tengo que traer?",
+      answer: "Ropa y calzado de deporte, y agua. Si tienes raqueta, tráela; si no, el primer día te la presta Marcos.",
     },
     {
       question: "¿Y si un día no puedo ir?",
@@ -94,7 +120,6 @@ export const school = {
   ],
 };
 
-
 export const TRIAL_MESSAGE = "Hola, Marcos. Me gustaría probar una clase de tenis.";
 
 /** A WhatsApp chat with the message already written; wa.me only takes the number's digits. */
@@ -106,8 +131,26 @@ export function whatsappUrl(number: string, message: string): string {
 }
 
 /** Where the trial-class button goes: WhatsApp once there is a number, the contact details until then. */
-export function trialHref(number: string | null = school.whatsapp): string {
-  return number ? whatsappUrl(number, TRIAL_MESSAGE) : "#donde";
+export function trialHref(number: string | null = school.whatsapp, message: string = TRIAL_MESSAGE): string {
+  return number ? whatsappUrl(number, message) : "#donde";
+}
+
+export type Learner = "me" | "child";
+export type Format = "group" | "private";
+
+/**
+ * "¿Qué clase es para mí?" (decision 21): the class to suggest, and the WhatsApp message that
+ * asks Marcos for its trial already saying what was chosen.
+ */
+export function recommendClass(learner: Learner, format: Format) {
+  const name = format === "private" ? "Particulares" : learner === "child" ? "Niños" : "Adultos";
+  const lesson = school.classes.find((candidate) => candidate.name === name);
+  if (!lesson) {
+    throw new Error(`There is no "${name}" class in school.ts.`);
+  }
+  const who = learner === "child" ? "que mi hijo o hija probara" : "probar";
+  const what = format === "private" ? "una clase particular de tenis" : `una clase de tenis en el grupo de ${name.toLowerCase()}`;
+  return { lesson, message: `Hola, Marcos. Me gustaría ${who} ${what}.` };
 }
 
 /** Splits a text into plain parts and the [placeholders] still waiting for real content. */

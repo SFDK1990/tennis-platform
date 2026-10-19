@@ -8,14 +8,26 @@ las decisiones que dice "tuyas" siguen abiertas.
 disco duro USB con alimentación propia: el servidor no cuesta nada y sustituye al VPS de la
 decisión 1. Lo demás se mantiene, con dos cambios:
 
-- **Entrada por Cloudflare Tunnel** en lugar de abrir 80 y 443. Funciona aunque la conexión
+- **Entrada por Cloudflare Tunnel** en lugar de abrir 80 y 443 (sustituida por Funnel, abajo). Funciona aunque la conexión
   use CGNAT, no abre puertos ni expone la IP del servidor, y Cloudflare pone el HTTPS. Caddy sigue dentro, sin certificado propio, y **sobrescribe** `X-Forwarded-For` con
   `CF-Connecting-IP`: sólo se llega a Caddy por el túnel, así que esa cabecera no la puede
   inventar un cliente. Probado: un `X-Forwarded-For` falso no pasa.
+- **Entrada por Tailscale Funnel (17/10/2026), en lugar de Cloudflare Tunnel.** El túnel con nombre
+  de Cloudflare necesita un dominio propio, y Daniel no quiere pagarlo hasta lanzar; el túnel
+  rápido (`trycloudflare.com`) cambia de dirección en cada reinicio de la Pi. Funnel da una
+  dirección fija y gratuita (`https://<pi>.<tailnet>.ts.net`) y pone el HTTPS. Caddy publica su
+  puerto sólo en `127.0.0.1:8090`, al que apunta `tailscale funnel --bg 8090`, y copia el
+  `X-Forwarded-For` que pone `tailscaled`, que descarta el del cliente y escribe la IP que vio. Con
+  dominio propio se volverá al túnel con nombre, y la cabecera volverá a ser `CF-Connecting-IP`.
 - **Administración por Tailscale** (SSH y `/actuator`), con `ufw` cerrando todo lo demás. Ningún
-  servicio de `compose.prod.yaml` publica puertos: Docker se los saltaría a `ufw`.
+  servicio de `compose.prod.yaml` publica puertos fuera de `127.0.0.1`: Docker se los saltaría a `ufw`.
+- **Un solo dominio (12/10/2026).** La web y la app se sirven en `https://<dominio>`, porque
+  desde la Fase 31 la web es parte del frontend; `www` y `app` redirigen allí. Con la app en
+  `app.` la cookie de sesión se quedaría en ese subdominio, y la web ofrecería "Entrar" a quien ya
+  tiene sesión. La build del frontend recibe `SITE_URL`, o el sitemap y `robots.txt` apuntarían
+  a `localhost`.
 
-El único gasto es el dominio (unos 10 €/año). Los ficheros están en `compose.prod.yaml` y
+Con Funnel no hay gasto; con dominio propio, unos 10 €/año. Los ficheros están en `compose.prod.yaml` y
 `TennisPlatformApp/deploy/`. La guía paso a paso de la Pi vive fuera del repositorio.
 
 Criterio de salida (`12-metodologia-trabajo.md`): PWA completa, accesibilidad, proveedor elegido
@@ -132,10 +144,13 @@ la 15.5. **react-best-practices**: el registro del worker no bloquea la hidratac
 
 5. **Backups sí, automáticos, pese a 01 §16.** Perder las reservas de todos es peor que un
    `cron`, y cuesta poco. Se corrige 01. La política:
-   - un `pg_dump` diario lo hace un servicio de la composición;
+   - un `pg_dump` diario lo hace un `cron` del servidor (`backup.sh`), sin dueños, para que
+     valga en otro servidor;
    - se **cifra** con `age` antes de salir del servidor;
-   - se copia **fuera** del servidor, a almacenamiento de objetos en la UE;
-   - se borra al cumplir la retención.
+   - se copia **fuera** del servidor: tu PC lo trae por Tailscale (`pull-backups.ps1`). Es
+     gratis, y el servidor no guarda ninguna credencial del PC, así que quien entre en él no
+     puede borrar las copias. Si el PC está apagado, la copia se hace al encenderlo;
+   - se borra al cumplir la retención, en los dos sitios.
    - Un `restore.sh` lo devuelve a una base vacía. **Se ensaya una vez antes de abrir**, con la
      evidencia pegada: un backup que no se ha restaurado nunca no es un backup.
 6. **Imagen del frontend** con `output: "standalone"`, sin root como la del backend, y también
@@ -158,7 +173,7 @@ la 15.5. **react-best-practices**: el registro del worker no bloquea la hidratac
 11. **CI arranca también la composición de producción**, con valores de prueba, y comprueba el
     health y una página. El perfil `prod` no tiene valores por defecto, y así una variable
     nueva que falte se ve en el PR, no al desplegar.
-12. **Un documento de operación** (`30-operacion.md`), corto: desplegar, restaurar, rotar un
+12. **Un documento de operación** (`32-operacion.md`), corto: desplegar, restaurar, rotar un
     secreto y dónde mirar los logs. Es lo único que se consulta con prisa.
 
 ### Lo que haces tú

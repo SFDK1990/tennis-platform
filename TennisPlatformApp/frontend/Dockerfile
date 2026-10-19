@@ -12,10 +12,13 @@ COPY . .
 # rewrites() in next.config.ts is evaluated at build time, not at start: the backend address
 # is baked into the image here. Left out, every /api call would go to localhost:8081.
 ARG BACKEND_URL=http://backend:8080
+# robots.txt and sitemap.xml are generated here too, with the public address in them. Left
+# out, they would point search engines at localhost.
+ARG SITE_URL
 ENV BACKEND_URL=$BACKEND_URL \
+    SITE_URL=$SITE_URL \
     NEXT_TELEMETRY_DISABLED=1
-# public/ is optional (it arrives with the PWA); the runtime stage copies it either way.
-RUN mkdir -p public && npm run build
+RUN npm run build
 
 # ---- runtime stage -----------------------------------------------------------
 FROM node:24-alpine AS runtime
