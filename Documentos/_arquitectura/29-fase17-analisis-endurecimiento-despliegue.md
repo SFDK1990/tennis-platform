@@ -177,7 +177,7 @@ la 15.5. **react-best-practices**: el registro del worker no bloquea la hidratac
 11. **CI arranca también la composición de producción**, con valores de prueba, y comprueba el
     health y una página. El perfil `prod` no tiene valores por defecto, y así una variable
     nueva que falte se ve en el PR, no al desplegar.
-12. **Un documento de operación** (`32-operacion.md`), corto: desplegar, restaurar, rotar un
+12. **Un documento de operación** (`33-operacion.md`), corto: desplegar, restaurar, rotar un
     secreto y dónde mirar los logs. Es lo único que se consulta con prisa.
 
 ### Lo que haces tú
