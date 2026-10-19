@@ -35,11 +35,17 @@ public interface BookingRepository {
     /** Confirmed bookings per lesson; lessons with none are absent from the map. */
     Map<UUID, Integer> countConfirmed(Collection<UUID> lessonIds);
 
-    /** Cancels every confirmed booking of the lesson with the given status, in one statement. */
-    void cancelConfirmedOfLesson(UUID lessonId, BookingStatus as, Instant at);
+    /**
+     * Cancels every confirmed booking of the lesson with the given status, in one statement, and
+     * returns them as they were, so each student can be told (Fase 20).
+     */
+    List<Booking> cancelConfirmedOfLesson(UUID lessonId, BookingStatus as, Instant at);
 
-    /** Cancels the student's confirmed bookings with this teacher whose lesson starts after {@code now}. */
-    void cancelUpcoming(UUID teacherUserId, UUID studentUserId, BookingStatus as, Instant now);
+    /**
+     * Cancels the student's confirmed bookings with this teacher whose lesson starts after
+     * {@code now}, and returns them as they were.
+     */
+    List<Booking> cancelUpcoming(UUID teacherUserId, UUID studentUserId, BookingStatus as, Instant now);
 
     Slice findForStudent(UUID studentUserId, BookingStatus status, int page, int size);
 

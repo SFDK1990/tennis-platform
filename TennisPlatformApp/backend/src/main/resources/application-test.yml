@@ -24,6 +24,9 @@ management:
       enabled: false
 
 tennis:
+  notification:
+    # Sent in the request's thread, so a test reads what went out as soon as its call returns.
+    send-in-background: false
   identity:
     jwt-secret: test-only-secret-value-at-least-32-bytes-long
     # Every test hits the API from 127.0.0.1, so the production limit would throttle the

@@ -47,6 +47,24 @@ interface BookingJpaRepository extends JpaRepository<BookingEntity, UUID>,
             """)
     List<Object[]> countConfirmed(@Param("lessonIds") Collection<UUID> lessonIds);
 
+    @Query("""
+            select b from BookingEntity b
+            where b.lessonId = :lessonId
+              and b.status = com.tennisplatform.booking.domain.BookingStatus.CONFIRMED
+            """)
+    List<BookingEntity> findConfirmedOfLesson(@Param("lessonId") UUID lessonId);
+
+    /** What {@link #cancelUpcoming} is about to cancel: the same condition. */
+    @Query("""
+            select b from BookingEntity b
+            where b.teacherUserId = :teacherUserId
+              and b.studentUserId = :studentUserId
+              and b.status = com.tennisplatform.booking.domain.BookingStatus.CONFIRMED
+              and b.lessonStartsAt > :now
+            """)
+    List<BookingEntity> findUpcoming(@Param("teacherUserId") UUID teacherUserId,
+                                     @Param("studentUserId") UUID studentUserId, @Param("now") Instant now);
+
     /**
      * Bulk updates, one statement each. They bypass the persistence context, so {@code
      * clearAutomatically} keeps an entity loaded earlier from reporting its old status, and

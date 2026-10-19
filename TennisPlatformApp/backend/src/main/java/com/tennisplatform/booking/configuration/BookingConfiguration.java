@@ -14,6 +14,7 @@ import com.tennisplatform.booking.application.service.MarkAttendanceService;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,13 +33,15 @@ public class BookingConfiguration {
 
     @Bean
     public BookLesson bookLesson(BookingRepository bookings, LockLesson lockLesson, GetLesson getLesson,
-                                 QueryManagedStudent managedStudents, Clock clock) {
-        return new BookLessonService(bookings, lockLesson, getLesson, managedStudents, clock);
+                                 QueryManagedStudent managedStudents, Clock clock,
+                                 ApplicationEventPublisher publisher) {
+        return new BookLessonService(bookings, lockLesson, getLesson, managedStudents, clock, publisher);
     }
 
     @Bean
-    public CancelBooking cancelBooking(BookingRepository bookings, GetLesson getLesson, Clock clock) {
-        return new CancelBookingService(bookings, getLesson, clock);
+    public CancelBooking cancelBooking(BookingRepository bookings, GetLesson getLesson, Clock clock,
+                                       ApplicationEventPublisher publisher) {
+        return new CancelBookingService(bookings, getLesson, clock, publisher);
     }
 
     @Bean
@@ -52,12 +55,12 @@ public class BookingConfiguration {
     }
 
     @Bean
-    public BookingsOfLessons bookingsOfLessons(BookingRepository bookings) {
-        return new BookingsOfLessons(bookings);
+    public BookingsOfLessons bookingsOfLessons(BookingRepository bookings, ApplicationEventPublisher publisher) {
+        return new BookingsOfLessons(bookings, publisher);
     }
 
     @Bean
-    public BookingsOfStudents bookingsOfStudents(BookingRepository bookings) {
-        return new BookingsOfStudents(bookings);
+    public BookingsOfStudents bookingsOfStudents(BookingRepository bookings, ApplicationEventPublisher publisher) {
+        return new BookingsOfStudents(bookings, publisher);
     }
 }

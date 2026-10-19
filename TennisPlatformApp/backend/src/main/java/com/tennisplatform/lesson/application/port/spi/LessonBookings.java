@@ -21,8 +21,11 @@ public interface LessonBookings {
      */
     Map<UUID, Integer> countConfirmed(Collection<UUID> lessonIds);
 
-    /** Cancels every confirmed booking of a lesson the teacher has just cancelled. */
-    void cancelAllOf(UUID lessonId, Instant cancelledAt);
+    /**
+     * Cancels every confirmed booking of a lesson the teacher has just cancelled. {@code reason}
+     * is what the teacher wrote, or null; it reaches the students' email and is not stored.
+     */
+    void cancelAllOf(UUID lessonId, Instant cancelledAt, String reason);
 
     /** The same, when it was an administrator: the student should know who decided. */
     void cancelAllOfCancelledByAdmin(UUID lessonId, Instant cancelledAt);

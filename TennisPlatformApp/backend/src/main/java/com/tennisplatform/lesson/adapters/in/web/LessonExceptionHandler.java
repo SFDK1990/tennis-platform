@@ -1,6 +1,7 @@
 package com.tennisplatform.lesson.adapters.in.web;
 
 import com.tennisplatform.error.Problems;
+import com.tennisplatform.lesson.domain.DateInThePastException;
 import com.tennisplatform.lesson.domain.InvalidLessonException;
 import com.tennisplatform.lesson.domain.LessonAlreadyCancelledException;
 import com.tennisplatform.lesson.domain.LessonAlreadyFinishedException;
@@ -68,6 +69,12 @@ class LessonExceptionHandler {
     ProblemDetail handleCapacityBelowBookings(LessonCapacityBelowBookingsException e) {
         return Problems.of(HttpStatus.CONFLICT, "Fewer seats than bookings", e.getMessage(),
                 "LESSON_CAPACITY_BELOW_BOOKINGS");
+    }
+
+    @ExceptionHandler(DateInThePastException.class)
+    ProblemDetail handleDateInThePast(DateInThePastException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Day already gone by", e.getMessage(),
+                "DATE_IN_THE_PAST");
     }
 
     @ExceptionHandler(LessonInThePastException.class)

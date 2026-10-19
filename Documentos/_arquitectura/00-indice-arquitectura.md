@@ -11,7 +11,7 @@
 | `15-convenciones-de-codigo.md` | Idioma, comentarios, tests, ramas, commits y utillaje |
 | `17-analisis-archunit-limites-modulares.md` | Por qué las reglas de frontera son como son |
 | `33-operacion.md` | Desplegar, backups, restaurar, cambiar de servidor, rotar secretos y logs |
-| `13`, `14`, `16`, `18`–`31` | Análisis de cada fase, con las decisiones que se tomaron al implementarla |
+| `13`, `14`, `16`, `18`–`32` | Análisis de cada fase, con las decisiones que se tomaron al implementarla |
 
 Los análisis de fase son registro: explican por qué algo es así. Si contradicen a los
 documentos 01–11, mandan éstos, que se mantienen al día.

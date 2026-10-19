@@ -1,6 +1,9 @@
 package com.tennisplatform.lesson.adapters.in.web;
 
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelDayRequest;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelLessonRequest;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelledDayResponse;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CreateLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.EditLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.LessonResponse;
@@ -62,10 +65,22 @@ class TeacherLessonsController {
                 new EditLesson.Changes(request.notes(), request.capacity())), true);
     }
 
+    /** The body is optional: it only carries the reason, which goes to the students. */
     @PostMapping("/{id}/cancel")
-    LessonResponse cancel(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id) {
+    LessonResponse cancel(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id,
+                          @Valid @RequestBody(required = false) CancelLessonRequest request) {
         requireTeacher(caller);
-        return LessonResponse.from(cancelLesson.cancel(caller.id(), id), true);
+        String reason = request == null ? null : request.reason();
+        return LessonResponse.from(cancelLesson.cancel(caller.id(), id, reason), true);
+    }
+
+    @PostMapping("/cancellations")
+    CancelledDayResponse cancelDay(@AuthenticationPrincipal AuthenticatedUser caller,
+                                   @Valid @RequestBody CancelDayRequest request) {
+        requireTeacher(caller);
+        return new CancelledDayResponse(cancelLesson.cancelDay(caller.id(), request.date(), request.reason()).stream()
+                .map(lesson -> LessonResponse.from(lesson, true))
+                .toList());
     }
 
     private static void requireTeacher(AuthenticatedUser caller) {

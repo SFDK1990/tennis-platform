@@ -78,6 +78,10 @@ existe: la integridad referencial de un campo de auditoría vale más que la pur
 
 Consulta agregada de disponibilidad, clases y reservas. No es propietario de los datos.
 
+### notification
+
+Los correos de reservas y cancelaciones, con su `.ics` (Fase 20). No guarda nada.
+
 ### shared
 
 Primitivas técnicas mínimas: identificadores, errores comunes, reloj e infraestructura compartida. No contiene lógica de negocio específica.
@@ -96,6 +100,8 @@ Primitivas técnicas mínimas: identificadores, errores comunes, reloj e infraes
   dependa de `booking` al compilar (Fase 9, `20-fase9-analisis-booking.md`).
 - `administration` puede consultar identity, teacher, student y platform.
 - `platform` no depende de ningún módulo: es la configuración global y la lee todo el mundo.
+- `notification` (Fase 20) puede consultar booking, lesson, teacher, student e identity. Escucha
+  lo que `booking` publica después del commit y escribe los correos; nadie depende de él.
 - `calendar` solo usa interfaces públicas de consulta.
 
 No se permiten accesos directos a repositorios, entidades JPA o adaptadores internos de otro módulo.
@@ -125,6 +131,7 @@ backend/
 - `administration/`
 - `calendar/`
 - `platform/`
+- `notification/`
 - `shared/`
 
 Dentro de cada módulo:

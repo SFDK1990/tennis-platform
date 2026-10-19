@@ -3,6 +3,7 @@ package com.tennisplatform.booking.application.service;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.domain.BookingStatus;
 import com.tennisplatform.lesson.application.port.spi.LessonBookings;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +22,11 @@ import java.util.UUID;
 public class BookingsOfLessons implements LessonBookings {
 
     private final BookingRepository bookings;
+    private final BookingEvents events;
 
-    public BookingsOfLessons(BookingRepository bookings) {
+    public BookingsOfLessons(BookingRepository bookings, ApplicationEventPublisher publisher) {
         this.bookings = bookings;
+        this.events = new BookingEvents(publisher);
     }
 
     @Override
@@ -37,13 +40,15 @@ public class BookingsOfLessons implements LessonBookings {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
-    public void cancelAllOf(UUID lessonId, Instant cancelledAt) {
-        bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_TEACHER, cancelledAt);
+    public void cancelAllOf(UUID lessonId, Instant cancelledAt, String reason) {
+        events.cancelled(bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_TEACHER, cancelledAt),
+                BookingStatus.CANCELLED_BY_TEACHER, reason);
     }
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public void cancelAllOfCancelledByAdmin(UUID lessonId, Instant cancelledAt) {
-        bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_ADMIN, cancelledAt);
+        events.cancelled(bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_ADMIN, cancelledAt),
+                BookingStatus.CANCELLED_BY_ADMIN, null);
     }
 }

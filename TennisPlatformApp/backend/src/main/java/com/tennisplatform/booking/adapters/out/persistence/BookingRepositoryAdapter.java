@@ -118,13 +118,23 @@ class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
-    public void cancelConfirmedOfLesson(UUID lessonId, BookingStatus as, Instant at) {
+    public List<Booking> cancelConfirmedOfLesson(UUID lessonId, BookingStatus as, Instant at) {
+        // Read first, then one update: the caller has already cancelled the lesson, and a booking
+        // locks the lesson and refuses a cancelled one, so nothing can slip in between.
+        List<Booking> confirmed = jpa.findConfirmedOfLesson(lessonId).stream()
+                .map(BookingEntity::toDomain)
+                .toList();
         jpa.cancelConfirmedOfLesson(lessonId, as, at);
+        return confirmed;
     }
 
     @Override
-    public void cancelUpcoming(UUID teacherUserId, UUID studentUserId, BookingStatus as, Instant now) {
+    public List<Booking> cancelUpcoming(UUID teacherUserId, UUID studentUserId, BookingStatus as, Instant now) {
+        List<Booking> upcoming = jpa.findUpcoming(teacherUserId, studentUserId, now).stream()
+                .map(BookingEntity::toDomain)
+                .toList();
         jpa.cancelUpcoming(teacherUserId, studentUserId, as, now);
+        return upcoming;
     }
 
     @Override

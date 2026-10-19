@@ -1516,6 +1516,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/lessons/cancellations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancela todas las clases de un dia (lluvia)
+         * @description Cancela las clases del profesor que empiezan ese dia en su zona horaria y que ni han empezado ni estaban ya canceladas, cada una con sus reservas (CANCELLED_BY_TEACHER). Todo en una transaccion: o se cancela el dia entero o nada. Un dia sin clases responde la lista vacia. Cada alumno recibe un correo por reserva, con el motivo si lo hay, que no se guarda (Fase 20).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CancelDayRequest"];
+                };
+            };
+            responses: {
+                /** @description Las clases canceladas */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CancelledDay"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description DATE_IN_THE_PAST: el dia ya paso en la zona del profesor */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teacher/lessons/{id}": {
         parameters: {
             query?: never;
@@ -1602,7 +1657,7 @@ export interface paths {
         put?: never;
         /**
          * Cancela una clase completa
-         * @description El profesor puede cancelar su propia clase en cualquier momento. La ventana de 24 horas NO le ata: un profesor que enferma la noche antes tiene que poder cancelar. La ventana sigue intacta para el alumno que cancela su reserva, que es donde el producto la justifico. La respuesta trae cancelledAtShortNotice para que el cliente sepa si hubo menos de 24 horas de aviso. Cancela en cascada, en la misma transaccion, todas sus reservas confirmadas (CANCELLED_BY_TEACHER): si la cascada falla, la clase no queda cancelada.
+         * @description El profesor puede cancelar su propia clase en cualquier momento. La ventana de 24 horas NO le ata: un profesor que enferma la noche antes tiene que poder cancelar. La ventana sigue intacta para el alumno que cancela su reserva, que es donde el producto la justifico. La respuesta trae cancelledAtShortNotice para que el cliente sepa si hubo menos de 24 horas de aviso. Cancela en cascada, en la misma transaccion, todas sus reservas confirmadas (CANCELLED_BY_TEACHER): si la cascada falla, la clase no queda cancelada. Cada alumno recibe un correo con el motivo, si lo hay, y un .ics de cancelacion (Fase 20).
          */
         post: {
             parameters: {
@@ -1613,7 +1668,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CancelLessonRequest"];
+                };
+            };
             responses: {
                 /** @description Cancelada */
                 200: {
@@ -2094,6 +2153,22 @@ export interface components {
         EditLessonRequest: {
             notes?: string | null;
             capacity?: number | null;
+        };
+        CancelLessonRequest: {
+            /** @description Va en el correo a los alumnos y no se guarda. */
+            reason?: string | null;
+        };
+        CancelDayRequest: {
+            /**
+             * Format: date
+             * @description Dia en la zona horaria del profesor
+             */
+            date: string;
+            /** @description Va en el correo a los alumnos y no se guarda. */
+            reason?: string | null;
+        };
+        CancelledDay: {
+            lessons: components["schemas"]["Lesson"][];
         };
         DeleteAccountRequest: {
             /** Format: password */

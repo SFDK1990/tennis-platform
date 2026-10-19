@@ -66,7 +66,11 @@ public abstract class AbstractBookingTest extends AbstractIntegrationTest {
 
     /** A lesson that starts {@code fromNow} after the current instant and lasts an hour. Lessons of one test must be at least an hour apart. */
     protected UUID aLessonStartingIn(Duration fromNow, LessonType type, int capacity) {
-        Instant startsAt = clock.instant().plus(fromNow).truncatedTo(ChronoUnit.MINUTES);
+        return aLessonAt(clock.instant().plus(fromNow).truncatedTo(ChronoUnit.MINUTES), type, capacity);
+    }
+
+    /** A lesson of an hour at a given instant, for the tests that need a literal date. */
+    protected UUID aLessonAt(Instant startsAt, LessonType type, int capacity) {
         return lessons.save(Lesson.rehydrate(null, teacherId, type, startsAt,
                 startsAt.plus(Duration.ofHours(1)), capacity, null, false, null)).id();
     }

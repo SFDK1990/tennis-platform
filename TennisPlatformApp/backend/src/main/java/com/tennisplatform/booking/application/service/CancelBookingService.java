@@ -8,6 +8,7 @@ import com.tennisplatform.booking.domain.BookingNotFoundException;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -21,18 +22,21 @@ public class CancelBookingService implements CancelBooking {
     private final BookingRepository bookings;
     private final BookingViews views;
     private final Clock clock;
+    private final BookingEvents events;
 
-    public CancelBookingService(BookingRepository bookings, GetLesson getLesson, Clock clock) {
+    public CancelBookingService(BookingRepository bookings, GetLesson getLesson, Clock clock,
+                                ApplicationEventPublisher publisher) {
         this.bookings = bookings;
         this.views = new BookingViews(getLesson);
         this.clock = clock;
+        this.events = new BookingEvents(publisher);
     }
 
     @Override
     @Transactional
     public BookingView asStudent(UUID studentUserId, UUID bookingId) {
         Booking booking = find(bookingId, b -> b.studentUserId().equals(studentUserId));
-        BookingView cancelled = views.of(bookings.save(booking.cancelByStudent(clock.instant())));
+        BookingView cancelled = views.of(saveAndTell(booking.cancelByStudent(clock.instant())));
         log.info("Booking {} cancelled by the student", bookingId);
         return cancelled;
     }
@@ -41,7 +45,7 @@ public class CancelBookingService implements CancelBooking {
     @Transactional
     public BookingView asTeacher(UUID teacherUserId, UUID bookingId) {
         Booking booking = find(bookingId, b -> b.teacherUserId().equals(teacherUserId));
-        BookingView cancelled = views.of(bookings.save(booking.cancelByTeacher(clock.instant())));
+        BookingView cancelled = views.of(saveAndTell(booking.cancelByTeacher(clock.instant())));
         log.info("Booking {} cancelled by the teacher", bookingId);
         return cancelled;
     }
@@ -50,9 +54,15 @@ public class CancelBookingService implements CancelBooking {
     @Transactional
     public BookingView asAdmin(UUID bookingId) {
         Booking booking = find(bookingId, b -> true);
-        BookingView cancelled = views.of(bookings.save(booking.cancelByAdmin(clock.instant())));
+        BookingView cancelled = views.of(saveAndTell(booking.cancelByAdmin(clock.instant())));
         log.info("Booking {} cancelled by the admin", bookingId);
         return cancelled;
+    }
+
+    private Booking saveAndTell(Booking cancelled) {
+        Booking saved = bookings.save(cancelled);
+        events.cancelled(saved, saved.status(), null);
+        return saved;
     }
 
     /**

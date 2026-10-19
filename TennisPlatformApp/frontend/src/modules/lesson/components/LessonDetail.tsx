@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCancelLesson, type Lesson } from "@/modules/lesson/api";
+import { CancelConfirmation } from "@/modules/lesson/components/CancelConfirmation";
 import { EditLessonForm } from "@/modules/lesson/components/EditLessonForm";
 import { dateIn, formatDay, formatTime } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
@@ -53,13 +54,15 @@ export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDe
       <ErrorNotice error={cancel.error} />
       {cancellable && !editing ? (
         confirming ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <span>Se cancelarán también todas sus reservas.</span>
-            <Button variant="danger" pending={cancel.isPending} onClick={() => cancel.mutate(lesson.id)}>
-              Sí, cancelar la clase
-            </Button>
-            <Button variant="quiet" onClick={() => setConfirming(false)}>No</Button>
-          </div>
+          <CancelConfirmation
+            confirmLabel="Sí, cancelar la clase"
+            pending={cancel.isPending}
+            withReason={as === "teacher"}
+            onConfirm={(reason) => cancel.mutate({ id: lesson.id, reason })}
+            onBack={() => setConfirming(false)}
+          >
+            <p>Se cancelarán también todas sus reservas, y cada alumno recibirá un correo.</p>
+          </CancelConfirmation>
         ) : (
           <div className="flex flex-wrap gap-2">
             {editable ? <Button variant="quiet" onClick={() => setEditing(true)}>Editar</Button> : null}

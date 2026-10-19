@@ -1,6 +1,7 @@
 package com.tennisplatform;
 
 import com.tennisplatform.contract.ContractValidation;
+import com.tennisplatform.notification.RecordingMailer;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -9,6 +10,7 @@ import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
+@Import(RecordingMailer.class)
 @ActiveProfiles("test")
 @EnabledIf(value = "com.tennisplatform.AbstractIntegrationTest#dockerAvailable",
            disabledReason = "No Docker daemon available")

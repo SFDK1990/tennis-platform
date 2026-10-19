@@ -830,6 +830,36 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /teacher/lessons/cancellations:
+    post:
+      tags: [lessons]
+      summary: Cancela todas las clases de un dia (lluvia)
+      description: >-
+        Cancela las clases del profesor que empiezan ese dia en su zona horaria y que ni han
+        empezado ni estaban ya canceladas, cada una con sus reservas (CANCELLED_BY_TEACHER).
+        Todo en una transaccion: o se cancela el dia entero o nada. Un dia sin clases responde
+        la lista vacia. Cada alumno recibe un correo por reserva, con el motivo si lo hay, que
+        no se guarda (Fase 20).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CancelDayRequest" }
+      responses:
+        "200":
+          description: Las clases canceladas
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CancelledDay" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: "DATE_IN_THE_PAST: el dia ya paso en la zona del profesor"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
   /teacher/lessons/{id}:
     patch:
       tags: [lessons]
@@ -885,9 +915,15 @@ paths:
         justifico. La respuesta trae cancelledAtShortNotice para que el cliente sepa si hubo
         menos de 24 horas de aviso. Cancela en cascada, en la misma transaccion, todas sus
         reservas confirmadas (CANCELLED_BY_TEACHER): si la cascada falla, la clase no queda
-        cancelada.
+        cancelada. Cada alumno recibe un correo con el motivo, si lo hay, y un .ics de
+        cancelacion (Fase 20).
       parameters:
         - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CancelLessonRequest" }
       responses:
         "200":
           description: Cancelada
@@ -1309,6 +1345,34 @@ components:
       properties:
         notes: { type: string, nullable: true, maxLength: 2000 }
         capacity: { type: integer, minimum: 1, nullable: true }
+
+    CancelLessonRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Va en el correo a los alumnos y no se guarda.
+
+    CancelDayRequest:
+      type: object
+      required: [date]
+      properties:
+        date: { type: string, format: date, description: "Dia en la zona horaria del profesor" }
+        reason:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: Va en el correo a los alumnos y no se guarda.
+
+    CancelledDay:
+      type: object
+      required: [lessons]
+      properties:
+        lessons:
+          type: array
+          items: { $ref: "#/components/schemas/Lesson" }
 
     DeleteAccountRequest:
       type: object

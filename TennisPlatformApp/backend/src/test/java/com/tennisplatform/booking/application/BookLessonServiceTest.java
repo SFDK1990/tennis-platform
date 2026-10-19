@@ -1,5 +1,6 @@
 package com.tennisplatform.booking.application;
 
+import com.tennisplatform.booking.application.port.in.BookingConfirmed;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.application.service.BookLessonService;
 import com.tennisplatform.booking.domain.Booking;
@@ -22,6 +23,8 @@ import org.mockito.InOrder;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +50,7 @@ class BookLessonServiceTest {
     private LockLesson lockLesson;
     private GetLesson getLesson;
     private QueryManagedStudent managedStudents;
+    private final List<Object> published = new ArrayList<>();
     private BookLessonService service;
 
     @BeforeEach
@@ -61,7 +65,7 @@ class BookLessonServiceTest {
         when(getLesson.byId(LESSON_ID)).thenReturn(lesson("OPEN", STARTS, 1));
 
         service = new BookLessonService(bookings, lockLesson, getLesson, managedStudents,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), published::add);
     }
 
     @Test
@@ -76,6 +80,28 @@ class BookLessonServiceTest {
         assertThat(saved.getValue().lessonStartsAt()).isEqualTo(STARTS);
         assertThat(saved.getValue().lessonEndsAt()).isEqualTo(ENDS);
         assertThat(saved.getValue().bookedAt()).isEqualTo(NOW);
+    }
+
+    @Test
+    void aConfirmedSeatIsAnnouncedWithItsIdsAndTimes() {
+        when(lockLesson.lockForBooking(LESSON_ID)).thenReturn(lesson("OPEN", STARTS, 0));
+
+        service.book(STUDENT_ID, true, LESSON_ID);
+
+        assertThat(published).singleElement().isInstanceOfSatisfying(BookingConfirmed.class, confirmed -> {
+            assertThat(confirmed.studentUserId()).isEqualTo(STUDENT_ID);
+            assertThat(confirmed.teacherUserId()).isEqualTo(TEACHER_ID);
+            assertThat(confirmed.startsAt()).isEqualTo(STARTS);
+            assertThat(confirmed.endsAt()).isEqualTo(ENDS);
+        });
+    }
+
+    @Test
+    void aRefusedSeatIsNotAnnounced() {
+        when(lockLesson.lockForBooking(LESSON_ID)).thenReturn(lesson("FULL", STARTS, 1));
+
+        assertThatThrownBy(() -> service.book(STUDENT_ID, true, LESSON_ID)).isInstanceOf(LessonFullException.class);
+        assertThat(published).isEmpty();
     }
 
     /**

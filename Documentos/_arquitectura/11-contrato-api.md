@@ -205,11 +205,17 @@ Códigos añadidos en la Fase 19:
 
 `LESSON_ALREADY_STARTED` (422) y `LESSON_ALREADY_CANCELLED` (409) responden también a `PATCH /teacher/lessons/{id}`.
 
+Código añadido en la Fase 20:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `DATE_IN_THE_PAST` | 422 | `POST /teacher/lessons/cancellations` | El día ya pasó en la zona del profesor. Releer no hace retroceder el reloj |
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos
 
-37 operaciones, agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. En la Fase 13 se retiraron
+38 operaciones, agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. La Fase 20, cancelar un día entero. En la Fase 13 se retiraron
 `PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
 `/calendar`).
 

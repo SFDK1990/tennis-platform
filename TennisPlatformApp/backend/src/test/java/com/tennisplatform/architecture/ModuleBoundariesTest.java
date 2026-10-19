@@ -45,7 +45,7 @@ class ModuleBoundariesTest {
 
     private static final List<String> MODULES = List.of(
             "identity", "teacher", "student", "availability", "lesson", "booking",
-            "administration", "calendar", "platform", "shared");
+            "administration", "calendar", "platform", "notification", "shared");
 
     // --- A. The dependency graph -----------------------------------------------
 
@@ -124,6 +124,15 @@ class ModuleBoundariesTest {
     @ArchTest
     static final ArchRule bookingDependsOnStudentLessonAndIdentity =
             mayOnlyDependOn("booking", "student", "lesson", "identity");
+
+    /**
+     * {@code notification} (Fase 20) hears what {@code booking} announces and reads the lesson,
+     * the teacher, the student and their addresses to write the emails. Nobody depends on it:
+     * the modules that announce do not know it exists.
+     */
+    @ArchTest
+    static final ArchRule notificationDependsOnWhatItTellsAbout =
+            mayOnlyDependOn("notification", "booking", "lesson", "teacher", "student", "identity");
 
     /**
      * {@code platform} joined in Fase 12: the configuration the console changes has lived there
