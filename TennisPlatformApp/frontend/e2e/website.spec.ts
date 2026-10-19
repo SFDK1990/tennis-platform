@@ -45,6 +45,19 @@ test("con sesión, la web lleva a cada uno a su inicio", async ({ page, arrange 
   await expect(page).toHaveURL(/\/teacher$/);
 });
 
+/** The logo goes to the role's home, so the app needs its own way back to the website. */
+test("desde la app se vuelve a la web, en el ordenador y en el móvil", async ({ page }) => {
+  await signIn(page, TEACHER.email, TEACHER.password);
+  await page.getByRole("link", { name: "Ver la web" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /Clases de tenis en/ })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("link", { name: "Mi cuenta" }).click();
+  await expect(page).toHaveURL(/\/teacher$/);
+  await page.getByRole("link", { name: "Ver la web" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /Clases de tenis en/ })).toBeVisible();
+});
+
 test.describe("con el sistema en oscuro", () => {
   test.use({ colorScheme: "dark" });
 
