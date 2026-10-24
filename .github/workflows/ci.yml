@@ -257,6 +257,15 @@ jobs:
       - name: Build and start the production composition
         run: docker compose -f compose.prod.yaml up -d --build --wait --wait-timeout 300
 
+      # Same gate as the backend image, for the one only this job builds. npm audit reads the
+      # lockfile and cannot see what the node base image brings along; in October 2026 that
+      # was where every finding was.
+      - name: No known fixable vulnerability in the frontend image
+        run: >-
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock
+          aquasec/trivy:0.74.0 image --quiet --scanners vuln --severity HIGH,CRITICAL
+          --ignore-unfixed --exit-code 1 tennis-prod-frontend:latest
+
       # Through Caddy, as Funnel reaches it: the website, a page of the app, and /actuator
       # closed to the internet.
       - name: Caddy serves the website and the app, not the actuator
