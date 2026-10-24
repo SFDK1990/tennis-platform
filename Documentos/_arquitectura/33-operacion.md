@@ -85,6 +85,29 @@ Se cambia en `.env` y se aplica con `docker compose -f compose.prod.yaml up -d`.
   `docker compose -f compose.prod.yaml exec postgres psql -U tennis_platform -c "alter user tennis_platform password '...'"`.
 - `MAIL_PASSWORD`: se genera la nueva en el proveedor de correo y después se revoca la vieja.
 
+## Bots y ataques
+
+Caddy deja una línea por petición, sin IP, cookies ni el token de los enlaces de los correos.
+`deploy/access-report.sh` la resume junto con los intentos contra la API: rutas que no existen
+(ahí salen los escaneos de `wp-login.php` o `.env`), lo rechazado (401, 403, 429), las
+contraseñas probadas y los bots que se identifican. Un 404 de un escaneo no es un problema; sí
+lo son muchos `401 AUTH_BAD_CREDENTIALS` seguidos o `429`.
+
+```bash
+TennisPlatformApp/deploy/access-report.sh 24h
+```
+
+Cada lunes, en el servidor, una vez (el PC lo trae a `Backups\tennis-platform\informes` con los
+backups, tras volver a copiar `pull-backups.ps1`):
+
+```bash
+mkdir -p /srv/reports
+```
+
+```bash
+crontab -e   # 0 8 * * 1 /srv/tennis-platform/TennisPlatformApp/deploy/access-report.sh > /srv/reports/accesos-$(date +\%G-W\%V).txt 2>&1
+```
+
 ## Logs
 
 ```bash

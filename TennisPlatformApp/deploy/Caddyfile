@@ -3,6 +3,22 @@
 	# Caddy needs no certificate of its own.
 	auto_https off
 	admin off
+	# Caddy's own lines (an upstream down during a deploy, say) quote the request: the same
+	# rule as the access log, no IP and nothing secret.
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				request>headers delete
+				request>uri query {
+					delete token
+				}
+			}
+		}
+	}
 }
 
 # One origin for everything: the frontend serves the website at / and the app on its own paths
@@ -13,6 +29,31 @@ http://{$DOMAIN} {
 
 	# Metrics and health are read through Tailscale/SSH, never from the internet (Fase 17, 10).
 	respond /actuator* 404
+
+	# One line per request, to see what bots and scanners try (access-report.sh). Without the
+	# IP, like every other log (28-fase16), and without anything secret: cookies, tokens and
+	# the token of the email links. The page's own files would only bury the rest.
+	@assets path /_next/static/* /web/* /favicon.ico /icon.svg
+	log_skip @assets
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+				request>headers>X-Forwarded-For delete
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				request>headers>X-Xsrf-Token delete
+				resp_headers>Set-Cookie delete
+				request>uri query {
+					delete token
+				}
+			}
+		}
+	}
 
 	reverse_proxy frontend:3000 {
 		# Overwrite, never append: the only address the rate limiting may believe is the one

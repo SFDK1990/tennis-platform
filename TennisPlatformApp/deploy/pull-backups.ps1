@@ -16,6 +16,12 @@ New-Item -ItemType Directory -Force $Destination | Out-Null
 & scp -B -p "${Server}:/srv/backups/tennis-*.sql.gz.age" $Destination
 if ($LASTEXITCODE -ne 0) { throw "scp from $Server failed with exit code $LASTEXITCODE" }
 
+# The weekly access report (access-report.sh), next to the backups. Best effort: a week with no
+# report must not hide whether the backups arrived.
+$reports = Join-Path $Destination 'informes'
+New-Item -ItemType Directory -Force $reports | Out-Null
+& scp -B -p "${Server}:/srv/reports/accesos-*.txt" $reports 2>$null
+
 $backups = Get-ChildItem $Destination -Filter 'tennis-*.sql.gz.age'
 $backups | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$RetentionDays) } |
     Remove-Item
