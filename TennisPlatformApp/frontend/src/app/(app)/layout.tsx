@@ -7,6 +7,7 @@ import { homeFor, type Me, type Role } from "@/modules/identity/api";
 import { AccountNotices } from "@/modules/identity/components/AccountNotices";
 import { RequireAccount } from "@/modules/identity/components/RequireAccount";
 import { SignOutButton } from "@/modules/identity/components/SignOutButton";
+import { BUTTON_BASE, BUTTON_VARIANTS } from "@/shared/ui/Button";
 import { Icon, type IconName } from "@/shared/ui/Icon";
 import { Logo } from "@/shared/ui/Logo";
 
@@ -65,9 +66,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   <Logo className="h-9 w-9" label="" />
                   <span className="font-display text-xl font-semibold">Oasis Papagayo</span>
                 </Link>
-                <Link href="/" className="ml-auto flex min-h-11 items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
+                <Link href="/" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.secondary} ml-auto px-3 text-sm`}>
                   <Icon name="web" />
-                  Ver la web
+                  Ir a la web
                 </Link>
               </header>
               <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pb-28 pt-3 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10">
@@ -109,9 +110,9 @@ function Sidebar({ me, items, current }: { me: Me; items: NavItem[]; current?: s
           <span className="text-on-navy">{ROLE_NAME[me.role]}</span>
         </p>
         {/* The way back to the website: the logo goes to the role's home (31-fase31, decision 2). */}
-        <Link href="/" className="flex min-h-11 items-center gap-3 rounded-lg px-1 text-on-navy hover:text-white">
+        <Link href="/" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.outlineOnCourt} w-full`}>
           <Icon name="web" />
-          Ver la web
+          Ir a la web
         </Link>
         <SignOutButton className="flex min-h-11 items-center gap-3 rounded-lg px-1 text-on-navy hover:text-white" />
       </div>
