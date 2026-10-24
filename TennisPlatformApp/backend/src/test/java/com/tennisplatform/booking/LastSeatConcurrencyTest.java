@@ -148,8 +148,9 @@ class LastSeatConcurrencyTest extends AbstractBookingTest {
 
     /**
      * Two students give up their seats in the same lesson at once, with two students waiting.
-     * The lesson's lock makes the two hand-overs take turns, so each seat goes to a different
-     * student; without it both read the same first student and the second cancellation fails.
+     * Each seat goes to a different student and both cancellations succeed. The two hand-overs
+     * both start from the first student waiting; the second waits for the first to delete that
+     * row, then finds the student seated and moves on (34-fase21, decisions taken).
      */
     @Test
     @SuppressWarnings("rawtypes")

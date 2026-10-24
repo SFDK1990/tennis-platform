@@ -176,11 +176,14 @@ Todo va primero a `openapi.yaml`:
   `lesson` y el calendario preguntaran a `booking` en cada lectura. El alumno ya tiene su puesto
   en `GET /waiting-list` (no `/me/waiting-list`: sigue el patrón de `GET /bookings`, que también
   es «lo mío» para el alumno), y la pantalla lo cruza con la clase.
-- **El cerrojo lo toma la promoción, no la cancelación antes de empezar.** La reserva cancelada
-  no se ha confirmado aún cuando otro cuenta plazas, así que esa persona sigue viendo la clase
-  llena hasta que la plaza ya es del primero de la lista. Lo que sí necesita el cerrojo es que dos
-  cancelaciones a la vez no repartan la misma plaza al mismo alumno:
-  `twoSeatsGivenUpAtOnceGoToTheFirstTwoWaiting` lo prueba.
+- **El cerrojo lo toma la promoción, no la cancelación antes de empezar.** La cancelación no se
+  ha confirmado aún cuando otro cuenta plazas, así que quien reserva en ese momento ve la clase
+  llena hasta que la plaza ya es del primero de la lista.
+- **La mutación «promocionar sin el cerrojo» no hizo fallar ningún test, y se explica.** Dos
+  cancelaciones a la vez tampoco reparten la misma plaza sin él: la promoción borra antes la fila
+  de la lista, la segunda espera a ese borrado y, al seguir, ve que ese alumno ya tiene plaza y
+  pasa al siguiente. El cerrojo se queda porque cuenta las plazas igual que reservar y no cuesta
+  nada, pero no es lo que lo garantiza. Las otras tres mutaciones sí se vieron fallar.
 - **Subir la capacidad promociona desde `lesson`** con un método nuevo del puerto
   `LessonBookings`, `fillFreeSeats`, que recibe la clase ya bloqueada por la edición.
 - **Las cancelaciones en bloque** bloquean las clases afectadas una a una, ordenadas por id.
