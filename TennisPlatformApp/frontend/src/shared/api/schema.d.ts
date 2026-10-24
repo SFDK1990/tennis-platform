@@ -1399,6 +1399,196 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lessons/{id}/waiting-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apunta al alumno autenticado a la lista de espera de una clase llena
+         * @description Las mismas comprobaciones que al reservar, en el mismo orden, y ademas: solo si la clase esta llena, y solo hasta 24 horas antes de que empiece. Cuando se libera una plaza, se reserva sola para el primero de la lista, en la misma transaccion que la libera (34-fase21-analisis-lista-espera.md).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description En la lista */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitingPlace"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description STUDENT_NOT_MANAGED | EMAIL_NOT_VERIFIED | AUTH_FORBIDDEN (quien llama no es un alumno). */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_NOT_FULL (hay plaza: se reserva) | ALREADY_WAITING | BOOKING_ALREADY_EXISTS | STUDENT_SCHEDULE_OVERLAP | LESSON_NOT_BOOKABLE (la clase esta cancelada). */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas). */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        /**
+         * Saca al alumno autenticado de la lista de espera
+         * @description Sin ventana, y tambien responde 204 si no estaba en ella.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Fuera de la lista */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/waiting-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Las listas de espera del alumno autenticado que siguen abiertas
+         * @description Con su puesto en cada una, de la clase mas proxima a la mas lejana.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitingPlaceList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/lessons/{id}/waiting-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quien espera plaza en una clase del profesor, en orden
+         * @description Solo para consultar. Una clase ajena devuelve la lista vacia, como las reservas de una clase ajena.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitingStudentList"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/bookings": {
         parameters: {
             query?: never;
@@ -2417,20 +2607,41 @@ export interface components {
             bookedAt: string;
             /** Format: date-time */
             cancelledAt: string | null;
-            lesson: {
+            lesson: components["schemas"]["LessonSummary"];
+        };
+        /** @description La clase tal como viaja dentro de una reserva o de una lista de espera, sin notes. */
+        LessonSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            teacherUserId: string;
+            type: components["schemas"]["LessonType"];
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            capacity: number;
+            bookedCount: number;
+            status: components["schemas"]["LessonStatus"];
+        };
+        /** @description Un puesto en la lista de espera de una clase llena. position cuenta desde 1: el primero es el siguiente en recibir plaza. */
+        WaitingPlace: {
+            lesson: components["schemas"]["LessonSummary"];
+            position: number;
+            /** Format: date-time */
+            joinedAt: string;
+        };
+        WaitingPlaceList: {
+            items: components["schemas"]["WaitingPlace"][];
+        };
+        WaitingStudentList: {
+            items: {
                 /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                teacherUserId: string;
-                type: components["schemas"]["LessonType"];
+                studentUserId: string;
+                position: number;
                 /** Format: date-time */
-                startsAt: string;
-                /** Format: date-time */
-                endsAt: string;
-                capacity: number;
-                bookedCount: number;
-                status: components["schemas"]["LessonStatus"];
-            };
+                joinedAt: string;
+            }[];
         };
         BookingPage: components["schemas"]["Page"] & {
             items: components["schemas"]["Booking"][];

@@ -115,6 +115,71 @@ class LastSeatConcurrencyTest extends AbstractBookingTest {
         }
     }
 
+    /**
+     * The criterion of 34-fase21-analisis-lista-espera.md: the holder gives the seat up while
+     * somebody else tries to book it. The seat goes to the student who was waiting, every time;
+     * the one who came in at that moment finds the lesson full. Without the lock in the
+     * cancellation, the booking slips in between the cancel and the hand-over.
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void aSeatGivenUpWhileSomebodyBooksGoesToTheStudentWhoWasWaiting() throws Exception {
+        for (int round = 0; round < ROUNDS; round++) {
+            UUID lessonId = anIndividualLessonIn(Duration.ofDays(50).plusHours(2L * round));
+            Student holder = aStudentWhoMayBook();
+            Student waiting = aStudentWhoMayBook();
+            String latecomer = aStudentWhoMayBook().token();
+            ResponseEntity<Map> seat = book(holder.token(), lessonId);
+            assertThat(rest.exchange("/api/v1/lessons/" + lessonId + "/waiting-list", HttpMethod.POST,
+                    new HttpEntity<>(bearer(waiting.token())), Map.class).getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+            List<ResponseEntity<Map>> answers = simultaneously(
+                    () -> rest.exchange("/api/v1/bookings/" + seat.getBody().get("id") + "/cancel", HttpMethod.POST,
+                            new HttpEntity<>(bearer(holder.token())), Map.class),
+                    () -> book(latecomer, lessonId));
+
+            assertThat(answers).allSatisfy(answer -> assertThat(answer.getStatusCode().is5xxServerError()).isFalse());
+            assertThat(confirmedBookingsOf(lessonId)).isEqualTo(1);
+            Integer waitingHasIt = jdbc.queryForObject("SELECT count(*) FROM bookings WHERE lesson_id = ? "
+                    + "AND student_user_id = ? AND status = 'CONFIRMED'", Integer.class, lessonId, waiting.id());
+            assertThat(waitingHasIt).isEqualTo(1);
+        }
+    }
+
+    /**
+     * Two students give up their seats in the same lesson at once, with two students waiting.
+     * The lesson's lock makes the two hand-overs take turns, so each seat goes to a different
+     * student; without it both read the same first student and the second cancellation fails.
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void twoSeatsGivenUpAtOnceGoToTheFirstTwoWaiting() throws Exception {
+        for (int round = 0; round < ROUNDS; round++) {
+            UUID lessonId = aLessonStartingIn(Duration.ofDays(60).plusHours(2L * round),
+                    com.tennisplatform.lesson.domain.LessonType.GROUP, 2);
+            Student one = aStudentWhoMayBook();
+            Student two = aStudentWhoMayBook();
+            Object seatOne = book(one.token(), lessonId).getBody().get("id");
+            Object seatTwo = book(two.token(), lessonId).getBody().get("id");
+            for (int i = 0; i < 2; i++) {
+                assertThat(rest.exchange("/api/v1/lessons/" + lessonId + "/waiting-list", HttpMethod.POST,
+                        new HttpEntity<>(bearer(aStudentWhoMayBook().token())), Map.class).getStatusCode())
+                        .isEqualTo(HttpStatus.CREATED);
+            }
+
+            List<ResponseEntity<Map>> answers = simultaneously(
+                    () -> rest.exchange("/api/v1/bookings/" + seatOne + "/cancel", HttpMethod.POST,
+                            new HttpEntity<>(bearer(one.token())), Map.class),
+                    () -> rest.exchange("/api/v1/bookings/" + seatTwo + "/cancel", HttpMethod.POST,
+                            new HttpEntity<>(bearer(two.token())), Map.class));
+
+            assertThat(answers).extracting(ResponseEntity::getStatusCode).containsOnly(HttpStatus.OK);
+            assertThat(confirmedBookingsOf(lessonId)).isEqualTo(2);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM waiting_list_entries WHERE lesson_id = ?",
+                    Integer.class, lessonId)).isZero();
+        }
+    }
+
     @SafeVarargs
     @SuppressWarnings("rawtypes")
     private static List<ResponseEntity<Map>> simultaneously(Callable<ResponseEntity<Map>>... requests)

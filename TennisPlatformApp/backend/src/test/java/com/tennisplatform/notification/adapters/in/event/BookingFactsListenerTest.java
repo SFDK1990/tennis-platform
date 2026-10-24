@@ -40,7 +40,7 @@ class BookingFactsListenerTest {
 
     private static BookingConfirmed confirmed() {
         return new BookingConfirmed(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
-                STARTS, STARTS.plusSeconds(3600));
+                STARTS, STARTS.plusSeconds(3600), false);
     }
 
     @Test

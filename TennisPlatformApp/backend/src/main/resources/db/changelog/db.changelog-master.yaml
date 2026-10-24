@@ -19,3 +19,5 @@ databaseChangeLog:
       file: db/changelog/changes/v7-booking.yaml
   - include:
       file: db/changelog/changes/v8-identity-deleted-accounts.yaml
+  - include:
+      file: db/changelog/changes/v9-booking-waiting-list.yaml

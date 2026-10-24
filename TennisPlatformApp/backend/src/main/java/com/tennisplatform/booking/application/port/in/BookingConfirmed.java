@@ -9,7 +9,10 @@ import java.util.UUID;
  *
  * <p>Ids and times only: whoever reacts looks up the names and addresses it needs, which keeps
  * personal data out of anything that may end up queued or logged.
+ *
+ * <p>{@code fromWaitingList} when the seat was handed to the first student waiting for it, who
+ * did not ask for it at that moment and has to be told how (Fase 21).
  */
 public record BookingConfirmed(UUID bookingId, UUID lessonId, UUID teacherUserId, UUID studentUserId,
-                               Instant startsAt, Instant endsAt) {
+                               Instant startsAt, Instant endsAt, boolean fromWaitingList) {
 }

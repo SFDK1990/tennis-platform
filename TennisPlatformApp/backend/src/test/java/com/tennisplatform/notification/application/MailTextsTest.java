@@ -71,7 +71,7 @@ class MailTextsTest {
     @Test
     void theTeacherHearsWhoBookedAndHowFullTheLessonIs() {
         Mail mail = TEXTS.bookingToTeacher(lesson("2026-03-27T09:00:00Z", "2026-03-27T10:00:00Z", "GROUP"),
-                "ana@example.com", "Lucia Prieto", 3, 6);
+                "ana@example.com", "Lucia Prieto", 3, 6, false);
 
         assertThat(mail.subject()).isEqualTo("Nueva reserva: Lucia Prieto, viernes 27 de marzo, 10:00");
         assertThat(mail.body()).contains("Plazas ocupadas: 3 de 6.");

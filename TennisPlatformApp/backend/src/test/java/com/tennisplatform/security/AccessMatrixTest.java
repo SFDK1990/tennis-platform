@@ -100,6 +100,10 @@ class AccessMatrixTest extends AbstractBookingTest {
                 "startsAt", day + "T10:00:00Z", "endsAt", day + "T11:00:00Z"),   401, 403, 403, 403, ALLOWED, 403);
         row("GET", "/lessons/{lessonId}", none,                                  401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("POST", "/lessons/{lessonId}/bookings", none,                        401, 403, ALLOWED, ALLOWED, 403, 403);
+        row("POST", "/lessons/{lessonId}/waiting-list", none,                    401, 403, ALLOWED, ALLOWED, 403, 403);
+        row("DELETE", "/lessons/{lessonId}/waiting-list", none,                  401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+        row("GET", "/waiting-list", none,                                        401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+        row("GET", "/teacher/lessons/{lessonId}/waiting-list", none,             401, 403, 403, 403, ALLOWED, 403);
         row("GET", "/bookings", none,                                            401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         // Somebody else's booking does not exist for them.
         row("POST", "/bookings/{bookingId}/cancel", none,                        401, 404, ALLOWED, 404, ALLOWED, ALLOWED);

@@ -137,7 +137,7 @@ class BookingNotificationsTest extends AbstractBookingTest {
     @Test
     void nothingIsSentForATransactionThatRolledBack() {
         BookingConfirmed confirmed = new BookingConfirmed(UUID.randomUUID(), lessonId, teacherId, student.id(),
-                clock.instant().plus(Duration.ofDays(3)), clock.instant().plus(Duration.ofDays(3).plusHours(1)));
+                clock.instant().plus(Duration.ofDays(3)), clock.instant().plus(Duration.ofDays(3).plusHours(1)), false);
 
         transactions.executeWithoutResult(status -> {
             publisher.publishEvent(confirmed);

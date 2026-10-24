@@ -4,13 +4,17 @@ import com.tennisplatform.booking.application.port.in.BookLesson;
 import com.tennisplatform.booking.application.port.in.CancelBooking;
 import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.booking.application.port.in.MarkAttendance;
+import com.tennisplatform.booking.application.port.in.WaitingList;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
+import com.tennisplatform.booking.application.port.out.WaitingListRepository;
 import com.tennisplatform.booking.application.service.BookLessonService;
 import com.tennisplatform.booking.application.service.BookingsOfLessons;
 import com.tennisplatform.booking.application.service.BookingsOfStudents;
 import com.tennisplatform.booking.application.service.CancelBookingService;
 import com.tennisplatform.booking.application.service.GetBookingsService;
 import com.tennisplatform.booking.application.service.MarkAttendanceService;
+import com.tennisplatform.booking.application.service.WaitingListPromotion;
+import com.tennisplatform.booking.application.service.WaitingListService;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
@@ -39,9 +43,23 @@ public class BookingConfiguration {
     }
 
     @Bean
-    public CancelBooking cancelBooking(BookingRepository bookings, GetLesson getLesson, Clock clock,
+    public CancelBooking cancelBooking(BookingRepository bookings, GetLesson getLesson, LockLesson lockLesson,
+                                       WaitingListPromotion promotion, Clock clock,
                                        ApplicationEventPublisher publisher) {
-        return new CancelBookingService(bookings, getLesson, clock, publisher);
+        return new CancelBookingService(bookings, getLesson, lockLesson, promotion, clock, publisher);
+    }
+
+    @Bean
+    public WaitingList waitingList(WaitingListRepository waiting, BookingRepository bookings, LockLesson lockLesson,
+                                   GetLesson getLesson, QueryManagedStudent managedStudents, Clock clock) {
+        return new WaitingListService(waiting, bookings, lockLesson, getLesson, managedStudents, clock);
+    }
+
+    @Bean
+    public WaitingListPromotion waitingListPromotion(BookingRepository bookings, WaitingListRepository waiting,
+                                                     QueryManagedStudent managedStudents, Clock clock,
+                                                     ApplicationEventPublisher publisher) {
+        return new WaitingListPromotion(bookings, waiting, managedStudents, clock, publisher);
     }
 
     @Bean
@@ -55,12 +73,15 @@ public class BookingConfiguration {
     }
 
     @Bean
-    public BookingsOfLessons bookingsOfLessons(BookingRepository bookings, ApplicationEventPublisher publisher) {
-        return new BookingsOfLessons(bookings, publisher);
+    public BookingsOfLessons bookingsOfLessons(BookingRepository bookings, WaitingListRepository waiting,
+                                               WaitingListPromotion promotion, ApplicationEventPublisher publisher) {
+        return new BookingsOfLessons(bookings, waiting, promotion, publisher);
     }
 
     @Bean
-    public BookingsOfStudents bookingsOfStudents(BookingRepository bookings, ApplicationEventPublisher publisher) {
-        return new BookingsOfStudents(bookings, publisher);
+    public BookingsOfStudents bookingsOfStudents(BookingRepository bookings, WaitingListRepository waiting,
+                                                 LockLesson lockLesson, WaitingListPromotion promotion,
+                                                 ApplicationEventPublisher publisher) {
+        return new BookingsOfStudents(bookings, waiting, lockLesson, promotion, publisher);
     }
 }

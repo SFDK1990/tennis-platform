@@ -47,6 +47,9 @@ public interface BookingRepository {
      */
     List<Booking> cancelUpcoming(UUID teacherUserId, UUID studentUserId, BookingStatus as, Instant now);
 
+    /** The lessons {@link #cancelUpcoming} would touch, so their locks can be taken first. */
+    List<UUID> upcomingLessonIds(UUID teacherUserId, UUID studentUserId, Instant now);
+
     Slice findForStudent(UUID studentUserId, BookingStatus status, int page, int size);
 
     /** Every booking, whoever it belongs to: only the administration reads this. */

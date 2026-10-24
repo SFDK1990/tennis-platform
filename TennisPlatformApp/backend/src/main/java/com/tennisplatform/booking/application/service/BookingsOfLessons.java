@@ -1,7 +1,9 @@
 package com.tennisplatform.booking.application.service;
 
 import com.tennisplatform.booking.application.port.out.BookingRepository;
+import com.tennisplatform.booking.application.port.out.WaitingListRepository;
 import com.tennisplatform.booking.domain.BookingStatus;
+import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Propagation;
@@ -22,10 +24,15 @@ import java.util.UUID;
 public class BookingsOfLessons implements LessonBookings {
 
     private final BookingRepository bookings;
+    private final WaitingListRepository waiting;
+    private final WaitingListPromotion promotion;
     private final BookingEvents events;
 
-    public BookingsOfLessons(BookingRepository bookings, ApplicationEventPublisher publisher) {
+    public BookingsOfLessons(BookingRepository bookings, WaitingListRepository waiting,
+                             WaitingListPromotion promotion, ApplicationEventPublisher publisher) {
         this.bookings = bookings;
+        this.waiting = waiting;
+        this.promotion = promotion;
         this.events = new BookingEvents(publisher);
     }
 
@@ -43,6 +50,7 @@ public class BookingsOfLessons implements LessonBookings {
     public void cancelAllOf(UUID lessonId, Instant cancelledAt, String reason) {
         events.cancelled(bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_TEACHER, cancelledAt),
                 BookingStatus.CANCELLED_BY_TEACHER, reason);
+        waiting.deleteAllOfLesson(lessonId);
     }
 
     @Override
@@ -50,5 +58,12 @@ public class BookingsOfLessons implements LessonBookings {
     public void cancelAllOfCancelledByAdmin(UUID lessonId, Instant cancelledAt) {
         events.cancelled(bookings.cancelConfirmedOfLesson(lessonId, BookingStatus.CANCELLED_BY_ADMIN, cancelledAt),
                 BookingStatus.CANCELLED_BY_ADMIN, null);
+        waiting.deleteAllOfLesson(lessonId);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void fillFreeSeats(LessonView lesson) {
+        promotion.fillFreeSeats(lesson);
     }
 }

@@ -763,6 +763,93 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /lessons/{id}/waiting-list:
+    post:
+      tags: [bookings]
+      summary: Apunta al alumno autenticado a la lista de espera de una clase llena
+      description: >-
+        Las mismas comprobaciones que al reservar, en el mismo orden, y ademas: solo si la clase
+        esta llena, y solo hasta 24 horas antes de que empiece. Cuando se libera una plaza, se
+        reserva sola para el primero de la lista, en la misma transaccion que la libera
+        (34-fase21-analisis-lista-espera.md).
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "201":
+          description: En la lista
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WaitingPlace" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: STUDENT_NOT_MANAGED | EMAIL_NOT_VERIFIED | AUTH_FORBIDDEN (quien llama no es un alumno).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: LESSON_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: >-
+            LESSON_NOT_FULL (hay plaza: se reserva) | ALREADY_WAITING | BOOKING_ALREADY_EXISTS |
+            STUDENT_SCHEDULE_OVERLAP | LESSON_NOT_BOOKABLE (la clase esta cancelada).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [bookings]
+      summary: Saca al alumno autenticado de la lista de espera
+      description: Sin ventana, y tambien responde 204 si no estaba en ella.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Fuera de la lista
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /waiting-list:
+    get:
+      tags: [bookings]
+      summary: Las listas de espera del alumno autenticado que siguen abiertas
+      description: Con su puesto en cada una, de la clase mas proxima a la mas lejana.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WaitingPlaceList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/lessons/{id}/waiting-list:
+    get:
+      tags: [bookings]
+      summary: Quien espera plaza en una clase del profesor, en orden
+      description: >-
+        Solo para consultar. Una clase ajena devuelve la lista vacia, como las reservas de una
+        clase ajena.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WaitingStudentList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /bookings:
     get:
       tags: [bookings]
@@ -1686,18 +1773,54 @@ components:
         attendance: { $ref: "#/components/schemas/Attendance" }
         bookedAt: { type: string, format: date-time }
         cancelledAt: { type: string, format: date-time, nullable: true }
-        lesson:
-          type: object
-          required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status]
-          properties:
-            id: { type: string, format: uuid }
-            teacherUserId: { type: string, format: uuid }
-            type: { $ref: "#/components/schemas/LessonType" }
-            startsAt: { type: string, format: date-time }
-            endsAt: { type: string, format: date-time }
-            capacity: { type: integer }
-            bookedCount: { type: integer }
-            status: { $ref: "#/components/schemas/LessonStatus" }
+        lesson: { $ref: "#/components/schemas/LessonSummary" }
+
+    LessonSummary:
+      type: object
+      description: La clase tal como viaja dentro de una reserva o de una lista de espera, sin notes.
+      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status]
+      properties:
+        id: { type: string, format: uuid }
+        teacherUserId: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/LessonType" }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        capacity: { type: integer }
+        bookedCount: { type: integer }
+        status: { $ref: "#/components/schemas/LessonStatus" }
+
+    WaitingPlace:
+      type: object
+      description: >-
+        Un puesto en la lista de espera de una clase llena. position cuenta desde 1: el primero
+        es el siguiente en recibir plaza.
+      required: [lesson, position, joinedAt]
+      properties:
+        lesson: { $ref: "#/components/schemas/LessonSummary" }
+        position: { type: integer, minimum: 1 }
+        joinedAt: { type: string, format: date-time }
+
+    WaitingPlaceList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/WaitingPlace" }
+
+    WaitingStudentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [studentUserId, position, joinedAt]
+            properties:
+              studentUserId: { type: string, format: uuid }
+              position: { type: integer, minimum: 1 }
+              joinedAt: { type: string, format: date-time }
 
     BookingPage:
       allOf:

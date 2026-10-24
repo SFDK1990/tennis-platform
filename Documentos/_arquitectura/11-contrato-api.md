@@ -211,6 +211,14 @@ Código añadido en la Fase 20:
 |---|---|---|---|
 | `DATE_IN_THE_PAST` | 422 | `POST /teacher/lessons/cancellations` | El día ya pasó en la zona del profesor. Releer no hace retroceder el reloj |
 
+Códigos añadidos en la Fase 21:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `LESSON_NOT_FULL` | 409 | `POST /lessons/{id}/waiting-list` | Hay plaza: se reserva en lugar de esperar. Releer la clase lo muestra |
+| `ALREADY_WAITING` | 409 | `POST /lessons/{id}/waiting-list` | El alumno ya está en la lista de esa clase |
+| `WAITING_LIST_CLOSED` | 422 | `POST /lessons/{id}/waiting-list` | La clase empieza en menos de 24 horas, y la lista ya no admite a nadie |
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos
