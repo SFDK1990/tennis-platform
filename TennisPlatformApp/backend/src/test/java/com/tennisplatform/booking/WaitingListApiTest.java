@@ -78,6 +78,36 @@ class WaitingListApiTest extends AbstractBookingTest {
         Student unverified = aStudentWithAProfile();
         manage(unverified);
         assertThat(join(unverified.token(), lessonId).getBody()).containsEntry("code", "EMAIL_NOT_VERIFIED");
+
+        Student stranger = aStudentWithAProfile();
+        verify(stranger);
+        assertThat(join(tokenOf(stranger.email(), PASSWORD), lessonId).getBody())
+                .containsEntry("code", "STUDENT_NOT_MANAGED");
+
+        UUID started = aLessonStartingIn(Duration.ofMinutes(-30), LessonType.INDIVIDUAL, 1);
+        assertThat(join(first.token(), started).getBody()).containsEntry("code", "LESSON_ALREADY_STARTED");
+
+        UUID cancelled = anIndividualLessonIn(IN_A_MONTH.plusDays(3));
+        rest.exchange("/api/v1/teacher/lessons/" + cancelled + "/cancel", HttpMethod.POST,
+                new HttpEntity<>(bearer(teacherToken)), Map.class);
+        assertThat(join(first.token(), cancelled).getBody()).containsEntry("code", "LESSON_NOT_BOOKABLE");
+    }
+
+    /** A list past its closing point is no longer shown to the student, and a lesson nobody waits for has none. */
+    @Test
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    void aClosedListIsNoLongerShownAndAnEmptyOneIsEmpty() {
+        UUID tomorrow = anIndividualLessonIn(Duration.ofHours(20));
+        jdbc.update("INSERT INTO waiting_list_entries (lesson_id, teacher_user_id, student_user_id, joined_at) "
+                + "VALUES (?, ?, ?, now())", tomorrow, teacherId, first.id());
+
+        List<Map> mine = (List<Map>) get(first.token(), "/api/v1/waiting-list").getBody().get("items");
+        assertThat(mine).extracting(place -> ((Map) place.get("lesson")).get("id")).containsExactly(lessonId.toString());
+
+        List<Map> nobody = (List<Map>) get(teacherToken, "/api/v1/teacher/lessons/" + aLessonStartingIn(
+                IN_A_MONTH.plusDays(4), LessonType.GROUP, 4) + "/waiting-list").getBody().get("items");
+        assertThat(nobody).isEmpty();
+        assertThat((List<Map>) get(holder.token(), "/api/v1/waiting-list").getBody().get("items")).isEmpty();
     }
 
     /** Decision 4: the list closes 24 hours before the lesson. */
