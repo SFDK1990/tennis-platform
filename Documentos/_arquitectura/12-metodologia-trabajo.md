@@ -68,8 +68,8 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 17 | Endurecimiento y despliegue | Completada (17.1) | `29-fase17-analisis-endurecimiento-despliegue.md`, `33-operacion.md`. En una Raspberry Pi, con entrada por Tailscale Funnel y sin coste de servidor; backups cifrados que tu PC trae cada día, con una restauración ensayada. La PWA y la accesibilidad pasan a la 30 |
 | 19 | Cierre del MVP | Completada | `30-fase19-analisis-cierre-mvp.md`. Cambiar la contraseña, exportar y borrar la cuenta; el admin lista reservas y cancela clases; editar las notas y la capacidad de una clase |
 | 31 | Web pública | Completada (PR #45) | `31-fase31-analisis-web-publica.md`. La web de la escuela en `/`, en claro y en oscuro, con la clase de prueba por WhatsApp; la app entera pasa a Oasis Papagayo |
-| 20 | Avisos y calendario | **Siguiente** | Correos de reserva y cancelación al alumno y aviso a Marcos; `.ics`; cancelar un día entero por lluvia |
-| 21 | Lista de espera | Pendiente | Una plaza liberada se reserva sola al primero de la lista |
+| 20 | Avisos y calendario | Completada (PR #61) | `32-fase20-analisis-avisos-calendario.md`. Correos de reserva y cancelación al alumno y aviso a Marcos; `.ics`; cancelar un día entero por lluvia |
+| 21 | Lista de espera | **Siguiente** | Una plaza liberada se reserva sola al primero de la lista |
 | 22 | Clases que se repiten | Pendiente | La misma clase durante varias semanas de una vez |
 | 23 | Niveles y ficha del alumno | Pendiente | Niveles de Marcos, clases por nivel, ficha con objetivos, notas privadas e historial |
 | 24 | Mensajes | Pendiente | A un grupo, un nivel o todos, por correo y en un tablón |

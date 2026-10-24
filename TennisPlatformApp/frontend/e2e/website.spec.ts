@@ -45,9 +45,9 @@ test("con sesión, la web lleva a cada uno a su inicio", async ({ page, arrange 
   await expect(page).toHaveURL(/\/teacher$/);
 });
 
-test("desde el login se vuelve a la web, por el enlace y por el logo", async ({ page }) => {
+test("desde el login se vuelve a la web, por el botón y por el logo", async ({ page }) => {
   await page.goto("/login");
-  await page.getByRole("navigation", { name: "La escuela" }).getByRole("link", { name: "Ver la web" }).click();
+  await page.getByRole("link", { name: "Ir a la web" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /Clases de tenis en/ })).toBeVisible();
 
   await page.goto("/register");
@@ -58,13 +58,13 @@ test("desde el login se vuelve a la web, por el enlace y por el logo", async ({ 
 /** The logo goes to the role's home, so the app needs its own way back to the website. */
 test("desde la app se vuelve a la web, en el ordenador y en el móvil", async ({ page }) => {
   await signIn(page, TEACHER.email, TEACHER.password);
-  await page.getByRole("link", { name: "Ver la web" }).click();
+  await page.getByRole("link", { name: "Ir a la web" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /Clases de tenis en/ })).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("link", { name: "Mi cuenta" }).click();
   await expect(page).toHaveURL(/\/teacher$/);
-  await page.getByRole("link", { name: "Ver la web" }).click();
+  await page.getByRole("link", { name: "Ir a la web" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /Clases de tenis en/ })).toBeVisible();
 });
 
@@ -123,7 +123,7 @@ test("desde la web, el login y el registro se llega al aviso legal y a la privac
   await expect(page.getByRole("heading", { level: 1, name: "Privacidad" })).toBeVisible();
 
   await page.goto("/login");
-  await page.getByRole("navigation", { name: "La escuela" }).getByRole("link", { name: "Aviso legal" }).click();
+  await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Aviso legal" }).click();
   await expect(page).toHaveURL(/\/aviso-legal$/);
 
   await page.goto("/register");

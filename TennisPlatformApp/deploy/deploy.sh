@@ -13,7 +13,9 @@ if [[ ! -f .env ]]; then
 fi
 
 git fetch --tags --prune origin
-git checkout --detach "$REF" 2>/dev/null || git checkout --detach "origin/$REF"
+# The remote branch first: a local "main" is whatever was last checked out here, and deploying
+# it put an old version back. A tag has no origin/ copy and falls through to itself.
+git checkout --detach "origin/$REF" 2>/dev/null || git checkout --detach "$REF"
 
 docker compose -f compose.prod.yaml up -d --build --remove-orphans
 docker image prune -f >/dev/null
