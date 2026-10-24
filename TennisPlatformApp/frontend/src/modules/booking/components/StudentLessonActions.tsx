@@ -94,7 +94,7 @@ function WaitingListAction({ lessonId }: { lessonId: string }) {
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <span className="max-w-48 text-xs text-muted">Completa. Si se libera una plaza, es para el primero de la lista.</span>
+          <span className="max-w-48 text-xs text-muted">Si se libera una plaza, es para el primero de la lista.</span>
           <Button variant="secondary" pending={join.isPending} onClick={() => join.mutate(lessonId)}>
             Apuntarme a la lista de espera
           </Button>
