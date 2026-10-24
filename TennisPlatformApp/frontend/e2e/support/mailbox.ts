@@ -29,3 +29,14 @@ export async function linkSentTo(email: string, path: "/verify-email" | "/reset-
     .toBe(true);
   return link!;
 }
+
+/** Waits until an email whose subject starts with {@code subject} reaches the address. */
+export async function expectEmail(email: string, subject: string): Promise<void> {
+  await expect
+    .poll(async () => {
+      const search = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`);
+      const { messages } = (await search.json()) as { messages: { Subject: string }[] };
+      return messages.some((message) => message.Subject.startsWith(subject));
+    }, { message: `no email "${subject}" reached ${email}`, timeout: 15_000 })
+    .toBe(true);
+}

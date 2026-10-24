@@ -18,8 +18,16 @@ final class BookingEvents {
     }
 
     void confirmed(Booking booking) {
+        confirmed(booking, false);
+    }
+
+    void confirmedFromWaitingList(Booking booking) {
+        confirmed(booking, true);
+    }
+
+    private void confirmed(Booking booking, boolean fromWaitingList) {
         publisher.publishEvent(new BookingConfirmed(booking.id(), booking.lessonId(), booking.teacherUserId(),
-                booking.studentUserId(), booking.lessonStartsAt(), booking.lessonEndsAt()));
+                booking.studentUserId(), booking.lessonStartsAt(), booking.lessonEndsAt(), fromWaitingList));
     }
 
     void cancelled(Booking booking, BookingStatus as, String reason) {

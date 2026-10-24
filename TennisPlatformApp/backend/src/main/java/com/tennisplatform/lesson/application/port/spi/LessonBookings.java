@@ -1,5 +1,7 @@
 package com.tennisplatform.lesson.application.port.spi;
 
+import com.tennisplatform.lesson.application.port.in.LessonView;
+
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
@@ -29,4 +31,10 @@ public interface LessonBookings {
 
     /** The same, when it was an administrator: the student should know who decided. */
     void cancelAllOfCancelledByAdmin(UUID lessonId, Instant cancelledAt);
+
+    /**
+     * Gives the lesson's free seats to the students waiting for them (Fase 21), after its capacity
+     * went up. {@code lesson} is read while the caller holds its lock.
+     */
+    void fillFreeSeats(LessonView lesson);
 }

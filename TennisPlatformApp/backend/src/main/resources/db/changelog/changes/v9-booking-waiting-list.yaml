@@ -1,0 +1,28 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v9-waiting-list-entries
+      author: tennis-platform
+      comment: >-
+        The waiting list of a full lesson (34-fase21-analisis-lista-espera.md). A row is a
+        student waiting for a seat; it is deleted when they get one, leave, or the lesson is
+        cancelled, so there is no status. Ids and a date only: nothing here identifies anybody,
+        and deleting an account only has to delete its rows. The order is joined_at, then id for
+        two students who joined in the same instant.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE waiting_list_entries (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  lesson_id        UUID NOT NULL REFERENCES lessons(id),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+                  joined_at        TIMESTAMPTZ NOT NULL,
+                  CONSTRAINT ux_waiting_list_pair UNIQUE (lesson_id, student_user_id)
+              );
+              CREATE INDEX ix_waiting_list_lesson_order ON waiting_list_entries (lesson_id, joined_at, id);
+              CREATE INDEX ix_waiting_list_student ON waiting_list_entries (student_user_id);
+      rollback:
+        - sql:
+            sql: DROP TABLE waiting_list_entries

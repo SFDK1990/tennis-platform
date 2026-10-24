@@ -54,11 +54,14 @@ public class BookingNotifications implements NotifyBookings {
         MailTexts.Lesson details = details(booking.bookingId(), lesson, people.teacher());
 
         if (people.student() != null) {
-            mailer.send(texts.confirmationToStudent(details, people.student().email(), people.studentName()));
+            String to = people.student().email();
+            mailer.send(booking.fromWaitingList()
+                    ? texts.waitingListSeatToStudent(details, to, people.studentName())
+                    : texts.confirmationToStudent(details, to, people.studentName()));
         }
         if (people.teacherAccount() != null) {
             mailer.send(texts.bookingToTeacher(details, people.teacherAccount().email(), people.studentLabel(),
-                    lesson.bookedCount(), lesson.capacity()));
+                    lesson.bookedCount(), lesson.capacity(), booking.fromWaitingList()));
         }
     }
 

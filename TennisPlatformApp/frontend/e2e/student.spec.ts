@@ -1,4 +1,4 @@
-import { linkSentTo } from "./support/mailbox";
+import { expectEmail, linkSentTo } from "./support/mailbox";
 import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
 import { addDays, todayIn, zonedToInstant } from "@/shared/time";
 import { STUDENT_PASSWORD, uniqueEmail, ZONE } from "./support/stack";
@@ -66,6 +66,30 @@ test("con la clase llena, otro alumno ya no puede reservar", async ({ page, arra
   await expect(lesson).toContainText("Completa");
   await expect(lesson).toContainText("Sin plazas");
   await expect(lesson.getByRole("button", { name: "Reservar" })).toHaveCount(0);
+});
+
+/** Fase 21: the seat somebody gives up goes by itself to the first student waiting for it. */
+test("con la clase llena, un alumno se apunta a la lista de espera y recibe la plaza que otro deja", async ({ page, arrange }) => {
+  const holder = await arrange.student({ managed: true });
+  const waiting = await arrange.student({ managed: true });
+  const day = await arrange.freeDay();
+  const lessonId = await arrange.lesson({ date: day, time: "12:00", capacity: 1 });
+  await arrange.book(holder, lessonId);
+
+  await signIn(page, waiting.email, waiting.password);
+  await openFromMenu(page, "Clases");
+  const lesson = (await dayInCalendar(page, day)).getByRole("listitem").filter({ hasText: "12:00" });
+  await lesson.getByRole("button", { name: "Apuntarme a la lista de espera" }).click();
+  await expect(lesson).toContainText("la próxima plaza es tuya");
+
+  await arrange.cancelSeat(holder, lessonId);
+
+  // Somebody else freed the seat: the screen learns of it when read again, as on any visit.
+  await openFromMenu(page, "Mis reservas");
+  await page.reload();
+  await expect(page.getByRole("listitem").filter({ hasText: "12:00" })).toContainText("Confirmada");
+  await expect(page.getByRole("heading", { name: "En lista de espera" })).toHaveCount(0);
+  await expectEmail(waiting.email, "Tienes plaza");
 });
 
 test("desde Inicio, un alumno reserva una clase con plazas, la ve como su próxima y la cancela", async ({ page, arrange }) => {

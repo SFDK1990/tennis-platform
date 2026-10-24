@@ -1,5 +1,6 @@
 package com.tennisplatform.booking.adapters.in.web;
 
+import com.tennisplatform.booking.domain.AlreadyWaitingException;
 import com.tennisplatform.booking.domain.AttendanceNotYetOpenException;
 import com.tennisplatform.booking.domain.BookingAlreadyCancelledException;
 import com.tennisplatform.booking.domain.BookingAlreadyExistsException;
@@ -10,7 +11,9 @@ import com.tennisplatform.booking.domain.InvalidBookingRequestException;
 import com.tennisplatform.booking.domain.LessonAlreadyStartedException;
 import com.tennisplatform.booking.domain.LessonFullException;
 import com.tennisplatform.booking.domain.LessonNotBookableException;
+import com.tennisplatform.booking.domain.LessonNotFullException;
 import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
+import com.tennisplatform.booking.domain.WaitingListClosedException;
 import com.tennisplatform.error.Problems;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -35,6 +38,22 @@ class BookingExceptionHandler {
     @ExceptionHandler(LessonFullException.class)
     ProblemDetail handleFull(LessonFullException e) {
         return Problems.of(HttpStatus.CONFLICT, "Lesson full", e.getMessage(), "LESSON_FULL");
+    }
+
+    @ExceptionHandler(LessonNotFullException.class)
+    ProblemDetail handleNotFull(LessonNotFullException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Lesson not full", e.getMessage(), "LESSON_NOT_FULL");
+    }
+
+    @ExceptionHandler(AlreadyWaitingException.class)
+    ProblemDetail handleAlreadyWaiting(AlreadyWaitingException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Already waiting", e.getMessage(), "ALREADY_WAITING");
+    }
+
+    @ExceptionHandler(WaitingListClosedException.class)
+    ProblemDetail handleWaitingListClosed(WaitingListClosedException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Waiting list closed", e.getMessage(),
+                "WAITING_LIST_CLOSED");
     }
 
     @ExceptionHandler(BookingAlreadyExistsException.class)

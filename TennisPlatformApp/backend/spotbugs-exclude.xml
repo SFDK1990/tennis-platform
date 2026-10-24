@@ -63,4 +63,15 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
+    <!--
+        The same false positive as above, on WaitingListRepository (Fase 21): the four booking
+        services that hold it are flagged on that field and on no other, BookingRepository
+        included. Scoped to them for the same reason.
+    -->
+    <Match>
+        <Class name="~com\.tennisplatform\.booking\.application\.service\.(BookingsOfLessons|BookingsOfStudents|WaitingListPromotion|WaitingListService)"/>
+        <Field name="waiting"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
 </FindBugsFilter>

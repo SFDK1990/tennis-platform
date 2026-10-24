@@ -138,6 +138,13 @@ class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
+    public List<UUID> upcomingLessonIds(UUID teacherUserId, UUID studentUserId, Instant now) {
+        return jpa.findUpcoming(teacherUserId, studentUserId, now).stream()
+                .map(entity -> entity.toDomain().lessonId())
+                .toList();
+    }
+
+    @Override
     public Slice findForStudent(UUID studentUserId, BookingStatus status, int page, int size) {
         return slice(equal("studentUserId", studentUserId).and(equal("status", status)), page, size);
     }

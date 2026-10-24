@@ -47,7 +47,7 @@ Clases individuales y grupales, horarios, capacidad, estados y asistencia.
 
 ### booking
 
-Reservas, capacidad, duplicados, solapamientos y cancelaciones.
+Reservas, capacidad, duplicados, solapamientos, cancelaciones y lista de espera (Fase 21).
 
 ### administration
 
@@ -224,6 +224,9 @@ añadido: son lo que hacen falta para cumplir los criterios de aceptación acord
 - `POST /api/v1/lessons/{id}/bookings`
 - `GET /api/v1/bookings`
 - `POST /api/v1/bookings/{id}/cancel`
+- `POST /api/v1/lessons/{id}/waiting-list` y `DELETE` (apuntarse y salir)
+- `GET /api/v1/waiting-list` (las del alumno)
+- `GET /api/v1/teacher/lessons/{id}/waiting-list`
 - `POST /api/v1/teacher/lessons/{id}/cancel`
 - `POST /api/v1/teacher/lessons/{id}/attendance`
 

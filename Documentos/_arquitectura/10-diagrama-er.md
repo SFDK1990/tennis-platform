@@ -25,6 +25,8 @@ erDiagram
     TEACHER_PROFILES ||--o{ LESSONS : imparte
     LESSONS ||--o{ BOOKINGS : recibe
     STUDENT_PROFILES ||--o{ BOOKINGS : reserva
+    LESSONS ||--o{ WAITING_LIST_ENTRIES : "lista de espera"
+    STUDENT_PROFILES ||--o{ WAITING_LIST_ENTRIES : espera
 
     USERS {
         uuid id PK
@@ -93,6 +95,13 @@ erDiagram
         varchar attendance
         timestamptz lesson_starts_at
         timestamptz lesson_ends_at
+    }
+    WAITING_LIST_ENTRIES {
+        uuid id PK
+        uuid lesson_id FK
+        uuid teacher_user_id FK
+        uuid student_user_id FK
+        timestamptz joined_at
     }
 ```
 
@@ -355,6 +364,23 @@ Tres cambios respecto al borrador, los tres deliberados:
   la fila de la clase (`SELECT ... FOR UPDATE`), y `LastSeatConcurrencyTest` lo demuestra —falla
   si se quita el cerrojo, y se comprobó quitándolo—. Un trigger repetiría la regla en PL/pgSQL, y
   de dos copias la que nadie lee es la que se desincroniza.
+
+## Changelog 6b — lista de espera (Fase 21)
+
+`v9-booking-waiting-list.yaml`. Razonamiento en `34-fase21-analisis-lista-espera.md`.
+
+```sql
+CREATE TABLE waiting_list_entries (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lesson_id        UUID NOT NULL REFERENCES lessons(id),
+    teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+    joined_at        TIMESTAMPTZ NOT NULL,
+    CONSTRAINT ux_waiting_list_pair UNIQUE (lesson_id, student_user_id)
+);
+CREATE INDEX ix_waiting_list_lesson_order ON waiting_list_entries (lesson_id, joined_at, id);
+CREATE INDEX ix_waiting_list_student ON waiting_list_entries (student_user_id);
+```
 
 ## Changelog 7 — platform (configuración global)
 

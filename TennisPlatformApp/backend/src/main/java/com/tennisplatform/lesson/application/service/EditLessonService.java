@@ -55,6 +55,9 @@ public class EditLessonService implements EditLesson {
         Instant now = clock.instant();
         Lesson edited = lessons.save(lesson.edit(changes.notes(), changes.capacity(), booked, now, maxGroupCapacity));
         log.info("Lesson {} edited", lessonId);
-        return LessonView.from(edited, now, booked);
+        // A higher capacity frees seats, and the waiting list gets them before anybody else (Fase 21).
+        bookings.fillFreeSeats(LessonView.from(edited, now, booked));
+        int bookedNow = bookings.countConfirmed(List.of(lessonId)).getOrDefault(lessonId, 0);
+        return LessonView.from(edited, now, bookedNow);
     }
 }

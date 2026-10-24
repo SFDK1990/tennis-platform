@@ -69,8 +69,28 @@ public class MailTexts {
                 calendar(CalendarInvite.Method.REQUEST, lesson, null));
     }
 
-    public Mail bookingToTeacher(Lesson lesson, String to, String student, int booked, int capacity) {
-        String body = student + " ha reservado la clase " + lesson.kind() + " del " + lesson.day()
+    /**
+     * The seat came from the waiting list (Fase 21): the student did not book it just now, so the
+     * email says how it happened and how to give it up.
+     */
+    public Mail waitingListSeatToStudent(Lesson lesson, String to, String studentName) {
+        String body = greeting(studentName)
+                + "Se ha liberado una plaza en la clase " + lesson.kind() + " del " + lesson.day()
+                + ", de " + lesson.start() + " a " + lesson.end() + ", y es para ti: estabas en el"
+                + " primer puesto de la lista de espera.\n\n"
+                + "Te la adjuntamos para que la añadas a tu calendario.\n\n"
+                + "Si ya no puedes venir, cancélala en " + frontendBaseUrl + "/bookings"
+                + " con más de 24 horas de antelación.\n\n"
+                + signature();
+        return new Mail("booking-confirmed-student-waiting-list", lesson.bookingId().toString(), to,
+                "Tienes plaza: " + lesson.day() + ", " + lesson.start(), body,
+                calendar(CalendarInvite.Method.REQUEST, lesson, null));
+    }
+
+    public Mail bookingToTeacher(Lesson lesson, String to, String student, int booked, int capacity,
+                                 boolean fromWaitingList) {
+        String body = student + (fromWaitingList ? " ha conseguido plaza, desde la lista de espera, en" : " ha reservado")
+                + " la clase " + lesson.kind() + " del " + lesson.day()
                 + ", de " + lesson.start() + " a " + lesson.end() + ".\n\n"
                 + "Plazas ocupadas: " + booked + " de " + capacity + ".\n\n"
                 + frontendBaseUrl + "/teacher/lessons/" + lesson.lessonId() + "\n";
