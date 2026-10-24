@@ -23,6 +23,16 @@ RUN npm run build
 # ---- runtime stage -----------------------------------------------------------
 FROM node:24-alpine AS runtime
 
+# The server runs with `node server.js` and never needs a package manager, but the base image
+# ships npm and yarn with their own dependency trees, and that is where the image's CVEs live
+# (undici, brace-expansion, http-cache-semantics in October 2026), out of reach of npm audit
+# and of our lockfile. The upgrade does for Alpine what the backend image does: a fix published
+# before the base image is rebuilt with it.
+RUN apk upgrade --no-cache \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+        /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+        /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
+
 # Never run the application as root.
 RUN addgroup -S app && adduser -S -G app app
 
