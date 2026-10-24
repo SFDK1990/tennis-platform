@@ -34,7 +34,7 @@ que recibe el correo. Si no puede ir, cancela como cualquier reserva.
   comprobaciones que al reservar, en el mismo orden.
 - **Sólo si la clase está llena.** Si hay plaza, se reserva sin más; apuntarse a la lista daría
   409 `LESSON_NOT_FULL`.
-- **Hasta que empiece la clase**, y nunca en una cancelada.
+- **Hasta 24 horas antes de la clase** (decisión 4), y nunca en una cancelada.
 - **Sin límite de gente.** El orden es el de llegada.
 - **Se sale cuando quiere**, sin ventana: estar en la lista no le cuesta nada a Marcos.
 
@@ -65,21 +65,16 @@ mientras tanto, y quien llega primero se la quita a quien esperaba.
 Por dentro es `BookingConfirmed` con un origen nuevo, `WAITING_LIST`. `notification` sólo
 cambia el texto.
 
-### 4. Las últimas 24 horas — **decisión tuya**
+### 4. La lista se cierra 24 horas antes de la clase (elegido por Daniel)
 
-Quien reserva con menos de 24 horas ya no puede cancelar (`01` §17). Con la lista eso choca: si
-una plaza se libera a 3 horas de la clase, el primero de la lista se encuentra reservado sin
-haberlo pedido en ese momento, y además sin poder cancelar. Las opciones son:
-
-- **A (te la recomiendo). La lista se cierra 24 horas antes de la clase.** Lo que se libere
-  después queda libre para quien la reserve primero, como hoy, y la lista ya no admite a nadie
-  más. Nadie se encuentra una clase que no puede soltar, y la regla de las 24 horas no cambia.
-  A cambio, una plaza liberada a última hora puede quedarse vacía.
-- **B. Se promociona hasta que empiece la clase, y esa reserva sí se puede cancelar.** Se llena
-  más, pero una reserva hecha por la lista se salta la regla de las 24 horas, y Marcos puede
-  quedarse con un hueco a última hora igual que si no hubiera lista.
-- **C. Se promociona hasta que empiece la clase, y no se puede cancelar.** Es lo más simple,
-  pero obliga al alumno a algo que no eligió en ese momento.
+Quien reserva con menos de 24 horas ya no puede cancelar (`01` §17). Promocionar a esas horas
+reservaría a alguien sin que lo pidiera en ese momento y sin poder soltarlo. Por eso:
+- **24 horas antes de la clase, la lista deja de promocionar y de admitir gente.** Lo que se
+  libere después queda libre para quien reserve primero, como hoy.
+- Las filas de esa lista se quedan, sin efecto, hasta que se cancela la clase o se borran con
+  ella; la app ya no muestra el puesto.
+- Se descartaron promocionar hasta el inicio dejando cancelar esa reserva (salta la regla de las
+  24 horas) o sin dejarla cancelar (obliga a algo que no se eligió).
 
 ### 5. Qué se ve en la app
 
@@ -112,8 +107,7 @@ Todo va primero a `openapi.yaml`:
 - **`GET /me/waiting-list`**: las listas del alumno, con su puesto en cada una.
 - **La vista de una clase** gana `waitingCount`, y para el alumno `waitingPosition` (o `null`).
 - **`GET /teacher/lessons/{id}/waiting-list`**: quiénes esperan, en orden.
-- Con la opción A, apuntarse a una clase que empieza en menos de 24 horas da 422
-  (`WAITING_LIST_CLOSED`).
+- Apuntarse a una clase que empieza en menos de 24 horas da 422 (`WAITING_LIST_CLOSED`).
 - `npm run api:types`, las filas nuevas en `AccessMatrixTest` y los códigos nuevos en
   `11-contrato-api.md`.
 
@@ -140,7 +134,8 @@ Todo va primero a `openapi.yaml`:
 - **Cancelar la clase** vacía la lista sin crear reservas.
 - **Concurrencia**, como `LastSeatConcurrencyTest`: un alumno cancela mientras otro intenta
   reservar. La plaza acaba siempre en el primero de la lista y nunca en el que llegó.
-- **Las 24 horas**, según lo que decidas en la 4, con `Clock` fijo.
+- **Las 24 horas**, con `Clock` fijo: una plaza liberada a 23 h 59 min no promociona y queda
+  libre; a 24 h justas, sí; apuntarse a menos de 24 horas da 422.
 - **Correo**: el promocionado recibe «Tienes plaza» con `.ics`, y Marcos el aviso de la reserva.
 - **Borrar la cuenta** quita sus filas de todas las listas.
 - **E2E**: un alumno se apunta a una clase llena, otro cancela, y el primero ve la reserva en
@@ -159,7 +154,7 @@ Todo va primero a `openapi.yaml`:
 - Existe un test de concurrencia que demuestra que la plaza no se la lleva quien llega en ese
   momento.
 - Existe un test que demuestra que cancelar la clase vacía la lista.
-- Existe un test para la regla de las 24 horas elegida en la decisión 4.
+- Existe un test que demuestra que a menos de 24 horas no se promociona y la plaza queda libre.
 - Las cuatro mutaciones se han visto fallar.
 - `mvn verify` y el CI en verde, sin tests saltados, y el E2E nuevo pasa.
 
