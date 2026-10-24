@@ -26,7 +26,7 @@
         <archunit.version>1.5.1</archunit.version>
         <swagger-request-validator.version>2.46.1</swagger-request-validator.version>
         <spotless.version>3.10.4</spotless.version>
-        <spotbugs.version>4.10.4.1</spotbugs.version>
+        <spotbugs.version>4.10.5.0</spotbugs.version>
         <jacoco.version>0.8.15</jacoco.version>
     </properties>
 
