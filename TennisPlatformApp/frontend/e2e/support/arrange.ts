@@ -141,6 +141,15 @@ export class Arrange {
     ok(await client.POST("/lessons/{id}/bookings", { params: { path: { id: lessonId } } }), "booking");
   }
 
+  /** The student gives up their seat in the lesson, as they would from Mis reservas. */
+  async cancelSeat(student: Student, lessonId: string): Promise<void> {
+    const { client } = await signIn(student.email, student.password);
+    const mine = ok(await client.GET("/bookings", { params: { query: { status: "CONFIRMED", size: 100 } } }), "bookings");
+    const seat = mine.items.find((booking) => booking.lessonId === lessonId);
+    if (!seat) throw new Error(`${student.email} has no seat in lesson ${lessonId}`);
+    ok(await client.POST("/bookings/{id}/cancel", { params: { path: { id: seat.id } } }), "cancellation");
+  }
+
   /** Seats taken in a lesson, read as the teacher sees them. */
   async confirmedBookingsOf(lessonId: string): Promise<number> {
     const teacher = await this.teacher();

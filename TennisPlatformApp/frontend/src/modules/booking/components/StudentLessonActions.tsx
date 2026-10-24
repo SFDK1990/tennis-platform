@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { insideCancellationWindow, useBookLesson, useCancelBooking } from "@/modules/booking/api";
+import {
+  insideCancellationWindow, useBookLesson, useCancelBooking, useJoinWaitingList, useLeaveWaitingList, useMyWaitingList,
+} from "@/modules/booking/api";
 import { useNow } from "@/shared/useNow";
 import { Button } from "@/shared/ui/Button";
 import { ErrorNotice } from "@/shared/ui/Notice";
@@ -46,6 +48,10 @@ export function StudentLessonActions({ lessonId, startsAt, lessonStatus, booking
     );
   }
 
+  if (lessonStatus === "FULL" && !started) {
+    return late ? null : <WaitingListAction lessonId={lessonId} />;
+  }
+
   if (lessonStatus !== "OPEN" || started) {
     return null;
   }
@@ -66,4 +72,40 @@ export function StudentLessonActions({ lessonId, startsAt, lessonStatus, booking
       <ErrorNotice error={error} />
     </div>
   );
+}
+
+/**
+ * A full lesson more than 24 hours away: the student waits for a seat, which is booked for them
+ * the moment one frees up (34-fase21-analisis-lista-espera.md). Closer than that the list is
+ * closed, and nothing is offered.
+ */
+function WaitingListAction({ lessonId }: { lessonId: string }) {
+  const places = useMyWaitingList();
+  const join = useJoinWaitingList();
+  const leave = useLeaveWaitingList();
+  const place = places.data?.find((candidate) => candidate.lesson.id === lessonId);
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      {place ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="text-sm font-semibold">{waitingLabel(place.position)}</span>
+          <Button variant="quiet" pending={leave.isPending} onClick={() => leave.mutate(lessonId)}>Salir de la lista</Button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="max-w-48 text-xs text-muted">Completa. Si se libera una plaza, es para el primero de la lista.</span>
+          <Button variant="secondary" pending={join.isPending} onClick={() => join.mutate(lessonId)}>
+            Apuntarme a la lista de espera
+          </Button>
+        </div>
+      )}
+      <ErrorNotice error={join.error ?? leave.error} />
+    </div>
+  );
+}
+
+/** Where the student stands, said without gender: the next seat, or how many are ahead. */
+export function waitingLabel(position: number): string {
+  return position === 1 ? "En lista de espera: la próxima plaza es tuya" : `En lista de espera: ${position - 1} por delante`;
 }

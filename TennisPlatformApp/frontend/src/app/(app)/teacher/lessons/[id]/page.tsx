@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { LessonAttendance } from "@/modules/booking/components/LessonAttendance";
+import { LessonWaitingList } from "@/modules/booking/components/LessonWaitingList";
 import { useLesson } from "@/modules/lesson/api";
 import { LessonDetail } from "@/modules/lesson/components/LessonDetail";
 import { useStudentNames } from "@/modules/student/api";
@@ -30,6 +31,7 @@ export default function LessonPage() {
             <h2 className="font-display text-2xl font-semibold">Alumnos</h2>
             <LessonAttendance lessonId={id} started={started} nameOf={nameOf} />
           </section>
+          {started ? null : <LessonWaitingList lessonId={id} nameOf={nameOf} />}
         </>
       ) : (
         <p className="text-muted">Cargando…</p>

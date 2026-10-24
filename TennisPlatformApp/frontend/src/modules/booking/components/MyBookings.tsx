@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useMyBookings, type Booking } from "@/modules/booking/api";
+import { useLeaveWaitingList, useMyBookings, useMyWaitingList, type Booking, type WaitingPlace } from "@/modules/booking/api";
+import { waitingLabel } from "@/modules/booking/components/StudentLessonActions";
 import { formatDateTime, formatTime } from "@/shared/time";
 import { useNow } from "@/shared/useNow";
 import { Button, BUTTON_BASE, BUTTON_VARIANTS } from "@/shared/ui/Button";
@@ -26,6 +27,7 @@ const ATTENDANCE: Record<Booking["attendance"], string | null> = {
 export function MyBookings({ zone }: { zone: string }) {
   const [page, setPage] = useState(0);
   const bookings = useMyBookings(page);
+  const waiting = useMyWaitingList();
   const now = useNow();
 
   if (bookings.error) {
@@ -34,7 +36,8 @@ export function MyBookings({ zone }: { zone: string }) {
   if (!bookings.data) {
     return <p className="text-muted">Cargando…</p>;
   }
-  if (bookings.data.items.length === 0) {
+  const places = waiting.data ?? [];
+  if (bookings.data.items.length === 0 && places.length === 0) {
     return (
       <EmptyState title="Aún no has reservado ninguna clase"
         actions={<Link href="/calendar" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.primary}`}>Ver las clases</Link>}>
@@ -52,6 +55,7 @@ export function MyBookings({ zone }: { zone: string }) {
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
+      {places.length > 0 ? <WaitingList places={places} zone={zone} /> : null}
       {coming.length > 0 ? <BookingList title="Próximas" bookings={coming} zone={zone} /> : null}
       {done.length > 0 ? <BookingList title="Anteriores y canceladas" bookings={done} zone={zone} /> : null}
       {totalItems > size ? (
@@ -83,6 +87,33 @@ function BookingList({ title, bookings, zone }: { title: string; bookings: Booki
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+/** Fase 21: the full lessons the student waits for, apart from the seats they hold. */
+function WaitingList({ places, zone }: { places: WaitingPlace[]; zone: string }) {
+  const leave = useLeaveWaitingList();
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="font-display text-2xl font-semibold">En lista de espera</h2>
+      <ul className="flex flex-col divide-y divide-line-soft rounded-xl border border-line bg-paper">
+        {places.map((place) => (
+          <li key={place.lesson.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+            <span className="flex flex-col">
+              <span className="font-semibold first-letter:uppercase">
+                {formatDateTime(place.lesson.startsAt, zone)}–{formatTime(place.lesson.endsAt, zone)}
+              </span>
+              <span className="text-sm text-muted">{waitingLabel(place.position)}</span>
+            </span>
+            <Button variant="quiet" pending={leave.isPending && leave.variables === place.lesson.id}
+              onClick={() => leave.mutate(place.lesson.id)}>
+              Salir de la lista
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <ErrorNotice error={leave.error} />
     </section>
   );
 }

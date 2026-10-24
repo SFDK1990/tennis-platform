@@ -5,6 +5,7 @@ import type { components } from "@/shared/api/schema";
 
 export type Booking = components["schemas"]["Booking"];
 export type AttendanceMark = components["schemas"]["MarkAttendanceRequest"]["entries"][number];
+export type WaitingPlace = components["schemas"]["WaitingPlace"];
 
 const CANCELLATION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -46,5 +47,35 @@ export function useMarkAttendance(lessonId: string) {
   return useMutation({
     mutationFn: async (entries: AttendanceMark[]) =>
       unwrap(await api.POST("/teacher/lessons/{id}/attendance", { params: { path: { id: lessonId } }, body: { entries } })),
+  });
+}
+
+/** The student's open waiting lists (Fase 21). One query, shared by every lesson on screen. */
+export function useMyWaitingList() {
+  return useQuery({
+    queryKey: ["waiting-list", "mine"],
+    queryFn: async () => unwrap(await api.GET("/waiting-list")).items,
+  });
+}
+
+export function useJoinWaitingList() {
+  return useMutation({
+    mutationFn: async (lessonId: string) =>
+      unwrap(await api.POST("/lessons/{id}/waiting-list", { params: { path: { id: lessonId } } })),
+  });
+}
+
+export function useLeaveWaitingList() {
+  return useMutation({
+    mutationFn: async (lessonId: string) =>
+      unwrap(await api.DELETE("/lessons/{id}/waiting-list", { params: { path: { id: lessonId } } })),
+  });
+}
+
+export function useLessonWaitingList(lessonId: string) {
+  return useQuery({
+    queryKey: ["waiting-list", "lesson", lessonId],
+    queryFn: async () =>
+      unwrap(await api.GET("/teacher/lessons/{id}/waiting-list", { params: { path: { id: lessonId } } })).items,
   });
 }
