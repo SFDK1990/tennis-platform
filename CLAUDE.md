@@ -80,6 +80,10 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   preguntan a `QueryAvailability`. Las fechas de cambio de hora van literales en los tests.
 - **La duración de una clase se mide en instantes; "no cruza medianoche", en hora local.**
 - **`lessons.status` sólo guarda `OPEN`/`CANCELLED`**; `FULL` y `COMPLETED` se derivan al leer.
+- **Una plaza que se libera pasa a la lista de espera dentro de la misma transacción y bajo el
+  cerrojo de la clase** (`WaitingListPromotion`). Un camino nuevo que libere plazas tiene que
+  llamarla, o la plaza queda libre para quien llegue; `WaitingListApiTest` tiene un test por camino.
+  La lista se cierra 24 horas antes de la clase.
 - **Los solapamientos se comprueban dos veces**: en la aplicación, para dar un 409 útil, y con
   `EXCLUDE USING gist` (necesita `btree_gist`), porque entre la comprobación y el `INSERT` cabe
   otra petición.

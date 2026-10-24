@@ -143,7 +143,7 @@ Todo va primero a `openapi.yaml`:
 
 **Mutaciones**, cada una se ve fallar y se deshace:
 - promocionar después del commit en vez de dentro de la transacción;
-- cancelar sin tomar el cerrojo de la clase;
+- promocionar sin el cerrojo de la clase;
 - no saltar al que ya no puede reservar;
 - olvidar la promoción en una cancelación en bloque.
 
@@ -171,3 +171,18 @@ Todo va primero a `openapi.yaml`:
    nuevas de `CLAUDE.md`.
 
 ## Decisiones tomadas al implementar
+
+- **La vista de una clase no gana campos.** `waitingCount` y `waitingPosition` habrían hecho que
+  `lesson` y el calendario preguntaran a `booking` en cada lectura. El alumno ya tiene su puesto
+  en `GET /waiting-list` (no `/me/waiting-list`: sigue el patrón de `GET /bookings`, que también
+  es «lo mío» para el alumno), y la pantalla lo cruza con la clase.
+- **El cerrojo lo toma la promoción, no la cancelación antes de empezar.** La reserva cancelada
+  no se ha confirmado aún cuando otro cuenta plazas, así que esa persona sigue viendo la clase
+  llena hasta que la plaza ya es del primero de la lista. Lo que sí necesita el cerrojo es que dos
+  cancelaciones a la vez no repartan la misma plaza al mismo alumno:
+  `twoSeatsGivenUpAtOnceGoToTheFirstTwoWaiting` lo prueba.
+- **Subir la capacidad promociona desde `lesson`** con un método nuevo del puerto
+  `LessonBookings`, `fillFreeSeats`, que recibe la clase ya bloqueada por la edición.
+- **Las cancelaciones en bloque** bloquean las clases afectadas una a una, ordenadas por id.
+- **Si el primero no puede reservar**, sale de la lista y se registra en el log con su id, sin
+  correo: no ha perdido nada que hubiera pedido en ese momento.

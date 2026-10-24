@@ -209,6 +209,12 @@ Estados de reserva: `CONFIRMED`, `CANCELLED_BY_STUDENT`, `CANCELLED_BY_TEACHER`.
 
 Estados de asistencia: `PENDING`, `ATTENDED`, `NO_SHOW`.
 
+### waiting_list_entries (Fase 21)
+
+- `id`, `lesson_id`, `teacher_user_id`, `student_user_id` y `joined_at`; único por clase y alumno.
+- Sin estado: la fila se borra al recibir la plaza, al salir o al cancelarse la clase. El orden es
+  `joined_at`.
+
 ## 5. Integridad y concurrencia
 
 ### Evitar doble reserva
