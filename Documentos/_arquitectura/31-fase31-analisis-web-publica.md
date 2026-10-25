@@ -224,7 +224,8 @@ Pedida por Daniel el 17 de octubre de 2026. Corrige la decisión 11, que permit�
 25. **Horario semanal visual**, en su propia sección tras las clases. Las horas de cada grupo
     viven una vez en `school.ts` (`slots`), y de ahí salen la rejilla y el texto "Cuándo" de las
     tarjetas. En el ordenador, días por columnas, con una fila por media hora y sólo las horas que
-    tienen clase; en el móvil, la misma información día a día. Un color por clase. No es el
+    tienen clase; en el móvil, la misma información día a día. Va sobre un recuadro un tono más
+    claro que la página, con un color por clase. No es el
     horario en vivo (sigue sin endpoint público, decisión 6).
 26. **Mapa dibujado en "Dónde"**: un SVG del norte de Fuerteventura con Corralejo, Lobos, las
     dunas y la pista, que dice que es orientativo. "Cómo llegar" sigue llevando al mapa real.

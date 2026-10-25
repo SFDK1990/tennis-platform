@@ -66,7 +66,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   <Logo className="h-9 w-9" label="" />
                   <span className="font-display text-xl font-semibold">Oasis Papagayo</span>
                 </Link>
-                <Link href="/" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.secondary} ml-auto px-3 text-sm`}>
+                <Link href="/" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.tint} ml-auto min-h-10 px-3.5 text-sm`}>
                   <Icon name="web" />
                   Ir a la web
                 </Link>

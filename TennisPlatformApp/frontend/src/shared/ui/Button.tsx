@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "quiet" | "danger" | "onCourt" | "outlineOnCourt";
+export type ButtonVariant = "primary" | "secondary" | "quiet" | "danger" | "onCourt" | "outlineOnCourt" | "tint";
 
 /** Also used by links styled as buttons, so both read the same. */
 export const BUTTON_BASE =
@@ -14,6 +14,8 @@ export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   // On the court-blue cards, where the page's own buttons would disappear.
   onCourt: "bg-paper text-court hover:bg-court-tint",
   outlineOnCourt: "border-[1.5px] border-white/85 text-white hover:bg-white/10",
+  // A way out that should be seen without competing with the screen's own action: "Ir a la web".
+  tint: "bg-court-tint text-court hover:bg-court hover:text-white",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
