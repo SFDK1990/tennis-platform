@@ -7,12 +7,13 @@ import { Logo } from "@/shared/ui/Logo";
 /** The way in: the mark on navy, a court's baseline under it, and the form on white. */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-navy px-4 py-12">
+    <main className="relative flex min-h-screen flex-col items-center justify-center bg-navy px-4 pb-12 pt-20">
+      {/* The way back to the website, in the page's corner and in its own colour: on navy it disappeared. */}
+      <Link href="/" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.tint} absolute right-4 top-4 text-sm sm:right-6 sm:top-6`}>
+        <Icon name="web" />
+        Ir a la web
+      </Link>
       <div className="w-full max-w-md">
-        <Link href="/" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.outlineOnCourt} mb-8 text-sm`}>
-          <Icon name="web" />
-          Ir a la web
-        </Link>
         <div className="relative mb-8 flex flex-col items-center gap-3 border-b-[3px] border-white/85 pb-6 text-white">
           {/* The school's mark leads to its website, as on any site. */}
           <Link href="/" className="flex flex-col items-center gap-3 rounded-lg">

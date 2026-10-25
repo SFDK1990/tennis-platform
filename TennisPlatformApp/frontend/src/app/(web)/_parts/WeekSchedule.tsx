@@ -64,7 +64,7 @@ export function WeekSchedule() {
     return null;
   }
   return (
-    <>
+    <div className="rounded-xl border border-(--site-line) bg-(--site-panel) p-4 sm:p-8">
       <div
         className={`hidden md:grid ${days === 7 ? "grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]" : days === 6 ? "grid-cols-[3.5rem_repeat(6,minmax(0,1fr))]" : "grid-cols-[3.5rem_repeat(5,minmax(0,1fr))]"} grid-rows-[auto] auto-rows-[2.6rem] gap-x-2`}
       >
@@ -118,7 +118,7 @@ export function WeekSchedule() {
           ) : null;
         })}
       </ol>
-    </>
+    </div>
   );
 }
 
