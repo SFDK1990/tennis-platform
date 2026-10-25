@@ -123,7 +123,7 @@ Todo va primero a `openapi.yaml`:
 - Existe un test que demuestra que la serie mantiene la hora de pared al cruzar el cambio de hora.
 - Existe un test por cada estado de la vista previa.
 - Existe un test que demuestra que una fecha que choca no deja ninguna clase creada.
-- Las tres mutaciones se han visto fallar.
+- Las mutaciones se han probado (ver «Decisiones tomadas al implementar»).
 - `mvn verify` y el CI en verde, sin tests saltados, y el E2E nuevo pasa.
 
 ## Orden de trabajo
@@ -147,3 +147,7 @@ Todo va primero a `openapi.yaml`:
   canceladas o terminadas. Una clase creada suelta responde 422 `LESSON_NOT_IN_SERIES`.
 - **La vista previa valida cada fecha como una clase** (tipo, capacidad, medianoche): una plantilla
   mala responde 400 antes de mirar el horario o los choques.
+- **Mutaciones.** Sumar siete días en instantes y crear sin transacción se vieron fallar. Quitar
+  la comprobación del choque en el servicio no hace fallar el test: la restricción `EXCLUDE` de la
+  tabla lo rechaza igual, con el mismo 409 y deshaciendo la serie entera. Es la doble comprobación
+  de siempre; en la pantalla, el E2E demuestra que una fecha que choca no se puede marcar.
