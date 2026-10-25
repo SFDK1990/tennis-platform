@@ -9,6 +9,9 @@ import java.util.UUID;
  */
 public interface EditLesson {
 
+    /** Puts the lesson on a level, or opens it to everybody with null (Fase 23). Seats already taken stay. */
+    LessonView changeLevel(UUID teacherUserId, UUID lessonId, UUID levelId);
+
     LessonView edit(UUID teacherUserId, UUID lessonId, Changes changes);
 
     /** Null leaves a value as it is; blank notes clear them. */

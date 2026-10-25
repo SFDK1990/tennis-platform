@@ -1,6 +1,7 @@
 package com.tennisplatform.lesson.application.port.in;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * What the caller asks for when scheduling a lesson.
@@ -13,5 +14,5 @@ import java.time.Instant;
  * the configured hours is a decision, not an accident, and it has to be asked for by name.
  */
 public record NewLesson(String type, Instant startsAt, Instant endsAt, int capacity, String notes,
-                        boolean overrideAvailability) {
+                        boolean overrideAvailability, UUID levelId) {
 }

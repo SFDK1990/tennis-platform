@@ -56,7 +56,7 @@ class ScheduleLessonServiceTest {
         when(lessons.existsOverlapping(any(), any(), any())).thenReturn(false);
         when(lessons.save(any())).thenAnswer(call -> call.getArgument(0));
 
-        service = new ScheduleLessonService(lessons, teacherProfile, availability, groupCapacity,
+        service = new ScheduleLessonService(lessons, teacherProfile, availability, groupCapacity, null,
                 Clock.fixed(STARTS.minusSeconds(86_400), ZoneOffset.UTC));
     }
 
@@ -109,7 +109,7 @@ class ScheduleLessonServiceTest {
     @Test
     void refusesALessonThatStartsAtTheMomentItIsCreated() {
         ScheduleLessonService atTheStart = new ScheduleLessonService(lessons, teacherProfile,
-                availability, groupCapacity, Clock.fixed(STARTS, ZoneOffset.UTC));
+                availability, groupCapacity, null, Clock.fixed(STARTS, ZoneOffset.UTC));
 
         assertThatThrownBy(() -> atTheStart.schedule(TEACHER_ID, request(1, true)))
                 .isInstanceOf(LessonInThePastException.class);
@@ -141,18 +141,18 @@ class ScheduleLessonServiceTest {
         when(availability.covers(TEACHER_ID, STARTS, ENDS)).thenReturn(true);
 
         assertThatThrownBy(() -> service.schedule(TEACHER_ID,
-                new NewLesson("GROUP", STARTS, ENDS, 9, null, false)))
+                new NewLesson("GROUP", STARTS, ENDS, 9, null, false, null)))
                 .isInstanceOf(InvalidLessonException.class);
     }
 
     @Test
     void refusesAnUnknownLessonType() {
         assertThatThrownBy(() -> service.schedule(TEACHER_ID,
-                new NewLesson("PRIVATE", STARTS, ENDS, 1, null, false)))
+                new NewLesson("PRIVATE", STARTS, ENDS, 1, null, false, null)))
                 .isInstanceOf(InvalidLessonException.class);
     }
 
     private static NewLesson request(int capacity, boolean overrideAvailability) {
-        return new NewLesson("INDIVIDUAL", STARTS, ENDS, capacity, null, overrideAvailability);
+        return new NewLesson("INDIVIDUAL", STARTS, ENDS, capacity, null, overrideAvailability, null);
     }
 }

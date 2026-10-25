@@ -4,6 +4,7 @@ import com.tennisplatform.student.application.port.in.ManagedStudentDetailView;
 import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.in.StudentLookupView;
+import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.List;
@@ -52,12 +53,17 @@ final class StudentDtos {
     /** The detail of one managed student, only ever built for the teacher managing them. */
     record StudentDetailResponse(UUID userId, String email, String fullName, String phone,
                                  String nationalId, String address, String managedStatus,
-                                 Instant managedAt, Instant deactivatedAt) {
+                                 Instant managedAt, Instant deactivatedAt, UUID levelId, String goals,
+                                 String privateNotes) {
 
         static StudentDetailResponse from(ManagedStudentDetailView view) {
             return new StudentDetailResponse(view.userId(), view.email(), view.fullName(),
                     view.phone(), view.nationalId(), view.address(), view.managedStatus(),
-                    view.managedAt(), view.deactivatedAt());
+                    view.managedAt(), view.deactivatedAt(), view.levelId(), view.goals(), view.privateNotes());
         }
+    }
+
+    /** The teacher's record of the student, replaced whole: a null level means none (Fase 23). */
+    record StudentRecordRequest(UUID levelId, @Size(max = 2000) String goals, @Size(max = 2000) String privateNotes) {
     }
 }

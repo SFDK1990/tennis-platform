@@ -55,7 +55,8 @@ public interface BookingRepository {
     /** Every booking, whoever it belongs to: only the administration reads this. */
     Slice findAll(UUID lessonId, BookingStatus status, int page, int size);
 
-    Slice findForTeacher(UUID teacherUserId, UUID lessonId, BookingStatus status, int page, int size);
+    Slice findForTeacher(UUID teacherUserId, UUID lessonId, UUID studentUserId, BookingStatus status, int page,
+                         int size);
 
     /** One page of bookings and the total they were cut from. */
     record Slice(List<Booking> items, long total) {

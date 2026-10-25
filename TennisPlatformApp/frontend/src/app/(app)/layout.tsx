@@ -29,7 +29,7 @@ const NAV: Record<Role, NavItem[]> = {
   TEACHER: [
     { href: "/teacher", label: "Hoy", icon: "today" },
     { href: "/teacher/calendar", label: "Agenda", icon: "calendar", also: ["/teacher/lessons/"] },
-    { href: "/teacher/students", label: "Alumnos", icon: "users" },
+    { href: "/teacher/students", label: "Alumnos", icon: "users", also: ["/teacher/students/"] },
     { href: "/teacher/availability", label: "Horario", icon: "clock" },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],

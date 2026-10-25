@@ -88,6 +88,13 @@ class AccessMatrixTest extends AbstractBookingTest {
         row("GET", "/teacher/students/{studentId}", none,                        401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/students/{studentId}/manage", none,                401, 403, 403, 403, ALLOWED, 403);
         row("DELETE", "/teacher/students/{studentId}/manage", none,              401, 403, 403, 403, ALLOWED, 403);
+        row("PUT", "/teacher/students/{studentId}/record", Map.of("goals", "Revés"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+
+        row("GET", "/levels", none,                                              401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        row("POST", "/teacher/levels", Map.of("name", "Nuevo"),                  401, 403, 403, 403, ALLOWED, 403);
+        row("PATCH", "/teacher/levels/{levelId}", Map.of("name", "Otro"),        401, 403, 403, 403, ALLOWED, 403);
+        row("DELETE", "/teacher/levels/{levelId}", none,                         401, 403, 403, 403, ALLOWED, 403);
 
         row("GET", "/teacher/availability?from=" + day + "&to=" + day, none,     401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("PUT", "/teacher/availability/weekly", Map.of("rules", List.of()),   401, 403, 403, 403, ALLOWED, 403);
@@ -108,6 +115,7 @@ class AccessMatrixTest extends AbstractBookingTest {
         // Somebody else's booking does not exist for them.
         row("POST", "/bookings/{bookingId}/cancel", none,                        401, 404, ALLOWED, 404, ALLOWED, ALLOWED);
         row("PATCH", "/teacher/lessons/{lessonId}", Map.of("capacity", 5),       401, 403, 403, 403, ALLOWED, 403);
+        row("PUT", "/teacher/lessons/{lessonId}/level", Map.of(),                401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/cancel", none,                  401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/series/preview", Map.of("type", "INDIVIDUAL", "capacity", 1, "weeks", 2,
                 "startsAt", day + "T10:00:00Z", "endsAt", day + "T11:00:00Z"),   401, 403, 403, 403, ALLOWED, 403);
@@ -196,6 +204,8 @@ class AccessMatrixTest extends AbstractBookingTest {
 
         UUID lessonId = aLessonStartingIn(Duration.ofDays(3), LessonType.GROUP, 4);
         ResponseEntity<Map> booked = book(student.token(), lessonId);
+        ResponseEntity<Map> level = rest.exchange("/api/v1/teacher/levels", HttpMethod.POST,
+                new HttpEntity<>(Map.of("name", "Matriz"), jsonBearer(teacherToken)), Map.class);
         ResponseEntity<Map> exception = rest.exchange("/api/v1/teacher/availability/exceptions", HttpMethod.POST,
                 new HttpEntity<>(Map.of("date", LocalDate.now(ZoneId.of("Europe/Madrid")).plusDays(20).toString(),
                         "type", "BLOCK"), jsonBearer(teacherToken)), Map.class);
@@ -213,7 +223,8 @@ class AccessMatrixTest extends AbstractBookingTest {
                 "studentEmail", student.email(),
                 "lessonId", lessonId.toString(),
                 "bookingId", (String) booked.getBody().get("id"),
-                "exceptionId", (String) exception.getBody().get("id"));
+                "exceptionId", (String) exception.getBody().get("id"),
+                "levelId", (String) level.getBody().get("id"));
     }
 
     private ResponseEntity<String> call(Row row, Who who) {

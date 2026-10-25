@@ -1,6 +1,7 @@
 package com.tennisplatform.student.application.port.in;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -15,6 +16,12 @@ public interface QueryManagedStudent {
 
     /** True only while the relationship exists and is active; a deactivated student answers false. */
     boolean isManagedBy(UUID teacherUserId, UUID studentUserId);
+
+    /** The level the teacher gave the student (Fase 23); empty when they have none. */
+    Optional<UUID> levelOf(UUID teacherUserId, UUID studentUserId);
+
+    /** What each teacher wrote about the student, for the student's own export (Fase 23, decision 7). */
+    List<StudentRecordView> recordsOf(UUID studentUserId);
 
     /** The teachers who currently manage this student; empty for a student nobody manages. */
     List<UUID> teachersOf(UUID studentUserId);

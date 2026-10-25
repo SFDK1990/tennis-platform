@@ -79,3 +79,11 @@ export function useLessonWaitingList(lessonId: string) {
       unwrap(await api.GET("/teacher/lessons/{id}/waiting-list", { params: { path: { id: lessonId } } })).items,
   });
 }
+
+/** The teacher's view of one student's bookings with them, newest lesson first (Fase 23). */
+export function useStudentHistory(studentUserId: string) {
+  return useQuery({
+    queryKey: ["bookings", "student", studentUserId],
+    queryFn: async () => unwrap(await api.GET("/bookings", { params: { query: { studentUserId, size: 100 } } })),
+  });
+}

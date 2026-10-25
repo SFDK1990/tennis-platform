@@ -4,6 +4,7 @@ import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelDayRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelledDayResponse;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.ChangeLevelRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CreateLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.EditLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CreateSeriesRequest;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
+import org.springframework.web.bind.annotation.PutMapping;
 
 /**
  * The teacher's own diary: everything here is written by the teacher and nobody else. The
@@ -63,7 +65,7 @@ class TeacherLessonsController {
         requireTeacher(caller);
         return LessonResponse.from(scheduleLesson.schedule(caller.id(),
                 new NewLesson(request.type(), request.startsAt(), request.endsAt(), request.capacity(),
-                        request.notes(), request.overrideAvailability())), true);
+                        request.notes(), request.overrideAvailability(), request.levelId())), true);
     }
 
     @PostMapping("/series/preview")
@@ -72,7 +74,7 @@ class TeacherLessonsController {
         requireTeacher(caller);
         return new SeriesPreviewResponse(scheduleSeries.preview(caller.id(), new ScheduleSeries.NewSeries(
                         request.type(), request.startsAt(), request.endsAt(), request.capacity(), request.notes(),
-                        request.weeks())).stream()
+                        request.weeks(), request.levelId())).stream()
                 .map(occurrence -> new OccurrenceResponse(occurrence.startsAt(), occurrence.endsAt(), occurrence.status()))
                 .toList());
     }
@@ -84,7 +86,8 @@ class TeacherLessonsController {
         requireTeacher(caller);
         return new LessonsResponse(scheduleSeries.schedule(caller.id(), new ScheduleSeries.NewSeries(
                                 request.type(), request.startsAt(), request.endsAt(), request.capacity(), request.notes(),
-                                request.weeks()), request.dates(), request.overrideAvailability()).stream()
+                                request.weeks(), request.levelId()), request.dates(), request.overrideAvailability())
+                .stream()
                 .map(lesson -> LessonResponse.from(lesson, true))
                 .toList());
     }
@@ -98,6 +101,13 @@ class TeacherLessonsController {
         return new LessonsResponse(cancelLesson.cancelFollowing(caller.id(), id, reason).stream()
                 .map(lesson -> LessonResponse.from(lesson, true))
                 .toList());
+    }
+
+    @PutMapping("/{id}/level")
+    LessonResponse changeLevel(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id,
+                               @RequestBody ChangeLevelRequest request) {
+        requireTeacher(caller);
+        return LessonResponse.from(editLesson.changeLevel(caller.id(), id, request.levelId()), true);
     }
 
     @PatchMapping("/{id}")

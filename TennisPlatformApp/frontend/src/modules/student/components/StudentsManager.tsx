@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useManagedStudents, useManageStudent, useStopManaging, useStudentLookup } from "@/modules/student/api";
 import { Button } from "@/shared/ui/Button";
@@ -64,7 +65,9 @@ export function StudentsManager() {
                     {initialsOf(student.fullName)}
                   </span>
                   <span className="min-w-0">
-                    <span className="block font-semibold">{student.fullName}</span>
+                    <Link href={`/teacher/students/${student.userId}`} className="block font-semibold text-court underline-offset-4 hover:underline">
+                      {student.fullName}
+                    </Link>
                     <span className="block truncate text-sm text-muted">{student.email}</span>
                   </span>
                 </span>

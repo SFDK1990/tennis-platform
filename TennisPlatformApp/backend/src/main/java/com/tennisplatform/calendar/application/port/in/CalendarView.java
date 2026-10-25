@@ -24,7 +24,7 @@ public record CalendarView(String timezone, List<Interval> availability, List<Ca
 
     /** A lesson and, for a student, their own booking in it ({@code myBooking} null otherwise). */
     public record CalendarLesson(UUID id, UUID teacherUserId, String type, Instant startsAt, Instant endsAt,
-                                 int capacity, int bookedCount, String status, MyBooking myBooking) {
+                                 int capacity, int bookedCount, String status, UUID levelId, MyBooking myBooking) {
     }
 
     public record MyBooking(UUID id, String status, String attendance) {

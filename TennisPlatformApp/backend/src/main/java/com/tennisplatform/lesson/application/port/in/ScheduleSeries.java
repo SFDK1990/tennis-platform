@@ -21,7 +21,8 @@ public interface ScheduleSeries {
     List<LessonView> schedule(UUID teacherUserId, NewSeries series, List<Instant> chosen, boolean overrideAvailability);
 
     /** The first lesson of the series, and how many weeks it runs counting that one. */
-    record NewSeries(String type, Instant startsAt, Instant endsAt, int capacity, String notes, int weeks) {
+    record NewSeries(String type, Instant startsAt, Instant endsAt, int capacity, String notes, int weeks,
+                     UUID levelId) {
     }
 
     /** {@code status} is OK, OUTSIDE_AVAILABILITY, OVERLAP or IN_THE_PAST. */

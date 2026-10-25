@@ -11,7 +11,11 @@ import com.tennisplatform.student.application.service.ManageStudentService;
 import com.tennisplatform.student.application.service.StudentProfileService;
 import com.tennisplatform.identity.application.port.in.CloseAccount;
 import com.tennisplatform.student.application.port.in.DeleteMyAccount;
+import com.tennisplatform.student.application.port.in.GetManagedStudents;
+import com.tennisplatform.student.application.port.in.UpdateStudentRecord;
 import com.tennisplatform.student.application.service.DeleteMyAccountService;
+import com.tennisplatform.student.application.service.StudentRecordService;
+import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -53,6 +57,12 @@ public class StudentConfiguration {
                                            StudentProfileRepository profiles, StudentBookings bookings,
                                            Clock clock) {
         return new DeleteMyAccountService(accounts, relationships, profiles, bookings, clock);
+    }
+
+    @Bean
+    public UpdateStudentRecord updateStudentRecord(ManagedStudentRepository relationships, QueryLevels levels,
+                                                   GetManagedStudents students) {
+        return new StudentRecordService(relationships, levels, students);
     }
 
     @Bean

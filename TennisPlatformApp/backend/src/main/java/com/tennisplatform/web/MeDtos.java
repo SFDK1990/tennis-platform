@@ -25,9 +25,10 @@ final class MeDtos {
      * is how the frontend knows it has to ask for them
      * (16-fase6-analisis-perfiles.md).
      */
+    /** {@code levelId} is the student's level with their teacher (Fase 23), null for anybody else. */
     record MeResponse(UUID id, String email, String role, String status, Instant emailVerifiedAt,
                       String fullName, String phone, String nationalId, String address,
-                      String displayName, String timezone) {
+                      String displayName, String timezone, UUID levelId) {
     }
 
     /**
@@ -51,7 +52,15 @@ final class MeDtos {
      * (30-fase19-analisis-cierre-mvp.md). The bookings carry their lesson, so the file can be
      * read without the application; they are empty for the teacher and the administrator.
      */
-    record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings) {
+    /**
+     * {@code records} is what each teacher wrote about the student, private notes included: the
+     * right of access covers what is kept about a person (36-fase23, decision 7).
+     */
+    record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings,
+                        List<ExportedRecord> records) {
+    }
+
+    record ExportedRecord(String level, String goals, String privateNotes) {
     }
 
     record ExportedBooking(UUID id, UUID lessonId, UUID studentUserId, String status, String attendance,

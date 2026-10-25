@@ -42,3 +42,22 @@ export function useStudentNames(): (userId: string) => string {
   const names = new Map(students.data?.items.map((student) => [student.userId, student.fullName]));
   return (userId) => names.get(userId) ?? "Alumno";
 }
+
+export type StudentDetail = components["schemas"]["StudentDetail"];
+export type StudentRecord = components["schemas"]["StudentRecordRequest"];
+
+/** The full record of one managed student, restricted data included (only their teacher reads it). */
+export function useStudentDetail(userId: string) {
+  return useQuery({
+    queryKey: ["students", userId],
+    queryFn: async () => unwrap(await api.GET("/teacher/students/{userId}", { params: { path: { userId } } })),
+  });
+}
+
+/** Level, goals and private notes, replaced together (Fase 23). */
+export function useUpdateStudentRecord(userId: string) {
+  return useMutation({
+    mutationFn: async (body: StudentRecord) =>
+      unwrap(await api.PUT("/teacher/students/{userId}/record", { params: { path: { userId } }, body })),
+  });
+}

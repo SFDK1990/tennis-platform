@@ -40,6 +40,15 @@ class ManagedStudentEntity {
     @Column(name = "deactivated_at")
     private Instant deactivatedAt;
 
+    @Column(name = "level_id")
+    private UUID levelId;
+
+    @Column(name = "goals", length = 2000)
+    private String goals;
+
+    @Column(name = "private_notes", length = 2000)
+    private String privateNotes;
+
     protected ManagedStudentEntity() {
     }
 
@@ -51,11 +60,14 @@ class ManagedStudentEntity {
         entity.status = relationship.status();
         entity.managedAt = relationship.managedAt();
         entity.deactivatedAt = relationship.deactivatedAt();
+        entity.levelId = relationship.levelId();
+        entity.goals = relationship.goals();
+        entity.privateNotes = relationship.privateNotes();
         return entity;
     }
 
     ManagedStudent toDomain() {
         return ManagedStudent.rehydrate(id, teacherUserId, studentUserId, status, managedAt,
-                deactivatedAt);
+                deactivatedAt, levelId, goals, privateNotes);
     }
 }

@@ -27,5 +27,7 @@ public interface GetBookings {
     /** Every booking of the platform, to resolve an incident. The filters are the teacher's. */
     ResultPage<BookingView> forAdministration(UUID lessonId, String status, int page, int size);
 
-    ResultPage<BookingView> forTeacher(UUID teacherUserId, UUID lessonId, String status, int page, int size);
+    /** {@code lessonId} and {@code studentUserId} narrow it down; the student's history is the second (Fase 23). */
+    ResultPage<BookingView> forTeacher(UUID teacherUserId, UUID lessonId, UUID studentUserId, String status, int page,
+                                       int size);
 }

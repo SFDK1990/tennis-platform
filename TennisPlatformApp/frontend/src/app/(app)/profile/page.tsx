@@ -4,9 +4,12 @@ import { useMe } from "@/modules/identity/api";
 import { ChangePasswordForm, DeleteMyAccount, DownloadMyData } from "@/modules/identity/components/AccountSettings";
 import { ProfileForm } from "@/modules/identity/components/ProfileForm";
 import { SignOutButton } from "@/modules/identity/components/SignOutButton";
+import { LevelsManager } from "@/modules/teacher/components/LevelsManager";
+import { useLevelName } from "@/shared/levels";
 
 export default function ProfilePage() {
   const me = useMe().data;
+  const levelName = useLevelName();
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <h1 className="font-display text-4xl font-semibold leading-none">Tu perfil</h1>
@@ -15,7 +18,14 @@ export default function ProfilePage() {
           <section aria-labelledby="personal-heading" className="flex flex-col gap-4 rounded-xl border border-line bg-paper p-5">
             <h2 id="personal-heading" className="font-display text-2xl font-semibold leading-none">Datos personales</h2>
             <ProfileForm key={me.id} me={me} />
+            {me.role === "STUDENT" ? (
+              <p className="text-sm">
+                <span className="font-semibold">Tu nivel:</span>{" "}
+                {levelName(me.levelId) ?? "todavía no te lo ha puesto tu profesor"}
+              </p>
+            ) : null}
           </section>
+          {me.role === "TEACHER" ? <LevelsManager /> : null}
           <ChangePasswordForm email={me.email} />
           <DownloadMyData />
           {/* The teacher and the administrator are created by the bootstrap and stay. */}

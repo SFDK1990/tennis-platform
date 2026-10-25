@@ -6,6 +6,7 @@ import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.ManagedStudentDetailView;
 import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
+import com.tennisplatform.student.application.port.in.StudentRecordView;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentLookupView;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
@@ -55,6 +56,21 @@ public class GetManagedStudentsService implements GetManagedStudents, QueryManag
         return relationships.findByPair(teacherUserId, studentUserId)
                 .map(ManagedStudent::isManaged)
                 .orElse(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UUID> levelOf(UUID teacherUserId, UUID studentUserId) {
+        return relationships.findByPair(teacherUserId, studentUserId).map(ManagedStudent::levelId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentRecordView> recordsOf(UUID studentUserId) {
+        return relationships.findAllByStudent(studentUserId).stream()
+                .map(relationship -> new StudentRecordView(relationship.teacherUserId(), relationship.levelId(),
+                        relationship.goals(), relationship.privateNotes()))
+                .toList();
     }
 
     @Override
@@ -122,7 +138,8 @@ public class GetManagedStudentsService implements GetManagedStudents, QueryManag
         return new ManagedStudentDetailView(studentUserId,
                 account == null ? null : account.email(), profile.fullName(), profile.phone(),
                 profile.nationalId(), profile.address(), relationship.status().name(),
-                relationship.managedAt(), relationship.deactivatedAt());
+                relationship.managedAt(), relationship.deactivatedAt(), relationship.levelId(),
+                relationship.goals(), relationship.privateNotes());
     }
 
     // --- helpers ---------------------------------------------------------------

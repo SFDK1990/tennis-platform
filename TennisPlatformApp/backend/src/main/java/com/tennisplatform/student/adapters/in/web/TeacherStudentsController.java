@@ -9,12 +9,17 @@ import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.ManageStudent;
 import com.tennisplatform.student.domain.StudentProfileNotFoundException;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
+import com.tennisplatform.student.adapters.in.web.StudentDtos.StudentRecordRequest;
+import com.tennisplatform.student.application.port.in.UpdateStudentRecord;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -37,10 +42,13 @@ class TeacherStudentsController {
 
     private final GetManagedStudents managedStudents;
     private final ManageStudent manageStudent;
+    private final UpdateStudentRecord records;
 
-    TeacherStudentsController(GetManagedStudents managedStudents, ManageStudent manageStudent) {
+    TeacherStudentsController(GetManagedStudents managedStudents, ManageStudent manageStudent,
+                              UpdateStudentRecord records) {
         this.managedStudents = managedStudents;
         this.manageStudent = manageStudent;
+        this.records = records;
     }
 
     /** The students this teacher manages. {@code query} narrows that set, and only that set. */
@@ -79,6 +87,15 @@ class TeacherStudentsController {
                                  @PathVariable UUID userId) {
         requireTeacher(caller);
         return StudentDetailResponse.from(managedStudents.detail(caller.id(), userId));
+    }
+
+    /** Level, goals and private notes, only ever seen by the teacher who wrote them (Fase 23). */
+    @PutMapping("/{userId}/record")
+    StudentDetailResponse updateRecord(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID userId,
+                                       @Valid @RequestBody StudentRecordRequest request) {
+        requireTeacher(caller);
+        return StudentDetailResponse.from(records.update(caller.id(), userId, request.levelId(), request.goals(),
+                request.privateNotes()));
     }
 
     @PostMapping("/{userId}/manage")

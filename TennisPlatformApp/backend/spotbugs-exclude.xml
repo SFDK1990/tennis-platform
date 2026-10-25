@@ -74,4 +74,11 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
+    <!-- The same false positive, on LevelRepository (Fase 23), scoped to the one field. -->
+    <Match>
+        <Class name="com.tennisplatform.teacher.application.service.LevelsService"/>
+        <Field name="levels"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
 </FindBugsFilter>

@@ -50,6 +50,10 @@ public class DeleteMyAccountService implements DeleteMyAccount {
             });
             bookings.cancelUpcomingOfDeletedAccount(teacherUserId, studentUserId, now);
         }
+        for (var relationship : relationships.findAllByStudent(studentUserId)) {
+            relationship.clearRecord();
+            relationships.save(relationship);
+        }
         profiles.findByUserId(studentUserId).ifPresent(profile -> {
             profile.anonymize();
             profiles.save(profile);

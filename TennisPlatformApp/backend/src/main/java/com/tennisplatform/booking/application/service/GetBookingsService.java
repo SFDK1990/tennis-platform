@@ -71,8 +71,9 @@ public class GetBookingsService implements GetBookings {
      */
     @Override
     @Transactional(readOnly = true)
-    public ResultPage<BookingView> forTeacher(UUID teacherUserId, UUID lessonId, String status, int page, int size) {
-        Slice slice = bookings.findForTeacher(teacherUserId, lessonId, BookingStatus.filter(status),
+    public ResultPage<BookingView> forTeacher(UUID teacherUserId, UUID lessonId, UUID studentUserId, String status,
+                                              int page, int size) {
+        Slice slice = bookings.findForTeacher(teacherUserId, lessonId, studentUserId, BookingStatus.filter(status),
                 page, size);
         return new ResultPage<BookingView>(views.of(slice.items()), page, size, slice.total());
     }

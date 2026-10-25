@@ -78,10 +78,12 @@ public class WaitingListPromotion {
 
     /**
      * What booking would check, asked again now: since they joined, the student may have booked
-     * another lesson at that time, or stopped being the teacher's student.
+     * another lesson at that time, stopped being the teacher's student, or been put on another
+     * level than the lesson's (Fase 23).
      */
     private boolean canTakeTheSeat(WaitingListEntry entry, LessonView lesson) {
         return managedStudents.isManagedBy(lesson.teacherUserId(), entry.studentUserId())
+                && LevelRule.allows(managedStudents, lesson, entry.studentUserId())
                 && !bookings.existsConfirmed(lesson.id(), entry.studentUserId())
                 && !bookings.existsOverlappingConfirmed(entry.studentUserId(), lesson.startsAt(), lesson.endsAt());
     }
