@@ -1,4 +1,5 @@
 import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { addDays } from "@/shared/time";
 import { TEACHER } from "./support/stack";
 
 test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla, el alumno lo ve", async ({ page, browser, arrange }) => {
@@ -100,4 +101,32 @@ test("el profesor sube las plazas de una clase de grupo y le añade notas", asyn
 
   await expect(page.getByText("Clase de grupo, 5 plazas")).toBeVisible();
   await expect(page.getByText("Traed agua")).toBeVisible();
+});
+
+/** Fase 22: a weekly lesson for four weeks, skipping the week that clashes with another lesson. */
+test("el profesor crea una clase semanal de 4 semanas y salta la fecha que choca", async ({ page, arrange }) => {
+  const day = await arrange.freeDay();
+  const weeks = [0, 1, 2, 3].map((week) => addDays(day, 7 * week));
+  weeks.slice(1).forEach((date) => arrange.clearAfterwards(date));
+  await arrange.lesson({ date: weeks[2], time: "06:00" });
+
+  await signIn(page, TEACHER.email, TEACHER.password);
+  await openFromMenu(page, "Agenda");
+  await page.getByRole("button", { name: "Nueva clase" }).click();
+  await page.getByLabel("Día").fill(day);
+  await page.getByLabel("Hora").fill("06:00");
+  await page.getByLabel("Repetir cada semana").check();
+  await page.getByLabel("Durante").selectOption("4");
+  await page.getByRole("button", { name: "Ver las fechas" }).click();
+
+  const dates = page.getByRole("region", { name: "Nueva clase" }).getByRole("listitem");
+  await expect(dates).toHaveCount(4);
+  await expect(dates.nth(2)).toContainText("Choca con otra clase");
+  await expect(dates.nth(2).getByRole("checkbox")).toBeDisabled();
+  // 06:00 is outside the hours: those start unticked, and can be ticked anyway.
+  for (const week of [0, 1, 3]) {
+    await dates.nth(week).getByRole("checkbox").check();
+  }
+  await page.getByRole("button", { name: "Crear 3 clases" }).click();
+  await expect(page.getByText("Serie creada: 3 clases")).toBeVisible();
 });

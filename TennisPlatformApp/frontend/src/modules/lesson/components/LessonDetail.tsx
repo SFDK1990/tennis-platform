@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCancelLesson, type Lesson } from "@/modules/lesson/api";
+import { useCancelFollowing, useCancelLesson, type Lesson } from "@/modules/lesson/api";
 import { CancelConfirmation } from "@/modules/lesson/components/CancelConfirmation";
 import { EditLessonForm } from "@/modules/lesson/components/EditLessonForm";
 import { dateIn, formatDay, formatTime } from "@/shared/time";
@@ -27,7 +27,9 @@ interface LessonDetailProps {
 
 export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDetailProps) {
   const cancel = useCancelLesson(as);
-  const [confirming, setConfirming] = useState(false);
+  const cancelFollowing = useCancelFollowing();
+  // Which cancellation is being confirmed: this lesson, or this one and the rest of its series.
+  const [confirming, setConfirming] = useState<"lesson" | "following" | null>(null);
   const [editing, setEditing] = useState(false);
   const cancellable = lesson.status === "OPEN" || lesson.status === "FULL";
   const editable = as === "teacher" && cancellable && !started;
@@ -45,28 +47,47 @@ export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDe
           {lesson.type === "INDIVIDUAL" ? "Clase individual" : `Clase de grupo, ${lesson.capacity} plazas`}.{" "}
           {STATUS[lesson.status]}, con {lesson.bookedCount} {lesson.bookedCount === 1 ? "reserva" : "reservas"}.
         </p>
+        {lesson.seriesPosition ? (
+          <p className="text-sm text-white/85">Se repite cada semana: es la {lesson.seriesPosition} de {lesson.seriesSize}.</p>
+        ) : null}
       </CourtCard>
       {lesson.notes && !editing ? <p className="rounded-xl border border-line bg-paper px-4 py-3">{lesson.notes}</p> : null}
       {lesson.cancelledAtShortNotice ? (
         <Notice>Se canceló con menos de 24 horas de aviso.</Notice>
       ) : null}
       {editing ? <EditLessonForm lesson={lesson} onDone={() => setEditing(false)} /> : null}
-      <ErrorNotice error={cancel.error} />
+      <ErrorNotice error={cancel.error ?? cancelFollowing.error} />
       {cancellable && !editing ? (
-        confirming ? (
+        confirming === "lesson" ? (
           <CancelConfirmation
             confirmLabel="Sí, cancelar la clase"
             pending={cancel.isPending}
             withReason={as === "teacher"}
             onConfirm={(reason) => cancel.mutate({ id: lesson.id, reason })}
-            onBack={() => setConfirming(false)}
+            onBack={() => setConfirming(null)}
           >
             <p>Se cancelarán también todas sus reservas, y cada alumno recibirá un correo.</p>
+          </CancelConfirmation>
+        ) : confirming === "following" ? (
+          <CancelConfirmation
+            confirmLabel="Sí, cancelar esta y las siguientes"
+            pending={cancelFollowing.isPending}
+            withReason
+            onConfirm={(reason) => cancelFollowing.mutate({ id: lesson.id, reason })}
+            onBack={() => setConfirming(null)}
+          >
+            <p>
+              Se cancelarán esta clase y las que vienen después en la serie, con sus reservas, y cada alumno recibirá un
+              correo. Las anteriores no cambian.
+            </p>
           </CancelConfirmation>
         ) : (
           <div className="flex flex-wrap gap-2">
             {editable ? <Button variant="quiet" onClick={() => setEditing(true)}>Editar</Button> : null}
-            <Button variant="danger" onClick={() => setConfirming(true)}>Cancelar clase</Button>
+            <Button variant="danger" onClick={() => setConfirming("lesson")}>Cancelar clase</Button>
+            {as === "teacher" && lesson.seriesPosition && lesson.seriesSize && lesson.seriesPosition < lesson.seriesSize ? (
+              <Button variant="danger" onClick={() => setConfirming("following")}>Cancelar esta y las siguientes</Button>
+            ) : null}
           </div>
         )
       ) : null}

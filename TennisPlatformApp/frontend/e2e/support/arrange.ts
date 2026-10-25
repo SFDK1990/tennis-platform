@@ -96,6 +96,11 @@ export class Arrange {
     throw new Error("No free day in the next two months");
   }
 
+  /** For a day the test fills through the screens: whatever it left there is cancelled afterwards. */
+  clearAfterwards(date: LocalDate): void {
+    this.undo.push(() => this.clearDay(date));
+  }
+
   async extraHours(date: LocalDate, startTime: string, endTime: string): Promise<void> {
     const teacher = await this.teacher();
     ok(await teacher.POST("/teacher/availability/exceptions", { body: { date, type: "EXTRA", startTime, endTime } }),
