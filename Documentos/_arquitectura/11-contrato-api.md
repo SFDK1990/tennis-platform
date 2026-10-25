@@ -219,6 +219,12 @@ Códigos añadidos en la Fase 21:
 | `ALREADY_WAITING` | 409 | `POST /lessons/{id}/waiting-list` | El alumno ya está en la lista de esa clase |
 | `WAITING_LIST_CLOSED` | 422 | `POST /lessons/{id}/waiting-list` | La clase empieza en menos de 24 horas, y la lista ya no admite a nadie |
 
+Código añadido en la Fase 22:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `LESSON_NOT_IN_SERIES` | 422 | `POST /teacher/lessons/{id}/cancel-following` | La clase se creó suelta y no tiene siguientes |
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos

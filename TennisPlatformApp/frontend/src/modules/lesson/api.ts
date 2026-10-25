@@ -49,3 +49,28 @@ export function useCancelDay() {
     mutationFn: async (body: CancelDay) => unwrap(await api.POST("/teacher/lessons/cancellations", { body })),
   });
 }
+
+export type SeriesPreviewRequest = components["schemas"]["SeriesPreviewRequest"];
+export type CreateSeries = components["schemas"]["CreateSeriesRequest"];
+export type Occurrence = components["schemas"]["SeriesPreview"]["occurrences"][number];
+
+/** The dates of a weekly series and what is wrong with each, before anything is created (Fase 22). */
+export function useSeriesPreview() {
+  return useMutation({
+    mutationFn: async (body: SeriesPreviewRequest) =>
+      unwrap(await api.POST("/teacher/lessons/series/preview", { body })).occurrences,
+  });
+}
+
+export function useCreateSeries() {
+  return useMutation({
+    mutationFn: async (body: CreateSeries) => unwrap(await api.POST("/teacher/lessons/series", { body })).lessons,
+  });
+}
+
+export function useCancelFollowing() {
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) =>
+      unwrap(await api.POST("/teacher/lessons/{id}/cancel-following", { params: { path: { id } }, body: { reason } })),
+  });
+}

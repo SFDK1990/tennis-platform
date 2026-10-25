@@ -224,6 +224,8 @@ añadido: son lo que hacen falta para cumplir los criterios de aceptación acord
 - `POST /api/v1/lessons/{id}/bookings`
 - `GET /api/v1/bookings`
 - `POST /api/v1/bookings/{id}/cancel`
+- `POST /api/v1/teacher/lessons/series/preview` y `POST /api/v1/teacher/lessons/series` (Fase 22)
+- `POST /api/v1/teacher/lessons/{id}/cancel-following`
 - `POST /api/v1/lessons/{id}/waiting-list` y `DELETE` (apuntarse y salir)
 - `GET /api/v1/waiting-list` (las del alumno)
 - `GET /api/v1/teacher/lessons/{id}/waiting-list`

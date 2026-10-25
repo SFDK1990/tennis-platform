@@ -111,4 +111,9 @@ class LessonRepositoryAdapter implements LessonRepository {
     public boolean existsOverlapping(UUID teacherUserId, Instant startsAt, Instant endsAt) {
         return jpa.existsOverlapping(teacherUserId, startsAt, endsAt);
     }
+
+    @Override
+    public List<Lesson> findBySeries(UUID seriesId) {
+        return jpa.findAllBySeriesIdOrderByStartsAtAsc(seriesId).stream().map(LessonEntity::toDomain).toList();
+    }
 }

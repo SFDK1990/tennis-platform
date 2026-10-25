@@ -29,6 +29,14 @@ public interface CancelLesson {
     List<LessonView> cancelDay(UUID teacherUserId, LocalDate day, String reason);
 
     /**
+     * Cancels the lesson and the ones after it in its weekly series (Fase 22), each with its
+     * bookings, in one transaction. Lessons already cancelled or over are left as they are.
+     *
+     * @return the lessons cancelled, which may be none
+     */
+    List<LessonView> cancelFollowing(UUID teacherUserId, UUID lessonId, String reason);
+
+    /**
      * An administrator resolves an incident (01-analisis-funcional.md §17): any lesson, with no
      * window either, and its bookings say the administration decided.
      */

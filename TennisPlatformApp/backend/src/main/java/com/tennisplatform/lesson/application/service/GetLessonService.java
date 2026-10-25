@@ -45,7 +45,13 @@ public class GetLessonService implements GetLesson {
     public LessonView byId(UUID id) {
         Lesson lesson = lessons.findById(id)
                 .orElseThrow(() -> new LessonNotFoundException("No lesson with id " + id));
-        return viewsOf(List.of(lesson)).get(0);
+        LessonView view = viewsOf(List.of(lesson)).get(0);
+        if (lesson.seriesId() == null) {
+            return view;
+        }
+        List<Lesson> series = lessons.findBySeries(lesson.seriesId());
+        int position = series.stream().map(Lesson::id).toList().indexOf(lesson.id()) + 1;
+        return view.inSeries(position, series.size());
     }
 
     @Override

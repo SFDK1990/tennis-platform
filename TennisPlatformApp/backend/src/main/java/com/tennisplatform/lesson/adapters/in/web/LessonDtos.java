@@ -41,6 +41,26 @@ final class LessonDtos {
                                int capacity, String notes, boolean overrideAvailability) {
     }
 
+    /** The first lesson of a weekly series and how many weeks it runs (Fase 22). */
+    record SeriesPreviewRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
+                                int capacity, String notes, int weeks) {
+    }
+
+    record SeriesPreviewResponse(List<OccurrenceResponse> occurrences) {
+    }
+
+    record OccurrenceResponse(Instant startsAt, Instant endsAt, String status) {
+    }
+
+    /** The same series, and the dates the teacher kept. */
+    record CreateSeriesRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
+                               int capacity, String notes, int weeks, @NotNull List<@NotNull Instant> dates,
+                               boolean overrideAvailability) {
+    }
+
+    record LessonsResponse(List<LessonResponse> lessons) {
+    }
+
     /**
      * A lesson on the wire.
      *
@@ -55,14 +75,16 @@ final class LessonDtos {
     record LessonResponse(UUID id, UUID teacherUserId, String type, Instant startsAt, Instant endsAt,
                           int capacity, int bookedCount, String status, String notes,
                           boolean createdOutsideAvailability, Instant cancelledAt,
-                          boolean cancelledAtShortNotice) {
+                          boolean cancelledAtShortNotice, UUID seriesId, Integer seriesPosition,
+                          Integer seriesSize) {
 
         static LessonResponse from(LessonView lesson, boolean forTheTeacher) {
             return new LessonResponse(lesson.id(), lesson.teacherUserId(), lesson.type(),
                     lesson.startsAt(), lesson.endsAt(), lesson.capacity(), lesson.bookedCount(),
                     lesson.status(),
                     forTheTeacher ? lesson.notes() : null, lesson.createdOutsideAvailability(),
-                    lesson.cancelledAt(), lesson.cancelledAtShortNotice());
+                    lesson.cancelledAt(), lesson.cancelledAtShortNotice(), lesson.seriesId(),
+                    lesson.seriesPosition(), lesson.seriesSize());
         }
     }
 }

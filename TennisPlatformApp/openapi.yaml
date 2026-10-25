@@ -947,6 +947,93 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /teacher/lessons/series/preview:
+    post:
+      tags: [lessons]
+      summary: Las fechas de una clase que se repite cada semana, sin crear nada
+      description: >-
+        Cada semana, el mismo dia y a la misma hora de pared en la zona del profesor, tambien
+        cuando cambia la hora (35-fase22-analisis-clases-que-se-repiten.md). Cada fecha trae su
+        estado: OK, OUTSIDE_AVAILABILITY (se puede crear igualmente), OVERLAP (choca con otra
+        clase: no se puede crear) o IN_THE_PAST (solo la primera puede estarlo).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SeriesPreviewRequest" }
+      responses:
+        "200":
+          description: Las fechas de la serie
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SeriesPreview" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/lessons/series:
+    post:
+      tags: [lessons]
+      summary: Crea las fechas elegidas de una clase que se repite cada semana
+      description: >-
+        Todas o ninguna, en una transaccion. Cada fecha tiene que ser una de la serie. Las clases
+        comparten seriesId.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateSeriesRequest" }
+      responses:
+        "201":
+          description: Las clases creadas
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "LESSON_OVERLAP: una fecha elegida choca ya con otra clase; no se crea ninguna"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_OUTSIDE_AVAILABILITY (sin overrideAvailability) | LESSON_IN_THE_PAST
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/lessons/{id}/cancel-following:
+    post:
+      tags: [lessons]
+      summary: Cancela la clase y las siguientes de su serie
+      description: >-
+        Cada una con sus reservas y en una transaccion, como cancelar una clase; las ya
+        canceladas o terminadas se dejan como estan. Cada alumno recibe su correo, con el motivo
+        si lo hay.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CancelLessonRequest" }
+      responses:
+        "200":
+          description: Las clases canceladas
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: "LESSON_NOT_IN_SERIES: la clase se creo suelta"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
   /teacher/lessons/{id}:
     patch:
       tags: [lessons]
@@ -1729,9 +1816,55 @@ components:
           default: false
           description: Permite crear la clase fuera de la disponibilidad configurada
 
+    SeriesPreviewRequest:
+      type: object
+      required: [type, startsAt, endsAt, capacity, weeks]
+      properties:
+        type: { $ref: "#/components/schemas/LessonType" }
+        startsAt: { type: string, format: date-time, description: La primera clase de la serie }
+        endsAt: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1 }
+        notes: { type: string, nullable: true }
+        weeks: { type: integer, minimum: 2, maximum: 16, description: Contando la primera }
+
+    SeriesPreview:
+      type: object
+      required: [occurrences]
+      properties:
+        occurrences:
+          type: array
+          items:
+            type: object
+            required: [startsAt, endsAt, status]
+            properties:
+              startsAt: { type: string, format: date-time }
+              endsAt: { type: string, format: date-time }
+              status: { type: string, enum: [OK, OUTSIDE_AVAILABILITY, OVERLAP, IN_THE_PAST] }
+
+    CreateSeriesRequest:
+      allOf:
+        - $ref: "#/components/schemas/SeriesPreviewRequest"
+        - type: object
+          required: [dates]
+          properties:
+            dates:
+              type: array
+              minItems: 1
+              items: { type: string, format: date-time }
+              description: El inicio de cada fecha elegida, tal como lo dio la vista previa
+            overrideAvailability: { type: boolean, default: false }
+
+    LessonList:
+      type: object
+      required: [lessons]
+      properties:
+        lessons:
+          type: array
+          items: { $ref: "#/components/schemas/Lesson" }
+
     Lesson:
       type: object
-      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes, createdOutsideAvailability, cancelledAt, cancelledAtShortNotice]
+      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes, createdOutsideAvailability, cancelledAt, cancelledAtShortNotice, seriesId, seriesPosition, seriesSize]
       description: >-
         bookedCount es el numero de reservas confirmadas. Se retiro en la Fase 8, cuando solo
         booking podia contarlas y aun no existia, y volvio con la Fase 9.
@@ -1758,6 +1891,16 @@ components:
         cancelledAtShortNotice:
           type: boolean
           description: Si la cancelacion dejo menos de 24 horas. Derivado de cancelledAt y startsAt.
+        seriesId:
+          type: string
+          format: uuid
+          nullable: true
+          description: La serie semanal en la que se creo (Fase 22), o null si se creo suelta
+        seriesPosition:
+          type: integer
+          nullable: true
+          description: Su puesto en la serie («3 de 12»). Solo al leer una clase; null en las listas
+        seriesSize: { type: integer, nullable: true }
 
     Booking:
       type: object

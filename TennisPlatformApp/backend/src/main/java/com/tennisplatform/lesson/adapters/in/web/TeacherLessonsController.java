@@ -6,11 +6,17 @@ import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelledDayResponse;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CreateLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.EditLessonRequest;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CreateSeriesRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.LessonResponse;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.LessonsResponse;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.OccurrenceResponse;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.SeriesPreviewRequest;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.SeriesPreviewResponse;
 import com.tennisplatform.lesson.application.port.in.CancelLesson;
 import com.tennisplatform.lesson.application.port.in.EditLesson;
 import com.tennisplatform.lesson.application.port.in.NewLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
+import com.tennisplatform.lesson.application.port.in.ScheduleSeries;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -38,11 +44,14 @@ import java.util.UUID;
 class TeacherLessonsController {
 
     private final ScheduleLesson scheduleLesson;
+    private final ScheduleSeries scheduleSeries;
     private final CancelLesson cancelLesson;
     private final EditLesson editLesson;
 
-    TeacherLessonsController(ScheduleLesson scheduleLesson, CancelLesson cancelLesson, EditLesson editLesson) {
+    TeacherLessonsController(ScheduleLesson scheduleLesson, ScheduleSeries scheduleSeries, CancelLesson cancelLesson,
+                             EditLesson editLesson) {
         this.scheduleLesson = scheduleLesson;
+        this.scheduleSeries = scheduleSeries;
         this.cancelLesson = cancelLesson;
         this.editLesson = editLesson;
     }
@@ -55,6 +64,40 @@ class TeacherLessonsController {
         return LessonResponse.from(scheduleLesson.schedule(caller.id(),
                 new NewLesson(request.type(), request.startsAt(), request.endsAt(), request.capacity(),
                         request.notes(), request.overrideAvailability())), true);
+    }
+
+    @PostMapping("/series/preview")
+    SeriesPreviewResponse previewSeries(@AuthenticationPrincipal AuthenticatedUser caller,
+                                        @Valid @RequestBody SeriesPreviewRequest request) {
+        requireTeacher(caller);
+        return new SeriesPreviewResponse(scheduleSeries.preview(caller.id(), new ScheduleSeries.NewSeries(
+                        request.type(), request.startsAt(), request.endsAt(), request.capacity(), request.notes(),
+                        request.weeks())).stream()
+                .map(occurrence -> new OccurrenceResponse(occurrence.startsAt(), occurrence.endsAt(), occurrence.status()))
+                .toList());
+    }
+
+    @PostMapping("/series")
+    @ResponseStatus(HttpStatus.CREATED)
+    LessonsResponse createSeries(@AuthenticationPrincipal AuthenticatedUser caller,
+                                 @Valid @RequestBody CreateSeriesRequest request) {
+        requireTeacher(caller);
+        return new LessonsResponse(scheduleSeries.schedule(caller.id(), new ScheduleSeries.NewSeries(
+                                request.type(), request.startsAt(), request.endsAt(), request.capacity(), request.notes(),
+                                request.weeks()), request.dates(), request.overrideAvailability()).stream()
+                .map(lesson -> LessonResponse.from(lesson, true))
+                .toList());
+    }
+
+    /** The lesson and the ones after it in its series; the reason goes to the students (Fase 22). */
+    @PostMapping("/{id}/cancel-following")
+    LessonsResponse cancelFollowing(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id,
+                                    @Valid @RequestBody(required = false) CancelLessonRequest request) {
+        requireTeacher(caller);
+        String reason = request == null ? null : request.reason();
+        return new LessonsResponse(cancelLesson.cancelFollowing(caller.id(), id, reason).stream()
+                .map(lesson -> LessonResponse.from(lesson, true))
+                .toList());
     }
 
     @PatchMapping("/{id}")

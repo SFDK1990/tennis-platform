@@ -109,6 +109,12 @@ class AccessMatrixTest extends AbstractBookingTest {
         row("POST", "/bookings/{bookingId}/cancel", none,                        401, 404, ALLOWED, 404, ALLOWED, ALLOWED);
         row("PATCH", "/teacher/lessons/{lessonId}", Map.of("capacity", 5),       401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/cancel", none,                  401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/lessons/series/preview", Map.of("type", "INDIVIDUAL", "capacity", 1, "weeks", 2,
+                "startsAt", day + "T10:00:00Z", "endsAt", day + "T11:00:00Z"),   401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/lessons/series", Map.of("type", "INDIVIDUAL", "capacity", 1, "weeks", 2,
+                "startsAt", day + "T10:00:00Z", "endsAt", day + "T11:00:00Z", "dates", List.of(day + "T10:00:00Z")),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/lessons/{lessonId}/cancel-following", none,        401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/cancellations", Map.of("date", day.toString()),
                                                                                  401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/attendance",

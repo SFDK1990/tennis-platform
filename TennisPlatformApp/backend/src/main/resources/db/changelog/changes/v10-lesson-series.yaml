@@ -1,0 +1,21 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v10-lesson-series
+      author: tennis-platform
+      comment: >-
+        Lessons created together as a weekly series share a series_id
+        (35-fase22-analisis-clases-que-se-repiten.md). There is no series table: the series is
+        nothing but the lessons that share the id, and what it is (day, time, weeks) is read from
+        them. Null for a lesson created on its own.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE lessons ADD COLUMN series_id UUID;
+              CREATE INDEX ix_lessons_series ON lessons (series_id, starts_at) WHERE series_id IS NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX ix_lessons_series;
+              ALTER TABLE lessons DROP COLUMN series_id;
