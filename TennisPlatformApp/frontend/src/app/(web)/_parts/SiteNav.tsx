@@ -9,6 +9,7 @@ export const WRAP = "mx-auto w-full max-w-6xl px-4 sm:px-10";
 
 const SECTIONS = [
   ["/#clases", "Clases"],
+  ["/#horario", "Horario"],
   ["/#empezar", "Cómo empezar"],
   ["/#precios", "Precios"],
   ["/#preguntas", "Preguntas"],

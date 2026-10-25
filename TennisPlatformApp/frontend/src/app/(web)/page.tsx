@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { preload } from "react-dom";
 import { ClassFinder } from "./_parts/ClassFinder";
+import { CourtMap } from "./_parts/CourtMap";
 import { Copy } from "./_parts/Copy";
 import { HeroVideo } from "./_parts/HeroVideo";
 import { placeholderParts, school } from "./_parts/school";
 import { SiteFooter, SiteNav, WRAP } from "./_parts/SiteNav";
 import { TrialButton } from "./_parts/TrialButton";
+import { WeekSchedule } from "./_parts/WeekSchedule";
 
 const DESCRIPTION =
   "Clases de tenis para niños y adultos, en grupos reducidos o particulares. Las da siempre Marcos, en la misma pista, y las plazas se reservan desde el móvil.";
@@ -27,6 +29,7 @@ export default function WebsitePage() {
       <Hero />
       <main>
         <Classes />
+        <Timetable />
         <Steps />
         <Teacher />
         <Prices />
@@ -119,6 +122,20 @@ function Classes() {
         ))}
       </div>
       <ClassFinder />
+    </section>
+  );
+}
+
+function Timetable() {
+  return (
+    <section id="horario" aria-labelledby="h-horario" className={`lg:scroll-mt-22 ${WRAP} pb-24`}>
+      <div className="mb-10 grid items-end gap-6 lg:grid-cols-2 lg:gap-12">
+        <h2 id="h-horario" className={SECTION_TITLE}>Horario</h2>
+        <p className="text-lg leading-relaxed text-(--site-muted)">
+          Los grupos de la semana. Las clases particulares van en los huecos libres: pregúntale a Marcos.
+        </p>
+      </div>
+      <WeekSchedule />
     </section>
   );
 }
@@ -280,14 +297,17 @@ function Contact() {
             <Link href="/login" className="font-semibold text-(--site-band-text) underline-offset-4 hover:underline">Entrar en la app</Link>
           </div>
         </div>
-        <address className="flex flex-col gap-2 text-lg not-italic">
-          <span className="font-display text-3xl font-bold">Dónde está la pista</span>
-          <span><Copy text={school.address} /></span>
-          <span className="text-(--site-band-muted)"><Copy text={school.phone} /> · <Copy text={school.email} /></span>
-          {school.mapsUrl ? (
-            <a href={school.mapsUrl} className="mt-2 font-semibold text-(--site-band-text) underline underline-offset-4">Cómo llegar</a>
-          ) : null}
-        </address>
+        <div className="flex flex-col gap-6">
+          <CourtMap />
+          <address className="flex flex-col gap-2 text-lg not-italic">
+            <span className="font-display text-3xl font-bold">Dónde está la pista</span>
+            <span><Copy text={school.address} /></span>
+            <span className="text-(--site-band-muted)"><Copy text={school.phone} /> · <Copy text={school.email} /></span>
+            {school.mapsUrl ? (
+              <a href={school.mapsUrl} className="mt-2 font-semibold text-(--site-band-text) underline underline-offset-4">Cómo llegar</a>
+            ) : null}
+          </address>
+        </div>
       </div>
     </section>
   );
