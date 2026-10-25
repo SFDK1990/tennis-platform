@@ -13,6 +13,7 @@ import com.tennisplatform.lesson.domain.LessonPeriod;
 import com.tennisplatform.lesson.domain.LessonType;
 import com.tennisplatform.platform.application.port.in.GetMaxGroupCapacity;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
+import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,15 +31,17 @@ public class ScheduleLessonService implements ScheduleLesson {
     private final TeacherLessons teacher;
     private final QueryAvailability availability;
     private final GetMaxGroupCapacity groupCapacity;
+    private final QueryLevels levels;
     private final Clock clock;
 
     public ScheduleLessonService(LessonRepository lessons, GetTeacherProfile teacherProfile,
                                  QueryAvailability availability, GetMaxGroupCapacity groupCapacity,
-                                 Clock clock) {
+                                 QueryLevels levels, Clock clock) {
         this.lessons = lessons;
         this.teacher = new TeacherLessons(teacherProfile);
         this.availability = availability;
         this.groupCapacity = groupCapacity;
+        this.levels = levels;
         this.clock = clock;
     }
 
@@ -73,8 +76,9 @@ public class ScheduleLessonService implements ScheduleLesson {
 
         // Recorded as what happened, not as what was asked for: a lesson is outside the hours
         // when it is outside them, whether or not the caller expected it to be.
+        LessonLevels.requireTheTeachers(levels, request.levelId(), teacherUserId);
         Lesson lesson = Lesson.create(teacherUserId, type, period, request.capacity(),
-                request.notes(), !covered, zone, maxGroupCapacity);
+                request.notes(), !covered, zone, maxGroupCapacity).withLevel(request.levelId());
 
         Lesson saved = lessons.save(lesson);
         log.info("Lesson {} scheduled", saved.id());

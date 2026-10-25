@@ -9,6 +9,7 @@ import com.tennisplatform.booking.domain.EmailNotVerifiedException;
 import com.tennisplatform.booking.domain.LessonAlreadyStartedException;
 import com.tennisplatform.booking.domain.LessonNotBookableException;
 import com.tennisplatform.booking.domain.LessonNotFullException;
+import com.tennisplatform.booking.domain.LevelNotAllowedException;
 import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
 import com.tennisplatform.booking.domain.WaitingListClosedException;
 import com.tennisplatform.booking.domain.WaitingListEntry;
@@ -68,6 +69,9 @@ public class WaitingListService implements WaitingList {
         LessonView lesson = lockLesson.lockForBooking(lessonId);
         if (!managedStudents.isManagedBy(lesson.teacherUserId(), studentUserId)) {
             throw new ForbiddenOperationException("STUDENT_NOT_MANAGED", "The teacher of this lesson does not manage you");
+        }
+        if (!LevelRule.allows(managedStudents, lesson, studentUserId)) {
+            throw new LevelNotAllowedException("This lesson is for another level");
         }
         if (CANCELLED.equals(lesson.status())) {
             throw new LessonNotBookableException("The lesson was cancelled");

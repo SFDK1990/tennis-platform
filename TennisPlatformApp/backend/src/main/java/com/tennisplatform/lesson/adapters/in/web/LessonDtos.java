@@ -38,12 +38,16 @@ final class LessonDtos {
     }
 
     record CreateLessonRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
-                               int capacity, String notes, boolean overrideAvailability) {
+                               int capacity, String notes, boolean overrideAvailability, UUID levelId) {
+    }
+
+    /** The level the lesson is for, or null for everybody (Fase 23). */
+    record ChangeLevelRequest(UUID levelId) {
     }
 
     /** The first lesson of a weekly series and how many weeks it runs (Fase 22). */
     record SeriesPreviewRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
-                                int capacity, String notes, int weeks) {
+                                int capacity, String notes, int weeks, UUID levelId) {
     }
 
     record SeriesPreviewResponse(List<OccurrenceResponse> occurrences) {
@@ -55,7 +59,7 @@ final class LessonDtos {
     /** The same series, and the dates the teacher kept. */
     record CreateSeriesRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
                                int capacity, String notes, int weeks, @NotNull List<@NotNull Instant> dates,
-                               boolean overrideAvailability) {
+                               boolean overrideAvailability, UUID levelId) {
     }
 
     record LessonsResponse(List<LessonResponse> lessons) {
@@ -76,7 +80,7 @@ final class LessonDtos {
                           int capacity, int bookedCount, String status, String notes,
                           boolean createdOutsideAvailability, Instant cancelledAt,
                           boolean cancelledAtShortNotice, UUID seriesId, Integer seriesPosition,
-                          Integer seriesSize) {
+                          Integer seriesSize, UUID levelId) {
 
         static LessonResponse from(LessonView lesson, boolean forTheTeacher) {
             return new LessonResponse(lesson.id(), lesson.teacherUserId(), lesson.type(),
@@ -84,7 +88,7 @@ final class LessonDtos {
                     lesson.status(),
                     forTheTeacher ? lesson.notes() : null, lesson.createdOutsideAvailability(),
                     lesson.cancelledAt(), lesson.cancelledAtShortNotice(), lesson.seriesId(),
-                    lesson.seriesPosition(), lesson.seriesSize());
+                    lesson.seriesPosition(), lesson.seriesSize(), lesson.levelId());
         }
     }
 }

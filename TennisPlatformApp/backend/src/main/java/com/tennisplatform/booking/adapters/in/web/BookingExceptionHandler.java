@@ -12,6 +12,7 @@ import com.tennisplatform.booking.domain.LessonAlreadyStartedException;
 import com.tennisplatform.booking.domain.LessonFullException;
 import com.tennisplatform.booking.domain.LessonNotBookableException;
 import com.tennisplatform.booking.domain.LessonNotFullException;
+import com.tennisplatform.booking.domain.LevelNotAllowedException;
 import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
 import com.tennisplatform.booking.domain.WaitingListClosedException;
 import com.tennisplatform.error.Problems;
@@ -38,6 +39,11 @@ class BookingExceptionHandler {
     @ExceptionHandler(LessonFullException.class)
     ProblemDetail handleFull(LessonFullException e) {
         return Problems.of(HttpStatus.CONFLICT, "Lesson full", e.getMessage(), "LESSON_FULL");
+    }
+
+    @ExceptionHandler(LevelNotAllowedException.class)
+    ProblemDetail handleLevelNotAllowed(LevelNotAllowedException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Level not allowed", e.getMessage(), "LEVEL_NOT_ALLOWED");
     }
 
     @ExceptionHandler(LessonNotFullException.class)

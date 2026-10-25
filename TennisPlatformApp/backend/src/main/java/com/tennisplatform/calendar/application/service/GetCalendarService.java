@@ -112,6 +112,6 @@ public class GetCalendarService implements GetCalendar {
         MyBooking myBooking = booking == null ? null
                 : new MyBooking(booking.id(), booking.status(), booking.attendance());
         return new CalendarLesson(lesson.id(), lesson.teacherUserId(), lesson.type(), lesson.startsAt(),
-                lesson.endsAt(), lesson.capacity(), lesson.bookedCount(), lesson.status(), myBooking);
+                lesson.endsAt(), lesson.capacity(), lesson.bookedCount(), lesson.status(), lesson.levelId(), myBooking);
     }
 }

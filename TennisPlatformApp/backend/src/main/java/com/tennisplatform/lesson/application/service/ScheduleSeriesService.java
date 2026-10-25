@@ -14,6 +14,7 @@ import com.tennisplatform.lesson.domain.LessonType;
 import com.tennisplatform.lesson.domain.WeeklySeries;
 import com.tennisplatform.platform.application.port.in.GetMaxGroupCapacity;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
+import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,14 +41,17 @@ public class ScheduleSeriesService implements ScheduleSeries {
     private final TeacherLessons teacher;
     private final QueryAvailability availability;
     private final GetMaxGroupCapacity groupCapacity;
+    private final QueryLevels levels;
     private final Clock clock;
 
     public ScheduleSeriesService(LessonRepository lessons, GetTeacherProfile teacherProfile,
-                                 QueryAvailability availability, GetMaxGroupCapacity groupCapacity, Clock clock) {
+                                 QueryAvailability availability, GetMaxGroupCapacity groupCapacity, QueryLevels levels,
+                                 Clock clock) {
         this.lessons = lessons;
         this.teacher = new TeacherLessons(teacherProfile);
         this.availability = availability;
         this.groupCapacity = groupCapacity;
+        this.levels = levels;
         this.clock = clock;
     }
 
@@ -91,7 +95,8 @@ public class ScheduleSeriesService implements ScheduleSeries {
                 throw new LessonOverlapException("Another lesson already runs at " + start);
             }
             Lesson saved = lessons.save(Lesson.create(teacherUserId, template.type(), period, series.capacity(),
-                    series.notes(), !covered, template.zone(), template.maxGroupCapacity(), seriesId));
+                    series.notes(), !covered, template.zone(), template.maxGroupCapacity(), seriesId)
+                    .withLevel(series.levelId()));
             created.add(LessonView.from(saved, now, 0));
         }
         log.info("Series {} scheduled: {} lessons", seriesId, created.size());
@@ -104,6 +109,7 @@ public class ScheduleSeriesService implements ScheduleSeries {
      */
     private Template templateOf(UUID teacherUserId, NewSeries series) {
         ZoneId zone = teacher.requireTheTeacher(teacherUserId);
+        LessonLevels.requireTheTeachers(levels, series.levelId(), teacherUserId);
         LessonType type = LessonType.parse(series.type());
         int maxGroupCapacity = type == LessonType.GROUP ? groupCapacity.maxGroupCapacity() : 1;
         List<LessonPeriod> occurrences = WeeklySeries.occurrences(series.startsAt(), series.endsAt(), zone,

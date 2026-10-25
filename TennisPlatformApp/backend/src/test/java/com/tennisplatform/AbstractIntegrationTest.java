@@ -104,7 +104,7 @@ public abstract class AbstractIntegrationTest {
      */
     @BeforeEach
     void emptyTheDatabase() {
-        jdbc.execute("TRUNCATE TABLE waiting_list_entries, bookings, lessons, weekly_availability_rules, availability_exceptions, "
+        jdbc.execute("TRUNCATE TABLE waiting_list_entries, bookings, lessons, levels, weekly_availability_rules, availability_exceptions, "
                 + "teacher_students, student_profiles, teacher_profiles, "
                 + "refresh_tokens, password_reset_tokens, email_verifications, users CASCADE");
         jdbc.update("INSERT INTO platform_configuration (id, student_limit) VALUES (1, 50) "

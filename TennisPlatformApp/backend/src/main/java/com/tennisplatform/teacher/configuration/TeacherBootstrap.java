@@ -1,6 +1,7 @@
 package com.tennisplatform.teacher.configuration;
 
 import com.tennisplatform.identity.application.port.in.ProvisionTeacherAccount;
+import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import com.tennisplatform.teacher.application.port.out.TeacherProfileRepository;
 import com.tennisplatform.teacher.domain.TeacherProfile;
 import org.slf4j.Logger;
@@ -35,13 +36,15 @@ class TeacherBootstrap implements ApplicationRunner {
     private final ProvisionTeacherAccount accounts;
     private final TeacherProfileRepository profiles;
     private final TeacherProperties properties;
+    private final QueryLevels levels;
     private final Clock clock;
 
     TeacherBootstrap(ProvisionTeacherAccount accounts, TeacherProfileRepository profiles,
-                     TeacherProperties properties, Clock clock) {
+                     TeacherProperties properties, QueryLevels levels, Clock clock) {
         this.accounts = accounts;
         this.profiles = profiles;
         this.properties = properties;
+        this.levels = levels;
         this.clock = clock;
     }
 
@@ -69,6 +72,7 @@ class TeacherBootstrap implements ApplicationRunner {
                 null,
                 properties.getBootstrapTimezone(),
                 clock.instant()));
+        levels.seedDefaults(userId);
 
         // Neither the address nor the name is logged: they are personal data
         // (02-arquitectura.md).

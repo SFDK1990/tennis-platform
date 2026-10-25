@@ -155,10 +155,11 @@ class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
-    public Slice findForTeacher(UUID teacherUserId, UUID lessonId, BookingStatus status, int page,
-                                int size) {
+    public Slice findForTeacher(UUID teacherUserId, UUID lessonId, UUID studentUserId, BookingStatus status,
+                                int page, int size) {
         return slice(equal("teacherUserId", teacherUserId)
                 .and(equal("lessonId", lessonId))
+                .and(equal("studentUserId", studentUserId))
                 .and(equal("status", status)), page, size);
     }
 

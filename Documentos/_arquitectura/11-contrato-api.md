@@ -225,6 +225,15 @@ Código añadido en la Fase 22:
 |---|---|---|---|
 | `LESSON_NOT_IN_SERIES` | 422 | `POST /teacher/lessons/{id}/cancel-following` | La clase se creó suelta y no tiene siguientes |
 
+Códigos añadidos en la Fase 23:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `LEVEL_NOT_ALLOWED` | 422 | `POST /lessons/{id}/bookings`, `POST /lessons/{id}/waiting-list` | La clase es de otro nivel que el del alumno. Releer no lo cambia |
+| `LEVEL_IN_USE` | 409 | `DELETE /teacher/levels/{id}` | Algún alumno o alguna clase lo tiene |
+| `LEVEL_ALREADY_EXISTS` | 409 | `POST /teacher/levels`, `PATCH /teacher/levels/{id}` | Ya hay un nivel con ese nombre |
+| `LEVEL_NOT_FOUND` | 404 | `PATCH` y `DELETE /teacher/levels/{id}` | No es un nivel del profesor |
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos

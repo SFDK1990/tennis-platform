@@ -25,5 +25,8 @@ public interface ManagedStudentRepository {
     /** The teachers with an active relationship to this student. */
     List<UUID> findManagingTeachers(UUID studentUserId);
 
+    /** Every relationship of the student, managed or not: deleting the account empties them all. */
+    List<ManagedStudent> findAllByStudent(UUID studentUserId);
+
     ManagedStudent save(ManagedStudent relationship);
 }

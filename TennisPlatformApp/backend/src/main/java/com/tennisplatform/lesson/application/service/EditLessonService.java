@@ -9,6 +9,7 @@ import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonType;
 import com.tennisplatform.platform.application.port.in.GetMaxGroupCapacity;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
+import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,15 +27,31 @@ public class EditLessonService implements EditLesson {
     private final LessonBookings bookings;
     private final GetMaxGroupCapacity groupCapacity;
     private final TeacherLessons teacher;
+    private final QueryLevels levels;
     private final Clock clock;
 
     public EditLessonService(LessonRepository lessons, LessonBookings bookings, GetMaxGroupCapacity groupCapacity,
-                             GetTeacherProfile teacherProfile, Clock clock) {
+                             GetTeacherProfile teacherProfile, QueryLevels levels, Clock clock) {
         this.lessons = lessons;
         this.bookings = bookings;
         this.groupCapacity = groupCapacity;
         this.teacher = new TeacherLessons(teacherProfile);
+        this.levels = levels;
         this.clock = clock;
+    }
+
+    @Override
+    @Transactional
+    public LessonView changeLevel(UUID teacherUserId, UUID lessonId, UUID levelId) {
+        teacher.requireTheTeacher(teacherUserId);
+        Lesson lesson = lessons.findById(lessonId)
+                .filter(found -> found.teacherUserId().equals(teacherUserId))
+                .orElseThrow(() -> new LessonNotFoundException("No lesson with id " + lessonId));
+        LessonLevels.requireTheTeachers(levels, levelId, teacherUserId);
+        Lesson changed = lessons.save(lesson.withLevel(levelId));
+        log.info("Lesson {} put on level {}", lessonId, levelId);
+        int booked = bookings.countConfirmed(List.of(lessonId)).getOrDefault(lessonId, 0);
+        return LessonView.from(changed, clock.instant(), booked);
     }
 
     /**

@@ -22,14 +22,14 @@ public record LessonView(UUID id, UUID teacherUserId, String type, Instant start
                          int capacity, int bookedCount, String status, String notes,
                          boolean createdOutsideAvailability, Instant cancelledAt,
                          boolean cancelledAtShortNotice, UUID seriesId, Integer seriesPosition,
-                         Integer seriesSize) {
+                         Integer seriesSize, UUID levelId) {
 
     public static LessonView from(Lesson lesson, Instant now, int bookedCount) {
         return new LessonView(lesson.id(), lesson.teacherUserId(), lesson.type().name(),
                 lesson.startsAt(), lesson.endsAt(), lesson.capacity(), bookedCount,
                 lesson.statusAt(now, bookedCount).name(), lesson.notes(),
                 lesson.createdOutsideAvailability(), lesson.cancelledAt(),
-                lesson.cancelledAtShortNotice(), lesson.seriesId(), null, null);
+                lesson.cancelledAtShortNotice(), lesson.seriesId(), null, null, lesson.levelId());
     }
 
     /**
@@ -38,6 +38,6 @@ public record LessonView(UUID id, UUID teacherUserId, String type, Instant start
      */
     public LessonView inSeries(int position, int size) {
         return new LessonView(id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes,
-                createdOutsideAvailability, cancelledAt, cancelledAtShortNotice, seriesId, position, size);
+                createdOutsideAvailability, cancelledAt, cancelledAtShortNotice, seriesId, position, size, levelId);
     }
 }

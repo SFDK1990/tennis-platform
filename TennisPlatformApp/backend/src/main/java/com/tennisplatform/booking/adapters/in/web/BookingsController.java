@@ -53,6 +53,7 @@ class BookingsController {
     BookingPageResponse list(@AuthenticationPrincipal AuthenticatedUser caller,
                              @RequestParam(required = false) String status,
                              @RequestParam(required = false) UUID lessonId,
+                             @RequestParam(required = false) UUID studentUserId,
                              @RequestParam(defaultValue = "0") int page,
                              @RequestParam(defaultValue = "20") int size) {
         int safePage = Math.max(page, 0);
@@ -62,7 +63,7 @@ class BookingsController {
         }
         if (caller.isTeacher()) {
             return BookingPageResponse.from(
-                    getBookings.forTeacher(caller.id(), lessonId, status, safePage, safeSize));
+                    getBookings.forTeacher(caller.id(), lessonId, studentUserId, status, safePage, safeSize));
         }
         if (caller.isAdmin()) {
             return BookingPageResponse.from(getBookings.forAdministration(lessonId, status, safePage, safeSize));

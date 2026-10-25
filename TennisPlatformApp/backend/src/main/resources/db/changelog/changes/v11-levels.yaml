@@ -1,0 +1,39 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v11-levels
+      author: tennis-platform
+      comment: >-
+        The teacher's levels, the level of each managed student and of each lesson, and the
+        student's record: goals and private notes (36-fase23-analisis-niveles-ficha.md).
+        A lesson without a level is open to everybody; a student without one may book any lesson.
+        A level in use cannot be deleted: the foreign keys restrict it, and the application turns
+        that into LEVEL_IN_USE. The existing teacher gets the four levels of 01 section 18.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE levels (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  name             VARCHAR(60) NOT NULL,
+                  position         INT NOT NULL,
+                  CONSTRAINT ux_levels_teacher_name UNIQUE (teacher_user_id, name)
+              );
+              INSERT INTO levels (teacher_user_id, name, position)
+              SELECT t.user_id, l.name, l.position
+              FROM teacher_profiles t
+              CROSS JOIN (VALUES ('Iniciación', 1), ('Intermedio', 2), ('Avanzado', 3), ('Competición', 4))
+                  AS l(name, position);
+
+              ALTER TABLE teacher_students
+                  ADD COLUMN level_id UUID REFERENCES levels(id) ON DELETE RESTRICT,
+                  ADD COLUMN goals VARCHAR(2000),
+                  ADD COLUMN private_notes VARCHAR(2000);
+              ALTER TABLE lessons ADD COLUMN level_id UUID REFERENCES levels(id) ON DELETE RESTRICT;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE lessons DROP COLUMN level_id;
+              ALTER TABLE teacher_students DROP COLUMN level_id, DROP COLUMN goals, DROP COLUMN private_notes;
+              DROP TABLE levels;

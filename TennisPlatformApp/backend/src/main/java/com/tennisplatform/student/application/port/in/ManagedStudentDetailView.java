@@ -14,5 +14,6 @@ import java.util.UUID;
  */
 public record ManagedStudentDetailView(UUID userId, String email, String fullName, String phone,
                                        String nationalId, String address, String managedStatus,
-                                       Instant managedAt, Instant deactivatedAt) {
+                                       Instant managedAt, Instant deactivatedAt, UUID levelId,
+                                       String goals, String privateNotes) {
 }

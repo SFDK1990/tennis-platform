@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/changes/v9-booking-waiting-list.yaml
   - include:
       file: db/changelog/changes/v10-lesson-series.yaml
+  - include:
+      file: db/changelog/changes/v11-levels.yaml

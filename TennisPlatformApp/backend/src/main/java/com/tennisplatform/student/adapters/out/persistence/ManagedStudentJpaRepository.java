@@ -9,6 +9,8 @@ import java.util.UUID;
 
 interface ManagedStudentJpaRepository extends JpaRepository<ManagedStudentEntity, UUID> {
 
+    List<ManagedStudentEntity> findAllByStudentUserId(UUID studentUserId);
+
     Optional<ManagedStudentEntity> findByTeacherUserIdAndStudentUserId(UUID teacherUserId,
                                                                       UUID studentUserId);
 

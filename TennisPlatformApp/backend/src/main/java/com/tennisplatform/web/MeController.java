@@ -5,14 +5,17 @@ import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.UserSummary;
 import com.tennisplatform.student.application.port.in.GetStudentProfile;
+import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentProfileUpdate;
 import com.tennisplatform.student.application.port.in.StudentProfileView;
 import com.tennisplatform.student.application.port.in.UpdateStudentProfile;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
+import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileUpdate;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 import com.tennisplatform.teacher.application.port.in.UpdateTeacherProfile;
 import com.tennisplatform.web.MeDtos.ExportedBooking;
+import com.tennisplatform.web.MeDtos.ExportedRecord;
 import com.tennisplatform.web.MeDtos.MeResponse;
 import com.tennisplatform.web.MeDtos.MyDataExport;
 import com.tennisplatform.web.MeDtos.UpdateMeRequest;
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * {@code /me}: the account plus the personal data that belongs to the caller's role.
@@ -56,17 +60,22 @@ class MeController {
     private final GetTeacherProfile teacherProfiles;
     private final UpdateTeacherProfile updateTeacherProfile;
     private final GetBookings bookings;
+    private final QueryManagedStudent managedStudents;
+    private final QueryLevels levels;
     private final Clock clock;
 
     MeController(GetCurrentUser getCurrentUser, GetStudentProfile studentProfiles,
                  UpdateStudentProfile updateStudentProfile, GetTeacherProfile teacherProfiles,
-                 UpdateTeacherProfile updateTeacherProfile, GetBookings bookings, Clock clock) {
+                 UpdateTeacherProfile updateTeacherProfile, GetBookings bookings,
+                 QueryManagedStudent managedStudents, QueryLevels levels, Clock clock) {
         this.getCurrentUser = getCurrentUser;
         this.studentProfiles = studentProfiles;
         this.updateStudentProfile = updateStudentProfile;
         this.teacherProfiles = teacherProfiles;
         this.updateTeacherProfile = updateTeacherProfile;
         this.bookings = bookings;
+        this.managedStudents = managedStudents;
+        this.levels = levels;
         this.clock = clock;
     }
 
@@ -89,9 +98,15 @@ class MeController {
         List<ExportedBooking> exported = caller.isStudent()
                 ? bookings.allOfStudent(caller.id()).stream().map(ExportedBooking::from).toList()
                 : List.of();
+        List<ExportedRecord> records = caller.isStudent()
+                ? managedStudents.recordsOf(caller.id()).stream()
+                        .map(record -> new ExportedRecord(record.levelId() == null ? null : levels.nameOf(record.levelId()),
+                                record.goals(), record.privateNotes()))
+                        .toList()
+                : List.of();
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mis-datos.json\"")
-                .body(new MyDataExport(clock.instant(), me(caller), exported));
+                .body(new MyDataExport(clock.instant(), me(caller), exported, records));
     }
 
     /**
@@ -144,6 +159,16 @@ class MeController {
                 student.map(StudentProfileView::nationalId).orElse(null),
                 student.map(StudentProfileView::address).orElse(null),
                 teacher.map(TeacherProfileView::displayName).orElse(null),
-                teacher.map(TeacherProfileView::timezone).orElse(null));
+                teacher.map(TeacherProfileView::timezone).orElse(null),
+                student.isPresent() ? levelOf(account.id()) : null);
+    }
+
+    /** The level the student's teacher gave them; with a single teacher there is one or none. */
+    private UUID levelOf(UUID studentUserId) {
+        return managedStudents.teachersOf(studentUserId).stream()
+                .map(teacherUserId -> managedStudents.levelOf(teacherUserId, studentUserId))
+                .flatMap(Optional::stream)
+                .findFirst()
+                .orElse(null);
     }
 }

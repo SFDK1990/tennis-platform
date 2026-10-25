@@ -187,6 +187,6 @@ class BookLessonServiceTest {
 
     private static LessonView lesson(String status, Instant startsAt, int booked) {
         return new LessonView(LESSON_ID, TEACHER_ID, "INDIVIDUAL", startsAt, ENDS, 1, booked, status,
-                null, false, null, false, null, null, null);
+                null, false, null, false, null, null, null, null);
     }
 }

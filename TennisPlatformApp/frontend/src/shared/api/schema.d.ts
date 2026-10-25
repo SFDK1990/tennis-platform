@@ -833,6 +833,245 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/students/{userId}/record": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Nivel, objetivos y notas privadas del alumno
+         * @description Se reemplazan los tres a la vez; un levelId null quita el nivel. Solo para el profesor que gestiona al alumno. Las notas no se ven en la app del alumno, pero salen en la exportacion de sus datos (36-fase23-analisis-niveles-ficha.md).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: components["parameters"]["UserId"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StudentRecordRequest"];
+                };
+            };
+            responses: {
+                /** @description La ficha actualizada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentDetail"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Los niveles del profesor, en su orden
+         * @description Los lee cualquiera con sesion, para saber de que nivel es cada clase (Fase 23).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LevelList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Anade un nivel al final */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateLevelRequest"];
+                };
+            };
+            responses: {
+                /** @description Creado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Level"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description LEVEL_ALREADY_EXISTS: ya hay un nivel con ese nombre */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/levels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borra un nivel que no usa nadie */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Borrado */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description LEVEL_IN_USE: algun alumno o alguna clase lo tiene */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Renombra un nivel o lo mueve de puesto
+         * @description Los demas se reordenan para hacerle sitio.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateLevelRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Level"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description LEVEL_ALREADY_EXISTS */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/teacher/students/{userId}/manage": {
         parameters: {
             query?: never;
@@ -1382,7 +1621,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
-                /** @description LESSON_ALREADY_STARTED */
+                /** @description LESSON_ALREADY_STARTED | LEVEL_NOT_ALLOWED (la clase es de otro nivel) */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -1461,7 +1700,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
-                /** @description LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas). */
+                /** @description LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas) | LEVEL_NOT_ALLOWED. */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -1608,6 +1847,8 @@ export interface paths {
                     status?: components["schemas"]["BookingStatus"];
                     /** @description Para el profesor y el admin; el alumno ya ve unicamente las suyas. */
                     lessonId?: string;
+                    /** @description Solo para el profesor: el historial de un alumno (Fase 23). Un alumno que no gestiona da la pagina vacia. */
+                    studentUserId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1923,6 +2164,55 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/lessons/{id}/level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pone la clase en un nivel, o la abre a todos con null
+         * @description Quien ya tiene plaza la conserva (Fase 23).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeLevelRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Lesson"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2507,6 +2797,38 @@ export interface components {
             exportedAt: string;
             account: components["schemas"]["MeResponse"];
             bookings: components["schemas"]["Booking"][];
+            /** @description Lo que cada profesor ha escrito del alumno, notas privadas incluidas: el derecho de acceso cubre lo que se guarda de una persona (Fase 23). */
+            records: {
+                level: string | null;
+                goals: string | null;
+                privateNotes: string | null;
+            }[];
+        };
+        Level: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            position: number;
+        };
+        LevelList: {
+            levels: components["schemas"]["Level"][];
+        };
+        CreateLevelRequest: {
+            name: string;
+        };
+        UpdateLevelRequest: {
+            name?: string;
+            position?: number;
+        };
+        ChangeLevelRequest: {
+            /** Format: uuid */
+            levelId?: string | null;
+        };
+        StudentRecordRequest: {
+            /** Format: uuid */
+            levelId?: string | null;
+            goals?: string | null;
+            privateNotes?: string | null;
         };
         EditLessonRequest: {
             notes?: string | null;
@@ -2559,6 +2881,11 @@ export interface components {
             displayName: string | null;
             /** @description Solo TEACHER. Id IANA, p.ej. Europe/Madrid */
             timezone: string | null;
+            /**
+             * Format: uuid
+             * @description Solo STUDENT: el nivel que le dio su profesor (Fase 23)
+             */
+            levelId: string | null;
         };
         /**
          * @description Solo se aceptan los campos aplicables al rol del usuario autenticado. Enviar uno de otro rol responde `400` con código `FIELD_NOT_APPLICABLE_TO_ROLE`, en lugar de ignorarlo: un cambio descartado en silencio hace creer al cliente que guardó.
@@ -2624,6 +2951,11 @@ export interface components {
             managedAt: string;
             /** Format: date-time */
             deactivatedAt: string | null;
+            /** Format: uuid */
+            levelId: string | null;
+            goals: string | null;
+            /** @description No se ven en la app del alumno (Fase 23) */
+            privateNotes: string | null;
         };
         StudentSummaryPage: components["schemas"]["Page"] & {
             items: components["schemas"]["StudentSummary"][];
@@ -2713,6 +3045,11 @@ export interface components {
                 capacity: number;
                 bookedCount: number;
                 status: components["schemas"]["LessonStatus"];
+                /**
+                 * Format: uuid
+                 * @description Nivel de la clase (Fase 23); null, abierta a todos
+                 */
+                levelId: string | null;
                 myBooking: {
                     /** Format: uuid */
                     id: string;
@@ -2735,6 +3072,11 @@ export interface components {
              * @default false
              */
             overrideAvailability: boolean;
+            /**
+             * Format: uuid
+             * @description El nivel de la clase; sin el, abierta a todos
+             */
+            levelId?: string | null;
         };
         SeriesPreviewRequest: {
             type: components["schemas"]["LessonType"];
@@ -2749,6 +3091,8 @@ export interface components {
             notes?: string | null;
             /** @description Contando la primera */
             weeks: number;
+            /** Format: uuid */
+            levelId?: string | null;
         };
         SeriesPreview: {
             occurrences: {
@@ -2801,6 +3145,11 @@ export interface components {
             /** @description Su puesto en la serie («3 de 12»). Solo al leer una clase; null en las listas */
             seriesPosition: number | null;
             seriesSize: number | null;
+            /**
+             * Format: uuid
+             * @description Nivel de la clase (Fase 23); null, abierta a todos
+             */
+            levelId: string | null;
         };
         /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. */
         Booking: {

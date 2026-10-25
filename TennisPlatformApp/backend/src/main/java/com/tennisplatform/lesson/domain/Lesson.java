@@ -40,9 +40,12 @@ public class Lesson {
     private final Instant cancelledAt;
     /** The weekly series it was created in (Fase 22), or null for a lesson created on its own. */
     private final UUID seriesId;
+    /** The level it is for (Fase 23), or null for a lesson open to everybody. */
+    private final UUID levelId;
 
     private Lesson(UUID id, UUID teacherUserId, LessonType type, LessonPeriod period, int capacity,
-                   String notes, boolean createdOutsideAvailability, Instant cancelledAt, UUID seriesId) {
+                   String notes, boolean createdOutsideAvailability, Instant cancelledAt, UUID seriesId,
+                   UUID levelId) {
         this.id = id;
         this.teacherUserId = teacherUserId;
         this.type = type;
@@ -52,6 +55,7 @@ public class Lesson {
         this.createdOutsideAvailability = createdOutsideAvailability;
         this.cancelledAt = cancelledAt;
         this.seriesId = seriesId;
+        this.levelId = levelId;
     }
 
     /**
@@ -91,7 +95,7 @@ public class Lesson {
         requireCapacityFor(type, capacity, maxGroupCapacity);
 
         return new Lesson(null, teacherUserId, type, period, capacity, normalise(notes),
-                createdOutsideAvailability, null, seriesId);
+                createdOutsideAvailability, null, seriesId, null);
     }
 
     /** Rehydration from persistence. Stored values are not re-validated. */
@@ -105,8 +109,25 @@ public class Lesson {
     public static Lesson rehydrate(UUID id, UUID teacherUserId, LessonType type, Instant startsAt,
                                    Instant endsAt, int capacity, String notes,
                                    boolean createdOutsideAvailability, Instant cancelledAt, UUID seriesId) {
+        return rehydrate(id, teacherUserId, type, startsAt, endsAt, capacity, notes, createdOutsideAvailability,
+                cancelledAt, seriesId, null);
+    }
+
+    public static Lesson rehydrate(UUID id, UUID teacherUserId, LessonType type, Instant startsAt,
+                                   Instant endsAt, int capacity, String notes,
+                                   boolean createdOutsideAvailability, Instant cancelledAt, UUID seriesId,
+                                   UUID levelId) {
         return new Lesson(id, teacherUserId, type, new LessonPeriod(startsAt, endsAt), capacity, notes,
-                createdOutsideAvailability, cancelledAt, seriesId);
+                createdOutsideAvailability, cancelledAt, seriesId, levelId);
+    }
+
+    /**
+     * The same lesson for another level, or for everybody with null. Whether the level is one of
+     * the teacher's is the use case's check; who already holds a seat keeps it.
+     */
+    public Lesson withLevel(UUID newLevelId) {
+        return new Lesson(id, teacherUserId, type, period, capacity, notes, createdOutsideAvailability, cancelledAt,
+                seriesId, newLevelId);
     }
 
     private static void requireCapacityFor(LessonType type, int capacity, int maxGroupCapacity) {
@@ -147,7 +168,7 @@ public class Lesson {
             throw new LessonAlreadyFinishedException("The lesson already ended and cannot be cancelled");
         }
         return new Lesson(id, teacherUserId, type, period, capacity, notes, createdOutsideAvailability, now,
-                seriesId);
+                seriesId, levelId);
     }
 
     /**
@@ -176,7 +197,7 @@ public class Lesson {
         }
         String notesAfter = newNotes == null ? notes : normalise(newNotes);
         return new Lesson(id, teacherUserId, type, period, capacityAfter, notesAfter, createdOutsideAvailability,
-                cancelledAt, seriesId);
+                cancelledAt, seriesId, levelId);
     }
 
     /**
@@ -256,5 +277,9 @@ public class Lesson {
 
     public UUID seriesId() {
         return seriesId;
+    }
+
+    public UUID levelId() {
+        return levelId;
     }
 }

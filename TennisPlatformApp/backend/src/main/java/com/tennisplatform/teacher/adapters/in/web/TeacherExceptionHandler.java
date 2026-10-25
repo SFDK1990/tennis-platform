@@ -1,7 +1,11 @@
 package com.tennisplatform.teacher.adapters.in.web;
 
 import com.tennisplatform.error.Problems;
+import com.tennisplatform.teacher.domain.InvalidLevelException;
 import com.tennisplatform.teacher.domain.InvalidTeacherProfileException;
+import com.tennisplatform.teacher.domain.LevelAlreadyExistsException;
+import com.tennisplatform.teacher.domain.LevelInUseException;
+import com.tennisplatform.teacher.domain.LevelNotFoundException;
 import com.tennisplatform.teacher.domain.TeacherProfileNotFoundException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -31,6 +35,26 @@ class TeacherExceptionHandler {
     ProblemDetail handleNotFound(TeacherProfileNotFoundException e) {
         return Problems.of(HttpStatus.NOT_FOUND, "Teacher profile not found",
                 "There is no teacher profile yet.", "TEACHER_PROFILE_NOT_FOUND");
+    }
+
+    @ExceptionHandler(LevelNotFoundException.class)
+    ProblemDetail handleLevelNotFound(LevelNotFoundException e) {
+        return Problems.of(HttpStatus.NOT_FOUND, "Level not found", e.getMessage(), "LEVEL_NOT_FOUND");
+    }
+
+    @ExceptionHandler(LevelInUseException.class)
+    ProblemDetail handleLevelInUse(LevelInUseException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Level in use", e.getMessage(), "LEVEL_IN_USE");
+    }
+
+    @ExceptionHandler(LevelAlreadyExistsException.class)
+    ProblemDetail handleLevelExists(LevelAlreadyExistsException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Level already exists", e.getMessage(), "LEVEL_ALREADY_EXISTS");
+    }
+
+    @ExceptionHandler(InvalidLevelException.class)
+    ProblemDetail handleInvalidLevel(InvalidLevelException e) {
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid level", e.getMessage(), "VALIDATION_ERROR");
     }
 
     @ExceptionHandler(InvalidTeacherProfileException.class)
