@@ -26,6 +26,9 @@ erDiagram
     LESSONS ||--o{ BOOKINGS : recibe
     STUDENT_PROFILES ||--o{ BOOKINGS : reserva
     LESSONS ||--o{ WAITING_LIST_ENTRIES : "lista de espera"
+    TEACHER_PROFILES ||--o{ LEVELS : define
+    LEVELS |o--o{ LESSONS : "es para"
+    LEVELS |o--o{ TEACHER_STUDENTS : "nivel del alumno"
     STUDENT_PROFILES ||--o{ WAITING_LIST_ENTRIES : espera
 
     USERS {
@@ -86,6 +89,13 @@ erDiagram
         varchar status
         int version
         uuid series_id
+        uuid level_id
+    }
+    LEVELS {
+        uuid id PK
+        uuid teacher_user_id FK
+        varchar name
+        int position
     }
     BOOKINGS {
         uuid id PK
@@ -373,6 +383,26 @@ Tres cambios respecto al borrador, los tres deliberados:
 ```sql
 ALTER TABLE lessons ADD COLUMN series_id UUID;
 CREATE INDEX ix_lessons_series ON lessons (series_id, starts_at) WHERE series_id IS NOT NULL;
+```
+
+## Changelog 5c — niveles y ficha del alumno (Fase 23)
+
+`v11-levels.yaml`. Razonamiento en `36-fase23-analisis-niveles-ficha.md`. Crea los cuatro niveles
+iniciales del profesor que ya existe.
+
+```sql
+CREATE TABLE levels (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    name             VARCHAR(60) NOT NULL,
+    position         INT NOT NULL,
+    CONSTRAINT ux_levels_teacher_name UNIQUE (teacher_user_id, name)
+);
+ALTER TABLE teacher_students
+    ADD COLUMN level_id UUID REFERENCES levels(id) ON DELETE RESTRICT,
+    ADD COLUMN goals VARCHAR(2000),
+    ADD COLUMN private_notes VARCHAR(2000);
+ALTER TABLE lessons ADD COLUMN level_id UUID REFERENCES levels(id) ON DELETE RESTRICT;
 ```
 
 ## Changelog 6b — lista de espera (Fase 21)

@@ -186,6 +186,14 @@ Tipos: `BLOCKED`, `ADDITIONAL_AVAILABILITY`.
 - `version bigint NOT NULL`
 - `series_id uuid NULL` (Fase 22): las clases creadas juntas como serie semanal lo comparten. No
   hay tabla de series: la serie son las clases con el mismo id.
+- `level_id uuid NULL FK levels` (Fase 23): null, abierta a todos.
+
+### levels (Fase 23)
+
+- `id`, `teacher_user_id`, `name` (único por profesor) y `position` (el orden, de menos a más).
+- No se borra mientras un alumno o una clase lo tenga (`ON DELETE RESTRICT`).
+- `teacher_students` gana `level_id`, `goals` y `private_notes`: la ficha del alumno. Al borrar la
+  cuenta se vacían.
 - Timestamps.
 
 Tipos: `INDIVIDUAL`, `GROUP`.

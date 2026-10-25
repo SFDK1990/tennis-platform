@@ -55,14 +55,11 @@ nivel o las abiertas a todos.
   lista. Si no se cumple, la respuesta es 422 `LEVEL_NOT_ALLOWED`: releer no lo cambia.
 - El alumno sigue viendo la clase, con «Para nivel avanzado» en lugar del botón.
 
-### 5. Un alumno sin nivel — **decisión tuya**
+### 5. Un alumno sin nivel reserva cualquier clase (opción A, elegida por Daniel)
 
-Al desplegar esta fase, ningún alumno tendrá nivel hasta que Marcos se lo ponga.
-
-- **A (te la recomiendo). Sin nivel, reserva cualquier clase.** Desplegar no cambia nada para
-  nadie, y la regla empieza a contar con cada alumno en cuanto Marcos le pone nivel.
-- **B. Sin nivel, sólo las abiertas a todos.** Es más estricto, pero el día del despliegue nadie
-  podría reservar clases con nivel hasta que Marcos los repasara a todos.
+Al desplegar, ningún alumno tiene nivel: así desplegar no cambia nada para nadie, y la regla
+empieza a contar con cada alumno en cuanto Marcos le pone nivel. Se descartó que sólo reservara
+las abiertas, que habría dejado a todos sin clases con nivel hasta que Marcos los repasara.
 
 ### 6. La ficha del alumno
 
@@ -78,18 +75,15 @@ La ficha que ya existe gana tres apartados, todos sólo para Marcos:
 Objetivos y notas van en `teacher_students` (`goals`, `private_notes`), hasta 2000 caracteres
 cada uno.
 
-### 7. Las notas privadas y los datos del alumno — **decisión tuya**
+### 7. Las notas privadas y los datos del alumno
 
 Objetivos y notas son datos personales del alumno.
 
 - **Al borrar la cuenta se vacían**, como el resto (`DeleteMyAccountTest` lo exige).
 - **Nunca salen en un log.**
-- **En la exportación de sus datos** hay dos opciones:
-  - **A (te la recomiendo). Salen.** El derecho de acceso del RGPD cubre lo que se guarda sobre
-    una persona, también lo que escribe otro sobre ella. «Privadas» quiere decir que no se ven en
-    la app, no que se le oculten si las pide.
-  - **B. No salen.** Marcos escribe con más libertad, pero la exportación dejaría de ser
-    completa.
+- **Salen en la exportación de sus datos** (opción A, elegida por Daniel). El derecho de acceso
+  del RGPD cubre lo que se guarda sobre una persona, también lo que escribe otro sobre ella.
+  «Privadas» quiere decir que no se ven en la app, no que se le oculten si las pide.
 
 ## Contrato
 
@@ -163,3 +157,14 @@ Todo va primero a `openapi.yaml`:
 7. E2E y documentación: `03`, `10-diagrama-er.md`, `11-contrato-api.md` y `CLAUDE.md`.
 
 ## Decisiones tomadas al implementar
+
+- **La ficha se guarda con `PUT /teacher/students/{userId}/record`**, no con un `PATCH`: los tres
+  campos van juntos, y así un nivel null quiere decir «sin nivel» y no «no lo cambies».
+- **El nivel de una clase se cambia con `PUT /teacher/lessons/{id}/level`**, por la misma razón.
+- **La clase lleva `levelId`, sin el nombre.** Los niveles se leen una vez con `GET /levels`, que
+  responde a cualquiera con sesión, y la pantalla pone el nombre. Así no hay que resolver nombres
+  en cada lista de clases.
+- **«No se puede borrar un nivel en uso» lo garantiza la base** (`ON DELETE RESTRICT`), y el
+  mensaje no dice cuántos lo usan: `teacher` no puede preguntar a `student` ni a `lesson` sin
+  invertir las dependencias del módulo.
+- **Las notas tampoco salen en los logs**: el servicio registra sólo el id del alumno.

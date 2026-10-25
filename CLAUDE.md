@@ -86,6 +86,12 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   cerrojo de la clase** (`WaitingListPromotion`). Un camino nuevo que libere plazas tiene que
   llamarla, o la plaza queda libre para quien llegue; `WaitingListApiTest` tiene un test por camino.
   La lista se cierra 24 horas antes de la clase.
+- **El nivel se comprueba en tres sitios**: al reservar, al apuntarse a la lista de espera y en la
+  promoción de la lista (`LevelRule`). Un camino nuevo que dé plaza tiene que preguntarle también.
+  Un alumno sin nivel reserva cualquier clase.
+- **Un nivel en uso no se borra** porque `levels` tiene `ON DELETE RESTRICT` desde alumnos y clases;
+  el adaptador traduce la violación a `LEVEL_IN_USE`. Los cuatro niveles iniciales los crea el
+  bootstrap: un test que necesite niveles llama a `QueryLevels.seedDefaults`.
 - **Los solapamientos se comprueban dos veces**: en la aplicación, para dar un 409 útil, y con
   `EXCLUDE USING gist` (necesita `btree_gist`), porque entre la comprobación y el `INSERT` cabe
   otra petición.
