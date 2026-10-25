@@ -184,6 +184,8 @@ Tipos: `BLOCKED`, `ADDITIONAL_AVAILABILITY`.
 - `cancelled_by uuid FK users NULL`
 - `cancelled_at timestamptz NULL`
 - `version bigint NOT NULL`
+- `series_id uuid NULL` (Fase 22): las clases creadas juntas como serie semanal lo comparten. No
+  hay tabla de series: la serie son las clases con el mismo id.
 - Timestamps.
 
 Tipos: `INDIVIDUAL`, `GROUP`.

@@ -85,6 +85,7 @@ erDiagram
         smallint capacity
         varchar status
         int version
+        uuid series_id
     }
     BOOKINGS {
         uuid id PK
@@ -364,6 +365,15 @@ Tres cambios respecto al borrador, los tres deliberados:
   la fila de la clase (`SELECT ... FOR UPDATE`), y `LastSeatConcurrencyTest` lo demuestra —falla
   si se quita el cerrojo, y se comprobó quitándolo—. Un trigger repetiría la regla en PL/pgSQL, y
   de dos copias la que nadie lee es la que se desincroniza.
+
+## Changelog 5b — series semanales (Fase 22)
+
+`v10-lesson-series.yaml`. Razonamiento en `35-fase22-analisis-clases-que-se-repiten.md`.
+
+```sql
+ALTER TABLE lessons ADD COLUMN series_id UUID;
+CREATE INDEX ix_lessons_series ON lessons (series_id, starts_at) WHERE series_id IS NOT NULL;
+```
 
 ## Changelog 6b — lista de espera (Fase 21)
 

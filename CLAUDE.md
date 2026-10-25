@@ -78,7 +78,9 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   adaptador.
 - **La disponibilidad es hora de pared.** Sólo la resuelve `AvailabilitySchedule`; los demás
   preguntan a `QueryAvailability`. Las fechas de cambio de hora van literales en los tests.
-- **La duración de una clase se mide en instantes; "no cruza medianoche", en hora local.**
+- **La duración de una clase se mide en instantes; "no cruza medianoche", en hora local.** Una
+  serie semanal (`WeeklySeries`) suma semanas en hora de pared: siete días de instantes movería
+  la clase una hora al cambiar la hora.
 - **`lessons.status` sólo guarda `OPEN`/`CANCELLED`**; `FULL` y `COMPLETED` se derivan al leer.
 - **Una plaza que se libera pasa a la lista de espera dentro de la misma transacción y bajo el
   cerrojo de la clase** (`WaitingListPromotion`). Un camino nuevo que libere plazas tiene que

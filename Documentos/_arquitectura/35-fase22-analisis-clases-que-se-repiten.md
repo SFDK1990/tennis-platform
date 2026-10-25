@@ -53,22 +53,21 @@ En la pantalla, las fechas con problemas salen desmarcadas y con el motivo:
   409 y la pantalla vuelve a pedir la vista previa. No queda una serie a medias que Marcos tenga
   que revisar a mano.
 
-### 4. Hasta 16 semanas — **decisión tuya**
+### 4. Hasta 16 semanas (aceptado por Daniel)
 
-Te propongo un tope de **16 semanas**, un cuatrimestre. Sirve para crear el curso entero de una
-vez, y evita crear un año de clases por un error en el número. Si prefieres otro tope, se cambia
-aquí.
+Un cuatrimestre. Sirve para crear el curso entero de una vez, y evita crear un año de clases por
+un error en el número.
 
-### 5. ¿Quedan unidas? — **decisión tuya**
+### 5. Cada clase lleva el id de su serie (opción A, elegida por Daniel)
 
-- **A (te la recomiendo). Cada clase lleva el id de su serie.** En el detalle se ve «Se repite
+- **Cada clase lleva el id de su serie.** En el detalle se ve «Se repite
   cada martes, 3 de 12», y aparece **«Cancelar esta y las siguientes»**, para cuando el curso
   termina antes o cambia de hora. La Fase 28 (mensualidades por grupo fijo) podrá apoyarse en
   ese vínculo.
-- **B. Clases sueltas, sin vínculo.** Es más simple. Pero para cancelar el resto del curso hay que
-  ir clase por clase, y la Fase 28 tendrá que inventar el vínculo después.
+- Se descartó dejarlas sueltas: cancelar el resto del curso habría sido clase por clase, y la
+  Fase 28 habría tenido que inventar el vínculo después.
 
-Con A, editar una clase de la serie sólo cambia esa clase: editar «todas las siguientes» no lo
+Editar una clase de la serie sólo cambia esa clase: editar «todas las siguientes» no lo
 ha pedido nadie.
 
 ## Contrato
@@ -78,7 +77,7 @@ Todo va primero a `openapi.yaml`:
   Responde `{ occurrences: [{ startsAt, endsAt, status }] }`.
 - `POST /teacher/lessons/series`: el mismo cuerpo, más `{ startsAt[] }` con las fechas elegidas
   y `overrideAvailability`. Responde 201 con las clases creadas.
-- Con la opción A:
+- La serie:
   - `seriesId` y `seriesPosition` en la vista de la clase;
   - `POST /teacher/lessons/{id}/cancel-following`, con el mismo motivo opcional que cancelar una
     clase. Avisa a los alumnos de cada una, como ya hace la Fase 20.
@@ -106,7 +105,7 @@ Todo va primero a `openapi.yaml`:
   - una fecha que choca hace fallar todas, y no queda ninguna creada;
   - una fecha que no pertenece a la serie se rechaza;
   - el tope de semanas.
-- **Con la opción A**:
+- **La serie**:
   - el puesto en la serie;
   - «cancelar esta y las siguientes» deja las anteriores intactas y avisa a los alumnos de las
     canceladas;
@@ -133,8 +132,18 @@ Todo va primero a `openapi.yaml`:
 2. Las fechas de la serie en hora de pared, con sus tests.
 3. La vista previa.
 4. Crear la serie, todo o nada.
-5. Con la opción A: el id de serie, el puesto y «cancelar esta y las siguientes».
+5. El id de serie, el puesto y «cancelar esta y las siguientes».
 6. Frontend: «Repetir cada semana» y la lista de fechas.
 7. E2E y documentación: `03`, `10-diagrama-er.md`, `11-contrato-api.md` y `CLAUDE.md`.
 
 ## Decisiones tomadas al implementar
+
+- **No hay tabla de series.** La serie son las clases que comparten `series_id`; lo que es (día,
+  hora, semanas) se lee de ellas.
+- **El puesto, «3 de 12», sólo sale al leer una clase** (`GET /lessons/{id}`). En las listas viaja
+  como null, para no hacer una consulta por cada serie que aparezca en la agenda. Cuenta también
+  las canceladas: la 3 sigue siendo la 3 aunque se cancelara la 2.
+- **Cancelar las siguientes** cuenta desde la hora de la clase elegida y deja como están las ya
+  canceladas o terminadas. Una clase creada suelta responde 422 `LESSON_NOT_IN_SERIES`.
+- **La vista previa valida cada fecha como una clase** (tipo, capacidad, medianoche): una plantilla
+  mala responde 400 antes de mirar el horario o los choques.
