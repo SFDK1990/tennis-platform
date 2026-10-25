@@ -32,4 +32,7 @@ public interface LessonRepository {
 
     /** Whether a non-cancelled lesson of this teacher already occupies any part of the interval. */
     boolean existsOverlapping(UUID teacherUserId, Instant startsAt, Instant endsAt);
+
+    /** Every lesson of a weekly series, cancelled ones too, in the order they run. */
+    List<Lesson> findBySeries(UUID seriesId);
 }

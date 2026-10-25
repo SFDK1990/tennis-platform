@@ -61,6 +61,9 @@ class LessonEntity {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
+    @Column(name = "series_id", updatable = false)
+    private UUID seriesId;
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
@@ -92,10 +95,11 @@ class LessonEntity {
         this.notes = lesson.notes();
         this.createdOutsideAvailability = lesson.createdOutsideAvailability();
         this.cancelledAt = lesson.cancelledAt();
+        this.seriesId = lesson.seriesId();
     }
 
     Lesson toDomain() {
         return Lesson.rehydrate(id, teacherUserId, type, startsAt, endsAt, capacity, notes,
-                createdOutsideAvailability, cancelledAt);
+                createdOutsideAvailability, cancelledAt, seriesId);
     }
 }

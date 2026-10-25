@@ -21,13 +21,23 @@ import java.util.UUID;
 public record LessonView(UUID id, UUID teacherUserId, String type, Instant startsAt, Instant endsAt,
                          int capacity, int bookedCount, String status, String notes,
                          boolean createdOutsideAvailability, Instant cancelledAt,
-                         boolean cancelledAtShortNotice) {
+                         boolean cancelledAtShortNotice, UUID seriesId, Integer seriesPosition,
+                         Integer seriesSize) {
 
     public static LessonView from(Lesson lesson, Instant now, int bookedCount) {
         return new LessonView(lesson.id(), lesson.teacherUserId(), lesson.type().name(),
                 lesson.startsAt(), lesson.endsAt(), lesson.capacity(), bookedCount,
                 lesson.statusAt(now, bookedCount).name(), lesson.notes(),
                 lesson.createdOutsideAvailability(), lesson.cancelledAt(),
-                lesson.cancelledAtShortNotice());
+                lesson.cancelledAtShortNotice(), lesson.seriesId(), null, null);
+    }
+
+    /**
+     * Where the lesson stands in its weekly series, "3 of 12" (Fase 22). Only reading a single
+     * lesson works it out: a list of lessons does not pay a query per series it touches.
+     */
+    public LessonView inSeries(int position, int size) {
+        return new LessonView(id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes,
+                createdOutsideAvailability, cancelledAt, cancelledAtShortNotice, seriesId, position, size);
     }
 }

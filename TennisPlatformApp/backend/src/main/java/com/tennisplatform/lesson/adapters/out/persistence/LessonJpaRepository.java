@@ -23,6 +23,8 @@ interface LessonJpaRepository extends JpaRepository<LessonEntity, UUID> {
     @Query("select l from LessonEntity l where l.id = :id")
     Optional<LessonEntity> findByIdForUpdate(@Param("id") UUID id);
 
+    List<LessonEntity> findAllBySeriesIdOrderByStartsAtAsc(UUID seriesId);
+
     /**
      * Everything that touches the interval, cancelled lessons included: the listing shows what
      * was cancelled too, because a teacher looking at last Tuesday wants to know why it is empty.

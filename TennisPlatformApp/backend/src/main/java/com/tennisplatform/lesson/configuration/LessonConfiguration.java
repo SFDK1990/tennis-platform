@@ -6,6 +6,7 @@ import com.tennisplatform.lesson.application.port.in.EditLesson;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
+import com.tennisplatform.lesson.application.port.in.ScheduleSeries;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.application.service.CancelLessonService;
@@ -13,6 +14,7 @@ import com.tennisplatform.lesson.application.service.EditLessonService;
 import com.tennisplatform.lesson.application.service.GetLessonService;
 import com.tennisplatform.lesson.application.service.LockLessonService;
 import com.tennisplatform.lesson.application.service.ScheduleLessonService;
+import com.tennisplatform.lesson.application.service.ScheduleSeriesService;
 import com.tennisplatform.platform.application.port.in.GetMaxGroupCapacity;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +34,13 @@ public class LessonConfiguration {
                                          QueryAvailability availability,
                                          GetMaxGroupCapacity groupCapacity, Clock clock) {
         return new ScheduleLessonService(lessons, teacherProfile, availability, groupCapacity, clock);
+    }
+
+    @Bean
+    public ScheduleSeries scheduleSeries(LessonRepository lessons, GetTeacherProfile teacherProfile,
+                                         QueryAvailability availability,
+                                         GetMaxGroupCapacity groupCapacity, Clock clock) {
+        return new ScheduleSeriesService(lessons, teacherProfile, availability, groupCapacity, clock);
     }
 
     @Bean

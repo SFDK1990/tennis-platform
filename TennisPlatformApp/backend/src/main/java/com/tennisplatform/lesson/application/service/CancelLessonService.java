@@ -7,6 +7,7 @@ import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.domain.DateInThePastException;
 import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
+import com.tennisplatform.lesson.domain.LessonNotInSeriesException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,31 @@ public class CancelLessonService implements CancelLesson {
             }
         }
         log.info("Day {} cancelled: {} lessons", day, cancelled.size());
+        return cancelled;
+    }
+
+    @Override
+    @Transactional
+    public List<LessonView> cancelFollowing(UUID teacherUserId, UUID lessonId, String reason) {
+        teacher.requireTheTeacher(teacherUserId);
+        Lesson lesson = lessons.findById(lessonId)
+                .filter(found -> found.teacherUserId().equals(teacherUserId))
+                .orElseThrow(() -> notFound(lessonId));
+        if (lesson.seriesId() == null) {
+            throw new LessonNotInSeriesException("The lesson was created on its own, not in a series");
+        }
+
+        Instant now = clock.instant();
+        List<LessonView> cancelled = new ArrayList<>();
+        for (Lesson following : lessons.findBySeries(lesson.seriesId())) {
+            boolean fromThisOneOn = !following.startsAt().isBefore(lesson.startsAt());
+            if (fromThisOneOn && following.cancelledAt() == null && following.endsAt().isAfter(now)) {
+                Lesson saved = lessons.save(following.cancel(now));
+                bookings.cancelAllOf(saved.id(), now, reason);
+                cancelled.add(LessonView.from(saved, now, 0));
+            }
+        }
+        log.info("Series {} cancelled from lesson {}: {} lessons", lesson.seriesId(), lessonId, cancelled.size());
         return cancelled;
     }
 

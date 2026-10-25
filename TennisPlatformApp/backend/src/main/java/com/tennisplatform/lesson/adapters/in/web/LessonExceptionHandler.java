@@ -8,6 +8,7 @@ import com.tennisplatform.lesson.domain.LessonAlreadyFinishedException;
 import com.tennisplatform.lesson.domain.LessonAlreadyStartedException;
 import com.tennisplatform.lesson.domain.LessonCapacityBelowBookingsException;
 import com.tennisplatform.lesson.domain.LessonInThePastException;
+import com.tennisplatform.lesson.domain.LessonNotInSeriesException;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
 import com.tennisplatform.lesson.domain.LessonOverlapException;
@@ -38,6 +39,11 @@ class LessonExceptionHandler {
     @ExceptionHandler(LessonOverlapException.class)
     ProblemDetail handleOverlap(LessonOverlapException e) {
         return Problems.of(HttpStatus.CONFLICT, "Overlapping lesson", e.getMessage(), "LESSON_OVERLAP");
+    }
+
+    @ExceptionHandler(LessonNotInSeriesException.class)
+    ProblemDetail handleNotInSeries(LessonNotInSeriesException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Not in a series", e.getMessage(), "LESSON_NOT_IN_SERIES");
     }
 
     @ExceptionHandler(LessonOutsideAvailabilityException.class)

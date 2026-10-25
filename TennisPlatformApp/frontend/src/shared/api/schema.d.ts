@@ -1761,6 +1761,174 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/lessons/series/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Las fechas de una clase que se repite cada semana, sin crear nada
+         * @description Cada semana, el mismo dia y a la misma hora de pared en la zona del profesor, tambien cuando cambia la hora (35-fase22-analisis-clases-que-se-repiten.md). Cada fecha trae su estado: OK, OUTSIDE_AVAILABILITY (se puede crear igualmente), OVERLAP (choca con otra clase: no se puede crear) o IN_THE_PAST (solo la primera puede estarlo).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SeriesPreviewRequest"];
+                };
+            };
+            responses: {
+                /** @description Las fechas de la serie */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SeriesPreview"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/lessons/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crea las fechas elegidas de una clase que se repite cada semana
+         * @description Todas o ninguna, en una transaccion. Cada fecha tiene que ser una de la serie. Las clases comparten seriesId.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateSeriesRequest"];
+                };
+            };
+            responses: {
+                /** @description Las clases creadas */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LessonList"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description LESSON_OVERLAP: una fecha elegida choca ya con otra clase; no se crea ninguna */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_OUTSIDE_AVAILABILITY (sin overrideAvailability) | LESSON_IN_THE_PAST */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/lessons/{id}/cancel-following": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancela la clase y las siguientes de su serie
+         * @description Cada una con sus reservas y en una transaccion, como cancelar una clase; las ya canceladas o terminadas se dejan como estan. Cada alumno recibe su correo, con el motivo si lo hay.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CancelLessonRequest"];
+                };
+            };
+            responses: {
+                /** @description Las clases canceladas */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LessonList"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description LESSON_NOT_IN_SERIES: la clase se creo suelta */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teacher/lessons/{id}": {
         parameters: {
             query?: never;
@@ -2568,6 +2736,39 @@ export interface components {
              */
             overrideAvailability: boolean;
         };
+        SeriesPreviewRequest: {
+            type: components["schemas"]["LessonType"];
+            /**
+             * Format: date-time
+             * @description La primera clase de la serie
+             */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            capacity: number;
+            notes?: string | null;
+            /** @description Contando la primera */
+            weeks: number;
+        };
+        SeriesPreview: {
+            occurrences: {
+                /** Format: date-time */
+                startsAt: string;
+                /** Format: date-time */
+                endsAt: string;
+                /** @enum {string} */
+                status: "OK" | "OUTSIDE_AVAILABILITY" | "OVERLAP" | "IN_THE_PAST";
+            }[];
+        };
+        CreateSeriesRequest: components["schemas"]["SeriesPreviewRequest"] & {
+            /** @description El inicio de cada fecha elegida, tal como lo dio la vista previa */
+            dates: string[];
+            /** @default false */
+            overrideAvailability: boolean;
+        };
+        LessonList: {
+            lessons: components["schemas"]["Lesson"][];
+        };
         /**
          * @description bookedCount es el numero de reservas confirmadas. Se retiro en la Fase 8, cuando solo booking podia contarlas y aun no existia, y volvio con la Fase 9.
          *     status se calcula al leer y no se guarda. La columna solo tiene OPEN y CANCELLED, que es lo que decide una persona; COMPLETED se deduce del reloj y FULL del numero de reservas. Precedencia: CANCELLED, luego COMPLETED, luego FULL, luego OPEN. Una clase llena que ya termino es COMPLETED: de una clase pasada lo que importa es que ocurrio.
@@ -2592,6 +2793,14 @@ export interface components {
             cancelledAt: string | null;
             /** @description Si la cancelacion dejo menos de 24 horas. Derivado de cancelledAt y startsAt. */
             cancelledAtShortNotice: boolean;
+            /**
+             * Format: uuid
+             * @description La serie semanal en la que se creo (Fase 22), o null si se creo suelta
+             */
+            seriesId: string | null;
+            /** @description Su puesto en la serie («3 de 12»). Solo al leer una clase; null en las listas */
+            seriesPosition: number | null;
+            seriesSize: number | null;
         };
         /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. */
         Booking: {
