@@ -82,6 +82,19 @@ body {
   --site-band-photo: light-dark(#d6dfea, #1a3260);
   --site-steps: light-dark(#e3ecf8, #174a91);
   --site-steps-muted: light-dark(#44536d, #e3ecf9);
+  /* The timetable: one colour per group class (decision 25). */
+  --site-kids: light-dark(#d7efe3, #1f5f43);
+  --site-kids-text: light-dark(#1f5f43, #eaf7f0);
+  --site-adults: light-dark(#dbe7f8, #1f4f99);
+  --site-adults-text: light-dark(#174a91, #eef4fd);
+  /* The drawn map in "Dónde" (decision 26). */
+  --site-sea: light-dark(#cfe2f3, #0e2a57);
+  --site-wave: light-dark(#a9c8e6, #24497f);
+  --site-land: light-dark(#f4ead6, #2b3b55);
+  --site-dune: light-dark(#ead7ae, #3a4a66);
+  --site-town: light-dark(#8d97a8, #9fb0c9);
+  --site-map-text: light-dark(#0b1e3f, #ffffff);
+  --site-map-muted: light-dark(#4a5973, #c9d6ea);
   /* The step numbers and the ball's trajectory: the ball's yellow only on navy (decision 1). */
   --site-accent: light-dark(#1f5fb8, #e4f03c);
 }

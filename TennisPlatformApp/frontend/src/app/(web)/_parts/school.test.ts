@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placeholderParts, recommendClass, trialHref, whatsappUrl } from "./school";
+import { describeSlots, placeholderParts, recommendClass, trialHref, whatsappUrl } from "./school";
 
 describe("whatsappUrl", () => {
   it("opens a chat with the number and the message already written", () => {
@@ -57,5 +57,29 @@ describe("placeholderParts", () => {
 
   it("leaves a finished text as one plain part", () => {
     expect(placeholderParts("Tú solo, o con un amigo")).toEqual([{ text: "Tú solo, o con un amigo", pending: false }]);
+  });
+});
+
+describe("describeSlots", () => {
+  it("names the days that share hours, and joins hours that follow each other", () => {
+    expect(
+      describeSlots([
+        { day: 1, start: "17:00", end: "18:00", detail: "" },
+        { day: 3, start: "17:00", end: "18:00", detail: "" },
+        { day: 1, start: "18:00", end: "19:00", detail: "" },
+        { day: 3, start: "18:00", end: "19:00", detail: "" },
+        { day: 6, start: "10:00", end: "11:00", detail: "" },
+      ]),
+    ).toBe("Lunes y miércoles, de 17:00 a 19:00; sábado, de 10:00 a 11:00");
+  });
+
+  it("keeps apart hours that only some of the days share", () => {
+    expect(
+      describeSlots([
+        { day: 2, start: "19:00", end: "20:00", detail: "" },
+        { day: 4, start: "19:00", end: "20:00", detail: "" },
+        { day: 4, start: "20:00", end: "21:00", detail: "" },
+      ]),
+    ).toBe("Martes y jueves, de 19:00 a 20:00; jueves, de 20:00 a 21:00");
   });
 });

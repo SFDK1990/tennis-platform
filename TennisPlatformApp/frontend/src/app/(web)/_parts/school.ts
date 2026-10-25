@@ -6,6 +6,52 @@
  * The values marked DEMO are invented to show the site while it is tested: they have to be
  * replaced before deploying (Fase 17), like any placeholder.
  */
+/**
+ * One class of the week: ISO day (1 = Monday), wall-clock times like "17:30", and what it is
+ * for within the class. The timetable and the class cards both read these, so each hour is
+ * written once.
+ */
+export type Slot = { day: number; start: string; end: string; detail: string };
+
+type ClassDraft = { name: string; summary: string; slots: Slot[]; when?: string; group: string; price: string };
+
+const DAYS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+
+/** "Lunes y miércoles, de 17:00 a 19:00; sábado, de 10:00 a 11:00": consecutive hours on the same days join up. */
+export function describeSlots(slots: Slot[]): string {
+  const byHours = new Map<string, { start: string; end: string; days: Set<number> }>();
+  for (const slot of slots) {
+    const key = `${slot.start}-${slot.end}`;
+    const entry = byHours.get(key) ?? { start: slot.start, end: slot.end, days: new Set<number>() };
+    entry.days.add(slot.day);
+    byHours.set(key, entry);
+  }
+  const ranges = [...byHours.values()]
+    .map((range) => ({ ...range, days: [...range.days].sort((a, b) => a - b) }))
+    .sort((a, b) => a.days[0] - b.days[0] || a.start.localeCompare(b.start));
+  const joined: typeof ranges = [];
+  for (const range of ranges) {
+    const previous = joined.find((candidate) => candidate.end === range.start && candidate.days.join() === range.days.join());
+    if (previous) {
+      previous.end = range.end;
+    } else {
+      joined.push({ ...range });
+    }
+  }
+  const text = joined
+    .map((range) => {
+      const names = range.days.map((day) => DAYS[day - 1]);
+      const days = names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : names[0];
+      return `${days}, de ${range.start} a ${range.end}`;
+    })
+    .join("; ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function withTimetable(classes: ClassDraft[]) {
+  return classes.map((lesson) => ({ ...lesson, when: lesson.when ?? describeSlots(lesson.slots) }));
+}
+
 /** Each price once: the class cards and the price list both read them from here. */
 const PRICES = {
   groupOneDay: "100 € al mes",
@@ -64,12 +110,18 @@ export const school = {
     action: "Marcos golpea una derecha en salto en la pista",
     championship: "Marcos en el Campeonato de Fuerteventura 2026",
   },
-  classes: [
+  classes: withTimetable([
     {
       name: "Niños",
       summary: "De 4 a 14 años. Aprenden jugando, en grupos de su edad y su nivel: minitenis hasta los 7 y escuela a partir de los 8.",
       /** DEMO */
-      when: "Lunes y miércoles, de 17:00 a 18:00",
+      slots: [
+        { day: 1, start: "17:00", end: "18:00", detail: "Minitenis, 4 a 7 años" },
+        { day: 3, start: "17:00", end: "18:00", detail: "Minitenis, 4 a 7 años" },
+        { day: 1, start: "18:00", end: "19:00", detail: "Escuela, 8 a 14 años" },
+        { day: 3, start: "18:00", end: "19:00", detail: "Escuela, 8 a 14 años" },
+        { day: 6, start: "10:00", end: "11:00", detail: "Minitenis y escuela" },
+      ],
       group: "Hasta 6 alumnos",
       price: `Desde ${PRICES.groupOneDay}`,
     },
@@ -77,18 +129,26 @@ export const school = {
       name: "Adultos",
       summary: "Empiezas de cero o vuelves después de años. Grupos por nivel, sin prisa.",
       /** DEMO */
-      when: "Martes y jueves, de 19:00 a 20:00",
+      slots: [
+        { day: 2, start: "19:00", end: "20:00", detail: "Iniciación" },
+        { day: 4, start: "19:00", end: "20:00", detail: "Iniciación" },
+        { day: 2, start: "20:00", end: "21:00", detail: "Ya juego" },
+        { day: 4, start: "20:00", end: "21:00", detail: "Ya juego" },
+        { day: 6, start: "11:00", end: "12:30", detail: "Todos los niveles" },
+      ],
       group: "Hasta 4 alumnos",
       price: `Desde ${PRICES.groupOneDay}`,
     },
     {
       name: "Particulares",
       summary: "Una hora solo para ti: corregir un golpe, preparar un partido o avanzar más rápido.",
+      slots: [],
+      /** Without slots of their own: they fit wherever the timetable has room. */
       when: "Según los huecos de Marcos",
       group: "Tú solo, o con un amigo",
       price: PRICES.private,
     },
-  ],
+  ]),
   prices: [
     { label: "Grupo, un día a la semana", amount: PRICES.groupOneDay },
     { label: "Grupo, dos días a la semana", amount: PRICES.groupTwoDays },
