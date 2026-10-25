@@ -145,3 +145,24 @@ test("un alumno borra su cuenta: pierde su plaza y ya no puede entrar", async ({
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "El email o la contraseña no son correctos." })).toBeVisible();
 });
+
+/** Fase 23: a student sees every lesson but books only their level's and the open ones. */
+test("un alumno de iniciación ve la clase de avanzado sin poder reservarla, y reserva una abierta", async ({ page, arrange }) => {
+  const student = await arrange.student({ managed: true });
+  await arrange.studentLevel(student, await arrange.levelId("Iniciación"));
+  const day = await arrange.freeDay();
+  const advanced = await arrange.lesson({ date: day, time: "09:00", capacity: 4 });
+  await arrange.lessonLevel(advanced, await arrange.levelId("Avanzado"));
+  await arrange.lesson({ date: day, time: "13:00", capacity: 4 });
+
+  await signIn(page, student.email, student.password);
+  await openFromMenu(page, "Clases");
+  const calendarDay = await dayInCalendar(page, day);
+  const forAdvanced = calendarDay.getByRole("listitem").filter({ hasText: "09:00" });
+  await expect(forAdvanced).toContainText("Para nivel avanzado");
+  await expect(forAdvanced.getByRole("button", { name: "Reservar" })).toHaveCount(0);
+
+  const open = calendarDay.getByRole("listitem").filter({ hasText: "13:00" });
+  await open.getByRole("button", { name: "Reservar" }).click();
+  await expect(open.getByText("Tienes plaza")).toBeVisible();
+});

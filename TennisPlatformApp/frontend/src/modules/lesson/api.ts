@@ -41,6 +41,14 @@ export function useCancelLesson(as: "teacher" | "admin" = "teacher") {
   });
 }
 
+/** Puts the lesson on a level, or opens it to everybody with null (Fase 23). */
+export function useChangeLessonLevel(id: string) {
+  return useMutation({
+    mutationFn: async (levelId: string | null) =>
+      unwrap(await api.PUT("/teacher/lessons/{id}/level", { params: { path: { id } }, body: { levelId } })),
+  });
+}
+
 export type CancelDay = components["schemas"]["CancelDayRequest"];
 
 /** Every lesson of a day in the teacher's zone, cancelled whole or not at all. */

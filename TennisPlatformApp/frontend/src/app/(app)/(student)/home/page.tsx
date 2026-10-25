@@ -22,6 +22,7 @@ const HORIZON_DAYS = 13;
 
 export default function StudentHomePage() {
   const me = useMe().data;
+  const myLevelId = me?.levelId ?? null;
   const now = useNow();
   // The range only needs to cover the teacher's days; the browser's zone is close enough for it.
   const today = dateIn(new Date(now), Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -69,7 +70,8 @@ export default function StudentHomePage() {
                 {home.open.map((lesson) => (
                   <LessonLine key={lesson.id} lesson={lesson} zone={zone} withDay
                     actions={<StudentLessonActions lessonId={lesson.id} startsAt={lesson.startsAt}
-                      lessonStatus={lesson.status} booking={lesson.myBooking} />} />
+                      lessonStatus={lesson.status} booking={lesson.myBooking}
+                      levelId={lesson.levelId} myLevelId={myLevelId} />} />
                 ))}
               </ul>
             </section>
@@ -98,7 +100,7 @@ function NextLesson({ lesson, zone, now, teacher }: { lesson: CalendarLesson; zo
       <p className="text-sm text-white/90">{lesson.capacity > 1 ? seatsLeft(lesson) : "Clase para ti solo"}</p>
       <div className="self-start rounded-lg bg-paper p-1.5 text-ink">
         <StudentLessonActions lessonId={lesson.id} startsAt={lesson.startsAt} lessonStatus={lesson.status}
-          booking={lesson.myBooking} />
+          booking={lesson.myBooking} levelId={lesson.levelId} />
       </div>
     </CourtCard>
   );

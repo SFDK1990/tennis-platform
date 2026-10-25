@@ -155,6 +155,29 @@ export class Arrange {
     ok(await client.POST("/bookings/{id}/cancel", { params: { path: { id: seat.id } } }), "cancellation");
   }
 
+  /** The id of the teacher's level with that name (Fase 23). */
+  async levelId(name: string): Promise<string> {
+    const teacher = await this.teacher();
+    const { levels } = ok(await teacher.GET("/levels"), "levels");
+    const level = levels.find((candidate) => candidate.name === name);
+    if (!level) throw new Error(`The teacher has no level called ${name}`);
+    return level.id;
+  }
+
+  /** The teacher puts the student on a level; the test leaves them without one afterwards. */
+  async studentLevel(student: Student, levelId: string): Promise<void> {
+    const teacher = await this.teacher();
+    const path = { params: { path: { userId: student.userId } } };
+    ok(await teacher.PUT("/teacher/students/{userId}/record", { ...path, body: { levelId } }), "record");
+    this.undo.push(() => teacher.PUT("/teacher/students/{userId}/record", { ...path, body: { levelId: null } }));
+  }
+
+  async lessonLevel(lessonId: string, levelId: string): Promise<void> {
+    const teacher = await this.teacher();
+    ok(await teacher.PUT("/teacher/lessons/{id}/level", { params: { path: { id: lessonId } }, body: { levelId } }),
+      "lesson level");
+  }
+
   /** Seats taken in a lesson, read as the teacher sees them. */
   async confirmedBookingsOf(lessonId: string): Promise<number> {
     const teacher = await this.teacher();

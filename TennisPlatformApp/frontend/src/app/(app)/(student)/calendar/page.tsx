@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { StudentLessonActions } from "@/modules/booking/components/StudentLessonActions";
+import { useMe } from "@/modules/identity/api";
 import { useCalendar } from "@/modules/calendar/api";
 import { WeekCalendar } from "@/modules/calendar/components/WeekCalendar";
 import { WeekNavigator } from "@/modules/calendar/components/WeekNavigator";
@@ -13,6 +14,7 @@ export default function StudentCalendarPage() {
   const [from, setFrom] = useState(() => weekOf(todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone)).from);
   const { to } = weekOf(from);
   const calendar = useCalendar(from, to);
+  const myLevelId = useMe().data?.levelId ?? null;
 
   return (
     <>
@@ -29,7 +31,7 @@ export default function StudentCalendarPage() {
           from={from}
           renderActions={(lesson) => (
             <StudentLessonActions lessonId={lesson.id} startsAt={lesson.startsAt} lessonStatus={lesson.status}
-              booking={lesson.myBooking} />
+              booking={lesson.myBooking} levelId={lesson.levelId} myLevelId={myLevelId} />
           )}
         />
       ) : (

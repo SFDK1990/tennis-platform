@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useCancelFollowing, useCancelLesson, type Lesson } from "@/modules/lesson/api";
+import { useCancelFollowing, useCancelLesson, useChangeLessonLevel, type Lesson } from "@/modules/lesson/api";
 import { CancelConfirmation } from "@/modules/lesson/components/CancelConfirmation";
 import { EditLessonForm } from "@/modules/lesson/components/EditLessonForm";
+import { LevelSelect, useLevelName } from "@/shared/levels";
 import { dateIn, formatDay, formatTime } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
 import { CourtCard } from "@/shared/ui/CourtCard";
@@ -28,6 +29,8 @@ interface LessonDetailProps {
 export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDetailProps) {
   const cancel = useCancelLesson(as);
   const cancelFollowing = useCancelFollowing();
+  const changeLevel = useChangeLessonLevel(lesson.id);
+  const levelName = useLevelName();
   // Which cancellation is being confirmed: this lesson, or this one and the rest of its series.
   const [confirming, setConfirming] = useState<"lesson" | "following" | null>(null);
   const [editing, setEditing] = useState(false);
@@ -47,6 +50,7 @@ export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDe
           {lesson.type === "INDIVIDUAL" ? "Clase individual" : `Clase de grupo, ${lesson.capacity} plazas`}.{" "}
           {STATUS[lesson.status]}, con {lesson.bookedCount} {lesson.bookedCount === 1 ? "reserva" : "reservas"}.
         </p>
+        <p className="text-sm text-white/85">{levelName(lesson.levelId) ? `Nivel ${levelName(lesson.levelId)}` : "Abierta a todos los niveles"}.</p>
         {lesson.seriesPosition ? (
           <p className="text-sm text-white/85">Se repite cada semana: es la {lesson.seriesPosition} de {lesson.seriesSize}.</p>
         ) : null}
@@ -56,6 +60,13 @@ export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDe
         <Notice>Se canceló con menos de 24 horas de aviso.</Notice>
       ) : null}
       {editing ? <EditLessonForm lesson={lesson} onDone={() => setEditing(false)} /> : null}
+      {editable ? (
+        <div className="max-w-64">
+          <LevelSelect id="lesson-detail-level" label="Nivel de la clase" noneLabel="Abierta a todos" value={lesson.levelId}
+            onChange={(levelId) => changeLevel.mutate(levelId)} />
+        </div>
+      ) : null}
+      <ErrorNotice error={changeLevel.error} />
       <ErrorNotice error={cancel.error ?? cancelFollowing.error} />
       {cancellable && !editing ? (
         confirming === "lesson" ? (

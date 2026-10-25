@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   insideCancellationWindow, useBookLesson, useCancelBooking, useJoinWaitingList, useLeaveWaitingList, useMyWaitingList,
 } from "@/modules/booking/api";
+import { useLevelName } from "@/shared/levels";
 import { useNow } from "@/shared/useNow";
 import { Button } from "@/shared/ui/Button";
 import { ErrorNotice } from "@/shared/ui/Notice";
@@ -13,10 +14,13 @@ interface StudentLessonActionsProps {
   startsAt: string;
   lessonStatus: string;
   booking: { id: string; status: string } | null;
+  /** The lesson's level, and the student's (Fase 23); null for an open lesson or a student without one. */
+  levelId?: string | null;
+  myLevelId?: string | null;
 }
 
 /** Book or cancel one lesson, with the 24-hour rule said before it bites. */
-export function StudentLessonActions({ lessonId, startsAt, lessonStatus, booking }: StudentLessonActionsProps) {
+export function StudentLessonActions({ lessonId, startsAt, lessonStatus, booking, levelId, myLevelId }: StudentLessonActionsProps) {
   const book = useBookLesson();
   const cancel = useCancelBooking();
   const [confirming, setConfirming] = useState(false);
@@ -46,6 +50,11 @@ export function StudentLessonActions({ lessonId, startsAt, lessonStatus, booking
         <ErrorNotice error={error} />
       </div>
     );
+  }
+
+  // The student sees every lesson, but books only their level's and the open ones (36-fase23, decision 4).
+  if (levelId && myLevelId && levelId !== myLevelId) {
+    return <LevelOnly levelId={levelId} />;
   }
 
   if (lessonStatus === "FULL" && !started) {
@@ -108,4 +117,9 @@ function WaitingListAction({ lessonId }: { lessonId: string }) {
 /** Where the student stands, said without gender: the next seat, or how many are ahead. */
 export function waitingLabel(position: number): string {
   return position === 1 ? "En lista de espera: la próxima plaza es tuya" : `En lista de espera: ${position - 1} por delante`;
+}
+
+function LevelOnly({ levelId }: { levelId: string }) {
+  const levelName = useLevelName();
+  return <span className="text-sm text-muted">Para nivel {levelName(levelId)?.toLowerCase() ?? "de otro nivel"}</span>;
 }
