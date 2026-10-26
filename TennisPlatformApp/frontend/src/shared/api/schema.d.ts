@@ -2580,7 +2580,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
-                /** @description NO_RECIPIENTS: en el destino no hay ningun alumno */
+                /** @description NO_RECIPIENTS si en el destino no hay ningun alumno; LESSON_NOT_IN_SERIES si se pide SERIES de una clase creada suelta */
                 422: {
                     headers: {
                         [name: string]: unknown;
