@@ -144,31 +144,6 @@ tailscale funnel status   # 443 sale como Funnel; 8443 sólo como tailnet
 
 Para quitarla: `sudo tailscale serve --https=8443 off` y la línea del cron.
 
-### Avisos al móvil
-
-El mismo script avisa cuando algo empieza a ir mal y cuando se arregla, nunca cada minuto:
-temperatura desde 75 °C (se da por resuelta por debajo de 70), memoria o disco desde el 90 %
-(resuelto por debajo del 85 %), falta de corriente o ralentización en ese momento, y cualquier
-contenedor parado o `unhealthy`. El aviso lleva sólo datos de la máquina.
-
-- **ntfy** manda la notificación. En el móvil, la app ntfy, suscrita a un canal de nombre largo y
-  aleatorio: quien conozca el nombre ve los avisos, así que no se comparte.
-- **healthchecks.io** cubre lo que la Pi no puede avisar: que se apague o se quede sin internet.
-  El script le da un toque cada minuto; si deja de llegar, es el servicio el que avisa, por correo
-  o por el mismo ntfy.
-
-Los dos son opcionales y se configuran en la Pi, fuera del repositorio:
-
-```bash
-mkdir -p ~/.config/tennis-status && touch ~/.config/tennis-status/alerts.env
-chmod 600 ~/.config/tennis-status/alerts.env
-nano ~/.config/tennis-status/alerts.env
-# NTFY_URL=https://ntfy.sh/<canal>
-# HEALTHCHECK_URL=https://hc-ping.com/<uuid>
-```
-
-Para probar el aviso: `curl -d "Prueba" https://ntfy.sh/<canal>`.
-
 ## Logs
 
 ```bash

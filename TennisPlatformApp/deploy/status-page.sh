@@ -7,15 +7,7 @@
 #   tailscale serve --bg --https=8443 /srv/status/index.html
 # Copied out of the repository: deploy.sh checks out tags, and one without this file would
 # leave cron without it.
-# Alerts, optional, from ~/.config/tennis-status/alerts.env (mode 600, never in Git):
-#   NTFY_URL=https://ntfy.sh/<long random topic>   a push to the phone when a problem starts
-#                                                  and when it clears, never every minute
-#   HEALTHCHECK_URL=https://hc-ping.com/<uuid>     pinged every run: if the Pi goes down, the
-#                                                  outside service is the one that warns
 set -euo pipefail
-
-ALERTS_FILE="${ALERTS_FILE:-$HOME/.config/tennis-status/alerts.env}"
-if [[ -f "$ALERTS_FILE" ]]; then set -a; source "$ALERTS_FILE"; set +a; fi
 
 STATUS_DIR="${STATUS_DIR:-/srv/status}"
 mkdir -p "$STATUS_DIR"
@@ -23,14 +15,11 @@ mkdir -p "$STATUS_DIR"
 # Optional readings: without vcgencmd (not a Pi) or docker, the page leaves them out.
 throttled="$(vcgencmd get_throttled 2>/dev/null | cut -d= -f2 || true)"
 containers="$(docker stats --no-stream --format '{{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}' 2>/dev/null || true)"
-# Stopped ones too: docker stats only lists what is running.
-states="$(docker ps -a --filter label=com.docker.compose.project=tennis-prod \
-  --format '{{.Names}}\t{{.Status}}' 2>/dev/null || true)"
 
-python3 - "$STATUS_DIR" "$throttled" "$containers" "$states" <<'PY'
-import html, os, shutil, sys, time, urllib.request
+python3 - "$STATUS_DIR" "$throttled" "$containers" <<'PY'
+import html, os, shutil, sys, time
 
-status_dir, throttled, containers, states = sys.argv[1:5]
+status_dir, throttled, containers = sys.argv[1:4]
 now = int(time.time())
 HISTORY_MINUTES = 24 * 60
 
@@ -188,57 +177,4 @@ index = os.path.join(status_dir, "index.html")
 with open(index + ".tmp", "w", encoding="utf-8") as f:
     f.write(page)
 os.replace(index + ".tmp", index)
-
-# Alerts. A problem has a start threshold and a lower one to clear it, so a value hovering at
-# the limit does not send a message a minute. The state is only saved once the push went out:
-# with the network down, it is tried again on the next run.
-def post(url, body, title, tags):
-    req = urllib.request.Request(url, data=body.encode("utf-8"),
-                                 headers={"Title": title, "Tags": tags})
-    urllib.request.urlopen(req, timeout=10).close()
-
-state_path = os.path.join(status_dir, "alerts.state")
-active = set(filter(None, (read(state_path) or "").splitlines()))
-
-def problem(key, on, off):
-    return on or (key in active and off)
-
-problems = {}
-if temp is not None and problem("temp", temp >= 75, temp >= 70):
-    problems["temp"] = f"Temperatura a {temp:.0f} °C"
-if problem("mem", mem_pct >= 90, mem_pct >= 85):
-    problems["mem"] = f"Memoria al {mem_pct:.0f} %"
-disk_pct = 100 * disk.used / disk.total
-if problem("disk", disk_pct >= 90, disk_pct >= 85):
-    problems["disk"] = f"Disco al {disk_pct:.0f} %"
-if throttled and int(throttled, 16) & 0xF:
-    problems["throttled"] = "Ahora mismo: " + ", ".join(
-        name for bit, name in FLAGS.items() if int(throttled, 16) & (1 << bit))
-for line in states.splitlines():
-    name, status = line.split("\t")
-    if not status.startswith("Up") or "unhealthy" in status:
-        short = name.removeprefix("tennis-prod-").removesuffix("-1")
-        problems[f"container:{short}"] = f"{short}: {status}"
-
-LABELS = {"temp": "temperatura", "mem": "memoria", "disk": "disco",
-          "throttled": "corriente y calor"}
-ntfy = os.environ.get("NTFY_URL")
-if ntfy:
-    try:
-        for key in sorted(problems.keys() - active):
-            post(ntfy, problems[key], "Problema en la Pi", "warning")
-        for key in sorted(active - problems.keys()):
-            post(ntfy, f"Resuelto: {LABELS.get(key, key.split(':')[-1])}",
-                 "La Pi vuelve a estar bien", "white_check_mark")
-        with open(state_path, "w", encoding="utf-8") as f:
-            f.writelines(f"{key}\n" for key in sorted(problems))
-    except OSError as e:
-        print(f"Alert not sent: {e}", file=sys.stderr)
-
-healthcheck = os.environ.get("HEALTHCHECK_URL")
-if healthcheck:
-    try:
-        urllib.request.urlopen(healthcheck, timeout=10).close()
-    except OSError as e:
-        print(f"Healthcheck ping failed: {e}", file=sys.stderr)
 PY
