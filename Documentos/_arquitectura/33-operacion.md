@@ -108,6 +108,38 @@ mkdir -p /srv/reports
 crontab -e   # 0 8 * * 1 /srv/tennis-platform/TennisPlatformApp/deploy/access-report.sh > /srv/reports/accesos-$(date +\%G-W\%V).txt 2>&1
 ```
 
+## Estado del servidor
+
+Temperatura, memoria, disco y carga de la Pi en una página que se abre desde el móvil:
+https://tenis-pi.tail26506d.ts.net:8443. Sólo la ve un dispositivo con Tailscale y la sesión
+iniciada en tu cuenta: la sirve `tailscaled` en un puerto que Funnel no abre, y Caddy no la
+conoce. Se recarga sola cada minuto; si la hora de arriba se queda vieja y sale en rojo, el cron
+dejó de ejecutarse.
+
+Arriba sale un aviso si la Pi ha tenido falta de corriente o se ha ralentizado por calor desde que
+arrancó (`vcgencmd get_throttled`). Desde 80 °C la Pi baja la frecuencia: la tarjeta se pone
+naranja a 70 °C y roja a 80 °C; la memoria y el disco, a 80 % y 90 %.
+
+Activarlo en el servidor, una vez. El script se copia fuera del repositorio, porque `deploy.sh`
+cambia de etiqueta y una que no lo tenga dejaría el cron sin él:
+
+```bash
+sudo install -m 755 deploy/status-page.sh /usr/local/bin/tennis-status-page.sh
+sudo mkdir -p /srv/status && sudo chown "$USER" /srv/status
+/usr/local/bin/tennis-status-page.sh   # la primera página, y comprueba que funciona
+```
+
+```bash
+crontab -e   # * * * * * /usr/local/bin/tennis-status-page.sh
+```
+
+```bash
+sudo tailscale serve --bg --https=8443 /srv/status/index.html
+tailscale funnel status   # 443 sale como Funnel; 8443 sólo como tailnet
+```
+
+Para quitarla: `sudo tailscale serve --https=8443 off` y la línea del cron.
+
 ## Logs
 
 ```bash
