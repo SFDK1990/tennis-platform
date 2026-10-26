@@ -81,6 +81,25 @@ public class GetManagedStudentsService implements GetManagedStudents, QueryManag
 
     @Override
     @Transactional(readOnly = true)
+    public List<UUID> studentsOf(UUID teacherUserId) {
+        return relationships.findAllByTeacher(teacherUserId).stream()
+                .filter(ManagedStudent::isManaged)
+                .map(ManagedStudent::studentUserId)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> studentsOn(UUID teacherUserId, UUID levelId) {
+        return relationships.findAllByTeacher(teacherUserId).stream()
+                .filter(ManagedStudent::isManaged)
+                .filter(relationship -> levelId.equals(relationship.levelId()))
+                .map(ManagedStudent::studentUserId)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ResultPage<ManagedStudentView> list(UUID teacherUserId, String query, int page, int size) {
         List<ManagedStudent> managed = relationships.findAllByTeacher(teacherUserId).stream()
                 .filter(ManagedStudent::isManaged)

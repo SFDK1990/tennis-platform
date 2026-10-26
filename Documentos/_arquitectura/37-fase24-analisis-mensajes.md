@@ -29,9 +29,9 @@ Marcos elige el destino entre tres:
 no recibe los mensajes anteriores. Cada mensaje guarda a quién fue, y eso es lo que ve cada uno
 en su tablón.
 
-### 2. Qué es un grupo — **decisión tuya**
+### 2. Qué es un grupo — **decidido: A**
 
-- **A (te la recomiendo). Los alumnos de una clase o de su serie.** Desde la página de una clase
+- **A. Los alumnos de una clase o de su serie.** Desde la página de una clase
   Marcos tiene «Escribir a los alumnos», con dos opciones: los de esa clase o los de toda la serie
   (cualquiera que tenga reserva en alguna de sus clases futuras). Sirve para «mañana no hay
   clase» y para «el grupo de los martes cambia de pista». No hay que mantener nada aparte.
@@ -137,3 +137,29 @@ Todo va primero a `openapi.yaml`:
 7. E2E y documentación: `02`, `03`, `10-diagrama-er.md`, `11-contrato-api.md` y `CLAUDE.md`.
 
 ## Decisiones tomadas al implementar
+
+- **Daniel eligió A en las dos decisiones**: un grupo son los alumnos de una clase o de su serie, y
+  cada alumno ve sólo los mensajes que se le enviaron.
+- **Los mensajes viven en `notification`**, que ya leía a los alumnos, las clases y las reservas
+  para los correos. Un módulo nuevo habría necesitado las mismas dependencias y las mismas reglas
+  de frontera para compartir con él el envío de correo.
+- **Los destinatarios son siempre alumnos que Marcos gestiona ahora**, también en una clase o una
+  serie: una reserva que quedó de un alumno dado de baja no lo convierte en destinatario.
+- **El grupo de una serie son los que tienen plaza en una clase que aún no ha empezado.** Quien
+  sólo estuvo en las primeras semanas ya no está en el grupo.
+- **`audience_label` se escribe al enviar** («Nivel Intermedio», «Grupo de los martes a las
+  18:00»): el nivel se puede renombrar o borrar, y la clase cancelarse.
+- **Pedir el grupo de una clase suelta da `LESSON_NOT_IN_SERIES`**, el mismo código que cancelar sus
+  siguientes. Un nivel o una clase de otro profesor dan su propio 404 (`LEVEL_NOT_FOUND`,
+  `LESSON_NOT_FOUND`).
+- **Sólo recibe el correo quien tiene la cuenta activa y el email verificado**; los demás
+  destinatarios lo ven en sus avisos.
+- **`GET /messages` responde a cualquiera con sesión**; el profesor y el admin reciben la página
+  vacía, como la exportación.
+- **El escuchador de los correos se llama ahora `MailListener`** y oye también `MessageSent`, con la
+  misma cola en segundo plano.
+- **Mutaciones**, todas vistas fallar y deshechas:
+  - leer el tablón sin filtrar por destinatario hizo fallar 6 tests;
+  - quitar el filtro de nivel, 2;
+  - mandar correo a un email sin verificar, 1;
+  - contar las clases ya pasadas de la serie, 1.

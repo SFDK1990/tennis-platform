@@ -1,0 +1,38 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v12-notification-messages
+      author: tennis-platform
+      comment: >-
+        The teacher's messages and who each one went to (37-fase24-analisis-mensajes.md). The
+        recipients are fixed when the message is sent; deleting a message takes its recipients
+        with it, and deleting an account removes the student from every message's recipients.
+        audience_label is written when sending because the level or lesson may change afterwards.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE messages (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  audience         VARCHAR(10) NOT NULL
+                                   CONSTRAINT ck_messages_audience CHECK (audience IN ('ALL', 'LEVEL', 'LESSON', 'SERIES')),
+                  audience_label   VARCHAR(120) NOT NULL,
+                  subject          VARCHAR(120) NOT NULL,
+                  body             VARCHAR(4000) NOT NULL,
+                  sent_at          TIMESTAMPTZ NOT NULL,
+                  recipient_count  INT NOT NULL CONSTRAINT ck_messages_recipient_count CHECK (recipient_count > 0)
+              );
+              CREATE INDEX ix_messages_teacher_sent_at ON messages (teacher_user_id, sent_at DESC);
+
+              CREATE TABLE message_recipients (
+                  message_id       UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+                  student_user_id  UUID NOT NULL REFERENCES users(id),
+                  PRIMARY KEY (message_id, student_user_id)
+              );
+              CREATE INDEX ix_message_recipients_student ON message_recipients (student_user_id);
+      rollback:
+        - sql:
+            sql: |
+              DROP TABLE message_recipients;
+              DROP TABLE messages;

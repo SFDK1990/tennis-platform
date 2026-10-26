@@ -6,11 +6,20 @@ import { LessonAttendance } from "@/modules/booking/components/LessonAttendance"
 import { LessonWaitingList } from "@/modules/booking/components/LessonWaitingList";
 import { useLesson } from "@/modules/lesson/api";
 import { LessonDetail } from "@/modules/lesson/components/LessonDetail";
+import { MessageComposer, type AudienceOption } from "@/modules/messages/components/MessageComposer";
 import { useStudentNames } from "@/modules/student/api";
 import { useTeacherZone } from "@/modules/teacher/api";
 import { useNow } from "@/shared/useNow";
 import { Icon } from "@/shared/ui/Icon";
 import { ErrorNotice } from "@/shared/ui/Notice";
+
+/** The students of this lesson, or those of every lesson still to come in its weekly series (Fase 24). */
+function audiencesOf(lessonId: string, inSeries: boolean): AudienceOption[] {
+  const lesson: AudienceOption = { key: "LESSON", label: "Los de esta clase", audience: { audience: "LESSON", lessonId } };
+  return inSeries
+    ? [lesson, { key: "SERIES", label: "Todo el grupo de la serie", audience: { audience: "SERIES", lessonId } }]
+    : [lesson];
+}
 
 export default function LessonPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +41,9 @@ export default function LessonPage() {
             <LessonAttendance lessonId={id} started={started} nameOf={nameOf} />
           </section>
           {started ? null : <LessonWaitingList lessonId={id} nameOf={nameOf} />}
+          {lesson.data.status === "CANCELLED" ? null : (
+            <MessageComposer title="Escribir a los alumnos" options={audiencesOf(id, lesson.data.seriesId != null)} />
+          )}
         </>
       ) : (
         <p className="text-muted">Cargando…</p>

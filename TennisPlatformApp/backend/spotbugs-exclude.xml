@@ -81,4 +81,11 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
+    <!-- The same false positive, on MessageRepository (Fase 24), scoped to the one field. -->
+    <Match>
+        <Class name="~com\.tennisplatform\.notification\.application\.service\.(MessagesService|MessageNotifications)"/>
+        <Field name="messages"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
 </FindBugsFilter>

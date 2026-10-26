@@ -19,6 +19,7 @@ tags:
   - name: calendar
   - name: lessons
   - name: bookings
+  - name: messages
   - name: administration
 
 paths:
@@ -260,8 +261,8 @@ paths:
       summary: Descarga todo lo que la plataforma guarda del usuario autenticado
       description: >-
         Un JSON para descargar (`Content-Disposition: attachment`): la cuenta y el perfil, como
-        `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia. El profesor y
-        el admin reciben la lista de reservas vacía.
+        `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia, su ficha y
+        los mensajes que recibió. El profesor y el admin reciben esas listas vacías.
       responses:
         "200":
           description: OK
@@ -1339,6 +1340,95 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /teacher/messages:
+    post:
+      tags: [messages]
+      summary: Escribe a todos los alumnos, a un nivel, a los de una clase o a los de su serie
+      description: >-
+        Los destinatarios se fijan al enviar: son los alumnos que el profesor gestiona y que en ese
+        momento estan en el destino. Para LESSON, los que tienen reserva confirmada en la clase; para
+        SERIES, los que la tienen en alguna clase de la serie que aun no ha empezado. Cada uno lo ve
+        en GET /messages y, si tiene el email verificado, lo recibe por correo despues del commit
+        (Fase 24).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SendMessageRequest" }
+      responses:
+        "201":
+          description: Enviado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SentMessage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: LEVEL_NOT_FOUND o LESSON_NOT_FOUND, tambien si son de otro profesor
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: >-
+            NO_RECIPIENTS si en el destino no hay ningun alumno; LESSON_NOT_IN_SERIES si se pide
+            SERIES de una clase creada suelta
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    get:
+      tags: [messages]
+      summary: Los mensajes que ha enviado el profesor, el mas reciente primero
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SentMessagePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/messages/{id}:
+    delete:
+      tags: [messages]
+      summary: Quita un mensaje del tablon de todos sus destinatarios
+      description: El correo ya ha salido y no se retira.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Borrado
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: MESSAGE_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /messages:
+    get:
+      tags: [messages]
+      summary: El tablon del usuario autenticado, el mas reciente primero
+      description: >-
+        Solo los mensajes que se le enviaron a el. El profesor y el admin reciben la pagina vacia.
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReceivedMessagePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
   /admin/configuration:
     get:
       tags: [administration]
@@ -1646,7 +1736,7 @@ components:
 
     MyDataExport:
       type: object
-      required: [exportedAt, account, bookings, records]
+      required: [exportedAt, account, bookings, records, messages]
       properties:
         exportedAt: { type: string, format: date-time }
         account: { $ref: "#/components/schemas/MeResponse" }
@@ -1665,6 +1755,10 @@ components:
               level: { type: string, nullable: true }
               goals: { type: string, nullable: true }
               privateNotes: { type: string, nullable: true }
+        messages:
+          type: array
+          description: Los mensajes que el alumno recibio y siguen en su tablon (Fase 24).
+          items: { $ref: "#/components/schemas/ReceivedMessage" }
 
     Level:
       type: object
@@ -2187,6 +2281,66 @@ components:
             properties:
               bookingId: { type: string, format: uuid }
               status: { type: string, enum: [ATTENDED, NO_SHOW] }
+
+    MessageAudience:
+      type: string
+      enum: [ALL, LEVEL, LESSON, SERIES]
+
+    SendMessageRequest:
+      type: object
+      required: [audience, subject, body]
+      description: levelId solo con LEVEL, lessonId solo con LESSON y SERIES.
+      properties:
+        audience: { $ref: "#/components/schemas/MessageAudience" }
+        levelId: { type: string, format: uuid }
+        lessonId: { type: string, format: uuid }
+        subject: { type: string, maxLength: 120 }
+        body: { type: string, maxLength: 4000 }
+
+    SentMessage:
+      type: object
+      required: [id, audience, audienceLabel, subject, body, sentAt, recipientCount]
+      properties:
+        id: { type: string, format: uuid }
+        audience: { $ref: "#/components/schemas/MessageAudience" }
+        audienceLabel:
+          type: string
+          description: >-
+            A quien fue, escrito al enviar ("Nivel Intermedio", "Clase del lunes 2 de noviembre,
+            18:00"): el nivel o la clase pueden cambiar o desaparecer despues.
+        subject: { type: string }
+        body: { type: string }
+        sentAt: { type: string, format: date-time }
+        recipientCount: { type: integer, minimum: 1 }
+
+    SentMessagePage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/SentMessage" }
+
+    ReceivedMessage:
+      type: object
+      required: [id, subject, body, sentAt]
+      properties:
+        id: { type: string, format: uuid }
+        subject: { type: string }
+        body: { type: string }
+        sentAt: { type: string, format: date-time }
+
+    ReceivedMessagePage:
+      allOf:
+        - $ref: "#/components/schemas/Page"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ReceivedMessage" }
 
     PlatformConfiguration:
       type: object

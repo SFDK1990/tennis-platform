@@ -124,6 +124,17 @@ public class MailTexts {
                 calendar(CalendarInvite.Method.CANCEL, lesson, why));
     }
 
+    /** A message from the teacher (Fase 24): their words as they wrote them, and where else to read them. */
+    public Mail messageToStudent(UUID messageId, String subject, String text, String teacherName, String to,
+                                 String studentName) {
+        String body = greeting(studentName)
+                + teacherName + " te ha escrito:\n\n"
+                + text + "\n\n"
+                + "Lo tienes también en tus avisos: " + frontendBaseUrl + "/messages\n\n"
+                + signature();
+        return new Mail("message-student", messageId.toString(), to, subject, body, null);
+    }
+
     private Mail.Calendar calendar(CalendarInvite.Method method, Lesson lesson, String reason) {
         String summary = "Clase de tenis con " + lesson.teacherName();
         String content = CalendarInvite.of(method, lesson.bookingId() + "@tennis-platform", lesson.startsAt(),

@@ -23,6 +23,9 @@ public interface GetLesson {
      */
     List<LessonView> byIds(Collection<UUID> ids);
 
+    /** Every lesson of a weekly series, cancelled ones too, in the order they run (Fase 24). */
+    List<LessonView> ofSeries(UUID seriesId);
+
     /**
      * The teacher's lessons whose time touches the given range of dates, both included.
      *

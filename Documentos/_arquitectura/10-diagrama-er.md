@@ -30,6 +30,9 @@ erDiagram
     LEVELS |o--o{ LESSONS : "es para"
     LEVELS |o--o{ TEACHER_STUDENTS : "nivel del alumno"
     STUDENT_PROFILES ||--o{ WAITING_LIST_ENTRIES : espera
+    TEACHER_PROFILES ||--o{ MESSAGES : escribe
+    MESSAGES ||--o{ MESSAGE_RECIPIENTS : "va a"
+    USERS ||--o{ MESSAGE_RECIPIENTS : recibe
 
     USERS {
         uuid id PK
@@ -403,6 +406,30 @@ ALTER TABLE teacher_students
     ADD COLUMN goals VARCHAR(2000),
     ADD COLUMN private_notes VARCHAR(2000);
 ALTER TABLE lessons ADD COLUMN level_id UUID REFERENCES levels(id) ON DELETE RESTRICT;
+```
+
+## Changelog 5d — mensajes (Fase 24)
+
+`v12-notification-messages.yaml`. Razonamiento en `37-fase24-analisis-mensajes.md`.
+
+```sql
+CREATE TABLE messages (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    audience         VARCHAR(10) NOT NULL CHECK (audience IN ('ALL', 'LEVEL', 'LESSON', 'SERIES')),
+    audience_label   VARCHAR(120) NOT NULL,
+    subject          VARCHAR(120) NOT NULL,
+    body             VARCHAR(4000) NOT NULL,
+    sent_at          TIMESTAMPTZ NOT NULL,
+    recipient_count  INT NOT NULL CHECK (recipient_count > 0)
+);
+CREATE INDEX ix_messages_teacher_sent_at ON messages (teacher_user_id, sent_at DESC);
+CREATE TABLE message_recipients (
+    message_id       UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    student_user_id  UUID NOT NULL REFERENCES users(id),
+    PRIMARY KEY (message_id, student_user_id)
+);
+CREATE INDEX ix_message_recipients_student ON message_recipients (student_user_id);
 ```
 
 ## Changelog 6b — lista de espera (Fase 21)

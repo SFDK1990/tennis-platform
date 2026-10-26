@@ -234,6 +234,16 @@ Códigos añadidos en la Fase 23:
 | `LEVEL_ALREADY_EXISTS` | 409 | `POST /teacher/levels`, `PATCH /teacher/levels/{id}` | Ya hay un nivel con ese nombre |
 | `LEVEL_NOT_FOUND` | 404 | `PATCH` y `DELETE /teacher/levels/{id}` | No es un nivel del profesor |
 
+Códigos añadidos en la Fase 24:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `NO_RECIPIENTS` | 422 | `POST /teacher/messages` | En el destino no hay ningún alumno: el mensaje no llegaría a nadie |
+| `MESSAGE_NOT_FOUND` | 404 | `DELETE /teacher/messages/{id}` | No es un mensaje del profesor |
+
+`POST /teacher/messages` responde también `LEVEL_NOT_FOUND` o `LESSON_NOT_FOUND` si el destino no
+es del profesor, y `LESSON_NOT_IN_SERIES` si se pide el grupo de una clase creada suelta.
+
 `409` se reserva para los casos donde el frontend debe releer el estado (calendario desactualizado); `422` para violaciones de regla que no dependen de una carrera de concurrencia; `403` para falta de autorización/relación. Este criterio es el mismo que ya recomendaba `02-arquitectura.md` para tratar las respuestas `409` como "el calendario puede estar obsoleto, vuelve a consultarlo".
 
 ## Endpoints cubiertos

@@ -25,3 +25,5 @@ databaseChangeLog:
       file: db/changelog/changes/v10-lesson-series.yaml
   - include:
       file: db/changelog/changes/v11-levels.yaml
+  - include:
+      file: db/changelog/changes/v12-notification-messages.yaml

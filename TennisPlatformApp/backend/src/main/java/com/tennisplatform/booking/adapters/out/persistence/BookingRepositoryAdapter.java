@@ -90,6 +90,11 @@ class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
+    public List<UUID> studentsConfirmedIn(Collection<UUID> lessonIds) {
+        return jpa.studentsConfirmedIn(lessonIds);
+    }
+
+    @Override
     public List<Booking> findAllById(Collection<UUID> ids) {
         return jpa.findAllById(ids).stream().map(BookingEntity::toDomain).toList();
     }

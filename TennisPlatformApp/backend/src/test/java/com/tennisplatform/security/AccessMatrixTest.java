@@ -129,6 +129,12 @@ class AccessMatrixTest extends AbstractBookingTest {
                 Map.of("entries", List.of(Map.of("bookingId", "{bookingId}", "status", "ATTENDED"))),
                                                                                  401, 403, 403, 403, ALLOWED, 403);
 
+        row("POST", "/teacher/messages", Map.of("audience", "ALL", "subject", "Aviso", "body", "Texto"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("GET", "/teacher/messages", none,                                    401, 403, 403, 403, ALLOWED, 403);
+        row("DELETE", "/teacher/messages/{messageId}", none,                     401, 403, 403, 403, ALLOWED, 403);
+        row("GET", "/messages", none,                                            401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+
         row("GET", "/admin/configuration", none,                                 401, 403, 403, 403, 403, ALLOWED);
         row("PATCH", "/admin/configuration", Map.of("studentLimit", 40),         401, 403, 403, 403, 403, ALLOWED);
         row("POST", "/admin/lessons/{lessonId}/cancel", none,                   401, 403, 403, 403, 403, ALLOWED);
@@ -224,7 +230,8 @@ class AccessMatrixTest extends AbstractBookingTest {
                 "lessonId", lessonId.toString(),
                 "bookingId", (String) booked.getBody().get("id"),
                 "exceptionId", (String) exception.getBody().get("id"),
-                "levelId", (String) level.getBody().get("id"));
+                "levelId", (String) level.getBody().get("id"),
+                "messageId", UUID.randomUUID().toString());
     }
 
     private ResponseEntity<String> call(Row row, Who who) {

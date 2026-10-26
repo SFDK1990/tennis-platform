@@ -80,7 +80,8 @@ Consulta agregada de disponibilidad, clases y reservas. No es propietario de los
 
 ### notification
 
-Los correos de reservas y cancelaciones, con su `.ics` (Fase 20). No guarda nada.
+Los correos de reservas y cancelaciones, con su `.ics` (Fase 20), y los mensajes de Marcos a sus
+alumnos con sus destinatarios (Fase 24, tablas `messages` y `message_recipients`).
 
 ### shared
 
@@ -101,7 +102,9 @@ Primitivas técnicas mínimas: identificadores, errores comunes, reloj e infraes
 - `administration` puede consultar identity, teacher, student y platform.
 - `platform` no depende de ningún módulo: es la configuración global y la lee todo el mundo.
 - `notification` (Fase 20) puede consultar booking, lesson, teacher, student e identity. Escucha
-  lo que `booking` publica después del commit y escribe los correos; nadie depende de él.
+  lo que `booking` publica después del commit y escribe los correos; nadie depende de él. Desde la
+  Fase 24 guarda los mensajes, e implementa la interfaz spi con la que `student` borra los
+  destinatarios de una cuenta que se borra.
 - `calendar` solo usa interfaces públicas de consulta.
 
 No se permiten accesos directos a repositorios, entidades JPA o adaptadores internos de otro módulo.

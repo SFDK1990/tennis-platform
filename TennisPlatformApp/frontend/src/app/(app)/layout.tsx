@@ -24,6 +24,7 @@ const NAV: Record<Role, NavItem[]> = {
     { href: "/home", label: "Inicio", icon: "home" },
     { href: "/calendar", label: "Clases", icon: "calendar" },
     { href: "/bookings", label: "Mis reservas", icon: "ticket" },
+    { href: "/messages", label: "Avisos", icon: "mail" },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],
   TEACHER: [
@@ -31,6 +32,7 @@ const NAV: Record<Role, NavItem[]> = {
     { href: "/teacher/calendar", label: "Agenda", icon: "calendar", also: ["/teacher/lessons/"] },
     { href: "/teacher/students", label: "Alumnos", icon: "users", also: ["/teacher/students/"] },
     { href: "/teacher/availability", label: "Horario", icon: "clock" },
+    { href: "/teacher/messages", label: "Mensajes", icon: "mail" },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],
   ADMIN: [

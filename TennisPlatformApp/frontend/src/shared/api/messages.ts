@@ -54,6 +54,9 @@ const MESSAGES: Record<string, string> = {
   ADMIN_TARGET_NOT_ALLOWED: "Sólo se pueden activar o desactivar cuentas de alumnos.",
   USER_NOT_FOUND: "Esa cuenta ya no existe.",
   ACCOUNT_DELETED: "El alumno borró su cuenta: ya no se puede activar ni desactivar.",
+
+  NO_RECIPIENTS: "No hay ningún alumno en ese destino: el mensaje no llegaría a nadie.",
+  MESSAGE_NOT_FOUND: "Ese mensaje ya no existe.",
 };
 
 /**

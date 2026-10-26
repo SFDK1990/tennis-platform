@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Size;
 
 import com.tennisplatform.booking.application.port.in.BookingView;
 import com.tennisplatform.lesson.application.port.in.LessonView;
+import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
 
 import java.time.Instant;
 import java.util.List;
@@ -57,7 +58,7 @@ final class MeDtos {
      * right of access covers what is kept about a person (36-fase23, decision 7).
      */
     record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings,
-                        List<ExportedRecord> records) {
+                        List<ExportedRecord> records, List<ReceivedMessageView> messages) {
     }
 
     record ExportedRecord(String level, String goals, String privateNotes) {
