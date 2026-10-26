@@ -124,14 +124,18 @@ Activarlo en el servidor, una vez. El script se copia fuera del repositorio, por
 cambia de etiqueta y una que no lo tenga dejaría el cron sin él:
 
 ```bash
-sudo install -m 755 deploy/status-page.sh /usr/local/bin/tennis-status-page.sh
-sudo mkdir -p /srv/status && sudo chown "$USER" /srv/status
-/usr/local/bin/tennis-status-page.sh   # la primera página, y comprueba que funciona
+mkdir -p ~/.local/bin /srv/status
+git show origin/main:TennisPlatformApp/deploy/status-page.sh > ~/.local/bin/tennis-status-page.sh
+chmod 755 ~/.local/bin/tennis-status-page.sh
+~/.local/bin/tennis-status-page.sh   # la primera página, y comprueba que funciona
 ```
 
 ```bash
-crontab -e   # * * * * * /usr/local/bin/tennis-status-page.sh
+crontab -e   # * * * * * /home/daniel/.local/bin/tennis-status-page.sh
 ```
+
+Servir un fichero exige root, así que este paso pide la contraseña. Desde el PC, con
+`ssh -t daniel@tenis-pi "..."`:
 
 ```bash
 sudo tailscale serve --bg --https=8443 /srv/status/index.html

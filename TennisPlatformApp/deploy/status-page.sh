@@ -2,7 +2,7 @@
 # A page with the server's temperature, memory and disk, readable from the phone through the
 # tailnet and never from the internet (33-operacion.md, "Estado del servidor").
 # Every minute from cron, as the user that runs the backups (it needs the docker group):
-#   * * * * * /usr/local/bin/tennis-status-page.sh
+#   * * * * * /home/daniel/.local/bin/tennis-status-page.sh
 # Served by tailscaled itself, on a port Funnel does not open (once, as root):
 #   tailscale serve --bg --https=8443 /srv/status/index.html
 # Copied out of the repository: deploy.sh checks out tags, and one without this file would
