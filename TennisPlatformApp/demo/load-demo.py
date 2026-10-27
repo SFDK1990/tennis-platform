@@ -2,7 +2,8 @@
 """Fills a local stack with example data, so every screen has something to show.
 
 Students with their level and record, lessons of each level (single ones and weekly series),
-bookings, a full lesson with a waiting list, and last week's lessons with attendance. Everything
+bookings, a full lesson with a waiting list, the lessons of the last two months with their
+attendance (for the monthly summary) and some messages from the teacher on the board. Everything
 goes through the API except what the API refuses on purpose: verifying the students' addresses
 (that takes an email) and lessons in the past (a lesson cannot be created once it has started),
 which go straight into the database of the local container.
@@ -18,7 +19,8 @@ of the local stack's example students, and so are their bookings. Load the local
         --api https://tenis-pi.tail26506d.ts.net/api/v1
 
 The students' password is given with --student-password and kept out of the repository.
-remove-demo.sql undoes it.
+remove-demo.sql undoes it. On a stack loaded before the summary and the messages existed, --extras
+adds only those two.
 """
 import argparse
 import datetime as dt
@@ -124,16 +126,116 @@ def read_env(path, server=None):
     return values
 
 
+WEEKDAYS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre"]
+
+# The past weeks: weekday (0 = Monday), hour, capacity, level, who had a seat.
+PAST_WEEK = [
+    (1, 18, 4, "Iniciación", ["lucia", "carlos"]),
+    (2, 10, 1, "Avanzado", ["ines"]),
+    (3, 19, 4, "Intermedio", ["pablo", "marta"]),
+    (4, 17, 6, None, ["lucia", "pablo", "ines"]),
+    (5, 10, 4, "Competición", ["diego"]),
+]
+
+
+def quote(text):
+    return "'" + text.replace("'", "''") + "'"
+
+
+def history(run, teacher_id, students, levels, today):
+    """The lessons of last month and of this one up to yesterday, with their register, and a rainy
+    day in each month: what the monthly summary adds up. Straight into the tables, because the API
+    does not create lessons in the past. A slot already taken is skipped."""
+    first = (today.replace(day=1) - dt.timedelta(days=1)).replace(day=1)
+    day, count, rainy_months = first, 0, set()
+    while day < today:
+        for weekday, hour, capacity, level, keys in PAST_WEEK:
+            if day.weekday() != weekday:
+                continue
+            count += 1
+            start = at(day, hour)
+            end = start + dt.timedelta(hours=1)
+            # The first beginners' lesson from the 8th on, in each month, is rained off that same afternoon.
+            rain = level == "Iniciación" and day.day >= 8 and day.month not in rainy_months
+            if rain:
+                rainy_months.add(day.month)
+            kind = "INDIVIDUAL" if capacity == 1 else "GROUP"
+            level_id = quote(levels[level]) if level else "NULL"
+            status, cancelled = ("'CANCELLED'", f"'{(start - dt.timedelta(hours=3)).isoformat()}'") if rain else ("'OPEN'", "NULL")
+            lesson = (f"INSERT INTO lessons (teacher_user_id, type, starts_at, ends_at, capacity, notes, "
+                      f"created_outside_availability, level_id, status, cancelled_at) SELECT '{teacher_id}', '{kind}', "
+                      f"'{start.isoformat()}', '{end.isoformat()}', {capacity}, '{NOTE}: clase pasada', true, {level_id}, "
+                      f"{status}, {cancelled} WHERE NOT EXISTS (SELECT 1 FROM lessons WHERE teacher_user_id = '{teacher_id}' "
+                      f"AND status <> 'CANCELLED' AND starts_at < '{end.isoformat()}' AND ends_at > '{start.isoformat()}') "
+                      f"RETURNING id, starts_at, ends_at")
+            if rain:
+                run(lesson + ";")
+                continue
+            # Most came, some did not, and the last days are still without a register.
+            seats = []
+            for index, key in enumerate(keys):
+                if (today - day).days <= 3:
+                    attendance = "PENDING"
+                elif (day.day + index * 3) % 7 == 0:
+                    attendance = "NO_SHOW"
+                else:
+                    attendance = "ATTENDED"
+                seats.append(f"('{students[key]}'::uuid, '{attendance}')")
+            run(f"WITH lesson AS ({lesson}) INSERT INTO bookings (lesson_id, teacher_user_id, student_user_id, attendance, "
+                f"lesson_starts_at, lesson_ends_at, booked_at) SELECT lesson.id, '{teacher_id}', s.student, s.attendance, "
+                f"lesson.starts_at, lesson.ends_at, lesson.starts_at - interval '2 days' FROM lesson, (VALUES "
+                + ", ".join(seats) + ") AS s(student, attendance);")
+        day += dt.timedelta(days=1)
+    return count
+
+
+def messages(run, teacher_id, students, today):
+    """A few messages on the board, written straight into the tables so no email goes out. The
+    newest one is from yesterday, so it shows on the students' home too."""
+    def ago(days, hour):
+        return at(today - dt.timedelta(days=days), hour).isoformat()
+
+    by_level = {}
+    for key, _, _, level, *_ in STUDENTS:
+        by_level.setdefault(level, []).append(key)
+    everybody = [key for key, *_ in STUDENTS]
+    saturday = next_weekday(today, 5)
+    examples = [
+        (ago(20, 9), "ALL", "Todos los alumnos", "Bienvenidos a la nueva app",
+         "Desde ahora las reservas, los cambios y los avisos van por aquí. Si algo no os funciona, decídmelo en "
+         "clase.\n\nNos vemos en la pista.", everybody),
+        (ago(9, 12), "LEVEL", "Nivel Intermedio", "Los jueves jugamos en la pista 2",
+         "La pista 1 está en obras hasta fin de mes. Mismo horario, en la pista 2, al fondo.", by_level["Intermedio"]),
+        (ago(4, 20), "SERIES", "Grupo de los sábados a las 10:00", "Torneo social de diciembre",
+         "Este año hay torneo social el segundo sábado de diciembre. Los del grupo de competición entráis directos: "
+         "decidme si contáis con ello.", by_level["Competición"]),
+        (ago(1, 19), "ALL", "Todos los alumnos", "Horario de Navidad",
+         f"Del 24 de diciembre al 6 de enero no hay clases de grupo. Las particulares, como siempre, avisando con "
+         f"tiempo. El sábado {saturday.day} de {MONTHS[saturday.month - 1]} sí hay clase.", everybody),
+    ]
+    for sent_at, audience, label, subject, body, keys in examples:
+        run(f"WITH m AS (INSERT INTO messages (teacher_user_id, audience, audience_label, subject, body, sent_at, "
+            f"recipient_count) VALUES ('{teacher_id}', '{audience}', {quote(label)}, {quote(subject)}, "
+            f"E{quote(body)}, '{sent_at}', {len(keys)}) RETURNING id) "
+            f"INSERT INTO message_recipients (message_id, student_user_id) SELECT m.id, s.student FROM m, (VALUES "
+            + ", ".join(f"('{students[key]}'::uuid)" for key in keys) + ") AS s(student);")
+    return len(examples)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--env", required=True, help="the stack's .env, with TEACHER_EMAIL and TEACHER_PASSWORD")
     parser.add_argument("--api", default="http://localhost:8081/api/v1")
     parser.add_argument("--db-container", default="tennis-postgres")
-    parser.add_argument("--student-password", required=True,
+    parser.add_argument("--student-password",
                         help="the example students' password; on a server it must be the local stack's")
     parser.add_argument("--server", help="ssh target of a server that sends real email; see the docstring")
     parser.add_argument("--local-db-container", default="tennis-postgres",
                         help="with --server, where the example students' password hash is read from")
+    parser.add_argument("--extras", action="store_true",
+                        help="on a stack that already has the example students: add only the history and the messages")
     args = parser.parse_args()
 
     env = read_env(args.env, args.server)
@@ -146,10 +248,27 @@ def main():
     api = Api(args.api)
     teacher = api.login(env["TEACHER_EMAIL"], env["TEACHER_PASSWORD"])
     teacher_id = api.call("GET", "/me", token=teacher)["id"]
-    if run(f"SELECT count(*) FROM users WHERE email LIKE '%@{EMAIL_DOMAIN}'") != "0":
-        sys.exit("The example data is already loaded: run remove-demo.sql first to load it again.")
-
     levels = {level["name"]: level["id"] for level in api.call("GET", "/levels", token=teacher)["levels"]}
+    today = dt.datetime.now(ZONE).date() if ZONE else dt.date.today()
+    loaded = run(f"SELECT count(*) FROM users WHERE email LIKE '%@{EMAIL_DOMAIN}'") != "0"
+
+    if args.extras:
+        if not loaded:
+            sys.exit("--extras adds to the example data, and it is not loaded yet.")
+        if run(f"SELECT count(*) FROM lessons WHERE notes = '{NOTE}: clase pasada'") != "0":
+            sys.exit("The history is already there: run remove-demo.sql and load everything again.")
+        ids = dict(line.split("|") for line in run(
+            f"SELECT split_part(split_part(email, '@', 1), '-', 2), id FROM users "
+            f"WHERE email LIKE 'demo-%@{EMAIL_DOMAIN}'").splitlines())
+        lessons = history(run, teacher_id, ids, levels, today)
+        sent = messages(run, teacher_id, ids, today)
+        print(f"Added {lessons} past lessons with their register and {sent} messages.")
+        return
+    if loaded:
+        sys.exit("The example data is already loaded: run remove-demo.sql first to load it again.")
+    if not args.student_password:
+        sys.exit("--student-password is required to load the example students.")
+
     missing = [name for _, _, _, name, _, _ in STUDENTS if name and name not in levels]
     if missing:
         sys.exit(f"The teacher has no level called {missing[0]}: the example data uses the four initial ones.")
@@ -182,8 +301,6 @@ def main():
         api.call("POST", f"/teacher/students/{student_id}/manage", token=teacher)
         api.call("PUT", f"/teacher/students/{student_id}/record",
                  {"levelId": levels.get(level), "goals": goals, "privateNotes": notes}, token=teacher)
-
-    today = dt.datetime.now(ZONE).date() if ZONE else dt.date.today()
 
     def create(start, minutes, capacity, level, note):
         return api.call("POST", "/teacher/lessons", lesson_body(start, minutes, capacity, levels.get(level), note),
@@ -232,31 +349,14 @@ def main():
     wait("marta", full)
     wait("ines", full)
 
-    # Last week, with attendance: lessons in the past cannot be created through the API.
-    last_tuesday = next_weekday(today, 1) - dt.timedelta(days=7)
-    last_wednesday = next_weekday(today, 2) - dt.timedelta(days=7)
-    if last_tuesday >= today:
-        last_tuesday -= dt.timedelta(days=7)
-    if last_wednesday >= today:
-        last_wednesday -= dt.timedelta(days=7)
-    past = [(at(last_tuesday, 18), 4, "Iniciación", [("lucia", "ATTENDED"), ("carlos", "NO_SHOW")]),
-            (at(last_wednesday, 10), 1, "Avanzado", [("ines", "ATTENDED")])]
-    for start, capacity, level, seats in past:
-        end = start + dt.timedelta(hours=1)
-        kind = "INDIVIDUAL" if capacity == 1 else "GROUP"
-        statement = (f"WITH lesson AS (INSERT INTO lessons (teacher_user_id, type, starts_at, ends_at, capacity, notes, "
-                     f"created_outside_availability, level_id) VALUES ('{teacher_id}', '{kind}', '{start.isoformat()}', "
-                     f"'{end.isoformat()}', {capacity}, '{NOTE}: clase de la semana pasada', true, '{levels[level]}') "
-                     f"RETURNING id, starts_at, ends_at) "
-                     f"INSERT INTO bookings (lesson_id, teacher_user_id, student_user_id, attendance, lesson_starts_at, "
-                     f"lesson_ends_at, booked_at) SELECT lesson.id, '{teacher_id}', s.student, s.attendance, "
-                     f"lesson.starts_at, lesson.ends_at, lesson.starts_at - interval '2 days' FROM lesson, (VALUES "
-                     + ", ".join(f"('{students[key]['id']}'::uuid, '{attendance}')" for key, attendance in seats)
-                     + ") AS s(student, attendance);")
-        run(statement)
+    # The last two months, with their register, and the messages: lessons in the past cannot be created
+    # through the API, and a message through it would email every student.
+    ids = {key: student["id"] for key, student in students.items()}
+    history(run, teacher_id, ids, levels, today)
+    messages(run, teacher_id, ids, today)
 
-    print(f"Example data loaded: {len(STUDENTS)} students, three weekly groups, single lessons, a waiting list "
-          f"and last week's attendance. Students sign in as demo-<name>@{EMAIL_DOMAIN}, see demo/README.md.")
+    print(f"Example data loaded: {len(STUDENTS)} students, three weekly groups, single lessons, a waiting list, "
+          f"two months of history and the board. Students sign in as demo-<name>@{EMAIL_DOMAIN}, see demo/README.md.")
 
 
 if __name__ == "__main__":
