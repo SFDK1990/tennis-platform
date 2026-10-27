@@ -76,7 +76,8 @@ existe: la integridad referencial de un campo de auditoría vale más que la pur
 
 ### calendar
 
-Consulta agregada de disponibilidad, clases y reservas. No es propietario de los datos.
+Consulta agregada de disponibilidad, clases y reservas, y el resumen del mes del profesor (Fase 25).
+No es propietario de los datos.
 
 ### notification
 

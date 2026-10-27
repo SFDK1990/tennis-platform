@@ -234,6 +234,9 @@ Códigos añadidos en la Fase 23:
 | `LEVEL_ALREADY_EXISTS` | 409 | `POST /teacher/levels`, `PATCH /teacher/levels/{id}` | Ya hay un nivel con ese nombre |
 | `LEVEL_NOT_FOUND` | 404 | `PATCH` y `DELETE /teacher/levels/{id}` | No es un nivel del profesor |
 
+`GET /teacher/summary` (Fase 25) responde `DATE_RANGE_INVALID` a un mes mal escrito o que aún no ha
+empezado.
+
 Códigos añadidos en la Fase 24:
 
 | Código | HTTP | Endpoint típico | Motivo |

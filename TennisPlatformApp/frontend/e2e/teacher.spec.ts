@@ -1,6 +1,6 @@
 import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
 import { addDays } from "@/shared/time";
-import { TEACHER } from "./support/stack";
+import { TEACHER, ZONE } from "./support/stack";
 
 test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla, el alumno lo ve", async ({ page, browser, arrange }) => {
   const student = await arrange.student();
@@ -129,4 +129,20 @@ test("el profesor crea una clase semanal de 4 semanas y salta la fecha que choca
   }
   await page.getByRole("button", { name: "Crear 3 clases" }).click();
   await expect(page.getByText("Serie creada: 3 clases")).toBeVisible();
+});
+
+/** Fase 25: the month in numbers, and the month before it. */
+test("el profesor abre el resumen del mes y va al mes anterior", async ({ page }) => {
+  await signIn(page, TEACHER.email, TEACHER.password);
+  await openFromMenu(page, "Resumen");
+  const month = new Intl.DateTimeFormat("es-ES", { timeZone: ZONE, month: "long", year: "numeric" }).format(new Date());
+  await expect(page.getByText(month, { exact: false })).toBeVisible();
+  await expect(page.getByText("hasta hoy")).toBeVisible();
+  await expect(page.getByText("Clases dadas")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mes siguiente" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Mes anterior" }).click();
+  await expect(page.getByText("hasta hoy")).toHaveCount(0);
+  await page.getByRole("button", { name: "Mes siguiente" }).click();
+  await expect(page.getByText("hasta hoy")).toBeVisible();
 });

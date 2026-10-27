@@ -30,17 +30,16 @@ borrada quedan como «Alumno eliminado», para que los resúmenes cuadren.
   lluvia se ve aquí.
 - **Las reservas de un alumno que borró su cuenta siguen contando**, como dice `01` §18.
 
-### 2. Qué es un alumno activo — **decisión tuya**
+### 2. Qué es un alumno activo — **decidido: A**
 
-- **A (te la recomiendo). El que ha tenido al menos una clase en el mes**: una plaza en una clase
+- **A. El que ha tenido al menos una clase en el mes**: una plaza en una clase
   dada, haya venido o no. Es lo que dice cuánta gente se mueve de verdad cada mes.
 - **B. El que Marcos gestiona a final de mes**, venga o no. Este número ya lo enseña la lista de
   alumnos.
 
-### 3. Qué enseña la pantalla — **decisión tuya**
+### 3. Qué enseña la pantalla — **decidido: A**
 
-- **A (te la recomiendo). Los números del mes, con el mes anterior al lado, y el mismo desglose por
-  nivel.** Así se ve si un nivel se llena y otro no, que es la pregunta que viene después de «¿cómo
+- **A. Los números del mes, con el mes anterior al lado, y el mismo desglose por nivel.** Así se ve si un nivel se llena y otro no, que es la pregunta que viene después de «¿cómo
   va el mes?».
 - **B. Sólo los números del mes**, sin comparar ni desglosar.
 
@@ -116,3 +115,20 @@ Con `Clock` fijo y fechas literales, cada número con su caso límite:
 5. E2E y documentación: `02`, `11-contrato-api.md` y `CLAUDE.md` si aparece alguna trampa.
 
 ## Decisiones tomadas al implementar
+
+- **Daniel eligió A en las dos decisiones.** Preguntó además por los pagos vencidos: llegan con la
+  Fase 28, donde quedó apuntado que el alumno sigue activo y Marcos ve el aviso.
+- **Un mes futuro o mal escrito da `DATE_RANGE_INVALID`**, el código de los rangos de fechas, y no
+  `VALIDATION_ERROR`.
+- **El backend da los recuentos y el frontend los porcentajes**: así el contrato no tiene que
+  decidir cómo se redondea, y un mes sin plazas no tiene que inventarse un 0 %.
+- **Las cancelaciones también se cuentan hasta ahora** en el mes en curso, como las clases dadas: una
+  clase cancelada de la semana que viene no es aún del resumen.
+- **«Resumen» va en la barra lateral, y no en la barra de abajo del móvil**, que con seis pestañas
+  ya no tiene sitio. En el móvil se llega desde «Hoy».
+- **El E2E abre el resumen y cambia de mes, sin comprobar números**: contra el reloj real no se puede
+  crear una clase ya dada. Los números se prueban con `Clock` fijo en `GetMonthSummaryServiceTest`, y
+  el de la API mueve una clase al principio del mes.
+- **Mutaciones**, todas vistas fallar y deshechas: contar las canceladas como dadas, contar las
+  plazas sin pasar lista como asistidas, cortar el mes en UTC y contar las clases que aún no han
+  empezado.

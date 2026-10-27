@@ -61,6 +61,17 @@ public class GetBookingsService implements GetBookings {
 
     @Override
     @Transactional(readOnly = true)
+    public List<BookingView> confirmedInLessons(Collection<UUID> lessonIds) {
+        if (lessonIds.isEmpty()) {
+            return List.of();
+        }
+        return bookings.findConfirmedInLessons(lessonIds).stream()
+                .map(booking -> BookingView.from(booking, null))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Set<UUID> studentsWithASeatIn(Collection<UUID> lessonIds) {
         if (lessonIds.isEmpty()) {
             return Set.of();

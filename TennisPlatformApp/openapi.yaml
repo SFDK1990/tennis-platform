@@ -773,6 +773,35 @@ paths:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
+  /teacher/summary:
+    get:
+      tags: [calendar]
+      summary: El resumen de un mes del profesor, con el anterior y el desglose por nivel
+      description: >-
+        Los meses son los del profesor, en su zona. Cuenta las clases que empiezan en el mes y,
+        si es el mes en curso, hasta ahora. Clases dadas son las que ya han empezado y no se
+        cancelaron; las plazas son las de esas clases; la asistencia sale de las plazas en las que
+        se paso lista. Un alumno activo es el que tuvo plaza en alguna clase dada del mes, haya
+        venido o no; las reservas de una cuenta borrada siguen contando (Fase 25).
+      parameters:
+        - name: month
+          in: query
+          description: El mes, como 2026-10. Si falta, el mes en curso.
+          schema: { type: string, pattern: '^[0-9]{4}-[0-9]{2}$', example: "2026-10" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MonthSummary" }
+        "400":
+          description: DATE_RANGE_INVALID, si el mes esta mal escrito o aun no ha empezado
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /teacher/lessons:
     post:
       tags: [lessons]
@@ -2341,6 +2370,47 @@ components:
             items:
               type: array
               items: { $ref: "#/components/schemas/ReceivedMessage" }
+
+    MonthFigures:
+      type: object
+      description: >-
+        Los numeros de un mes. La ocupacion es seatsTaken / seatsOffered y la asistencia
+        attended / (attended + noShow); unmarked son las plazas sin pasar lista.
+      required: [lessonsGiven, individualLessons, groupLessons, seatsOffered, seatsTaken, attended, noShow,
+        unmarked, activeStudents, cancelledLessons, cancelledAtShortNotice]
+      properties:
+        lessonsGiven: { type: integer }
+        individualLessons: { type: integer }
+        groupLessons: { type: integer }
+        seatsOffered: { type: integer }
+        seatsTaken: { type: integer }
+        attended: { type: integer }
+        noShow: { type: integer }
+        unmarked: { type: integer }
+        activeStudents: { type: integer }
+        cancelledLessons: { type: integer }
+        cancelledAtShortNotice: { type: integer }
+
+    MonthSummary:
+      type: object
+      required: [month, timezone, current, previous, levels]
+      properties:
+        month: { type: string, example: "2026-10" }
+        timezone: { type: string, example: Europe/Madrid }
+        current: { $ref: "#/components/schemas/MonthFigures" }
+        previous: { $ref: "#/components/schemas/MonthFigures" }
+        levels:
+          type: array
+          description: >-
+            Una fila por nivel con clases en alguno de los dos meses; levelId null son las abiertas
+            a todos. Un alumno con clases de dos niveles es activo en las dos filas.
+          items:
+            type: object
+            required: [levelId, current, previous]
+            properties:
+              levelId: { type: string, format: uuid, nullable: true }
+              current: { $ref: "#/components/schemas/MonthFigures" }
+              previous: { $ref: "#/components/schemas/MonthFigures" }
 
     PlatformConfiguration:
       type: object

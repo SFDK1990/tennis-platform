@@ -17,6 +17,8 @@ interface NavItem {
   icon: IconName;
   /** Deeper screens that still belong to this item, such as a lesson under the agenda. */
   also?: string[];
+  /** Left out of the phone's tab bar, which has no room for it: another screen leads there. */
+  sidebarOnly?: boolean;
 }
 
 const NAV: Record<Role, NavItem[]> = {
@@ -33,6 +35,7 @@ const NAV: Record<Role, NavItem[]> = {
     { href: "/teacher/students", label: "Alumnos", icon: "users", also: ["/teacher/students/"] },
     { href: "/teacher/availability", label: "Horario", icon: "clock" },
     { href: "/teacher/messages", label: "Mensajes", icon: "mail" },
+    { href: "/teacher/summary", label: "Resumen", icon: "chart", sidebarOnly: true },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],
   ADMIN: [
@@ -128,7 +131,7 @@ function TabBar({ items, current }: { items: NavItem[]; current?: string }) {
   return (
     <nav aria-label="Principal"
       className="fixed inset-x-0 bottom-0 z-10 flex border-t border-line bg-paper px-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] lg:hidden">
-      {items.map((item) => (
+      {items.filter((item) => !item.sidebarOnly).map((item) => (
         <Link key={item.href} href={item.href} aria-current={item.href === current ? "page" : undefined}
           className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold text-muted aria-[current=page]:text-court">
           <Icon name={item.icon} className="size-6" />

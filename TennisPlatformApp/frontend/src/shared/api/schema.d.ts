@@ -1449,6 +1449,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * El resumen de un mes del profesor, con el anterior y el desglose por nivel
+         * @description Los meses son los del profesor, en su zona. Cuenta las clases que empiezan en el mes y, si es el mes en curso, hasta ahora. Clases dadas son las que ya han empezado y no se cancelaron; las plazas son las de esas clases; la asistencia sale de las plazas en las que se paso lista. Un alumno activo es el que tuvo plaza en alguna clase dada del mes, haya venido o no; las reservas de una cuenta borrada siguen contando (Fase 25).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description El mes, como 2026-10. Si falta, el mes en curso. */
+                    month?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MonthSummary"];
+                    };
+                };
+                /** @description DATE_RANGE_INVALID, si el mes esta mal escrito o aun no ha empezado */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teacher/lessons": {
         parameters: {
             query?: never;
@@ -3436,6 +3489,35 @@ export interface components {
         };
         ReceivedMessagePage: components["schemas"]["Page"] & {
             items: components["schemas"]["ReceivedMessage"][];
+        };
+        /** @description Los numeros de un mes. La ocupacion es seatsTaken / seatsOffered y la asistencia attended / (attended + noShow); unmarked son las plazas sin pasar lista. */
+        MonthFigures: {
+            lessonsGiven: number;
+            individualLessons: number;
+            groupLessons: number;
+            seatsOffered: number;
+            seatsTaken: number;
+            attended: number;
+            noShow: number;
+            unmarked: number;
+            activeStudents: number;
+            cancelledLessons: number;
+            cancelledAtShortNotice: number;
+        };
+        MonthSummary: {
+            /** @example 2026-10 */
+            month: string;
+            /** @example Europe/Madrid */
+            timezone: string;
+            current: components["schemas"]["MonthFigures"];
+            previous: components["schemas"]["MonthFigures"];
+            /** @description Una fila por nivel con clases en alguno de los dos meses; levelId null son las abiertas a todos. Un alumno con clases de dos niveles es activo en las dos filas. */
+            levels: {
+                /** Format: uuid */
+                levelId: string | null;
+                current: components["schemas"]["MonthFigures"];
+                previous: components["schemas"]["MonthFigures"];
+            }[];
         };
         PlatformConfiguration: {
             studentLimit: number;

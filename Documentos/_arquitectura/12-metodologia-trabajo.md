@@ -73,10 +73,11 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 22 | Clases que se repiten | Completada | `35-fase22-analisis-clases-que-se-repiten.md`. La misma clase durante varias semanas de una vez |
 | 23 | Niveles y ficha del alumno | Completada | `36-fase23-analisis-niveles-ficha.md`. Niveles de Marcos, clases por nivel, ficha con objetivos, notas privadas e historial |
 | 24 | Mensajes | Completada | `37-fase24-analisis-mensajes.md`. Marcos escribe a todos, a un nivel, a una clase o a su grupo; llega por correo y a los avisos del alumno |
-| 25 | Resumen del mes | **Siguiente** | Clases dadas, ocupación, asistencia y alumnos activos |
+| 25 | Resumen del mes | Completada | `38-fase25-analisis-resumen-mes.md`. Clases dadas, ocupación, asistencia, alumnos activos y canceladas, con el mes anterior y por nivel |
+| 25.5 | Foto del alumno | **Siguiente** | El alumno la sube desde su perfil; Marcos la ve en la ficha y en sus listas (Daniel, 27/10/2026). Los alumnos de ejemplo llevan las fotos de `fotosMuppets`, fuera del repositorio |
 | 26 | Familias | Pendiente | Un adulto gestiona los perfiles de sus hijos y reserva por ellos |
 | 27 | Bonos | Pendiente | Tipos de bono de Marcos; el pago se apunta, no se cobra en la app |
-| 28 | Mensualidades | Pendiente | Cuota por grupo fijo y registro de quién ha pagado |
+| 28 | Mensualidades | Pendiente | Cuota por grupo fijo y registro de quién ha pagado. Un alumno con la cuota vencida sigue activo, y Marcos ve un aviso de que se le pasó la fecha (Daniel, 27/10/2026) |
 | 29 | Progreso del alumno | Pendiente | Objetivos por nivel que Marcos marca como conseguidos |
 | 30 | PWA y accesibilidad | Pendiente | Instalable, sin conexión sin datos personales, axe sin fallos graves y WebKit en los flujos del alumno |
 | 18 | Revisión final de arquitectura | Pendiente | Informe con severidades; nada se aplica sin aprobación. Va la última |
