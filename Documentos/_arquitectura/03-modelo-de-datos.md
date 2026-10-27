@@ -219,6 +219,15 @@ Estados de reserva: `CONFIRMED`, `CANCELLED_BY_STUDENT`, `CANCELLED_BY_TEACHER`.
 
 Estados de asistencia: `PENDING`, `ATTENDED`, `NO_SHOW`.
 
+### messages y message_recipients (Fase 24)
+
+- `messages`: `id`, `teacher_user_id`, `audience` (`ALL`, `LEVEL`, `LESSON`, `SERIES`),
+  `audience_label` (a quién fue, escrito al enviar), `subject` (120), `body` (4000), `sent_at` y
+  `recipient_count`. No se edita.
+- `message_recipients`: `message_id` y `student_user_id`, clave primaria los dos. Los destinatarios
+  se fijan al enviar; borrar el mensaje los borra (`ON DELETE CASCADE`), y borrar la cuenta quita al
+  alumno de todos.
+
 ### waiting_list_entries (Fase 21)
 
 - `id`, `lesson_id`, `teacher_user_id`, `student_user_id` y `joined_at`; único por clase y alumno.

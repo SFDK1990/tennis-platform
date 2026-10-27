@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
  * Sends through the same SMTP server as the account emails, with the lesson attached as an
  * iCalendar file when there is one.
  *
- * <p>Counted in {@code tennis.mail.sent} by kind and outcome. Only the kind and the booking id
+ * <p>Counted in {@code tennis.mail.sent} by kind and outcome. Only the kind and the booking or message id
  * are logged: an SMTP server that rejects a recipient quotes the address in its message, which is
  * personal data, so the exception's message never reaches the log either (Fase 16).
  */
@@ -47,10 +47,10 @@ class SmtpMailer implements Mailer {
         try {
             sender.send(message(mail));
             meters.counter(METRIC, "kind", mail.kind(), "outcome", "sent").increment();
-            log.info("Sent {} for booking {}", mail.kind(), mail.reference());
+            log.info("Sent {} {}", mail.kind(), mail.reference());
         } catch (MailException | MessagingException | UnsupportedEncodingException e) {
             meters.counter(METRIC, "kind", mail.kind(), "outcome", "failed").increment();
-            log.error("Could not send {} for booking {}: {}", mail.kind(), mail.reference(),
+            log.error("Could not send {} {}: {}", mail.kind(), mail.reference(),
                     NestedExceptionUtils.getMostSpecificCause(e).getClass().getName());
         }
     }

@@ -5,6 +5,7 @@ import com.tennisplatform.student.application.port.in.DeleteMyAccount;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
+import com.tennisplatform.student.application.port.spi.StudentMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,8 @@ import java.util.UUID;
 
 /**
  * Lives here because this is the module that may reach both halves: the account through
- * identity's inbound port, and the bookings through the SPI that {@code booking} implements.
+ * identity's inbound port, and the bookings and the messages through the SPIs that {@code booking}
+ * and {@code notification} implement.
  */
 public class DeleteMyAccountService implements DeleteMyAccount {
 
@@ -25,14 +27,17 @@ public class DeleteMyAccountService implements DeleteMyAccount {
     private final ManagedStudentRepository relationships;
     private final StudentProfileRepository profiles;
     private final StudentBookings bookings;
+    private final StudentMessages messages;
     private final Clock clock;
 
     public DeleteMyAccountService(CloseAccount accounts, ManagedStudentRepository relationships,
-                                  StudentProfileRepository profiles, StudentBookings bookings, Clock clock) {
+                                  StudentProfileRepository profiles, StudentBookings bookings,
+                                  StudentMessages messages, Clock clock) {
         this.accounts = accounts;
         this.relationships = relationships;
         this.profiles = profiles;
         this.bookings = bookings;
+        this.messages = messages;
         this.clock = clock;
     }
 
@@ -58,6 +63,8 @@ public class DeleteMyAccountService implements DeleteMyAccount {
             profile.anonymize();
             profiles.save(profile);
         });
-        log.info("Account {} deleted by its student, upcoming bookings cancelled and profile emptied", studentUserId);
+        messages.forgetRecipient(studentUserId);
+        log.info("Account {} deleted by its student, upcoming bookings cancelled, profile emptied and messages forgotten",
+                studentUserId);
     }
 }

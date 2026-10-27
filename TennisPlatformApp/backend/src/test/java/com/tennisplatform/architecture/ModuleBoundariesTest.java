@@ -129,6 +129,11 @@ class ModuleBoundariesTest {
      * {@code notification} (Fase 20) hears what {@code booking} announces and reads the lesson,
      * the teacher, the student and their addresses to write the emails. Nobody depends on it:
      * the modules that announce do not know it exists.
+     *
+     * <p>Since Fase 24 it also keeps the teacher's messages, and reads the same modules to know
+     * who they reach. Still nobody depends on it: {@code web} composes the export out of its
+     * inbound port, and {@code student} has deleting an account forget the messages through an
+     * spi interface that this module implements.
      */
     @ArchTest
     static final ArchRule notificationDependsOnWhatItTellsAbout =
@@ -231,6 +236,9 @@ class ModuleBoundariesTest {
 
     @ArchTest
     static final ArchRule platformCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("platform");
+
+    @ArchTest
+    static final ArchRule notificationCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("notification");
 
     // --- D. calendar only reads -------------------------------------------------
 

@@ -178,6 +178,26 @@ export class Arrange {
       "lesson level");
   }
 
+  /** A level of the test's own, so a message to it reaches nobody else on the stack; deleted afterwards. */
+  async newLevel(): Promise<{ id: string; name: string }> {
+    const teacher = await this.teacher();
+    const name = `E2E ${Math.random().toString(36).slice(2, 8)}`;
+    const level = ok(await teacher.POST("/teacher/levels", { body: { name } }), "level");
+    this.undo.push(() => teacher.DELETE("/teacher/levels/{id}", { params: { path: { id: level.id } } }));
+    return { id: level.id, name };
+  }
+
+  /** The test sends a message through the screens; afterwards it is taken off every board (Fase 24). */
+  deleteMessageAfterwards(subject: string): void {
+    this.undo.push(async () => {
+      const teacher = await this.teacher();
+      const sent = ok(await teacher.GET("/teacher/messages", { params: { query: { size: 100 } } }), "messages");
+      for (const message of sent.items.filter((candidate) => candidate.subject === subject)) {
+        await teacher.DELETE("/teacher/messages/{id}", { params: { path: { id: message.id } } });
+      }
+    });
+  }
+
   /** Seats taken in a lesson, read as the teacher sees them. */
   async confirmedBookingsOf(lessonId: string): Promise<number> {
     const teacher = await this.teacher();

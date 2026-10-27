@@ -63,6 +63,12 @@ public class GetLessonService implements GetLesson {
         return viewsOf(lessons.findAllById(ids));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<LessonView> ofSeries(UUID seriesId) {
+        return viewsOf(lessons.findBySeries(seriesId));
+    }
+
     /**
      * The dates are turned into instants with the teacher's own zone, because "the lessons of
      * the 3rd" means the 3rd where the teacher lives. The upper bound is the start of the day

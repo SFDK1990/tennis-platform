@@ -20,12 +20,12 @@ async function expectTabBar(page: Page, items: string[]): Promise<void> {
 test("en el móvil, el alumno se mueve con la barra de abajo", async ({ page, arrange }) => {
   const student = await arrange.student({ managed: true });
   await signIn(page, student.email, student.password);
-  await expectTabBar(page, ["Inicio", "Clases", "Mis reservas", "Perfil"]);
+  await expectTabBar(page, ["Inicio", "Clases", "Mis reservas", "Avisos", "Perfil"]);
 });
 
 test("en el móvil, el profesor se mueve con la barra de abajo y sale desde su perfil", async ({ page }) => {
   await signIn(page, TEACHER.email, TEACHER.password);
-  await expectTabBar(page, ["Hoy", "Agenda", "Alumnos", "Horario", "Perfil"]);
+  await expectTabBar(page, ["Hoy", "Agenda", "Alumnos", "Horario", "Mensajes", "Perfil"]);
   await openFromMenu(page, "Perfil");
   await page.getByRole("button", { name: "Salir" }).click();
   await expect(page).toHaveURL(/\/login/);

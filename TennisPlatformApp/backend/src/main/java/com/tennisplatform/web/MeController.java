@@ -4,6 +4,8 @@ import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.UserSummary;
+import com.tennisplatform.notification.application.port.in.GetMessages;
+import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
 import com.tennisplatform.student.application.port.in.GetStudentProfile;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentProfileUpdate;
@@ -62,12 +64,13 @@ class MeController {
     private final GetBookings bookings;
     private final QueryManagedStudent managedStudents;
     private final QueryLevels levels;
+    private final GetMessages messages;
     private final Clock clock;
 
     MeController(GetCurrentUser getCurrentUser, GetStudentProfile studentProfiles,
                  UpdateStudentProfile updateStudentProfile, GetTeacherProfile teacherProfiles,
                  UpdateTeacherProfile updateTeacherProfile, GetBookings bookings,
-                 QueryManagedStudent managedStudents, QueryLevels levels, Clock clock) {
+                 QueryManagedStudent managedStudents, QueryLevels levels, GetMessages messages, Clock clock) {
         this.getCurrentUser = getCurrentUser;
         this.studentProfiles = studentProfiles;
         this.updateStudentProfile = updateStudentProfile;
@@ -76,6 +79,7 @@ class MeController {
         this.bookings = bookings;
         this.managedStudents = managedStudents;
         this.levels = levels;
+        this.messages = messages;
         this.clock = clock;
     }
 
@@ -104,9 +108,10 @@ class MeController {
                                 record.goals(), record.privateNotes()))
                         .toList()
                 : List.of();
+        List<ReceivedMessageView> received = caller.isStudent() ? messages.allReceivedBy(caller.id()) : List.of();
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mis-datos.json\"")
-                .body(new MyDataExport(clock.instant(), me(caller), exported, records));
+                .body(new MyDataExport(clock.instant(), me(caller), exported, records, received));
     }
 
     /**

@@ -140,6 +140,9 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   eliminado»), porque sus reservas pasadas la apuntan. Una columna nueva que copie un dato personal
   del alumno lo dejaría tras el borrado: `DeleteMyAccountTest` recorre todas las columnas de texto y
   falla.
+- **Un mensaje de Marcos guarda sus destinatarios al enviarse** (`message_recipients`, en
+  `notification`): el tablón no se calcula al leer, y quien entra después en un nivel no ve lo
+  anterior. Borrar la cuenta saca al alumno de todos por la spi `StudentMessages`.
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
   `ContractConventionsTest`.

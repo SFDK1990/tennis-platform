@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class GetBookingsService implements GetBookings {
@@ -56,6 +57,15 @@ public class GetBookingsService implements GetBookings {
         return bookings.findByStudentInLessons(studentUserId, lessonIds).stream()
                 .map(booking -> BookingView.from(booking, null))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<UUID> studentsWithASeatIn(Collection<UUID> lessonIds) {
+        if (lessonIds.isEmpty()) {
+            return Set.of();
+        }
+        return Set.copyOf(bookings.studentsConfirmedIn(lessonIds));
     }
 
     @Override

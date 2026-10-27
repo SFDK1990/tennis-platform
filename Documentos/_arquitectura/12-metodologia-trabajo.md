@@ -72,8 +72,8 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 21 | Lista de espera | Completada | `34-fase21-analisis-lista-espera.md`. Una plaza liberada se reserva sola al primero de la lista |
 | 22 | Clases que se repiten | Completada | `35-fase22-analisis-clases-que-se-repiten.md`. La misma clase durante varias semanas de una vez |
 | 23 | Niveles y ficha del alumno | Completada | `36-fase23-analisis-niveles-ficha.md`. Niveles de Marcos, clases por nivel, ficha con objetivos, notas privadas e historial |
-| 24 | Mensajes | **Siguiente** | A un grupo, un nivel o todos, por correo y en un tablón |
-| 25 | Resumen del mes | Pendiente | Clases dadas, ocupación, asistencia y alumnos activos |
+| 24 | Mensajes | Completada | `37-fase24-analisis-mensajes.md`. Marcos escribe a todos, a un nivel, a una clase o a su grupo; llega por correo y a los avisos del alumno |
+| 25 | Resumen del mes | **Siguiente** | Clases dadas, ocupación, asistencia y alumnos activos |
 | 26 | Familias | Pendiente | Un adulto gestiona los perfiles de sus hijos y reserva por ellos |
 | 27 | Bonos | Pendiente | Tipos de bono de Marcos; el pago se apunta, no se cobra en la app |
 | 28 | Mensualidades | Pendiente | Cuota por grupo fijo y registro de quién ha pagado |

@@ -20,11 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** The background queue, which the test profile replaces by the request's own thread. */
 @ExtendWith(OutputCaptureExtension.class)
-class BookingFactsListenerTest {
+class MailListenerTest {
 
     private static final Instant STARTS = Instant.parse("2026-11-03T09:00:00Z");
 
-    private BookingFactsListener listener;
+    private MailListener listener;
 
     @AfterEach
     void stop() {
@@ -32,10 +32,10 @@ class BookingFactsListenerTest {
         listener.destroy();
     }
 
-    private static BookingFactsListener inTheBackground(NotifyBookings notify) {
+    private static MailListener inTheBackground(NotifyBookings notify) {
         NotificationProperties properties = new NotificationProperties();
         properties.setSendInBackground(true);
-        return new BookingFactsListener(notify, properties);
+        return new MailListener(notify, messageId -> { }, properties);
     }
 
     private static BookingConfirmed confirmed() {

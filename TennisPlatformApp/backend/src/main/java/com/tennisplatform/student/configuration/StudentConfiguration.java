@@ -6,6 +6,7 @@ import com.tennisplatform.student.application.port.in.ManageStudent;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
+import com.tennisplatform.student.application.port.spi.StudentMessages;
 import com.tennisplatform.student.application.service.GetManagedStudentsService;
 import com.tennisplatform.student.application.service.ManageStudentService;
 import com.tennisplatform.student.application.service.StudentProfileService;
@@ -55,8 +56,8 @@ public class StudentConfiguration {
     @Bean
     public DeleteMyAccount deleteMyAccount(CloseAccount accounts, ManagedStudentRepository relationships,
                                            StudentProfileRepository profiles, StudentBookings bookings,
-                                           Clock clock) {
-        return new DeleteMyAccountService(accounts, relationships, profiles, bookings, clock);
+                                           StudentMessages messages, Clock clock) {
+        return new DeleteMyAccountService(accounts, relationships, profiles, bookings, messages, clock);
     }
 
     @Bean

@@ -23,6 +23,9 @@ public interface BookingRepository {
 
     Optional<Booking> findById(UUID id);
 
+    /** The students with a confirmed booking in any of these lessons, each once. */
+    List<UUID> studentsConfirmedIn(Collection<UUID> lessonIds);
+
     List<Booking> findAllById(Collection<UUID> ids);
 
     boolean existsConfirmed(UUID lessonId, UUID studentUserId);

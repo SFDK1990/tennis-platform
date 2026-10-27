@@ -476,7 +476,7 @@ export interface paths {
         };
         /**
          * Descarga todo lo que la plataforma guarda del usuario autenticado
-         * @description Un JSON para descargar (`Content-Disposition: attachment`): la cuenta y el perfil, como `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia. El profesor y el admin reciben la lista de reservas vacía.
+         * @description Un JSON para descargar (`Content-Disposition: attachment`): la cuenta y el perfil, como `GET /me`, y para el alumno todas sus reservas con su clase y su asistencia, su ficha y los mensajes que recibió. El profesor y el admin reciben esas listas vacías.
          */
         get: {
             parameters: {
@@ -2507,6 +2507,191 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Los mensajes que ha enviado el profesor, el mas reciente primero */
+        get: {
+            parameters: {
+                query?: {
+                    page?: components["parameters"]["Page"];
+                    size?: components["parameters"]["Size"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SentMessagePage"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        /**
+         * Escribe a todos los alumnos, a un nivel, a los de una clase o a los de su serie
+         * @description Los destinatarios se fijan al enviar: son los alumnos que el profesor gestiona y que en ese momento estan en el destino. Para LESSON, los que tienen reserva confirmada en la clase; para SERIES, los que la tienen en alguna clase de la serie que aun no ha empezado. Cada uno lo ve en GET /messages y, si tiene el email verificado, lo recibe por correo despues del commit (Fase 24).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SendMessageRequest"];
+                };
+            };
+            responses: {
+                /** @description Enviado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SentMessage"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description LEVEL_NOT_FOUND o LESSON_NOT_FOUND, tambien si son de otro profesor */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description NO_RECIPIENTS si en el destino no hay ningun alumno; LESSON_NOT_IN_SERIES si se pide SERIES de una clase creada suelta */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/messages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Quita un mensaje del tablon de todos sus destinatarios
+         * @description El correo ya ha salido y no se retira.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Borrado */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description MESSAGE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * El tablon del usuario autenticado, el mas reciente primero
+         * @description Solo los mensajes que se le enviaron a el. El profesor y el admin reciben la pagina vacia.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: components["parameters"]["Page"];
+                    size?: components["parameters"]["Size"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReceivedMessagePage"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/configuration": {
         parameters: {
             query?: never;
@@ -2803,6 +2988,8 @@ export interface components {
                 goals: string | null;
                 privateNotes: string | null;
             }[];
+            /** @description Los mensajes que el alumno recibio y siguen en su tablon (Fase 24). */
+            messages: components["schemas"]["ReceivedMessage"][];
         };
         Level: {
             /** Format: uuid */
@@ -3211,6 +3398,44 @@ export interface components {
                 /** @enum {string} */
                 status: "ATTENDED" | "NO_SHOW";
             }[];
+        };
+        /** @enum {string} */
+        MessageAudience: "ALL" | "LEVEL" | "LESSON" | "SERIES";
+        /** @description levelId solo con LEVEL, lessonId solo con LESSON y SERIES. */
+        SendMessageRequest: {
+            audience: components["schemas"]["MessageAudience"];
+            /** Format: uuid */
+            levelId?: string;
+            /** Format: uuid */
+            lessonId?: string;
+            subject: string;
+            body: string;
+        };
+        SentMessage: {
+            /** Format: uuid */
+            id: string;
+            audience: components["schemas"]["MessageAudience"];
+            /** @description A quien fue, escrito al enviar ("Nivel Intermedio", "Clase del lunes 2 de noviembre, 18:00"): el nivel o la clase pueden cambiar o desaparecer despues. */
+            audienceLabel: string;
+            subject: string;
+            body: string;
+            /** Format: date-time */
+            sentAt: string;
+            recipientCount: number;
+        };
+        SentMessagePage: components["schemas"]["Page"] & {
+            items: components["schemas"]["SentMessage"][];
+        };
+        ReceivedMessage: {
+            /** Format: uuid */
+            id: string;
+            subject: string;
+            body: string;
+            /** Format: date-time */
+            sentAt: string;
+        };
+        ReceivedMessagePage: components["schemas"]["Page"] & {
+            items: components["schemas"]["ReceivedMessage"][];
         };
         PlatformConfiguration: {
             studentLimit: number;

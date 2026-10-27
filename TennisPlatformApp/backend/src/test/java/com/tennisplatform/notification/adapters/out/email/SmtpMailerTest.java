@@ -77,7 +77,7 @@ class SmtpMailerTest {
 
         assertThat(meters.counter("tennis.mail.sent", "kind", "booking-confirmed-student", "outcome", "failed").count())
                 .isEqualTo(1);
-        assertThat(output.getAll()).contains("Could not send booking-confirmed-student for booking b-1")
+        assertThat(output.getAll()).contains("Could not send booking-confirmed-student b-1")
                 .doesNotContain(ADDRESS);
     }
 }

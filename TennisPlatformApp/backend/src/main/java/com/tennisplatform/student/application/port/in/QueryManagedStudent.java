@@ -25,4 +25,10 @@ public interface QueryManagedStudent {
 
     /** The teachers who currently manage this student; empty for a student nobody manages. */
     List<UUID> teachersOf(UUID studentUserId);
+
+    /** The students this teacher currently manages, whom a message to everybody reaches (Fase 24). */
+    List<UUID> studentsOf(UUID teacherUserId);
+
+    /** The students this teacher currently manages and has put on this level (Fase 24). */
+    List<UUID> studentsOn(UUID teacherUserId, UUID levelId);
 }

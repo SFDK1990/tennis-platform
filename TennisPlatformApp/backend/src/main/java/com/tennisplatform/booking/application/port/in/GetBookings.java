@@ -4,6 +4,7 @@ import com.tennisplatform.shared.domain.ResultPage;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /** Listing bookings, newest lesson first. {@code status} and {@code lessonId} are optional filters. */
@@ -24,6 +25,9 @@ public interface GetBookings {
      * The bookings of the teacher's lessons. Filtering by one lesson is what builds the attendance
      * screen, which needs precisely the booking ids of that lesson.
      */
+    /** The students with a confirmed booking in any of these lessons: who a message to a group reaches (Fase 24). */
+    Set<UUID> studentsWithASeatIn(Collection<UUID> lessonIds);
+
     /** Every booking of the platform, to resolve an incident. The filters are the teacher's. */
     ResultPage<BookingView> forAdministration(UUID lessonId, String status, int page, int size);
 
