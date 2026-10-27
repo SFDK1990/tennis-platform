@@ -23,6 +23,8 @@ public interface BookingRepository {
 
     Optional<Booking> findById(UUID id);
 
+    List<Booking> findConfirmedInLessons(Collection<UUID> lessonIds);
+
     /** The students with a confirmed booking in any of these lessons, each once. */
     List<UUID> studentsConfirmedIn(Collection<UUID> lessonIds);
 

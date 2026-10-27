@@ -41,6 +41,8 @@ function Today({ zone }: { zone: string }) {
         </div>
         {/* On a phone the tab bar already leads there. */}
         <Link href="/teacher/calendar" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.secondary} max-lg:hidden`}>Ver la agenda</Link>
+        {/* The tab bar has no room for it; the sidebar does. */}
+        <Link href="/teacher/summary" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.quiet} lg:hidden`}>Resumen del mes</Link>
       </div>
 
       <ErrorNotice error={calendar.error} />

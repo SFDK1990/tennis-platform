@@ -48,6 +48,13 @@ interface BookingJpaRepository extends JpaRepository<BookingEntity, UUID>,
     List<Object[]> countConfirmed(@Param("lessonIds") Collection<UUID> lessonIds);
 
     @Query("""
+            select b from BookingEntity b
+            where b.lessonId in :lessonIds
+              and b.status = com.tennisplatform.booking.domain.BookingStatus.CONFIRMED
+            """)
+    List<BookingEntity> findConfirmedInLessons(@Param("lessonIds") Collection<UUID> lessonIds);
+
+    @Query("""
             select distinct b.studentUserId from BookingEntity b
             where b.lessonId in :lessonIds
               and b.status = com.tennisplatform.booking.domain.BookingStatus.CONFIRMED

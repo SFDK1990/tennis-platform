@@ -25,6 +25,12 @@ public interface GetBookings {
      * The bookings of the teacher's lessons. Filtering by one lesson is what builds the attendance
      * screen, which needs precisely the booking ids of that lesson.
      */
+    /**
+     * The confirmed bookings of these lessons, without the lesson attached: what the monthly
+     * summary counts seats and attendance from (Fase 25).
+     */
+    List<BookingView> confirmedInLessons(Collection<UUID> lessonIds);
+
     /** The students with a confirmed booking in any of these lessons: who a message to a group reaches (Fase 24). */
     Set<UUID> studentsWithASeatIn(Collection<UUID> lessonIds);
 
