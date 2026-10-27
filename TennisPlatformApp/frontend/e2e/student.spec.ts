@@ -1,7 +1,7 @@
 import { expectEmail, linkSentTo } from "./support/mailbox";
 import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
 import { addDays, todayIn, zonedToInstant } from "@/shared/time";
-import { STUDENT_PASSWORD, uniqueEmail, ZONE } from "./support/stack";
+import { STUDENT_PASSWORD, TEACHER, uniqueEmail, ZONE } from "./support/stack";
 
 test("un alumno se registra, verifica su email con el enlace del correo y completa su perfil", async ({ page }) => {
   const email = uniqueEmail();
@@ -165,4 +165,25 @@ test("un alumno de iniciación ve la clase de avanzado sin poder reservarla, y r
   const open = calendarDay.getByRole("listitem").filter({ hasText: "13:00" });
   await open.getByRole("button", { name: "Reservar" }).click();
   await expect(open.getByText("Tienes plaza")).toBeVisible();
+});
+
+/** Fase 25.5: the student's photo, which only their teacher sees. */
+test("un alumno sube su foto desde el perfil y su profesor la ve en la ficha", async ({ page, arrange }) => {
+  const student = await arrange.student({ managed: true });
+  await signIn(page, student.email, student.password);
+  await openFromMenu(page, "Perfil");
+  await page.getByLabel("Elegir una foto").setInputFiles({
+    name: "cara.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64"),
+  });
+  await expect(page.getByRole("button", { name: "Cambiar foto" })).toBeVisible();
+  await expect(page.locator('img[src^="data:image/jpeg"]')).toBeVisible();
+
+  await page.context().clearCookies();
+  await page.goto("/login");
+  await signIn(page, TEACHER.email, TEACHER.password);
+  await page.goto("/teacher/students");
+  await page.getByRole("link", { name: student.fullName }).click();
+  await expect(page.locator('img[src^="data:image/jpeg"]')).toBeVisible();
 });

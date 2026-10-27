@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useCancelBooking, useLessonBookings, useMarkAttendance, type AttendanceMark } from "@/modules/booking/api";
 import { Button } from "@/shared/ui/Button";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
@@ -10,6 +10,8 @@ interface LessonAttendanceProps {
   started: boolean;
   /** Bookings only carry the student's id; the page knows the names. */
   nameOf: (studentUserId: string) => string;
+  /** The student's photo or initials, which only the student module can fetch (Fase 25.5). */
+  faceOf?: (studentUserId: string) => ReactNode;
   /** The administrator takes a seat back to resolve an incident; the attendance is the teacher's. */
   as?: "teacher" | "admin";
 }
@@ -18,7 +20,7 @@ interface LessonAttendanceProps {
  * The teacher's view of who is coming. Before the lesson they can take a seat back; once it
  * has started, they mark who came, all at once, as the backend applies it.
  */
-export function LessonAttendance({ lessonId, started, nameOf, as = "teacher" }: LessonAttendanceProps) {
+export function LessonAttendance({ lessonId, started, nameOf, faceOf, as = "teacher" }: LessonAttendanceProps) {
   const marking = started && as === "teacher";
   const bookings = useLessonBookings(lessonId);
   const mark = useMarkAttendance(lessonId);
@@ -49,7 +51,10 @@ export function LessonAttendance({ lessonId, started, nameOf, as = "teacher" }: 
       <ul className="flex flex-col divide-y divide-line-soft rounded-xl border border-line bg-paper">
         {confirmed.map((booking) => (
           <li key={booking.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <span className="font-semibold">{nameOf(booking.studentUserId)}</span>
+            <span className="flex items-center gap-3 font-semibold">
+              {faceOf?.(booking.studentUserId)}
+              {nameOf(booking.studentUserId)}
+            </span>
             {marking ? (
               <fieldset className="flex gap-2">
                 <legend className="sr-only">Asistencia de {nameOf(booking.studentUserId)}</legend>

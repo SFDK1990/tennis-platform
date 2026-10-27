@@ -27,3 +27,5 @@ databaseChangeLog:
       file: db/changelog/changes/v11-levels.yaml
   - include:
       file: db/changelog/changes/v12-notification-messages.yaml
+  - include:
+      file: db/changelog/changes/v13-student-photos.yaml

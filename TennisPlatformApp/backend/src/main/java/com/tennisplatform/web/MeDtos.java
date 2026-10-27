@@ -29,7 +29,7 @@ final class MeDtos {
     /** {@code levelId} is the student's level with their teacher (Fase 23), null for anybody else. */
     record MeResponse(UUID id, String email, String role, String status, Instant emailVerifiedAt,
                       String fullName, String phone, String nationalId, String address,
-                      String displayName, String timezone, UUID levelId) {
+                      String displayName, String timezone, UUID levelId, boolean hasPhoto) {
     }
 
     /**
@@ -58,10 +58,14 @@ final class MeDtos {
      * right of access covers what is kept about a person (36-fase23, decision 7).
      */
     record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings,
-                        List<ExportedRecord> records, List<ReceivedMessageView> messages) {
+                        List<ExportedRecord> records, List<ReceivedMessageView> messages, ExportedPhoto photo) {
     }
 
     record ExportedRecord(String level, String goals, String privateNotes) {
+    }
+
+    /** The student's photo in the export, as base64 inside the JSON (Fase 25.5). */
+    record ExportedPhoto(String contentType, String base64) {
     }
 
     record ExportedBooking(UUID id, UUID lessonId, UUID studentUserId, String status, String attendance,

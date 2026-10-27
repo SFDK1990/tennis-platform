@@ -237,6 +237,13 @@ Códigos añadidos en la Fase 23:
 `GET /teacher/summary` (Fase 25) responde `DATE_RANGE_INVALID` a un mes mal escrito o que aún no ha
 empezado.
 
+Códigos añadidos en la Fase 25.5:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `PHOTO_INVALID` | 400 | `PUT /me/photo` | No es una imagen JPEG, PNG o WebP, o pasa de 1 MB |
+| `PHOTO_NOT_FOUND` | 404 | `GET /me/photo`, `GET /teacher/students/{userId}/photo` | No hay foto, o el profesor ya no gestiona al alumno |
+
 Códigos añadidos en la Fase 24:
 
 | Código | HTTP | Endpoint típico | Motivo |

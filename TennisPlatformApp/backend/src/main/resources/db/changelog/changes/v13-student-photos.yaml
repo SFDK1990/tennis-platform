@@ -1,0 +1,23 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v13-student-photos
+      author: tennis-platform
+      comment: >-
+        The student's photo (39-fase25.5-analisis-foto-alumno.md): one per student, already
+        reduced by the browser to some 40 KB. In the database, so the nightly backup carries it.
+        Deleting the account deletes the row; the users row itself is never deleted.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE student_photos (
+                  user_id       UUID PRIMARY KEY REFERENCES users(id),
+                  content_type  VARCHAR(20) NOT NULL
+                                CONSTRAINT ck_student_photos_type CHECK (content_type IN ('image/jpeg', 'image/png', 'image/webp')),
+                  data          BYTEA NOT NULL CONSTRAINT ck_student_photos_size CHECK (octet_length(data) <= 1048576),
+                  updated_at    TIMESTAMPTZ NOT NULL
+              );
+      rollback:
+        - sql:
+            sql: DROP TABLE student_photos;

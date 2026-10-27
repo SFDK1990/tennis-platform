@@ -7,7 +7,8 @@ import { LessonWaitingList } from "@/modules/booking/components/LessonWaitingLis
 import { useLesson } from "@/modules/lesson/api";
 import { LessonDetail } from "@/modules/lesson/components/LessonDetail";
 import { MessageComposer, type AudienceOption } from "@/modules/messages/components/MessageComposer";
-import { useStudentNames } from "@/modules/student/api";
+import { useStudentHasPhoto, useStudentNames } from "@/modules/student/api";
+import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
 import { useTeacherZone } from "@/modules/teacher/api";
 import { useNow } from "@/shared/useNow";
 import { Icon } from "@/shared/ui/Icon";
@@ -26,6 +27,8 @@ export default function LessonPage() {
   const lesson = useLesson(id);
   const zone = useTeacherZone();
   const nameOf = useStudentNames();
+  const hasPhoto = useStudentHasPhoto();
+  const faceOf = (userId: string) => <StudentAvatar userId={userId} name={nameOf(userId)} hasPhoto={hasPhoto(userId)} />;
   const now = useNow();
   const started = lesson.data ? new Date(lesson.data.startsAt).getTime() <= now : false;
 
@@ -38,7 +41,7 @@ export default function LessonPage() {
           <LessonDetail lesson={lesson.data} zone={zone} started={started} />
           <section className="flex flex-col gap-3">
             <h2 className="font-display text-2xl font-semibold">Alumnos</h2>
-            <LessonAttendance lessonId={id} started={started} nameOf={nameOf} />
+            <LessonAttendance lessonId={id} started={started} nameOf={nameOf} faceOf={faceOf} />
           </section>
           {started ? null : <LessonWaitingList lessonId={id} nameOf={nameOf} />}
           {lesson.data.status === "CANCELLED" ? null : (

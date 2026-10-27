@@ -88,4 +88,11 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
+    <!-- The same false positive, on StudentPhotoRepository (Fase 25.5), scoped to the one field. -->
+    <Match>
+        <Class name="~com\.tennisplatform\.student\.application\.service\.(DeleteMyAccountService|StudentPhotoService)"/>
+        <Field name="photos"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
 </FindBugsFilter>

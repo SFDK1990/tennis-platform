@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /** Wire representations. Kept apart from the domain so persistence can never leak out. */
@@ -22,20 +23,20 @@ final class StudentDtos {
      * (02-arquitectura.md).
      */
     record StudentSummaryResponse(UUID userId, String fullName, String email,
-                                  String managedStatus, Instant managedAt) {
+                                  String managedStatus, Instant managedAt, boolean hasPhoto) {
 
-        static StudentSummaryResponse from(ManagedStudentView view) {
+        static StudentSummaryResponse from(ManagedStudentView view, Set<UUID> withPhoto) {
             return new StudentSummaryResponse(view.userId(), view.fullName(), view.email(),
-                    view.managedStatus(), view.managedAt());
+                    view.managedStatus(), view.managedAt(), withPhoto.contains(view.userId()));
         }
     }
 
     record StudentSummaryPageResponse(List<StudentSummaryResponse> items, int page, int size,
                                       long totalItems) {
 
-        static StudentSummaryPageResponse from(ResultPage<ManagedStudentView> page) {
+        static StudentSummaryPageResponse from(ResultPage<ManagedStudentView> page, Set<UUID> withPhoto) {
             return new StudentSummaryPageResponse(
-                    page.items().stream().map(StudentSummaryResponse::from).toList(),
+                    page.items().stream().map(view -> StudentSummaryResponse.from(view, withPhoto)).toList(),
                     page.page(), page.size(), page.totalItems());
         }
     }
@@ -54,12 +55,13 @@ final class StudentDtos {
     record StudentDetailResponse(UUID userId, String email, String fullName, String phone,
                                  String nationalId, String address, String managedStatus,
                                  Instant managedAt, Instant deactivatedAt, UUID levelId, String goals,
-                                 String privateNotes) {
+                                 String privateNotes, boolean hasPhoto) {
 
-        static StudentDetailResponse from(ManagedStudentDetailView view) {
+        static StudentDetailResponse from(ManagedStudentDetailView view, Set<UUID> withPhoto) {
             return new StudentDetailResponse(view.userId(), view.email(), view.fullName(),
                     view.phone(), view.nationalId(), view.address(), view.managedStatus(),
-                    view.managedAt(), view.deactivatedAt(), view.levelId(), view.goals(), view.privateNotes());
+                    view.managedAt(), view.deactivatedAt(), view.levelId(), view.goals(), view.privateNotes(),
+                    withPhoto.contains(view.userId()));
         }
     }
 

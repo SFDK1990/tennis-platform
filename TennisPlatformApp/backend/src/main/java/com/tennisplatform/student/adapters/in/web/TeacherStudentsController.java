@@ -7,6 +7,10 @@ import com.tennisplatform.student.adapters.in.web.StudentDtos.StudentSummaryPage
 import com.tennisplatform.student.adapters.in.web.StudentDtos.StudentSummaryResponse;
 import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.ManageStudent;
+import com.tennisplatform.student.application.port.in.ManagedStudentDetailView;
+import com.tennisplatform.student.application.port.in.ManagedStudentView;
+import com.tennisplatform.student.application.port.in.StudentPhotos;
+import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.student.domain.StudentProfileNotFoundException;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.student.adapters.in.web.StudentDtos.StudentRecordRequest;
@@ -25,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -39,16 +45,19 @@ import java.util.UUID;
 class TeacherStudentsController {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final String MANAGED = "MANAGED";
 
     private final GetManagedStudents managedStudents;
     private final ManageStudent manageStudent;
     private final UpdateStudentRecord records;
+    private final StudentPhotos photos;
 
     TeacherStudentsController(GetManagedStudents managedStudents, ManageStudent manageStudent,
-                              UpdateStudentRecord records) {
+                              UpdateStudentRecord records, StudentPhotos photos) {
         this.managedStudents = managedStudents;
         this.manageStudent = manageStudent;
         this.records = records;
+        this.photos = photos;
     }
 
     /** The students this teacher manages. {@code query} narrows that set, and only that set. */
@@ -58,8 +67,10 @@ class TeacherStudentsController {
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "20") int size) {
         requireTeacher(caller);
-        return StudentSummaryPageResponse.from(managedStudents.list(caller.id(), query,
-                Math.max(page, 0), Math.clamp(size, 1, MAX_PAGE_SIZE)));
+        ResultPage<ManagedStudentView> found = managedStudents.list(caller.id(), query, Math.max(page, 0),
+                Math.clamp(size, 1, MAX_PAGE_SIZE));
+        return StudentSummaryPageResponse.from(found,
+                photos.withPhoto(found.items().stream().map(ManagedStudentView::userId).toList()));
     }
 
     /**
@@ -86,7 +97,7 @@ class TeacherStudentsController {
     StudentDetailResponse detail(@AuthenticationPrincipal AuthenticatedUser caller,
                                  @PathVariable UUID userId) {
         requireTeacher(caller);
-        return StudentDetailResponse.from(managedStudents.detail(caller.id(), userId));
+        return detailOf(managedStudents.detail(caller.id(), userId));
     }
 
     /** Level, goals and private notes, only ever seen by the teacher who wrote them (Fase 23). */
@@ -94,7 +105,7 @@ class TeacherStudentsController {
     StudentDetailResponse updateRecord(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID userId,
                                        @Valid @RequestBody StudentRecordRequest request) {
         requireTeacher(caller);
-        return StudentDetailResponse.from(records.update(caller.id(), userId, request.levelId(), request.goals(),
+        return detailOf(records.update(caller.id(), userId, request.levelId(), request.goals(),
                 request.privateNotes()));
     }
 
@@ -102,7 +113,8 @@ class TeacherStudentsController {
     StudentSummaryResponse manage(@AuthenticationPrincipal AuthenticatedUser caller,
                                   @PathVariable UUID userId) {
         requireTeacher(caller);
-        return StudentSummaryResponse.from(manageStudent.manage(caller.id(), userId));
+        ManagedStudentView managed = manageStudent.manage(caller.id(), userId);
+        return StudentSummaryResponse.from(managed, photos.withPhoto(List.of(managed.userId())));
     }
 
     @DeleteMapping("/{userId}/manage")
@@ -111,6 +123,12 @@ class TeacherStudentsController {
                       @PathVariable UUID userId) {
         requireTeacher(caller);
         manageStudent.stopManaging(caller.id(), userId);
+    }
+
+    /** A student the teacher let go keeps their record readable, but not their photo (Fase 25.5). */
+    private StudentDetailResponse detailOf(ManagedStudentDetailView view) {
+        boolean managed = MANAGED.equals(view.managedStatus());
+        return StudentDetailResponse.from(view, managed ? photos.withPhoto(List.of(view.userId())) : Set.of());
     }
 
     private void requireTeacher(AuthenticatedUser caller) {

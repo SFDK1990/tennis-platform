@@ -33,6 +33,15 @@ python TennisPlatformApp/demo/load-demo.py --server daniel@tenis-pi --env /srv/t
 Si los ejemplos se cargaron antes de que hubiera resumen y mensajes, `--extras` añade sólo esa
 parte (con los mismos `--server`, `--env`, `--db-container` y `--api`).
 
+Las fotos de los alumnos de ejemplo no están en el repositorio. Con la carpeta de fotos, una por
+alumno y en el orden de la lista de arriba:
+
+```bash
+python TennisPlatformApp/demo/load-demo-photos.py --folder <carpeta> --env TennisPlatformApp/.env
+```
+
+En la Pi, con los mismos `--server`, `--env` y `--db-container` que el cargador.
+
 Para quitarlos (en la Pi, con `ssh daniel@tenis-pi` y el contenedor `tennis-prod-postgres-1`):
 
 ```bash

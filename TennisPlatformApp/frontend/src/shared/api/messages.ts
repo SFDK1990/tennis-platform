@@ -55,6 +55,8 @@ const MESSAGES: Record<string, string> = {
   USER_NOT_FOUND: "Esa cuenta ya no existe.",
   ACCOUNT_DELETED: "El alumno borró su cuenta: ya no se puede activar ni desactivar.",
 
+  PHOTO_INVALID: "La foto tiene que ser una imagen JPEG, PNG o WebP de menos de 1 MB.",
+  PHOTO_NOT_FOUND: "No hay foto.",
   NO_RECIPIENTS: "No hay ningún alumno en ese destino: el mensaje no llegaría a nadie.",
   MESSAGE_NOT_FOUND: "Ese mensaje ya no existe.",
 };

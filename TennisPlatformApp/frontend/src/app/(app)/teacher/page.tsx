@@ -6,7 +6,8 @@ import { useCalendar, type CalendarLesson } from "@/modules/calendar/api";
 import { LessonLine } from "@/modules/calendar/components/LessonLine";
 import { LESSON_TITLE } from "@/modules/calendar/labels";
 import { teacherDay } from "@/modules/calendar/select";
-import { useStudentNames } from "@/modules/student/api";
+import { useStudentHasPhoto, useStudentNames } from "@/modules/student/api";
+import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
 import { useTeacherZone } from "@/modules/teacher/api";
 import { addDays, dateIn, formatDay, formatTime } from "@/shared/time";
 import { useNow } from "@/shared/useNow";
@@ -26,6 +27,8 @@ function Today({ zone }: { zone: string }) {
   const today = dateIn(new Date(now), zone);
   const calendar = useCalendar(today, addDays(today, 6));
   const nameOf = useStudentNames();
+  const hasPhoto = useStudentHasPhoto();
+  const faceOf = (userId: string) => <StudentAvatar userId={userId} name={nameOf(userId)} hasPhoto={hasPhoto(userId)} />;
   const day = calendar.data ? teacherDay(calendar.data.lessons, zone, today, now) : null;
   const count = day ? day.rest.length + (day.focus ? 1 : 0) : 0;
 
@@ -56,7 +59,7 @@ function Today({ zone }: { zone: string }) {
                 <Focus lesson={day.focus} zone={zone} now={now} />
                 <section aria-labelledby="students" className="flex flex-col gap-3">
                   <h2 id="students" className="font-display text-2xl font-semibold">Alumnos</h2>
-                  <LessonAttendance key={day.focus.id} lessonId={day.focus.id} nameOf={nameOf}
+                  <LessonAttendance key={day.focus.id} lessonId={day.focus.id} nameOf={nameOf} faceOf={faceOf}
                     started={new Date(day.focus.startsAt).getTime() <= now} />
                 </section>
               </>

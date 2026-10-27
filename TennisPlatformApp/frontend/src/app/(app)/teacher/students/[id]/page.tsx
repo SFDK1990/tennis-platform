@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { StudentHistory } from "@/modules/booking/components/StudentHistory";
 import { useStudentDetail } from "@/modules/student/api";
+import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
 import { StudentRecordForm } from "@/modules/student/components/StudentRecordForm";
 import { useTeacherZone } from "@/modules/teacher/api";
 import { Icon } from "@/shared/ui/Icon";
@@ -23,11 +24,15 @@ export default function StudentPage() {
       <ErrorNotice error={student.error} />
       {student.data && zone ? (
         <>
-          <div className="flex flex-col gap-1">
-            <h1 className="font-display text-4xl font-semibold leading-none">{student.data.fullName}</h1>
-            <p className="text-muted">
-              {student.data.email}{student.data.phone ? `, ${student.data.phone}` : ""}
-            </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <StudentAvatar userId={student.data.userId} name={student.data.fullName} hasPhoto={student.data.hasPhoto}
+              size="lg" />
+            <div className="flex flex-col gap-1">
+              <h1 className="font-display text-4xl font-semibold leading-none">{student.data.fullName}</h1>
+              <p className="text-muted">
+                {student.data.email}{student.data.phone ? `, ${student.data.phone}` : ""}
+              </p>
+            </div>
           </div>
           <section aria-labelledby="record-heading" className="flex flex-col gap-4 rounded-xl border border-line bg-paper p-5">
             <h2 id="record-heading" className="font-display text-2xl font-semibold leading-none">Ficha</h2>

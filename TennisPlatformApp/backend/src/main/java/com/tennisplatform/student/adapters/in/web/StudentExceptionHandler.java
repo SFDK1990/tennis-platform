@@ -5,6 +5,8 @@ import com.tennisplatform.student.domain.InvalidStudentProfileException;
 import com.tennisplatform.student.domain.StudentAlreadyInactiveException;
 import com.tennisplatform.student.domain.StudentAlreadyManagedException;
 import com.tennisplatform.student.domain.StudentLimitReachedException;
+import com.tennisplatform.student.domain.InvalidPhotoException;
+import com.tennisplatform.student.domain.PhotoNotFoundException;
 import com.tennisplatform.student.domain.StudentNotManagedException;
 import com.tennisplatform.student.domain.StudentProfileIncompleteException;
 import com.tennisplatform.student.domain.StudentProfileNotFoundException;
@@ -26,6 +28,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 class StudentExceptionHandler {
+
+    @ExceptionHandler(InvalidPhotoException.class)
+    ProblemDetail handleInvalidPhoto(InvalidPhotoException e) {
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid photo", e.getMessage(), "PHOTO_INVALID");
+    }
+
+    @ExceptionHandler(PhotoNotFoundException.class)
+    ProblemDetail handlePhotoNotFound(PhotoNotFoundException e) {
+        return Problems.of(HttpStatus.NOT_FOUND, "Photo not found", e.getMessage(), "PHOTO_NOT_FOUND");
+    }
 
     @ExceptionHandler(StudentProfileNotFoundException.class)
     ProblemDetail handleNotFound(StudentProfileNotFoundException e) {

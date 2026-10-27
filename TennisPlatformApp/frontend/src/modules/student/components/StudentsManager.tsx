@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useManagedStudents, useManageStudent, useStopManaging, useStudentLookup } from "@/modules/student/api";
+import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
 import { Button } from "@/shared/ui/Button";
 import { Field } from "@/shared/ui/Field";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
@@ -61,9 +62,7 @@ export function StudentsManager() {
             {active.map((student) => (
               <li key={student.userId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <span className="flex min-w-0 items-center gap-3">
-                  <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-semibold text-white">
-                    {initialsOf(student.fullName)}
-                  </span>
+                  <StudentAvatar userId={student.userId} name={student.fullName} hasPhoto={student.hasPhoto} />
                   <span className="min-w-0">
                     <Link href={`/teacher/students/${student.userId}`} className="block font-semibold text-court underline-offset-4 hover:underline">
                       {student.fullName}
@@ -90,8 +89,4 @@ export function StudentsManager() {
       </section>
     </div>
   );
-}
-
-function initialsOf(name: string): string {
-  return name.split(/\s+/).slice(0, 2).map((word) => word[0]?.toUpperCase() ?? "").join("");
 }
