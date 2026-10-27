@@ -4,6 +4,7 @@ import { useMe } from "@/modules/identity/api";
 import { ChangePasswordForm, DeleteMyAccount, DownloadMyData } from "@/modules/identity/components/AccountSettings";
 import { ProfileForm } from "@/modules/identity/components/ProfileForm";
 import { SignOutButton } from "@/modules/identity/components/SignOutButton";
+import { PhotoPicker } from "@/modules/student/components/PhotoPicker";
 import { LevelsManager } from "@/modules/teacher/components/LevelsManager";
 import { useLevelName } from "@/shared/levels";
 
@@ -17,6 +18,7 @@ export default function ProfilePage() {
         <>
           <section aria-labelledby="personal-heading" className="flex flex-col gap-4 rounded-xl border border-line bg-paper p-5">
             <h2 id="personal-heading" className="font-display text-2xl font-semibold leading-none">Datos personales</h2>
+            {me.role === "STUDENT" ? <PhotoPicker name={me.fullName} hasPhoto={me.hasPhoto} /> : null}
             <ProfileForm key={me.id} me={me} />
             {me.role === "STUDENT" ? (
               <p className="text-sm">

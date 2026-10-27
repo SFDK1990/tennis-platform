@@ -13,6 +13,7 @@ DELETE FROM waiting_list_entries
 DELETE FROM bookings
     WHERE student_user_id IN (SELECT id FROM demo_students) OR lesson_id IN (SELECT id FROM demo_lessons);
 DELETE FROM lessons WHERE id IN (SELECT id FROM demo_lessons);
+DELETE FROM student_photos WHERE user_id IN (SELECT id FROM demo_students);
 DELETE FROM teacher_students WHERE student_user_id IN (SELECT id FROM demo_students);
 DELETE FROM student_profiles WHERE user_id IN (SELECT id FROM demo_students);
 DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM demo_students);

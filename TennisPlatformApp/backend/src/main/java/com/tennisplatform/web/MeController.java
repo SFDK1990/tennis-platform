@@ -9,6 +9,7 @@ import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
 import com.tennisplatform.student.application.port.in.GetStudentProfile;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentProfileUpdate;
+import com.tennisplatform.student.application.port.in.StudentPhotos;
 import com.tennisplatform.student.application.port.in.StudentProfileView;
 import com.tennisplatform.student.application.port.in.UpdateStudentProfile;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
@@ -17,6 +18,7 @@ import com.tennisplatform.teacher.application.port.in.TeacherProfileUpdate;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
 import com.tennisplatform.teacher.application.port.in.UpdateTeacherProfile;
 import com.tennisplatform.web.MeDtos.ExportedBooking;
+import com.tennisplatform.web.MeDtos.ExportedPhoto;
 import com.tennisplatform.web.MeDtos.ExportedRecord;
 import com.tennisplatform.web.MeDtos.MeResponse;
 import com.tennisplatform.web.MeDtos.MyDataExport;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Clock;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -65,12 +68,14 @@ class MeController {
     private final QueryManagedStudent managedStudents;
     private final QueryLevels levels;
     private final GetMessages messages;
+    private final StudentPhotos photos;
     private final Clock clock;
 
     MeController(GetCurrentUser getCurrentUser, GetStudentProfile studentProfiles,
                  UpdateStudentProfile updateStudentProfile, GetTeacherProfile teacherProfiles,
                  UpdateTeacherProfile updateTeacherProfile, GetBookings bookings,
-                 QueryManagedStudent managedStudents, QueryLevels levels, GetMessages messages, Clock clock) {
+                 QueryManagedStudent managedStudents, QueryLevels levels, GetMessages messages,
+                 StudentPhotos photos, Clock clock) {
         this.getCurrentUser = getCurrentUser;
         this.studentProfiles = studentProfiles;
         this.updateStudentProfile = updateStudentProfile;
@@ -80,6 +85,7 @@ class MeController {
         this.managedStudents = managedStudents;
         this.levels = levels;
         this.messages = messages;
+        this.photos = photos;
         this.clock = clock;
     }
 
@@ -111,7 +117,7 @@ class MeController {
         List<ReceivedMessageView> received = caller.isStudent() ? messages.allReceivedBy(caller.id()) : List.of();
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mis-datos.json\"")
-                .body(new MyDataExport(clock.instant(), me(caller), exported, records, received));
+                .body(new MyDataExport(clock.instant(), me(caller), exported, records, received, photoOf(caller)));
     }
 
     /**
@@ -165,7 +171,8 @@ class MeController {
                 student.map(StudentProfileView::address).orElse(null),
                 teacher.map(TeacherProfileView::displayName).orElse(null),
                 teacher.map(TeacherProfileView::timezone).orElse(null),
-                student.isPresent() ? levelOf(account.id()) : null);
+                student.isPresent() ? levelOf(account.id()) : null,
+                student.isPresent() && !photos.withPhoto(List.of(account.id())).isEmpty());
     }
 
     /** The level the student's teacher gave them; with a single teacher there is one or none. */
@@ -174,6 +181,15 @@ class MeController {
                 .map(teacherUserId -> managedStudents.levelOf(teacherUserId, studentUserId))
                 .flatMap(Optional::stream)
                 .findFirst()
+                .orElse(null);
+    }
+
+    private ExportedPhoto photoOf(AuthenticatedUser caller) {
+        if (!caller.isStudent()) {
+            return null;
+        }
+        return photos.ofStudent(caller.id())
+                .map(photo -> new ExportedPhoto(photo.contentType(), Base64.getEncoder().encodeToString(photo.bytes())))
                 .orElse(null);
     }
 }

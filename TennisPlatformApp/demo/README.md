@@ -28,6 +28,15 @@ tiene que tener ya los ejemplos cargados con la misma contraseña):
 python TennisPlatformApp/demo/load-demo.py --server daniel@tenis-pi --env /srv/tennis-platform/TennisPlatformApp/.env --db-container tennis-prod-postgres-1 --api https://tenis-pi.tail26506d.ts.net/api/v1 --student-password <la misma>
 ```
 
+Las fotos de los alumnos de ejemplo no están en el repositorio. Con la carpeta de fotos, una por
+alumno y en el orden de la lista de arriba:
+
+```bash
+python TennisPlatformApp/demo/load-demo-photos.py --folder <carpeta> --env TennisPlatformApp/.env
+```
+
+En la Pi, con los mismos `--server`, `--env` y `--db-container` que el cargador.
+
 Para quitarlos (en la Pi, con `ssh daniel@tenis-pi` y el contenedor `tennis-prod-postgres-1`):
 
 ```bash

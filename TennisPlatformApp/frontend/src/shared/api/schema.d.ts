@@ -570,6 +570,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * La foto del usuario autenticado
+         * @description Sin caché compartida (Cache-Control: no-store). Quien no tiene foto recibe 404.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description La imagen */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/jpeg": string;
+                        "image/png": string;
+                        "image/webp": string;
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description PHOTO_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        /**
+         * El alumno sube o cambia su foto
+         * @description La imagen va tal cual en el cuerpo. El frontend la recorta en cuadrado y la reduce a 400 x 400 antes de subirla; el servidor sólo acepta JPEG, PNG o WebP de hasta 1 MB, y mira el tipo en el contenido, no en el nombre ni en la cabecera (Fase 25.5).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/webp": string;
+                };
+            };
+            responses: {
+                /** @description Guardada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description PHOTO_INVALID, si no es una imagen de esos tipos o pasa de 1 MB */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        post?: never;
+        /** El alumno quita su foto */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Quitada, o no la tenía */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/password": {
         parameters: {
             query?: never;
@@ -816,6 +925,61 @@ export interface paths {
                 401: components["responses"]["Unauthorized"];
                 /** @description El llamante no es el profesor (`TEACHER_FORBIDDEN`), o no gestiona a ese alumno (`STUDENT_NOT_MANAGED`) */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/students/{userId}/photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * La foto de un alumno, para el profesor que lo gestiona ahora
+         * @description Un alumno sin foto, que no es suyo o al que dio de baja responde igual: 404. Sin caché compartida (Fase 25.5).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: components["parameters"]["UserId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description La imagen */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/jpeg": string;
+                        "image/png": string;
+                        "image/webp": string;
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description PHOTO_NOT_FOUND */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3043,6 +3207,11 @@ export interface components {
             }[];
             /** @description Los mensajes que el alumno recibio y siguen en su tablon (Fase 24). */
             messages: components["schemas"]["ReceivedMessage"][];
+            /** @description La foto del alumno en base64, o null si no tiene (Fase 25.5). */
+            photo: {
+                contentType: string;
+                base64: string;
+            } | null;
         };
         Level: {
             /** Format: uuid */
@@ -3126,6 +3295,8 @@ export interface components {
              * @description Solo STUDENT: el nivel que le dio su profesor (Fase 23)
              */
             levelId: string | null;
+            /** @description Solo STUDENT: si ha subido su foto (Fase 25.5); false para los demás */
+            hasPhoto: boolean;
         };
         /**
          * @description Solo se aceptan los campos aplicables al rol del usuario autenticado. Enviar uno de otro rol responde `400` con código `FIELD_NOT_APPLICABLE_TO_ROLE`, en lugar de ignorarlo: un cambio descartado en silencio hace creer al cliente que guardó.
@@ -3161,6 +3332,8 @@ export interface components {
             managedStatus: components["schemas"]["ManagedStatus"];
             /** Format: date-time */
             managedAt: string | null;
+            /** @description Si el profesor puede pedir su foto (Fase 25.5) */
+            hasPhoto: boolean;
         };
         /** @description Lo mínimo para confirmar a quién se va a asociar. Sin teléfono, DNI ni dirección. */
         StudentLookup: {
@@ -3196,6 +3369,8 @@ export interface components {
             goals: string | null;
             /** @description No se ven en la app del alumno (Fase 23) */
             privateNotes: string | null;
+            /** @description Si el profesor puede pedir su foto: false si lo dio de baja (Fase 25.5) */
+            hasPhoto: boolean;
         };
         StudentSummaryPage: components["schemas"]["Page"] & {
             items: components["schemas"]["StudentSummary"][];

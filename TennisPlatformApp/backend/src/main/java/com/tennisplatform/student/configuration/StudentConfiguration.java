@@ -3,12 +3,15 @@ package com.tennisplatform.student.configuration;
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.platform.application.port.in.GetStudentLimit;
 import com.tennisplatform.student.application.port.in.ManageStudent;
+import com.tennisplatform.student.application.port.in.StudentPhotos;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
+import com.tennisplatform.student.application.port.out.StudentPhotoRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
 import com.tennisplatform.student.application.port.spi.StudentMessages;
 import com.tennisplatform.student.application.service.GetManagedStudentsService;
 import com.tennisplatform.student.application.service.ManageStudentService;
+import com.tennisplatform.student.application.service.StudentPhotoService;
 import com.tennisplatform.student.application.service.StudentProfileService;
 import com.tennisplatform.identity.application.port.in.CloseAccount;
 import com.tennisplatform.student.application.port.in.DeleteMyAccount;
@@ -55,9 +58,15 @@ public class StudentConfiguration {
      */
     @Bean
     public DeleteMyAccount deleteMyAccount(CloseAccount accounts, ManagedStudentRepository relationships,
-                                           StudentProfileRepository profiles, StudentBookings bookings,
-                                           StudentMessages messages, Clock clock) {
-        return new DeleteMyAccountService(accounts, relationships, profiles, bookings, messages, clock);
+                                           StudentProfileRepository profiles, StudentPhotoRepository photos,
+                                           StudentBookings bookings, StudentMessages messages, Clock clock) {
+        return new DeleteMyAccountService(accounts, relationships, profiles, photos, bookings, messages, clock);
+    }
+
+    @Bean
+    public StudentPhotos studentPhotos(StudentPhotoRepository photos, ManagedStudentRepository relationships,
+                                       Clock clock) {
+        return new StudentPhotoService(photos, relationships, clock);
     }
 
     @Bean

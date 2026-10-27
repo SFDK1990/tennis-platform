@@ -33,6 +33,7 @@ erDiagram
     TEACHER_PROFILES ||--o{ MESSAGES : escribe
     MESSAGES ||--o{ MESSAGE_RECIPIENTS : "va a"
     USERS ||--o{ MESSAGE_RECIPIENTS : recibe
+    USERS ||--o| STUDENT_PHOTOS : "foto del alumno"
 
     USERS {
         uuid id PK
@@ -430,6 +431,19 @@ CREATE TABLE message_recipients (
     PRIMARY KEY (message_id, student_user_id)
 );
 CREATE INDEX ix_message_recipients_student ON message_recipients (student_user_id);
+```
+
+## Changelog 3b — foto del alumno (Fase 25.5)
+
+`v13-student-photos.yaml`. Razonamiento en `39-fase25.5-analisis-foto-alumno.md`.
+
+```sql
+CREATE TABLE student_photos (
+    user_id       UUID PRIMARY KEY REFERENCES users(id),
+    content_type  VARCHAR(20) NOT NULL CHECK (content_type IN ('image/jpeg', 'image/png', 'image/webp')),
+    data          BYTEA NOT NULL CHECK (octet_length(data) <= 1048576),
+    updated_at    TIMESTAMPTZ NOT NULL
+);
 ```
 
 ## Changelog 6b — lista de espera (Fase 21)

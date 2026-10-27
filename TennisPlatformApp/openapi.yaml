@@ -309,6 +309,62 @@ paths:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /me/photo:
+    put:
+      tags: [me]
+      summary: El alumno sube o cambia su foto
+      description: >-
+        La imagen va tal cual en el cuerpo. El frontend la recorta en cuadrado y la reduce a
+        400 x 400 antes de subirla; el servidor sólo acepta JPEG, PNG o WebP de hasta 1 MB, y mira
+        el tipo en el contenido, no en el nombre ni en la cabecera (Fase 25.5).
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema: { type: string, format: binary }
+          image/png:
+            schema: { type: string, format: binary }
+          image/webp:
+            schema: { type: string, format: binary }
+      responses:
+        "204":
+          description: Guardada
+        "400":
+          description: PHOTO_INVALID, si no es una imagen de esos tipos o pasa de 1 MB
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      tags: [me]
+      summary: El alumno quita su foto
+      responses:
+        "204":
+          description: Quitada, o no la tenía
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    get:
+      tags: [me]
+      summary: La foto del usuario autenticado
+      description: "Sin caché compartida (Cache-Control: no-store). Quien no tiene foto recibe 404."
+      responses:
+        "200":
+          description: La imagen
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/webp:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: PHOTO_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
   /me/password:
     post:
       tags: [me]
@@ -444,6 +500,34 @@ paths:
           description: >-
             El llamante no es el profesor (`TEACHER_FORBIDDEN`), o no gestiona a ese alumno
             (`STUDENT_NOT_MANAGED`)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/students/{userId}/photo:
+    get:
+      tags: [students]
+      summary: La foto de un alumno, para el profesor que lo gestiona ahora
+      description: >-
+        Un alumno sin foto, que no es suyo o al que dio de baja responde igual: 404. Sin caché
+        compartida (Fase 25.5).
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: La imagen
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/webp:
+              schema: { type: string, format: binary }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: PHOTO_NOT_FOUND
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -1765,7 +1849,7 @@ components:
 
     MyDataExport:
       type: object
-      required: [exportedAt, account, bookings, records, messages]
+      required: [exportedAt, account, bookings, records, messages, photo]
       properties:
         exportedAt: { type: string, format: date-time }
         account: { $ref: "#/components/schemas/MeResponse" }
@@ -1788,6 +1872,14 @@ components:
           type: array
           description: Los mensajes que el alumno recibio y siguen en su tablon (Fase 24).
           items: { $ref: "#/components/schemas/ReceivedMessage" }
+        photo:
+          type: object
+          nullable: true
+          description: La foto del alumno en base64, o null si no tiene (Fase 25.5).
+          required: [contentType, base64]
+          properties:
+            contentType: { type: string }
+            base64: { type: string }
 
     Level:
       type: object
@@ -1878,7 +1970,7 @@ components:
 
     MeResponse:
       type: object
-      required: [id, email, role, status, emailVerifiedAt, fullName, phone, nationalId, address, displayName, timezone, levelId]
+      required: [id, email, role, status, emailVerifiedAt, fullName, phone, nationalId, address, displayName, timezone, levelId, hasPhoto]
       description: >-
         Forma única para todos los roles: los campos que no aplican llegan a `null`. Un alumno
         recién verificado que aún no ha rellenado sus datos recibe `fullName`, `phone`,
@@ -1897,6 +1989,7 @@ components:
         displayName: { type: string, nullable: true, description: "Solo TEACHER" }
         timezone: { type: string, nullable: true, description: "Solo TEACHER. Id IANA, p.ej. Europe/Madrid" }
         levelId: { type: string, format: uuid, nullable: true, description: "Solo STUDENT: el nivel que le dio su profesor (Fase 23)" }
+        hasPhoto: { type: boolean, description: "Solo STUDENT: si ha subido su foto (Fase 25.5); false para los demás" }
 
     UpdateMeRequest:
       type: object
@@ -1926,13 +2019,14 @@ components:
 
     StudentSummary:
       type: object
-      required: [userId, fullName, email, managedStatus, managedAt]
+      required: [userId, fullName, email, managedStatus, managedAt, hasPhoto]
       properties:
         userId: { type: string, format: uuid }
         fullName: { type: string }
         email: { type: string, format: email }
         managedStatus: { $ref: "#/components/schemas/ManagedStatus" }
         managedAt: { type: string, format: date-time, nullable: true }
+        hasPhoto: { type: boolean, description: "Si el profesor puede pedir su foto (Fase 25.5)" }
 
     StudentLookup:
       type: object
@@ -1954,7 +2048,7 @@ components:
 
     StudentDetail:
       type: object
-      required: [userId, email, fullName, phone, nationalId, address, managedStatus, managedAt, deactivatedAt, levelId, goals, privateNotes]
+      required: [userId, email, fullName, phone, nationalId, address, managedStatus, managedAt, deactivatedAt, levelId, goals, privateNotes, hasPhoto]
       description: >-
         Ficha completa de un alumno gestionado, con los datos restringidos. Nunca se devuelve
         en listados ni búsquedas.
@@ -1971,6 +2065,7 @@ components:
         levelId: { type: string, format: uuid, nullable: true }
         goals: { type: string, nullable: true }
         privateNotes: { type: string, nullable: true, description: "No se ven en la app del alumno (Fase 23)" }
+        hasPhoto: { type: boolean, description: "Si el profesor puede pedir su foto: false si lo dio de baja (Fase 25.5)" }
 
     StudentSummaryPage:
       allOf:

@@ -41,6 +41,9 @@ class AccessMatrixTest extends AbstractBookingTest {
 
     private static final int ALLOWED = 0;
 
+    /** The PNG signature and nothing else: enough for the server to take it as a PNG. */
+    private static final byte[] TINY_PNG = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0};
+
     /** The columns of every row, in this order. */
     private enum Who { ANONYMOUS, UNVERIFIED, STUDENT, OTHER, TEACHER, ADMIN }
 
@@ -81,6 +84,11 @@ class AccessMatrixTest extends AbstractBookingTest {
         row("POST", "/me/deletion", Map.of("password", PASSWORD),                401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
         row("POST", "/me/password", Map.of("currentPassword", PASSWORD, "newPassword", "another-valid-password"),
                                                                                  401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        // The photo (Fase 25.5): STUDENT has one; the others do not, so theirs is a 404.
+        row("PUT", "/me/photo", none,                                            401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+        row("DELETE", "/me/photo", none,                                         401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+        row("GET", "/me/photo", none,                                            401, 404, ALLOWED, 404, 404, 404);
+        row("GET", "/teacher/students/{studentId}/photo", none,                  401, 403, 403, 403, ALLOWED, 403);
         row("GET", "/teacher/profile", none,                                     401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
 
         row("GET", "/teacher/students", none,                                    401, 403, 403, 403, ALLOWED, 403);
@@ -211,6 +219,9 @@ class AccessMatrixTest extends AbstractBookingTest {
 
         UUID lessonId = aLessonStartingIn(Duration.ofDays(3), LessonType.GROUP, 4);
         ResponseEntity<Map> booked = book(student.token(), lessonId);
+        HttpHeaders photo = bearer(student.token());
+        photo.setContentType(MediaType.IMAGE_PNG);
+        rest.exchange("/api/v1/me/photo", HttpMethod.PUT, new HttpEntity<>(TINY_PNG, photo), Void.class);
         ResponseEntity<Map> level = rest.exchange("/api/v1/teacher/levels", HttpMethod.POST,
                 new HttpEntity<>(Map.of("name", "Matriz"), jsonBearer(teacherToken)), Map.class);
         ResponseEntity<Map> exception = rest.exchange("/api/v1/teacher/availability/exceptions", HttpMethod.POST,

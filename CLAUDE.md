@@ -143,6 +143,8 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
 - **Un mensaje de Marcos guarda sus destinatarios al enviarse** (`message_recipients`, en
   `notification`): el tablón no se calcula al leer, y quien entra después en un nivel no ve lo
   anterior. Borrar la cuenta saca al alumno de todos por la spi `StudentMessages`.
+- **Una foto de alumno no se enlaza con `<img src>` a la API**: no llevaría el token. El frontend la
+  pide con `api` y la pinta como data URL (`student_photos`, Fase 25.5).
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
   `ContractConventionsTest`.

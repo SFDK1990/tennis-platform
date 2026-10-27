@@ -219,6 +219,11 @@ Estados de reserva: `CONFIRMED`, `CANCELLED_BY_STUDENT`, `CANCELLED_BY_TEACHER`.
 
 Estados de asistencia: `PENDING`, `ATTENDED`, `NO_SHOW`.
 
+### student_photos (Fase 25.5)
+
+- `user_id` (clave), `content_type` (`image/jpeg`, `image/png` o `image/webp`), `data` (`bytea`, hasta
+  1 MB) y `updated_at`. Una por alumno; borrar la cuenta la borra.
+
 ### messages y message_recipients (Fase 24)
 
 - `messages`: `id`, `teacher_user_id`, `audience` (`ALL`, `LEVEL`, `LESSON`, `SERIES`),
