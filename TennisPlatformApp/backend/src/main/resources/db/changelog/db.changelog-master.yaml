@@ -29,3 +29,5 @@ databaseChangeLog:
       file: db/changelog/changes/v12-notification-messages.yaml
   - include:
       file: db/changelog/changes/v13-student-photos.yaml
+  - include:
+      file: db/changelog/changes/v14-lesson-courts.yaml

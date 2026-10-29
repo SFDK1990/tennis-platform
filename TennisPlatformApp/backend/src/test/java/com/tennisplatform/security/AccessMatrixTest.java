@@ -125,6 +125,10 @@ class AccessMatrixTest extends AbstractBookingTest {
         row("POST", "/bookings/{bookingId}/cancel", none,                        401, 404, ALLOWED, 404, ALLOWED, ALLOWED);
         row("PATCH", "/teacher/lessons/{lessonId}", Map.of("capacity", 5),       401, 403, 403, 403, ALLOWED, 403);
         row("PUT", "/teacher/lessons/{lessonId}/level", Map.of(),                401, 403, 403, 403, ALLOWED, 403);
+        row("PUT", "/teacher/lessons/{lessonId}/court", Map.of("courtId", "{courtId}"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("GET", "/courts", none,                                              401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        row("PATCH", "/teacher/courts/{courtId}", Map.of("name", "Otra"),        401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/{lessonId}/cancel", none,                  401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/lessons/series/preview", Map.of("type", "INDIVIDUAL", "capacity", 1, "weeks", 2,
                 "startsAt", day + "T10:00:00Z", "endsAt", day + "T11:00:00Z"),   401, 403, 403, 403, ALLOWED, 403);
@@ -209,7 +213,7 @@ class AccessMatrixTest extends AbstractBookingTest {
         return (List<?>) page.getBody().get("items");
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private void arrange() {
         Student student = aStudentWhoMayBook();
         Student other = aStudentWhoMayBook();
@@ -243,7 +247,9 @@ class AccessMatrixTest extends AbstractBookingTest {
                 "bookingId", (String) booked.getBody().get("id"),
                 "exceptionId", (String) exception.getBody().get("id"),
                 "levelId", (String) level.getBody().get("id"),
-                "messageId", UUID.randomUUID().toString());
+                "messageId", UUID.randomUUID().toString(),
+                "courtId", (String) ((List<Map>) rest.exchange("/api/v1/courts", HttpMethod.GET,
+                        new HttpEntity<>(bearer(teacherToken)), Map.class).getBody().get("courts")).get(1).get("id"));
     }
 
     private ResponseEntity<String> call(Row row, Who who) {

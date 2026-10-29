@@ -8,6 +8,7 @@ import { ApiError } from "@/shared/api/errors";
 import { dateIn, formatDay, formatTime, zonedToInstant, type LocalDate } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
 import { CONTROL_CLASS, Field } from "@/shared/ui/Field";
+import { CourtSelect } from "@/shared/courts";
 import { LevelSelect } from "@/shared/levels";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
 
@@ -28,6 +29,7 @@ export function CreateLessonForm({ zone, defaultDate }: { zone: string; defaultD
   const [type, setType] = useState<CreateLesson["type"]>("INDIVIDUAL");
   const [repeat, setRepeat] = useState(false);
   const [levelId, setLevelId] = useState<string | null>(null);
+  const [courtId, setCourtId] = useState<string | null>(null);
   const [series, setSeries] = useState<SeriesPreviewRequest | null>(null);
   const outsideHours = create.error instanceof ApiError && create.error.code === "LESSON_OUTSIDE_AVAILABILITY";
 
@@ -43,6 +45,7 @@ export function CreateLessonForm({ zone, defaultDate }: { zone: string; defaultD
       capacity: type === "INDIVIDUAL" ? 1 : Number(form.get("capacity")),
       notes: String(form.get("notes") ?? "") || null,
       levelId,
+      courtId,
     };
     if (repeat) {
       const request = { ...lesson, weeks: Number(form.get("weeks")) };
@@ -90,8 +93,13 @@ export function CreateLessonForm({ zone, defaultDate }: { zone: string; defaultD
       {type === "GROUP" ? (
         <Field label="Plazas" name="capacity" type="number" min={1} max={8} defaultValue={4} required className="max-w-32" />
       ) : null}
-      <div className="max-w-64">
-        <LevelSelect id="lesson-level" label="Nivel" noneLabel="Abierta a todos" value={levelId} onChange={setLevelId} />
+      <div className="flex flex-wrap gap-4">
+        <div className="w-64">
+          <LevelSelect id="lesson-level" label="Nivel" noneLabel="Abierta a todos" value={levelId} onChange={setLevelId} />
+        </div>
+        <div className="w-48">
+          <CourtSelect id="lesson-court" label="Pista" value={courtId} onChange={setCourtId} />
+        </div>
       </div>
       <Field label="Notas" name="notes" hint="Sólo las ves tú." />
       <div className="flex flex-wrap items-center gap-4">

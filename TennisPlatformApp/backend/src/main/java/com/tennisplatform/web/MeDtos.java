@@ -80,11 +80,11 @@ final class MeDtos {
 
     /** The lesson as it travels inside a booking: without the teacher's notes, as everywhere else. */
     record ExportedLesson(UUID id, UUID teacherUserId, String type, Instant startsAt, Instant endsAt,
-                          int capacity, int bookedCount, String status) {
+                          int capacity, int bookedCount, String status, UUID courtId) {
 
         static ExportedLesson from(LessonView lesson) {
             return new ExportedLesson(lesson.id(), lesson.teacherUserId(), lesson.type(), lesson.startsAt(),
-                    lesson.endsAt(), lesson.capacity(), lesson.bookedCount(), lesson.status());
+                    lesson.endsAt(), lesson.capacity(), lesson.bookedCount(), lesson.status(), lesson.courtId());
         }
     }
 }

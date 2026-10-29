@@ -7,7 +7,10 @@ import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleSeries;
+import com.tennisplatform.lesson.application.port.in.Courts;
+import com.tennisplatform.lesson.application.port.out.CourtRepository;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
+import com.tennisplatform.lesson.application.service.CourtsService;
 import com.tennisplatform.lesson.application.port.spi.LessonBookings;
 import com.tennisplatform.lesson.application.service.CancelLessonService;
 import com.tennisplatform.lesson.application.service.EditLessonService;
@@ -18,6 +21,7 @@ import com.tennisplatform.lesson.application.service.ScheduleSeriesService;
 import com.tennisplatform.platform.application.port.in.GetMaxGroupCapacity;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.QueryLevels;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -33,15 +37,17 @@ public class LessonConfiguration {
     @Bean
     public ScheduleLesson scheduleLesson(LessonRepository lessons, GetTeacherProfile teacherProfile,
                                          QueryAvailability availability,
-                                         GetMaxGroupCapacity groupCapacity, QueryLevels levels, Clock clock) {
-        return new ScheduleLessonService(lessons, teacherProfile, availability, groupCapacity, levels, clock);
+                                         GetMaxGroupCapacity groupCapacity, QueryLevels levels, CourtRepository courts,
+                                         Clock clock) {
+        return new ScheduleLessonService(lessons, teacherProfile, availability, groupCapacity, levels, courts, clock);
     }
 
     @Bean
     public ScheduleSeries scheduleSeries(LessonRepository lessons, GetTeacherProfile teacherProfile,
                                          QueryAvailability availability,
-                                         GetMaxGroupCapacity groupCapacity, QueryLevels levels, Clock clock) {
-        return new ScheduleSeriesService(lessons, teacherProfile, availability, groupCapacity, levels, clock);
+                                         GetMaxGroupCapacity groupCapacity, QueryLevels levels, CourtRepository courts,
+                                         Clock clock) {
+        return new ScheduleSeriesService(lessons, teacherProfile, availability, groupCapacity, levels, courts, clock);
     }
 
     @Bean
@@ -53,8 +59,14 @@ public class LessonConfiguration {
     @Bean
     public EditLesson editLesson(LessonRepository lessons, LessonBookings bookings,
                                  GetMaxGroupCapacity groupCapacity, GetTeacherProfile teacherProfile,
-                                 QueryLevels levels, Clock clock) {
-        return new EditLessonService(lessons, bookings, groupCapacity, teacherProfile, levels, clock);
+                                 QueryLevels levels, CourtRepository courts, ApplicationEventPublisher events,
+                                 Clock clock) {
+        return new EditLessonService(lessons, bookings, groupCapacity, teacherProfile, levels, courts, events, clock);
+    }
+
+    @Bean
+    public Courts courts(CourtRepository courts, GetTeacherProfile teacherProfile) {
+        return new CourtsService(courts, teacherProfile);
     }
 
     @Bean

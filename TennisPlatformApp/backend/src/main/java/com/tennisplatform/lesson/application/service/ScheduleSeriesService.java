@@ -3,6 +3,7 @@ package com.tennisplatform.lesson.application.service;
 import com.tennisplatform.availability.application.port.in.QueryAvailability;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.in.ScheduleSeries;
+import com.tennisplatform.lesson.application.port.out.CourtRepository;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.domain.InvalidLessonException;
 import com.tennisplatform.lesson.domain.Lesson;
@@ -42,16 +43,18 @@ public class ScheduleSeriesService implements ScheduleSeries {
     private final QueryAvailability availability;
     private final GetMaxGroupCapacity groupCapacity;
     private final QueryLevels levels;
+    private final CourtRepository courts;
     private final Clock clock;
 
     public ScheduleSeriesService(LessonRepository lessons, GetTeacherProfile teacherProfile,
                                  QueryAvailability availability, GetMaxGroupCapacity groupCapacity, QueryLevels levels,
-                                 Clock clock) {
+                                 CourtRepository courts, Clock clock) {
         this.lessons = lessons;
         this.teacher = new TeacherLessons(teacherProfile);
         this.availability = availability;
         this.groupCapacity = groupCapacity;
         this.levels = levels;
+        this.courts = courts;
         this.clock = clock;
     }
 
@@ -96,7 +99,7 @@ public class ScheduleSeriesService implements ScheduleSeries {
             }
             Lesson saved = lessons.save(Lesson.create(teacherUserId, template.type(), period, series.capacity(),
                     series.notes(), !covered, template.zone(), template.maxGroupCapacity(), seriesId)
-                    .withLevel(series.levelId()));
+                    .withLevel(series.levelId()).withCourt(series.courtId()));
             created.add(LessonView.from(saved, now, 0));
         }
         log.info("Series {} scheduled: {} lessons", seriesId, created.size());
@@ -110,6 +113,7 @@ public class ScheduleSeriesService implements ScheduleSeries {
     private Template templateOf(UUID teacherUserId, NewSeries series) {
         ZoneId zone = teacher.requireTheTeacher(teacherUserId);
         LessonLevels.requireTheTeachers(levels, series.levelId(), teacherUserId);
+        LessonCourts.requireExisting(courts, series.courtId());
         LessonType type = LessonType.parse(series.type());
         int maxGroupCapacity = type == LessonType.GROUP ? groupCapacity.maxGroupCapacity() : 1;
         List<LessonPeriod> occurrences = WeeklySeries.occurrences(series.startsAt(), series.endsAt(), zone,

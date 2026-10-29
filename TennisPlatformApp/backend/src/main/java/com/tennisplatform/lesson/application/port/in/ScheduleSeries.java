@@ -22,7 +22,7 @@ public interface ScheduleSeries {
 
     /** The first lesson of the series, and how many weeks it runs counting that one. */
     record NewSeries(String type, Instant startsAt, Instant endsAt, int capacity, String notes, int weeks,
-                     UUID levelId) {
+                     UUID levelId, UUID courtId) {
     }
 
     /** {@code status} is OK, OUTSIDE_AVAILABILITY, OVERLAP or IN_THE_PAST. */

@@ -910,6 +910,11 @@ paths:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: COURT_NOT_FOUND, si la pista elegida no existe
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
           description: LESSON_OVERLAP
           content:
@@ -1201,6 +1206,11 @@ paths:
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: COURT_NOT_FOUND, si la pista elegida no existe
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
 
   /teacher/lessons/series:
     post:
@@ -1223,6 +1233,11 @@ paths:
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: COURT_NOT_FOUND, si la pista elegida no existe
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
         "409":
           description: "LESSON_OVERLAP: una fecha elegida choca ya con otra clase; no se crea ninguna"
           content:
@@ -1261,6 +1276,90 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422":
           description: "LESSON_NOT_IN_SERIES: la clase se creo suelta"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /courts:
+    get:
+      tags: [lessons]
+      summary: Las pistas de la escuela, en su orden
+      description: La primera es donde va una clase si no se elige otra (Fase 25.6).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CourtList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /teacher/courts/{id}:
+    patch:
+      tags: [lessons]
+      summary: Cambia el nombre de una pista
+      description: Añadir o quitar pistas llega con el club; ahora sólo se renombran (Fase 25.6).
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RenameCourtRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Court" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: COURT_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "COURT_ALREADY_EXISTS: otra pista ya se llama así"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/lessons/{id}/court:
+    put:
+      tags: [lessons]
+      summary: Pasa una clase que no ha empezado a otra pista
+      description: >-
+        Quien tiene plaza la conserva, y si la pista cambia de verdad recibe un correo después del
+        commit (Fase 25.6).
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangeCourtRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: LESSON_NOT_FOUND o COURT_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: LESSON_ALREADY_CANCELLED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LESSON_ALREADY_STARTED
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -1909,6 +2008,34 @@ components:
         name: { type: string, maxLength: 60 }
         position: { type: integer, minimum: 1 }
 
+    Court:
+      type: object
+      required: [id, name, position]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, maxLength: 60 }
+        position: { type: integer, minimum: 1 }
+
+    CourtList:
+      type: object
+      required: [courts]
+      properties:
+        courts:
+          type: array
+          items: { $ref: "#/components/schemas/Court" }
+
+    RenameCourtRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 60 }
+
+    ChangeCourtRequest:
+      type: object
+      required: [courtId]
+      properties:
+        courtId: { type: string, format: uuid }
+
     ChangeLevelRequest:
       type: object
       properties:
@@ -2192,7 +2319,7 @@ components:
           type: array
           items:
             type: object
-            required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, levelId, myBooking]
+            required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, levelId, courtId, myBooking]
             properties:
               id: { type: string, format: uuid }
               teacherUserId: { type: string, format: uuid }
@@ -2203,6 +2330,7 @@ components:
               bookedCount: { type: integer }
               status: { $ref: "#/components/schemas/LessonStatus" }
               levelId: { type: string, format: uuid, nullable: true, description: "Nivel de la clase (Fase 23); null, abierta a todos" }
+              courtId: { type: string, format: uuid, description: "La pista de la clase (Fase 25.6)" }
               myBooking:
                 type: object
                 required: [id, status, attendance]
@@ -2231,6 +2359,7 @@ components:
           default: false
           description: Permite crear la clase fuera de la disponibilidad configurada
         levelId: { type: string, format: uuid, nullable: true, description: "El nivel de la clase; sin el, abierta a todos" }
+        courtId: { type: string, format: uuid, nullable: true, description: "La pista; sin ella, la primera (Fase 25.6)" }
 
     SeriesPreviewRequest:
       type: object
@@ -2243,6 +2372,7 @@ components:
         notes: { type: string, nullable: true }
         weeks: { type: integer, minimum: 2, maximum: 16, description: Contando la primera }
         levelId: { type: string, format: uuid, nullable: true }
+        courtId: { type: string, format: uuid, nullable: true, description: "La pista de toda la serie; sin ella, la primera" }
 
     SeriesPreview:
       type: object
@@ -2281,7 +2411,7 @@ components:
 
     Lesson:
       type: object
-      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes, createdOutsideAvailability, cancelledAt, cancelledAtShortNotice, seriesId, seriesPosition, seriesSize, levelId]
+      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, notes, createdOutsideAvailability, cancelledAt, cancelledAtShortNotice, seriesId, seriesPosition, seriesSize, levelId, courtId]
       description: >-
         bookedCount es el numero de reservas confirmadas. Se retiro en la Fase 8, cuando solo
         booking podia contarlas y aun no existia, y volvio con la Fase 9.
@@ -2319,6 +2449,7 @@ components:
           description: Su puesto en la serie («3 de 12»). Solo al leer una clase; null en las listas
         seriesSize: { type: integer, nullable: true }
         levelId: { type: string, format: uuid, nullable: true, description: "Nivel de la clase (Fase 23); null, abierta a todos" }
+        courtId: { type: string, format: uuid, description: "La pista de la clase (Fase 25.6)" }
 
     Booking:
       type: object
@@ -2339,7 +2470,7 @@ components:
     LessonSummary:
       type: object
       description: La clase tal como viaja dentro de una reserva o de una lista de espera, sin notes.
-      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status]
+      required: [id, teacherUserId, type, startsAt, endsAt, capacity, bookedCount, status, courtId]
       properties:
         id: { type: string, format: uuid }
         teacherUserId: { type: string, format: uuid }
@@ -2349,6 +2480,7 @@ components:
         capacity: { type: integer }
         bookedCount: { type: integer }
         status: { $ref: "#/components/schemas/LessonStatus" }
+        courtId: { type: string, format: uuid, description: "La pista de la clase (Fase 25.6)" }
 
     WaitingPlace:
       type: object

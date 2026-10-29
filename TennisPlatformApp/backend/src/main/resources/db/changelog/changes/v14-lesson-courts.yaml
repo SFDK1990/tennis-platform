@@ -1,0 +1,28 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v14-lesson-courts
+      author: tennis-platform
+      comment: >-
+        The school's two tennis courts, and the court of each lesson (40-fase25.6-analisis-pistas.md).
+        The lessons that already exist go to the first one. The teacher still cannot give two
+        lessons at once: the overlap rule stays the teacher's, whatever the court.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE courts (
+                  id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  name      VARCHAR(60) NOT NULL CONSTRAINT ux_courts_name UNIQUE,
+                  position  INT NOT NULL CONSTRAINT ux_courts_position UNIQUE
+              );
+              INSERT INTO courts (name, position) VALUES ('Pista 1', 1), ('Pista 2', 2);
+
+              ALTER TABLE lessons ADD COLUMN court_id UUID REFERENCES courts(id);
+              UPDATE lessons SET court_id = (SELECT id FROM courts WHERE position = 1);
+              ALTER TABLE lessons ALTER COLUMN court_id SET NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE lessons DROP COLUMN court_id;
+              DROP TABLE courts;

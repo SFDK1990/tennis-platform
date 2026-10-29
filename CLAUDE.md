@@ -1,7 +1,7 @@
 # CLAUDE.md — Tennis Platform
 
 Plataforma web/PWA para que un profesor de tenis gestione alumnos, disponibilidad, clases y
-reservas. MVP con un profesor y una pista. Roles: `ADMIN`, `TEACHER`, `STUDENT`.
+reservas. Un profesor y dos pistas de tenis. Roles: `ADMIN`, `TEACHER`, `STUDENT`.
 
 El detalle técnico del backend está en `TennisPlatformApp/CLAUDE.md`.
 
@@ -62,6 +62,8 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   propiedad es `jackson-2-bom.version`: `jackson-bom.version` es la de Jackson 3.
 - **`AbstractIntegrationTest` usa un contenedor singleton.** Con `@Container` la base se apaga
   tras la primera clase de test.
+- **Las pistas (`courts`) no se vacían entre tests**: las crea la migración. Un test que las renombre
+  deja el nombre como estaba. Una clase guardada sin pista va a la primera.
 - **`AbstractIntegrationTest` vacía la base antes de cada test.** Una tabla nueva va a la lista
   del `TRUNCATE`. El `CASCADE` vacía también `platform_configuration`, y por eso se vuelve a
   sembrar. Un test que necesite al profesor lo siembra él.

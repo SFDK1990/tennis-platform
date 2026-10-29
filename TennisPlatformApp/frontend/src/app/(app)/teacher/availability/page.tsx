@@ -3,6 +3,7 @@
 import { useAvailability } from "@/modules/availability/api";
 import { ExceptionsEditor } from "@/modules/availability/components/ExceptionsEditor";
 import { WeeklyRulesEditor } from "@/modules/availability/components/WeeklyRulesEditor";
+import { CourtsManager } from "@/modules/lesson/components/CourtsManager";
 import { useTeacherZone } from "@/modules/teacher/api";
 import { addDays, todayIn } from "@/shared/time";
 import { ErrorNotice } from "@/shared/ui/Notice";
@@ -27,6 +28,7 @@ export default function AvailabilityPage() {
             <h2 className="font-display text-2xl font-semibold">Días concretos</h2>
             <ExceptionsEditor exceptions={availability.data.exceptions} today={today} />
           </section>
+          <CourtsManager />
         </div>
       ) : (
         <p className="text-muted">Cargando…</p>

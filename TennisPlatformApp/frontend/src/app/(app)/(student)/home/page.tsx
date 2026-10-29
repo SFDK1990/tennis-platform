@@ -10,6 +10,7 @@ import { LESSON_TITLE, seatsLeft } from "@/modules/calendar/labels";
 import { studentHome } from "@/modules/calendar/select";
 import { useMe, useResendVerification, type Me } from "@/modules/identity/api";
 import { useTeacherProfile } from "@/modules/teacher/api";
+import { useCourtName } from "@/shared/courts";
 import { addDays, dateIn, formatDay, formatTime } from "@/shared/time";
 import { useNow } from "@/shared/useNow";
 import { Button, BUTTON_BASE, BUTTON_VARIANTS } from "@/shared/ui/Button";
@@ -87,6 +88,7 @@ export default function StudentHomePage() {
 }
 
 function NextLesson({ lesson, zone, now, teacher }: { lesson: CalendarLesson; zone: string; now: number; teacher: string }) {
+  const court = useCourtName()(lesson.courtId);
   const day = dateIn(lesson.startsAt, zone);
   const today = dateIn(new Date(now), zone);
   const when = day === today ? "Hoy" : day === addDays(today, 1) ? "Mañana" : formatDay(day);
@@ -97,7 +99,10 @@ function NextLesson({ lesson, zone, now, teacher }: { lesson: CalendarLesson; zo
         <p className="font-display text-5xl font-semibold leading-none first-letter:uppercase">
           {when}, {formatTime(lesson.startsAt, zone)}
         </p>
-        <p className="mt-2">{LESSON_TITLE[lesson.type]} con {teacher} · hasta las {formatTime(lesson.endsAt, zone)}</p>
+        <p className="mt-2">
+          {LESSON_TITLE[lesson.type]} con {teacher} · hasta las {formatTime(lesson.endsAt, zone)}
+          {court ? ` · ${court}` : ""}
+        </p>
       </div>
       <p className="text-sm text-white/90">{lesson.capacity > 1 ? seatsLeft(lesson) : "Clase para ti solo"}</p>
       <div className="self-start rounded-lg bg-paper p-1.5 text-ink">

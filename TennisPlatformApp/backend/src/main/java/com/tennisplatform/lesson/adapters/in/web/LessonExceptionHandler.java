@@ -9,6 +9,9 @@ import com.tennisplatform.lesson.domain.LessonAlreadyStartedException;
 import com.tennisplatform.lesson.domain.LessonCapacityBelowBookingsException;
 import com.tennisplatform.lesson.domain.LessonInThePastException;
 import com.tennisplatform.lesson.domain.LessonNotInSeriesException;
+import com.tennisplatform.lesson.domain.CourtAlreadyExistsException;
+import com.tennisplatform.lesson.domain.CourtNotFoundException;
+import com.tennisplatform.lesson.domain.InvalidCourtException;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonOutsideAvailabilityException;
 import com.tennisplatform.lesson.domain.LessonOverlapException;
@@ -39,6 +42,21 @@ class LessonExceptionHandler {
     @ExceptionHandler(LessonOverlapException.class)
     ProblemDetail handleOverlap(LessonOverlapException e) {
         return Problems.of(HttpStatus.CONFLICT, "Overlapping lesson", e.getMessage(), "LESSON_OVERLAP");
+    }
+
+    @ExceptionHandler(CourtNotFoundException.class)
+    ProblemDetail handleCourtNotFound(CourtNotFoundException e) {
+        return Problems.of(HttpStatus.NOT_FOUND, "Court not found", e.getMessage(), "COURT_NOT_FOUND");
+    }
+
+    @ExceptionHandler(CourtAlreadyExistsException.class)
+    ProblemDetail handleCourtExists(CourtAlreadyExistsException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Court already exists", e.getMessage(), "COURT_ALREADY_EXISTS");
+    }
+
+    @ExceptionHandler(InvalidCourtException.class)
+    ProblemDetail handleInvalidCourt(InvalidCourtException e) {
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid court", e.getMessage(), "VALIDATION_ERROR");
     }
 
     @ExceptionHandler(LessonNotInSeriesException.class)

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useLeaveWaitingList, useMyBookings, useMyWaitingList, type Booking, type WaitingPlace } from "@/modules/booking/api";
 import { waitingLabel } from "@/modules/booking/components/StudentLessonActions";
+import { useCourtName } from "@/shared/courts";
 import { formatDateTime, formatTime } from "@/shared/time";
 import { useNow } from "@/shared/useNow";
 import { Button, BUTTON_BASE, BUTTON_VARIANTS } from "@/shared/ui/Button";
@@ -71,16 +72,19 @@ export function MyBookings({ zone }: { zone: string }) {
 }
 
 function BookingList({ title, bookings, zone }: { title: string; bookings: Booking[]; zone: string }) {
+  const courtName = useCourtName();
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-2xl font-semibold">{title}</h2>
       <ul className="flex flex-col divide-y divide-line-soft rounded-xl border border-line bg-paper">
         {bookings.map((booking) => {
           const label = ATTENDANCE[booking.attendance] ?? STATUS[booking.status];
+          const court = courtName(booking.lesson.courtId);
           return (
             <li key={booking.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
               <span className="font-semibold first-letter:uppercase">
                 {formatDateTime(booking.lesson.startsAt, zone)}–{formatTime(booking.lesson.endsAt, zone)}
+                {court ? <span className="block text-sm font-normal text-muted">{court}</span> : null}
               </span>
               <Chip tone={toneOf(booking)}>{label}</Chip>
             </li>

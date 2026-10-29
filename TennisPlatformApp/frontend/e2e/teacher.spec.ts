@@ -1,5 +1,6 @@
 import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
-import { addDays } from "@/shared/time";
+import { addDays, zonedToInstant } from "@/shared/time";
+import { expectEmail } from "./support/mailbox";
 import { TEACHER, ZONE } from "./support/stack";
 
 test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla, el alumno lo ve", async ({ page, browser, arrange }) => {
@@ -145,4 +146,19 @@ test("el profesor abre el resumen del mes y va al mes anterior", async ({ page }
   await expect(page.getByText("hasta hoy")).toHaveCount(0);
   await page.getByRole("button", { name: "Mes siguiente" }).click();
   await expect(page.getByText("hasta hoy")).toBeVisible();
+});
+
+/** Fase 25.6: the lesson's court, and the email when it changes. */
+test("el profesor pasa una clase con reservas a otra pista y el alumno recibe el aviso", async ({ page, arrange }) => {
+  const student = await arrange.student({ managed: true });
+  const day = await arrange.freeDay();
+  const lessonId = await arrange.lessonAt(new Date(zonedToInstant(day, "11:00", ZONE)), 60, 4, await arrange.courtId("Pista 2"));
+  await arrange.book(student, lessonId);
+
+  await signIn(page, TEACHER.email, TEACHER.password);
+  await page.goto(`/teacher/lessons/${lessonId}`);
+  await expect(page.getByText("Pista 2.", { exact: false })).toBeVisible();
+  await page.getByLabel("Pista", { exact: true }).selectOption({ label: "Pista 1" });
+  await expect(page.getByText("Pista cambiada.")).toBeVisible();
+  await expectEmail(student.email, "Cambio de pista");
 });

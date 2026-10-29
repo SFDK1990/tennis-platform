@@ -25,9 +25,9 @@ export default function LegalNoticePage() {
 
       <h2>Qué ofrecen</h2>
       <p>
-        La web informa de las clases de tenis que da Marcos en la pista del {school.name}, en {school.area}. La app
+        La web informa de las clases de tenis que da Marcos en las pistas del {school.name}, en {school.area}. La app
         sirve a sus alumnos para reservar y cancelar sus plazas. La app no cobra: las clases se pagan a Marcos en la
-        pista.
+        escuela.
       </p>
 
       <h2>Condiciones de uso</h2>

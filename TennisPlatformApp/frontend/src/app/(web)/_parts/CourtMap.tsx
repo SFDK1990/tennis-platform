@@ -14,7 +14,7 @@ export function CourtMap() {
         className="h-auto w-full overflow-hidden rounded-lg bg-(--site-sea)"
       >
         <title id="map-title">
-          Dibujo del norte de Fuerteventura: la pista está en Corralejo, frente a la isla de Lobos y junto a las dunas
+          Dibujo del norte de Fuerteventura: las pistas están en Corralejo, frente a la isla de Lobos y junto a las dunas
         </title>
         {/* Waves, a few, so the sea reads as sea. */}
         <g className="fill-none stroke-(--site-wave) stroke-[1.5]" strokeLinecap="round">
@@ -64,7 +64,7 @@ export function CourtMap() {
           <circle cy="-27" r="5" className="fill-ball" />
         </g>
         <text x="368" y="252" textAnchor="middle" className="fill-(--site-map-text) text-[13px] font-semibold">
-          La pista
+          Las pistas
         </text>
         {/* North. */}
         <g transform="translate(36 268)" className="fill-(--site-map-muted)">

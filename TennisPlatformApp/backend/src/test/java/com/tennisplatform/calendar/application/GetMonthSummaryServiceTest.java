@@ -80,7 +80,7 @@ class GetMonthSummaryServiceTest {
         UUID id = UUID.randomUUID();
         lessonsOfTheTeacher.add(new LessonView(id, TEACHER, type, starts, starts.plusSeconds(3600), capacity, 0,
                 cancelled ? "CANCELLED" : "COMPLETED", null, false, cancelled ? starts.minusSeconds(60) : null,
-                shortNotice, null, null, null, level));
+                shortNotice, null, null, null, level, null));
         return id;
     }
 

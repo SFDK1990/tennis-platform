@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useCancelFollowing, useCancelLesson, useChangeLessonLevel, type Lesson } from "@/modules/lesson/api";
+import { useCancelFollowing, useCancelLesson, useChangeLessonCourt, useChangeLessonLevel, type Lesson } from "@/modules/lesson/api";
 import { CancelConfirmation } from "@/modules/lesson/components/CancelConfirmation";
 import { EditLessonForm } from "@/modules/lesson/components/EditLessonForm";
+import { CourtSelect, useCourtName } from "@/shared/courts";
 import { LevelSelect, useLevelName } from "@/shared/levels";
 import { dateIn, formatDay, formatTime } from "@/shared/time";
 import { Button } from "@/shared/ui/Button";
@@ -31,6 +32,8 @@ export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDe
   const cancelFollowing = useCancelFollowing();
   const changeLevel = useChangeLessonLevel(lesson.id);
   const levelName = useLevelName();
+  const changeCourt = useChangeLessonCourt(lesson.id);
+  const courtName = useCourtName();
   // Which cancellation is being confirmed: this lesson, or this one and the rest of its series.
   const [confirming, setConfirming] = useState<"lesson" | "following" | null>(null);
   const [editing, setEditing] = useState(false);
@@ -50,7 +53,10 @@ export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDe
           {lesson.type === "INDIVIDUAL" ? "Clase individual" : `Clase de grupo, ${lesson.capacity} plazas`}.{" "}
           {STATUS[lesson.status]}, con {lesson.bookedCount} {lesson.bookedCount === 1 ? "reserva" : "reservas"}.
         </p>
-        <p className="text-sm text-white/85">{levelName(lesson.levelId) ? `Nivel ${levelName(lesson.levelId)}` : "Abierta a todos los niveles"}.</p>
+        <p className="text-sm text-white/85">
+          {courtName(lesson.courtId) ? `${courtName(lesson.courtId)}. ` : ""}
+          {levelName(lesson.levelId) ? `Nivel ${levelName(lesson.levelId)}` : "Abierta a todos los niveles"}.
+        </p>
         {lesson.seriesPosition ? (
           <p className="text-sm text-white/85">Se repite cada semana: es la {lesson.seriesPosition} de {lesson.seriesSize}.</p>
         ) : null}
@@ -61,12 +67,22 @@ export function LessonDetail({ lesson, zone, started, as = "teacher" }: LessonDe
       ) : null}
       {editing ? <EditLessonForm lesson={lesson} onDone={() => setEditing(false)} /> : null}
       {editable ? (
-        <div className="max-w-64">
-          <LevelSelect id="lesson-detail-level" label="Nivel de la clase" noneLabel="Abierta a todos" value={lesson.levelId}
-            onChange={(levelId) => changeLevel.mutate(levelId)} />
+        <div className="flex flex-wrap gap-4">
+          <div className="w-64">
+            <LevelSelect id="lesson-detail-level" label="Nivel de la clase" noneLabel="Abierta a todos" value={lesson.levelId}
+              onChange={(levelId) => changeLevel.mutate(levelId)} />
+          </div>
+          <div className="w-48">
+            <CourtSelect id="lesson-detail-court" label="Pista" value={lesson.courtId}
+              onChange={(courtId) => changeCourt.mutate(courtId)} />
+          </div>
         </div>
       ) : null}
-      <ErrorNotice error={changeLevel.error} />
+      {editable && lesson.bookedCount > 0 ? (
+        <p className="text-sm text-muted">Si cambias la pista, los alumnos con plaza reciben un correo.</p>
+      ) : null}
+      {changeCourt.isSuccess ? <Notice tone="success">Pista cambiada.</Notice> : null}
+      <ErrorNotice error={changeLevel.error ?? changeCourt.error} />
       <ErrorNotice error={cancel.error ?? cancelFollowing.error} />
       {cancellable && !editing ? (
         confirming === "lesson" ? (

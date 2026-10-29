@@ -11,7 +11,7 @@ import { TrialButton } from "./_parts/TrialButton";
 import { WeekSchedule } from "./_parts/WeekSchedule";
 
 const DESCRIPTION =
-  "Clases de tenis para niños y adultos, en grupos reducidos o particulares. Las da siempre Marcos, en la misma pista, y las plazas se reservan desde el móvil.";
+  "Clases de tenis para niños y adultos, en grupos reducidos o particulares. Las da siempre Marcos, en las pistas de tenis del Oasis Papagayo, y las plazas se reservan desde el móvil.";
 
 export const metadata: Metadata = {
   title: { absolute: `${school.name}, escuela de tenis en ${school.area}` },
@@ -54,8 +54,8 @@ function Hero() {
             Clases de tenis en <Copy text={school.area} />
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-(--site-band-muted) sm:text-xl">
-            Grupos reducidos y clases particulares, para niños y adultos. Las da siempre Marcos, en la
-            misma pista, y tu plaza la reservas desde el móvil.
+            Grupos reducidos y clases particulares, para niños y adultos. Las da siempre Marcos, en las
+            pistas de tenis del Oasis Papagayo, y tu plaza la reservas desde el móvil.
           </p>
           <div className="flex flex-wrap items-center gap-5">
             <TrialButton layout="desktop" />
@@ -300,7 +300,7 @@ function Contact() {
         <div className="flex flex-col gap-6">
           <CourtMap />
           <address className="flex flex-col gap-2 text-lg not-italic">
-            <span className="font-display text-3xl font-bold">Dónde está la pista</span>
+            <span className="font-display text-3xl font-bold">Dónde están las pistas</span>
             <span><Copy text={school.address} /></span>
             <span className="text-(--site-band-muted)"><Copy text={school.phone} /> · <Copy text={school.email} /></span>
             {school.mapsUrl ? (

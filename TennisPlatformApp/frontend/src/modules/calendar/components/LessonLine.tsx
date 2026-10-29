@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CalendarLesson } from "@/modules/calendar/api";
 import { LESSON_STATUS, LESSON_TITLE, seatsLeft } from "@/modules/calendar/labels";
+import { useCourtName } from "@/shared/courts";
 import { dateIn, formatShortWeekday, formatTime } from "@/shared/time";
 import { Chip } from "@/shared/ui/Chip";
 
@@ -18,6 +19,7 @@ interface LessonLineProps {
 /** One lesson in a short list: its time, what it is, how full, and what can be done. */
 export function LessonLine({ lesson, zone, withDay = false, href, actions }: LessonLineProps) {
   const status = LESSON_STATUS[lesson.status];
+  const court = useCourtName()(lesson.courtId);
   const inactive = lesson.status === "CANCELLED" || lesson.status === "COMPLETED";
   const body = (
     <>
@@ -28,7 +30,7 @@ export function LessonLine({ lesson, zone, withDay = false, href, actions }: Les
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{LESSON_TITLE[lesson.type]}</p>
         <p className="text-sm text-muted">
-          Hasta las {formatTime(lesson.endsAt, zone)} · {seatsLeft(lesson)}
+          Hasta las {formatTime(lesson.endsAt, zone)}{court ? ` · ${court}` : ""} · {seatsLeft(lesson)}
         </p>
       </div>
       {status ? <Chip tone={lesson.status === "FULL" ? "court" : "neutral"}>{status}</Chip> : null}

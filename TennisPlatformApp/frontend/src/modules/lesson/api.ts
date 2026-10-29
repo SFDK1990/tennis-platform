@@ -49,6 +49,21 @@ export function useChangeLessonLevel(id: string) {
   });
 }
 
+/** Moves a lesson that has not started to another court; the students with a seat get an email (Fase 25.6). */
+export function useChangeLessonCourt(id: string) {
+  return useMutation({
+    mutationFn: async (courtId: string) =>
+      unwrap(await api.PUT("/teacher/lessons/{id}/court", { params: { path: { id } }, body: { courtId } })),
+  });
+}
+
+export function useRenameCourt() {
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) =>
+      unwrap(await api.PATCH("/teacher/courts/{id}", { params: { path: { id } }, body: { name } })),
+  });
+}
+
 export type CancelDay = components["schemas"]["CancelDayRequest"];
 
 /** Every lesson of a day in the teacher's zone, cancelled whole or not at all. */

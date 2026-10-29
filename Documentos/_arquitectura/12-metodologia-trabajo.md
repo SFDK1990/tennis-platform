@@ -75,8 +75,8 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 24 | Mensajes | Completada | `37-fase24-analisis-mensajes.md`. Marcos escribe a todos, a un nivel, a una clase o a su grupo; llega por correo y a los avisos del alumno |
 | 25 | Resumen del mes | Completada | `38-fase25-analisis-resumen-mes.md`. Clases dadas, ocupación, asistencia, alumnos activos y canceladas, con el mes anterior y por nivel |
 | 25.5 | Foto del alumno | Completada | `39-fase25.5-analisis-foto-alumno.md`. El alumno la sube desde su perfil; Marcos la ve en la ficha y en sus listas (Daniel, 27/10/2026). Los alumnos de ejemplo llevan las fotos de `fotosMuppets`, fuera del repositorio |
-| 25.6 | Pistas | **Siguiente** | Las dos pistas de tenis de la escuela; cada clase dice en cuál es, y la web deja de hablar de una sola pista (Daniel, 27/10/2026) |
-| 26 | Familias | Pendiente | Un adulto gestiona los perfiles de sus hijos y reserva por ellos |
+| 25.6 | Pistas | Completada | `40-fase25.6-analisis-pistas.md`. Las dos pistas de tenis de la escuela; cada clase dice en cuál es, y la web deja de hablar de una sola pista (Daniel, 27/10/2026) |
+| 26 | Familias | **Siguiente** | Un adulto gestiona los perfiles de sus hijos y reserva por ellos |
 | 27 | Bonos | Pendiente | Tipos de bono de Marcos; el pago se apunta, no se cobra en la app |
 | 28 | Mensualidades | Pendiente | Cuota por grupo fijo y registro de quién ha pagado. Un alumno con la cuota vencida sigue activo, y Marcos ve un aviso de que se le pasó la fecha (Daniel, 27/10/2026) |
 | 29 | Progreso del alumno | Pendiente | Objetivos por nivel que Marcos marca como conseguidos |

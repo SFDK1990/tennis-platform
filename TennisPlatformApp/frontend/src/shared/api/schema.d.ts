@@ -1709,6 +1709,15 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
+                /** @description COURT_NOT_FOUND, si la pista elegida no existe */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description LESSON_OVERLAP */
                 409: {
                     headers: {
@@ -2257,6 +2266,15 @@ export interface paths {
                 400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
+                /** @description COURT_NOT_FOUND, si la pista elegida no existe */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2303,6 +2321,15 @@ export interface paths {
                 400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
+                /** @description COURT_NOT_FOUND, si la pista elegida no existe */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description LESSON_OVERLAP: una fecha elegida choca ya con otra clase; no se crea ninguna */
                 409: {
                     headers: {
@@ -2381,6 +2408,187 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/courts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Las pistas de la escuela, en su orden
+         * @description La primera es donde va una clase si no se elige otra (Fase 25.6).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CourtList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/courts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Cambia el nombre de una pista
+         * @description Añadir o quitar pistas llega con el club; ahora sólo se renombran (Fase 25.6).
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RenameCourtRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Court"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description COURT_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description COURT_ALREADY_EXISTS: otra pista ya se llama así */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/teacher/lessons/{id}/court": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pasa una clase que no ha empezado a otra pista
+         * @description Quien tiene plaza la conserva, y si la pista cambia de verdad recibe un correo después del commit (Fase 25.6).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeCourtRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Lesson"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description LESSON_NOT_FOUND o COURT_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_ALREADY_CANCELLED */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LESSON_ALREADY_STARTED */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3229,6 +3437,22 @@ export interface components {
             name?: string;
             position?: number;
         };
+        Court: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            position: number;
+        };
+        CourtList: {
+            courts: components["schemas"]["Court"][];
+        };
+        RenameCourtRequest: {
+            name: string;
+        };
+        ChangeCourtRequest: {
+            /** Format: uuid */
+            courtId: string;
+        };
         ChangeLevelRequest: {
             /** Format: uuid */
             levelId?: string | null;
@@ -3465,6 +3689,11 @@ export interface components {
                  * @description Nivel de la clase (Fase 23); null, abierta a todos
                  */
                 levelId: string | null;
+                /**
+                 * Format: uuid
+                 * @description La pista de la clase (Fase 25.6)
+                 */
+                courtId: string;
                 myBooking: {
                     /** Format: uuid */
                     id: string;
@@ -3492,6 +3721,11 @@ export interface components {
              * @description El nivel de la clase; sin el, abierta a todos
              */
             levelId?: string | null;
+            /**
+             * Format: uuid
+             * @description La pista; sin ella, la primera (Fase 25.6)
+             */
+            courtId?: string | null;
         };
         SeriesPreviewRequest: {
             type: components["schemas"]["LessonType"];
@@ -3508,6 +3742,11 @@ export interface components {
             weeks: number;
             /** Format: uuid */
             levelId?: string | null;
+            /**
+             * Format: uuid
+             * @description La pista de toda la serie; sin ella, la primera
+             */
+            courtId?: string | null;
         };
         SeriesPreview: {
             occurrences: {
@@ -3565,6 +3804,11 @@ export interface components {
              * @description Nivel de la clase (Fase 23); null, abierta a todos
              */
             levelId: string | null;
+            /**
+             * Format: uuid
+             * @description La pista de la clase (Fase 25.6)
+             */
+            courtId: string;
         };
         /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. */
         Booking: {
@@ -3596,6 +3840,11 @@ export interface components {
             capacity: number;
             bookedCount: number;
             status: components["schemas"]["LessonStatus"];
+            /**
+             * Format: uuid
+             * @description La pista de la clase (Fase 25.6)
+             */
+            courtId: string;
         };
         /** @description Un puesto en la lista de espera de una clase llena. position cuenta desde 1: el primero es el siguiente en recibir plaza. */
         WaitingPlace: {

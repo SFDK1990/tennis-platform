@@ -12,6 +12,12 @@ public interface EditLesson {
     /** Puts the lesson on a level, or opens it to everybody with null (Fase 23). Seats already taken stay. */
     LessonView changeLevel(UUID teacherUserId, UUID lessonId, UUID levelId);
 
+    /**
+     * Moves a lesson that has not started to another court (Fase 25.6). The students with a seat
+     * are told once the change is committed; moving it to the court it is on changes nothing.
+     */
+    LessonView changeCourt(UUID teacherUserId, UUID lessonId, UUID courtId);
+
     LessonView edit(UUID teacherUserId, UUID lessonId, Changes changes);
 
     /** Null leaves a value as it is; blank notes clear them. */

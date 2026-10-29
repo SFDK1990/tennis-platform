@@ -187,6 +187,12 @@ Tipos: `BLOCKED`, `ADDITIONAL_AVAILABILITY`.
 - `series_id uuid NULL` (Fase 22): las clases creadas juntas como serie semanal lo comparten. No
   hay tabla de series: la serie son las clases con el mismo id.
 - `level_id uuid NULL FK levels` (Fase 23): null, abierta a todos.
+- `court_id uuid NOT NULL FK courts` (Fase 25.6): la pista. Las clases anteriores pasaron a la primera.
+
+### courts (Fase 25.6)
+
+- `id`, `name` (único) y `position` (único; la primera es la de por defecto). Nacen «Pista 1» y
+  «Pista 2»; el profesor sólo las renombra.
 
 ### levels (Fase 23)
 
