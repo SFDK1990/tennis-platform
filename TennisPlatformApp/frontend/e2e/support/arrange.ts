@@ -112,7 +112,7 @@ export class Arrange {
   }
 
   /** Outside the hours on purpose when the time is not a free day's: the test is not about availability. */
-  async lessonAt(startsAt: Date, minutes = 30, capacity = 1): Promise<string> {
+  async lessonAt(startsAt: Date, minutes = 30, capacity = 1, courtId?: string): Promise<string> {
     const teacher = await this.teacher();
     const lesson = ok(await teacher.POST("/teacher/lessons", {
       body: {
@@ -121,6 +121,7 @@ export class Arrange {
         endsAt: new Date(startsAt.getTime() + minutes * 60_000).toISOString(),
         capacity,
         overrideAvailability: true,
+        courtId,
       },
     }), "lesson");
     this.undo.push(async () => teacher.POST("/teacher/lessons/{id}/cancel", { params: { path: { id: lesson.id } } }));
@@ -153,6 +154,15 @@ export class Arrange {
     const seat = mine.items.find((booking) => booking.lessonId === lessonId);
     if (!seat) throw new Error(`${student.email} has no seat in lesson ${lessonId}`);
     ok(await client.POST("/bookings/{id}/cancel", { params: { path: { id: seat.id } } }), "cancellation");
+  }
+
+  /** The id of the court with that name (Fase 25.6). */
+  async courtId(name: string): Promise<string> {
+    const teacher = await this.teacher();
+    const { courts } = ok(await teacher.GET("/courts"), "courts");
+    const court = courts.find((candidate) => candidate.name === name);
+    if (!court) throw new Error(`There is no court called ${name}`);
+    return court.id;
   }
 
   /** The id of the teacher's level with that name (Fase 23). */

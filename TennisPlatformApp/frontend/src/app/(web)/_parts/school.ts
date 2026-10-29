@@ -73,7 +73,7 @@ export const school = {
   phone: "+34 600 000 000",
   /** DEMO: a reserved domain, so nothing sent there reaches anyone. */
   email: "hola@oasispapagayo.example",
-  address: "Pista de tenis del Oasis Papagayo, Corralejo, La Oliva (Fuerteventura)",
+  address: "Pistas de tenis del Oasis Papagayo, Corralejo, La Oliva (Fuerteventura)",
   /** A link to the court on a map. */
   mapsUrl: "https://www.google.com/maps/search/?api=1&query=Oasis+Papagayo+Corralejo" as string | null,
   teacher: {

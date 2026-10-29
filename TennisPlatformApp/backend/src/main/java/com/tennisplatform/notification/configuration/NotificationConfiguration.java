@@ -4,10 +4,12 @@ import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.notification.application.port.in.NotifyBookings;
+import com.tennisplatform.notification.application.port.in.NotifyCourtChanges;
 import com.tennisplatform.notification.application.port.in.NotifyMessages;
 import com.tennisplatform.notification.application.port.out.Mailer;
 import com.tennisplatform.notification.application.service.BookingNotifications;
 import com.tennisplatform.notification.application.port.out.MessageRepository;
+import com.tennisplatform.notification.application.service.CourtChangeNotifications;
 import com.tennisplatform.notification.application.service.MailTexts;
 import com.tennisplatform.notification.application.service.MessageNotifications;
 import com.tennisplatform.notification.application.service.MessagesService;
@@ -47,6 +49,13 @@ public class NotificationConfiguration {
                                     GetLesson lessons, GetBookings bookings, GetTeacherProfile teachers,
                                     ApplicationEventPublisher events, Clock clock) {
         return new MessagesService(messages, students, levels, lessons, bookings, teachers, events, clock);
+    }
+
+    @Bean
+    public NotifyCourtChanges notifyCourtChanges(Mailer mailer, MailTexts texts, GetBookings bookings,
+                                                 FindUserAccounts accounts, GetStudentProfile students,
+                                                 GetTeacherProfile teachers) {
+        return new CourtChangeNotifications(mailer, texts, bookings, accounts, students, teachers);
     }
 
     @Bean

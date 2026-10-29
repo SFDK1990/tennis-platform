@@ -39,9 +39,11 @@ class LessonRepositoryAdapter implements LessonRepository {
     private static final String OVERLAP_CONSTRAINT = "ex_lessons_no_teacher_overlap";
 
     private final LessonJpaRepository jpa;
+    private final CourtJpaRepository courts;
 
-    LessonRepositoryAdapter(LessonJpaRepository jpa) {
+    LessonRepositoryAdapter(LessonJpaRepository jpa, CourtJpaRepository courts) {
         this.jpa = jpa;
+        this.courts = courts;
     }
 
     /**
@@ -55,13 +57,23 @@ class LessonRepositoryAdapter implements LessonRepository {
     @Override
     public Lesson save(Lesson lesson) {
         try {
-            return jpa.saveAndFlush(entityFor(lesson)).toDomain();
+            return jpa.saveAndFlush(entityFor(onACourt(lesson))).toDomain();
         } catch (DataIntegrityViolationException e) {
             if (violatesOverlap(e)) {
                 throw new LessonOverlapException("Another lesson already runs at that time");
             }
             throw e;
         }
+    }
+
+    /** A lesson nobody put on a court goes on the first one (Fase 25.6). */
+    private Lesson onACourt(Lesson lesson) {
+        if (lesson.courtId() != null) {
+            return lesson;
+        }
+        return lesson.withCourt(courts.findFirstByOrderByPositionAsc()
+                .map(court -> court.toDomain().id())
+                .orElseThrow(() -> new IllegalStateException("The school has no courts")));
     }
 
     /**

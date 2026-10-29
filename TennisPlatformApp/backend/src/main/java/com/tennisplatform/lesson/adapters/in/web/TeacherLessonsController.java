@@ -4,6 +4,7 @@ import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelDayRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CancelledDayResponse;
+import com.tennisplatform.lesson.adapters.in.web.LessonDtos.ChangeCourtRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.ChangeLevelRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.CreateLessonRequest;
 import com.tennisplatform.lesson.adapters.in.web.LessonDtos.EditLessonRequest;
@@ -65,7 +66,7 @@ class TeacherLessonsController {
         requireTeacher(caller);
         return LessonResponse.from(scheduleLesson.schedule(caller.id(),
                 new NewLesson(request.type(), request.startsAt(), request.endsAt(), request.capacity(),
-                        request.notes(), request.overrideAvailability(), request.levelId())), true);
+                        request.notes(), request.overrideAvailability(), request.levelId(), request.courtId())), true);
     }
 
     @PostMapping("/series/preview")
@@ -74,7 +75,7 @@ class TeacherLessonsController {
         requireTeacher(caller);
         return new SeriesPreviewResponse(scheduleSeries.preview(caller.id(), new ScheduleSeries.NewSeries(
                         request.type(), request.startsAt(), request.endsAt(), request.capacity(), request.notes(),
-                        request.weeks(), request.levelId())).stream()
+                        request.weeks(), request.levelId(), request.courtId())).stream()
                 .map(occurrence -> new OccurrenceResponse(occurrence.startsAt(), occurrence.endsAt(), occurrence.status()))
                 .toList());
     }
@@ -86,7 +87,8 @@ class TeacherLessonsController {
         requireTeacher(caller);
         return new LessonsResponse(scheduleSeries.schedule(caller.id(), new ScheduleSeries.NewSeries(
                                 request.type(), request.startsAt(), request.endsAt(), request.capacity(), request.notes(),
-                                request.weeks(), request.levelId()), request.dates(), request.overrideAvailability())
+                                request.weeks(), request.levelId(), request.courtId()), request.dates(),
+                                request.overrideAvailability())
                 .stream()
                 .map(lesson -> LessonResponse.from(lesson, true))
                 .toList());
@@ -108,6 +110,13 @@ class TeacherLessonsController {
                                @RequestBody ChangeLevelRequest request) {
         requireTeacher(caller);
         return LessonResponse.from(editLesson.changeLevel(caller.id(), id, request.levelId()), true);
+    }
+
+    @PutMapping("/{id}/court")
+    LessonResponse changeCourt(@AuthenticationPrincipal AuthenticatedUser caller, @PathVariable UUID id,
+                               @Valid @RequestBody ChangeCourtRequest request) {
+        requireTeacher(caller);
+        return LessonResponse.from(editLesson.changeCourt(caller.id(), id, request.courtId()), true);
     }
 
     @PatchMapping("/{id}")

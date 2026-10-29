@@ -2,7 +2,9 @@ package com.tennisplatform.notification.adapters.in.event;
 
 import com.tennisplatform.booking.application.port.in.BookingCancelled;
 import com.tennisplatform.booking.application.port.in.BookingConfirmed;
+import com.tennisplatform.lesson.application.port.in.LessonCourtChanged;
 import com.tennisplatform.notification.application.port.in.NotifyBookings;
+import com.tennisplatform.notification.application.port.in.NotifyCourtChanges;
 import com.tennisplatform.notification.application.port.in.NotifyMessages;
 import com.tennisplatform.notification.configuration.NotificationProperties;
 import com.tennisplatform.notification.domain.MessageSent;
@@ -40,11 +42,14 @@ class MailListener implements DisposableBean {
 
     private final NotifyBookings notify;
     private final NotifyMessages messages;
+    private final NotifyCourtChanges courts;
     private final Executor executor;
 
-    MailListener(NotifyBookings notify, NotifyMessages messages, NotificationProperties properties) {
+    MailListener(NotifyBookings notify, NotifyMessages messages, NotifyCourtChanges courts,
+                 NotificationProperties properties) {
         this.notify = notify;
         this.messages = messages;
+        this.courts = courts;
         this.executor = properties.isSendInBackground() ? queue() : Runnable::run;
     }
 
@@ -56,6 +61,11 @@ class MailListener implements DisposableBean {
     @TransactionalEventListener
     void on(BookingCancelled booking) {
         submit("booking " + booking.bookingId() + " cancelled", () -> notify.cancelled(booking));
+    }
+
+    @TransactionalEventListener
+    void on(LessonCourtChanged change) {
+        submit("court of lesson " + change.lessonId(), () -> courts.changed(change));
     }
 
     @TransactionalEventListener

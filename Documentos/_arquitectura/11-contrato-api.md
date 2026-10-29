@@ -237,6 +237,13 @@ Códigos añadidos en la Fase 23:
 `GET /teacher/summary` (Fase 25) responde `DATE_RANGE_INVALID` a un mes mal escrito o que aún no ha
 empezado.
 
+Códigos añadidos en la Fase 25.6:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `COURT_NOT_FOUND` | 404 | `POST /teacher/lessons`, `PUT /teacher/lessons/{id}/court`, `PATCH /teacher/courts/{id}` | No existe esa pista |
+| `COURT_ALREADY_EXISTS` | 409 | `PATCH /teacher/courts/{id}` | Otra pista ya se llama así |
+
 Códigos añadidos en la Fase 25.5:
 
 | Código | HTTP | Endpoint típico | Motivo |

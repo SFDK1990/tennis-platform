@@ -124,6 +124,17 @@ public class MailTexts {
                 calendar(CalendarInvite.Method.CANCEL, lesson, why));
     }
 
+    /** The lesson moved to another court (Fase 25.6): the time stays, so only the court is news. */
+    public Mail courtChangedToStudent(Lesson lesson, String courtName, String to, String studentName) {
+        String body = greeting(studentName)
+                + "Tu clase " + lesson.kind() + " del " + lesson.day() + ", de " + lesson.start() + " a " + lesson.end()
+                + ", pasa a la " + courtName + ". La hora no cambia.\n\n"
+                + "La tienes en " + frontendBaseUrl + "/bookings\n\n"
+                + signature();
+        return new Mail("lesson-court-changed-student", lesson.lessonId().toString(), to,
+                "Cambio de pista: " + lesson.day() + ", " + lesson.start(), body, null);
+    }
+
     /** A message from the teacher (Fase 24): their words as they wrote them, and where else to read them. */
     public Mail messageToStudent(UUID messageId, String subject, String text, String teacherName, String to,
                                  String studentName) {

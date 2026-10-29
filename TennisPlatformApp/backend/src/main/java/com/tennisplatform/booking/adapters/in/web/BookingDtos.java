@@ -37,7 +37,7 @@ final class BookingDtos {
      * lesson itself.
      */
     record LessonSummary(UUID id, UUID teacherUserId, String type, Instant startsAt, Instant endsAt,
-                         int capacity, int bookedCount, String status) {
+                         int capacity, int bookedCount, String status, UUID courtId) {
 
         static LessonSummary from(LessonView lesson) {
             if (lesson == null) {
@@ -45,7 +45,7 @@ final class BookingDtos {
             }
             return new LessonSummary(lesson.id(), lesson.teacherUserId(), lesson.type(),
                     lesson.startsAt(), lesson.endsAt(), lesson.capacity(), lesson.bookedCount(),
-                    lesson.status());
+                    lesson.status(), lesson.courtId());
         }
     }
 

@@ -14,5 +14,5 @@ import java.util.UUID;
  * the configured hours is a decision, not an accident, and it has to be asked for by name.
  */
 public record NewLesson(String type, Instant startsAt, Instant endsAt, int capacity, String notes,
-                        boolean overrideAvailability, UUID levelId) {
+                        boolean overrideAvailability, UUID levelId, UUID courtId) {
 }

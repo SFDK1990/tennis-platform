@@ -2,8 +2,11 @@ package com.tennisplatform.lesson.application.service;
 
 import com.tennisplatform.lesson.application.port.in.EditLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
+import com.tennisplatform.lesson.application.port.out.CourtRepository;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.application.port.spi.LessonBookings;
+import com.tennisplatform.lesson.application.port.in.LessonCourtChanged;
+import com.tennisplatform.lesson.domain.Court;
 import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonNotFoundException;
 import com.tennisplatform.lesson.domain.LessonType;
@@ -12,6 +15,7 @@ import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -28,15 +32,20 @@ public class EditLessonService implements EditLesson {
     private final GetMaxGroupCapacity groupCapacity;
     private final TeacherLessons teacher;
     private final QueryLevels levels;
+    private final CourtRepository courts;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     public EditLessonService(LessonRepository lessons, LessonBookings bookings, GetMaxGroupCapacity groupCapacity,
-                             GetTeacherProfile teacherProfile, QueryLevels levels, Clock clock) {
+                             GetTeacherProfile teacherProfile, QueryLevels levels, CourtRepository courts,
+                             ApplicationEventPublisher events, Clock clock) {
         this.lessons = lessons;
         this.bookings = bookings;
         this.groupCapacity = groupCapacity;
         this.teacher = new TeacherLessons(teacherProfile);
         this.levels = levels;
+        this.courts = courts;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -52,6 +61,26 @@ public class EditLessonService implements EditLesson {
         log.info("Lesson {} put on level {}", lessonId, levelId);
         int booked = bookings.countConfirmed(List.of(lessonId)).getOrDefault(lessonId, 0);
         return LessonView.from(changed, clock.instant(), booked);
+    }
+
+    @Override
+    @Transactional
+    public LessonView changeCourt(UUID teacherUserId, UUID lessonId, UUID courtId) {
+        teacher.requireTheTeacher(teacherUserId);
+        Lesson lesson = lessons.findById(lessonId)
+                .filter(found -> found.teacherUserId().equals(teacherUserId))
+                .orElseThrow(() -> new LessonNotFoundException("No lesson with id " + lessonId));
+        Court court = LessonCourts.find(courts, courtId);
+        Instant now = clock.instant();
+        Lesson moved = lesson.moveToCourt(courtId, now);
+        Lesson changed = courtId.equals(lesson.courtId()) ? lesson : lessons.save(moved);
+        if (changed != lesson) {
+            events.publishEvent(new LessonCourtChanged(lessonId, teacherUserId, changed.type().name(),
+                    changed.startsAt(), changed.endsAt(), court.name()));
+            log.info("Lesson {} moved to court {}", lessonId, courtId);
+        }
+        int booked = bookings.countConfirmed(List.of(lessonId)).getOrDefault(lessonId, 0);
+        return LessonView.from(changed, now, booked);
     }
 
     /**

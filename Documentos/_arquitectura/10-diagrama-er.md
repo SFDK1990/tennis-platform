@@ -34,6 +34,7 @@ erDiagram
     MESSAGES ||--o{ MESSAGE_RECIPIENTS : "va a"
     USERS ||--o{ MESSAGE_RECIPIENTS : recibe
     USERS ||--o| STUDENT_PHOTOS : "foto del alumno"
+    COURTS ||--o{ LESSONS : "se da en"
 
     USERS {
         uuid id PK
@@ -444,6 +445,22 @@ CREATE TABLE student_photos (
     data          BYTEA NOT NULL CHECK (octet_length(data) <= 1048576),
     updated_at    TIMESTAMPTZ NOT NULL
 );
+```
+
+## Changelog 5e — pistas (Fase 25.6)
+
+`v14-lesson-courts.yaml`. Razonamiento en `40-fase25.6-analisis-pistas.md`.
+
+```sql
+CREATE TABLE courts (
+    id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name      VARCHAR(60) NOT NULL UNIQUE,
+    position  INT NOT NULL UNIQUE
+);
+INSERT INTO courts (name, position) VALUES ('Pista 1', 1), ('Pista 2', 2);
+ALTER TABLE lessons ADD COLUMN court_id UUID REFERENCES courts(id);
+UPDATE lessons SET court_id = (SELECT id FROM courts WHERE position = 1);
+ALTER TABLE lessons ALTER COLUMN court_id SET NOT NULL;
 ```
 
 ## Changelog 6b — lista de espera (Fase 21)

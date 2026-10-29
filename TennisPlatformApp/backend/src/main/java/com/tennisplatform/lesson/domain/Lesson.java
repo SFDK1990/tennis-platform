@@ -42,10 +42,12 @@ public class Lesson {
     private final UUID seriesId;
     /** The level it is for (Fase 23), or null for a lesson open to everybody. */
     private final UUID levelId;
+    /** The court it is on (Fase 25.6). Null only until it is saved: then it is the first court. */
+    private final UUID courtId;
 
     private Lesson(UUID id, UUID teacherUserId, LessonType type, LessonPeriod period, int capacity,
                    String notes, boolean createdOutsideAvailability, Instant cancelledAt, UUID seriesId,
-                   UUID levelId) {
+                   UUID levelId, UUID courtId) {
         this.id = id;
         this.teacherUserId = teacherUserId;
         this.type = type;
@@ -56,6 +58,7 @@ public class Lesson {
         this.cancelledAt = cancelledAt;
         this.seriesId = seriesId;
         this.levelId = levelId;
+        this.courtId = courtId;
     }
 
     /**
@@ -95,7 +98,7 @@ public class Lesson {
         requireCapacityFor(type, capacity, maxGroupCapacity);
 
         return new Lesson(null, teacherUserId, type, period, capacity, normalise(notes),
-                createdOutsideAvailability, null, seriesId, null);
+                createdOutsideAvailability, null, seriesId, null, null);
     }
 
     /** Rehydration from persistence. Stored values are not re-validated. */
@@ -117,8 +120,16 @@ public class Lesson {
                                    Instant endsAt, int capacity, String notes,
                                    boolean createdOutsideAvailability, Instant cancelledAt, UUID seriesId,
                                    UUID levelId) {
+        return rehydrate(id, teacherUserId, type, startsAt, endsAt, capacity, notes, createdOutsideAvailability,
+                cancelledAt, seriesId, levelId, null);
+    }
+
+    public static Lesson rehydrate(UUID id, UUID teacherUserId, LessonType type, Instant startsAt,
+                                   Instant endsAt, int capacity, String notes,
+                                   boolean createdOutsideAvailability, Instant cancelledAt, UUID seriesId,
+                                   UUID levelId, UUID courtId) {
         return new Lesson(id, teacherUserId, type, new LessonPeriod(startsAt, endsAt), capacity, notes,
-                createdOutsideAvailability, cancelledAt, seriesId, levelId);
+                createdOutsideAvailability, cancelledAt, seriesId, levelId, courtId);
     }
 
     /**
@@ -127,7 +138,27 @@ public class Lesson {
      */
     public Lesson withLevel(UUID newLevelId) {
         return new Lesson(id, teacherUserId, type, period, capacity, notes, createdOutsideAvailability, cancelledAt,
-                seriesId, newLevelId);
+                seriesId, newLevelId, courtId);
+    }
+
+    /** The court it is created on; null leaves it to the first court when it is saved. */
+    public Lesson withCourt(UUID newCourtId) {
+        return new Lesson(id, teacherUserId, type, period, capacity, notes, createdOutsideAvailability, cancelledAt,
+                seriesId, levelId, newCourtId);
+    }
+
+    /**
+     * Moves a lesson that has not started to another court (Fase 25.6). Whether the court exists
+     * is the use case's check; who holds a seat keeps it, and hears about it.
+     */
+    public Lesson moveToCourt(UUID newCourtId, Instant now) {
+        if (cancelledAt != null) {
+            throw new LessonAlreadyCancelledException("A cancelled lesson cannot be changed");
+        }
+        if (!period.startsAt().isAfter(now)) {
+            throw new LessonAlreadyStartedException("The lesson has started and can no longer be changed");
+        }
+        return withCourt(newCourtId);
     }
 
     private static void requireCapacityFor(LessonType type, int capacity, int maxGroupCapacity) {
@@ -168,7 +199,7 @@ public class Lesson {
             throw new LessonAlreadyFinishedException("The lesson already ended and cannot be cancelled");
         }
         return new Lesson(id, teacherUserId, type, period, capacity, notes, createdOutsideAvailability, now,
-                seriesId, levelId);
+                seriesId, levelId, courtId);
     }
 
     /**
@@ -197,7 +228,7 @@ public class Lesson {
         }
         String notesAfter = newNotes == null ? notes : normalise(newNotes);
         return new Lesson(id, teacherUserId, type, period, capacityAfter, notesAfter, createdOutsideAvailability,
-                cancelledAt, seriesId, levelId);
+                cancelledAt, seriesId, levelId, courtId);
     }
 
     /**
@@ -281,5 +312,9 @@ public class Lesson {
 
     public UUID levelId() {
         return levelId;
+    }
+
+    public UUID courtId() {
+        return courtId;
     }
 }

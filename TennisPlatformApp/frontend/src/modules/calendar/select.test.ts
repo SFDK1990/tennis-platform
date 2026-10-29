@@ -8,7 +8,7 @@ function lesson(id: string, startsAt: string, minutes: number, extra: Partial<Ca
   return {
     id, teacherUserId: "t", type: "GROUP", startsAt,
     endsAt: new Date(new Date(startsAt).getTime() + minutes * 60_000).toISOString(),
-    capacity: 4, bookedCount: 1, status: "OPEN", levelId: null, myBooking: null, ...extra,
+    capacity: 4, bookedCount: 1, status: "OPEN", levelId: null, courtId: "c1", myBooking: null, ...extra,
   };
 }
 

@@ -35,7 +35,7 @@ class MailListenerTest {
     private static MailListener inTheBackground(NotifyBookings notify) {
         NotificationProperties properties = new NotificationProperties();
         properties.setSendInBackground(true);
-        return new MailListener(notify, messageId -> { }, properties);
+        return new MailListener(notify, messageId -> { }, change -> { }, properties);
     }
 
     private static BookingConfirmed confirmed() {

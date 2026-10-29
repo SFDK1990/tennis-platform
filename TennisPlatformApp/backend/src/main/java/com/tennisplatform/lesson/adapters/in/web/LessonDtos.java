@@ -38,16 +38,25 @@ final class LessonDtos {
     }
 
     record CreateLessonRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
-                               int capacity, String notes, boolean overrideAvailability, UUID levelId) {
+                               int capacity, String notes, boolean overrideAvailability, UUID levelId,
+                               UUID courtId) {
     }
 
     /** The level the lesson is for, or null for everybody (Fase 23). */
     record ChangeLevelRequest(UUID levelId) {
     }
 
+    /** The court a lesson moves to (Fase 25.6). */
+    record ChangeCourtRequest(@NotNull UUID courtId) {
+    }
+
+    /** A court's new name (Fase 25.6). */
+    record RenameCourtRequest(@NotNull String name) {
+    }
+
     /** The first lesson of a weekly series and how many weeks it runs (Fase 22). */
     record SeriesPreviewRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
-                                int capacity, String notes, int weeks, UUID levelId) {
+                                int capacity, String notes, int weeks, UUID levelId, UUID courtId) {
     }
 
     record SeriesPreviewResponse(List<OccurrenceResponse> occurrences) {
@@ -59,7 +68,7 @@ final class LessonDtos {
     /** The same series, and the dates the teacher kept. */
     record CreateSeriesRequest(@NotNull String type, @NotNull Instant startsAt, @NotNull Instant endsAt,
                                int capacity, String notes, int weeks, @NotNull List<@NotNull Instant> dates,
-                               boolean overrideAvailability, UUID levelId) {
+                               boolean overrideAvailability, UUID levelId, UUID courtId) {
     }
 
     record LessonsResponse(List<LessonResponse> lessons) {
@@ -80,7 +89,7 @@ final class LessonDtos {
                           int capacity, int bookedCount, String status, String notes,
                           boolean createdOutsideAvailability, Instant cancelledAt,
                           boolean cancelledAtShortNotice, UUID seriesId, Integer seriesPosition,
-                          Integer seriesSize, UUID levelId) {
+                          Integer seriesSize, UUID levelId, UUID courtId) {
 
         static LessonResponse from(LessonView lesson, boolean forTheTeacher) {
             return new LessonResponse(lesson.id(), lesson.teacherUserId(), lesson.type(),
@@ -88,7 +97,7 @@ final class LessonDtos {
                     lesson.status(),
                     forTheTeacher ? lesson.notes() : null, lesson.createdOutsideAvailability(),
                     lesson.cancelledAt(), lesson.cancelledAtShortNotice(), lesson.seriesId(),
-                    lesson.seriesPosition(), lesson.seriesSize(), lesson.levelId());
+                    lesson.seriesPosition(), lesson.seriesSize(), lesson.levelId(), lesson.courtId());
         }
     }
 }

@@ -4,6 +4,7 @@ import com.tennisplatform.availability.application.port.in.QueryAvailability;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.in.NewLesson;
 import com.tennisplatform.lesson.application.port.in.ScheduleLesson;
+import com.tennisplatform.lesson.application.port.out.CourtRepository;
 import com.tennisplatform.lesson.application.port.out.LessonRepository;
 import com.tennisplatform.lesson.domain.Lesson;
 import com.tennisplatform.lesson.domain.LessonInThePastException;
@@ -32,16 +33,18 @@ public class ScheduleLessonService implements ScheduleLesson {
     private final QueryAvailability availability;
     private final GetMaxGroupCapacity groupCapacity;
     private final QueryLevels levels;
+    private final CourtRepository courts;
     private final Clock clock;
 
     public ScheduleLessonService(LessonRepository lessons, GetTeacherProfile teacherProfile,
                                  QueryAvailability availability, GetMaxGroupCapacity groupCapacity,
-                                 QueryLevels levels, Clock clock) {
+                                 QueryLevels levels, CourtRepository courts, Clock clock) {
         this.lessons = lessons;
         this.teacher = new TeacherLessons(teacherProfile);
         this.availability = availability;
         this.groupCapacity = groupCapacity;
         this.levels = levels;
+        this.courts = courts;
         this.clock = clock;
     }
 
@@ -77,8 +80,10 @@ public class ScheduleLessonService implements ScheduleLesson {
         // Recorded as what happened, not as what was asked for: a lesson is outside the hours
         // when it is outside them, whether or not the caller expected it to be.
         LessonLevels.requireTheTeachers(levels, request.levelId(), teacherUserId);
+        LessonCourts.requireExisting(courts, request.courtId());
         Lesson lesson = Lesson.create(teacherUserId, type, period, request.capacity(),
-                request.notes(), !covered, zone, maxGroupCapacity).withLevel(request.levelId());
+                request.notes(), !covered, zone, maxGroupCapacity).withLevel(request.levelId())
+                .withCourt(request.courtId());
 
         Lesson saved = lessons.save(lesson);
         log.info("Lesson {} scheduled", saved.id());
