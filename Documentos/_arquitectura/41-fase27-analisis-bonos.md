@@ -24,14 +24,14 @@ La regla ya está decidida (`01` §18):
 
 ## Decisiones propuestas
 
-### 1. Para qué clases sirve cada bono — **decisión tuya**
+### 1. Para qué clases sirve cada bono — **A** (Daniel, 30/10/2026)
 
 - **A (te la recomiendo). Cada tipo de bono es para clases de grupo o para particulares**, porque
   no cuestan lo mismo. Por ejemplo, «10 clases de grupo, 120 €, 3 meses» o «5 particulares, 150 €,
   sin caducidad».
 - **B. Un bono vale para cualquier clase**, y una clase es una clase.
 
-### 2. Cuándo empieza a pedirse bono — **decisión tuya**
+### 2. Cuándo empieza a pedirse bono — **A** (Daniel, 30/10/2026)
 
 Al desplegar, nadie tiene bono. Si «sin saldo no se reserva» se aplicara desde ese momento, nadie
 podría reservar.
@@ -98,10 +98,10 @@ Todo va primero a `openapi.yaml`:
 
 ## Fuera, y por qué
 
-- **Cobrar en la app** (tarjeta o Bizum): `12` lo deja aparcado; aquí sólo se apunta el pago.
+- **Cobrar en la app** (tarjeta o Bizum): es la Fase 27.5; aquí sólo se apunta el pago.
 - **Facturas**: también aparcadas.
-- **Que el alumno compre el bono desde la app**: sin cobro en la app, sería otra forma de apuntar
-  algo que sólo Marcos sabe si ha cobrado.
+- **Que el alumno compre el bono desde la app**: llega con el cobro, en la 27.5. Sin cobro sería
+  otra forma de apuntar algo que sólo Marcos sabe si ha cobrado.
 - **Bonos compartidos entre alumnos**: no se han pedido.
 
 ## Tests
