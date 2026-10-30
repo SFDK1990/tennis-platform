@@ -62,6 +62,10 @@ const MESSAGES: Record<string, string> = {
   PASS_TYPE_RETIRED: "Ese tipo de bono está retirado: ya no se vende.",
   PASS_NOT_FOUND: "Ese bono ya no existe.",
   PASS_ALREADY_USED: "Ya se ha reservado alguna clase con este bono: no se puede anular.",
+  ONLINE_PAYMENT_DISABLED: "Tu profesor no vende bonos en la app. Pídeselo a él.",
+  ONLINE_PAYMENT_UNAVAILABLE: "El pago online no está configurado en el servidor. Hacen falta las claves de Stripe.",
+  PRICE_TOO_LOW_TO_PAY_ONLINE: "Un bono de menos de 0,50 € no se puede pagar online.",
+  PURCHASE_NOT_FOUND: "Esa compra no existe.",
 
   PHOTO_INVALID: "La foto tiene que ser una imagen JPEG, PNG o WebP de menos de 1 MB.",
   PHOTO_NOT_FOUND: "No hay foto.",

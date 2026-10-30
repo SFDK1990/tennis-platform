@@ -503,6 +503,35 @@ ALTER TABLE bookings ADD COLUMN pass_id UUID REFERENCES passes(id);
 CREATE INDEX ix_bookings_pass ON bookings (pass_id) WHERE pass_id IS NOT NULL;
 ```
 
+## Changelog 6d — compras de bonos en la app (Fase 27.5)
+
+`v16-pass-purchases.yaml`. Razonamiento en `42-fase27.5-analisis-pago-online.md`.
+
+```sql
+ALTER TABLE pass_settings ADD COLUMN online_payment BOOLEAN NOT NULL DEFAULT FALSE;
+-- passes.payment_method admite además 'ONLINE', que sólo pone la app.
+CREATE TABLE pass_purchases (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_user_id      UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    student_user_id      UUID NOT NULL REFERENCES student_profiles(user_id),
+    pass_type_id         UUID NOT NULL REFERENCES pass_types(id) ON DELETE RESTRICT,
+    name                 VARCHAR(60) NOT NULL,
+    lesson_type          VARCHAR(20) NOT NULL CHECK (lesson_type IN ('INDIVIDUAL', 'GROUP')),
+    lessons              INT NOT NULL CHECK (lessons BETWEEN 1 AND 200),
+    price_cents          INT NOT NULL CHECK (price_cents >= 50),
+    validity_months      INT CHECK (validity_months BETWEEN 1 AND 36),
+    status               VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'PAID', 'EXPIRED')),
+    checkout_session_id  VARCHAR(255) UNIQUE,
+    checkout_url         VARCHAR(1024),
+    pass_id              UUID UNIQUE REFERENCES passes(id),
+    created_at           TIMESTAMPTZ NOT NULL,
+    expires_at           TIMESTAMPTZ NOT NULL,
+    paid_at              TIMESTAMPTZ,
+    CHECK ((status = 'PAID') = (pass_id IS NOT NULL))
+);
+CREATE INDEX ix_pass_purchases_student ON pass_purchases (student_user_id);
+```
+
 ## Changelog 6b — lista de espera (Fase 21)
 
 `v9-booking-waiting-list.yaml`. Razonamiento en `34-fase21-analisis-lista-espera.md`.

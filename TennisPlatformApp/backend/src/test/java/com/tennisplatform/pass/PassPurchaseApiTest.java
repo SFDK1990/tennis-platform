@@ -277,6 +277,22 @@ class PassPurchaseApiTest extends AbstractPassTest {
         assertThat(notify("not json").getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    /** A type somebody started buying is in use: their payment may still arrive. It can be retired. */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void aTypeSomebodyStartedBuyingIsNotDeleted() {
+        Student student = aStudentWhoMayBook();
+        UUID type = aPassType("10 de grupo", "GROUP", 10, 3);
+        sellOnline();
+        buy(student.token(), type);
+
+        ResponseEntity<Map> deleted = rest.exchange("/api/v1/teacher/pass-types/" + type, HttpMethod.DELETE,
+                new HttpEntity<>(bearer(teacherToken)), Map.class);
+
+        assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(deleted.getBody()).containsEntry("code", "PASS_TYPE_IN_USE");
+    }
+
     // --- Reading it back -----------------------------------------------------------------------
 
     @Test

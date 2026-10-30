@@ -25,7 +25,7 @@ const NAV: Record<Role, NavItem[]> = {
   STUDENT: [
     { href: "/home", label: "Inicio", icon: "home" },
     { href: "/calendar", label: "Clases", icon: "calendar" },
-    { href: "/bookings", label: "Mis reservas", icon: "ticket" },
+    { href: "/bookings", label: "Mis reservas", icon: "ticket", also: ["/passes"] },
     { href: "/messages", label: "Avisos", icon: "mail" },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],

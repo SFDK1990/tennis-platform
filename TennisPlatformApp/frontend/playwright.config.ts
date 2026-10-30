@@ -36,11 +36,20 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /(student|navigation)\.spec\.ts/ },
     { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /(student|navigation)\.spec\.ts/ },
   ],
-  webServer: {
-    command: `npm run build && npx next start -p ${PORT}`,
-    url: `http://localhost:${PORT}/login`,
-    env: { BACKEND_URL: `http://localhost:${process.env.SERVER_PORT || 8080}` },
-    reuseExistingServer: !process.env.CI,
-    timeout: 240_000,
-  },
+  webServer: [
+    {
+      command: `npm run build && npx next start -p ${PORT}`,
+      url: `http://localhost:${PORT}/login`,
+      env: { BACKEND_URL: `http://localhost:${process.env.SERVER_PORT || 8080}` },
+      reuseExistingServer: !process.env.CI,
+      timeout: 240_000,
+    },
+    // Stripe, for buying a pass (Fase 27.5); the backend finds it through compose.e2e.yaml.
+    {
+      command: "node e2e/support/fake-stripe.mjs",
+      url: "http://localhost:12111/health",
+      env: { FAKE_STRIPE_FRONTEND: `http://localhost:${PORT}` },
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });

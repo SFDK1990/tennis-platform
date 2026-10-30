@@ -8,13 +8,21 @@ export type PassType = components["schemas"]["PassType"];
 export type Pass = components["schemas"]["Pass"];
 export type LessonKind = PassType["lessonType"];
 export type PaymentMethod = components["schemas"]["PaymentMethod"];
+export type RecordedPaymentMethod = components["schemas"]["RecordPassRequest"]["paymentMethod"];
+export type Purchase = components["schemas"]["PassPurchase"];
 
 export const KIND_PLURAL: Record<LessonKind, string> = { GROUP: "de grupo", INDIVIDUAL: "particulares" };
 
-export const PAYMENT_METHODS: Record<PaymentMethod, string> = {
+/** What the teacher can write down by hand; ONLINE only the app sets (42-fase27.5). */
+export const RECORDED_PAYMENT_METHODS: Record<RecordedPaymentMethod, string> = {
   CASH: "Efectivo",
   BIZUM: "Bizum",
   TRANSFER: "Transferencia",
+};
+
+export const PAYMENT_METHODS: Record<PaymentMethod, string> = {
+  ...RECORDED_PAYMENT_METHODS,
+  ONLINE: "Pagado en la app",
 };
 
 /** "120 €", "12,50 €": the price is kept in cents, so no amount is ever a float. */
@@ -93,6 +101,35 @@ export function useRequirePasses() {
   return useMutation({
     mutationFn: async (required: boolean) =>
       unwrap(await api.PUT("/teacher/pass-settings", { body: { required } })),
+  });
+}
+
+/** Selling passes in the app (42-fase27.5, decision 2). */
+export function useSellOnline() {
+  return useMutation({
+    mutationFn: async (onlinePayment: boolean) =>
+      unwrap(await api.PUT("/teacher/pass-settings", { body: { onlinePayment } })),
+  });
+}
+
+/** Starts a purchase; the answer carries Stripe's page, where the student goes to pay. */
+export function useBuyPass() {
+  return useMutation({
+    mutationFn: async (passTypeId: string) =>
+      unwrap(await api.POST("/me/pass-purchases", { body: { passTypeId } })),
+  });
+}
+
+/**
+ * A purchase after coming back from Stripe's page. The pass is created when Stripe's notice
+ * reaches the server, which can be a few seconds after the student is back, so it asks again
+ * while the purchase is still pending.
+ */
+export function usePurchase(id: string) {
+  return useQuery({
+    queryKey: ["pass-purchases", id],
+    queryFn: async () => unwrap(await api.GET("/me/pass-purchases/{id}", { params: { path: { id } } })),
+    refetchInterval: (query) => (query.state.data?.status === "PENDING" ? 2000 : false),
   });
 }
 

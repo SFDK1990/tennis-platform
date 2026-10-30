@@ -248,6 +248,12 @@ Códigos añadidos en la Fase 27:
 | `PASS_TYPE_RETIRED` | 422 | `POST /teacher/students/{userId}/passes` | El tipo está retirado y ya no se vende |
 | `PASS_NOT_FOUND` | 404 | `POST /teacher/passes/{id}/void` | No es un bono del profesor |
 | `PASS_ALREADY_USED` | 409 | `POST /teacher/passes/{id}/void` | El bono ya pagó alguna clase: anularlo borraría lo gastado |
+| `ONLINE_PAYMENT_DISABLED` | 409 | `POST /me/pass-purchases` | Marcos no ha encendido la venta de bonos en la app |
+| `ONLINE_PAYMENT_UNAVAILABLE` | 409 | `PUT /teacher/pass-settings`, `POST /me/pass-purchases` | El servidor no tiene las claves de Stripe |
+| `PRICE_TOO_LOW_TO_PAY_ONLINE` | 422 | `POST /me/pass-purchases` | Stripe no cobra menos de 0,50 € |
+| `PURCHASE_NOT_FOUND` | 404 | `GET /me/pass-purchases/{id}` | No es una compra del alumno |
+| `PAYMENT_GATEWAY_UNAVAILABLE` | 503 | `POST /me/pass-purchases` | Stripe no ha contestado o se ha negado; se puede reintentar |
+| `INVALID_WEBHOOK_SIGNATURE` | 400 | `POST /payments/stripe/webhook` | El aviso no lleva una firma buena y reciente de Stripe |
 
 Apuntar un bono a un alumno que el profesor no gestiona responde 403 `STUDENT_NOT_MANAGED`. Cada
 reserva dice con qué bono se pagó (`passId`, null si no se pidió bono), y el resumen del mes suma

@@ -1,0 +1,15 @@
+# What the E2E suite adds to compose.yaml (25-fase14-analisis-cobertura-e2e.md):
+#   docker compose -f compose.yaml -f compose.e2e.yaml up -d --build
+# CI sets COMPOSE_FILE to the same pair, so every compose command of the job uses both.
+services:
+  backend:
+    environment:
+      # The whole suite comes from one IP.
+      TENNIS_IDENTITY_AUTH_RATE_LIMIT_PER_MINUTE: 1000
+      # Stripe is played by frontend/e2e/support/fake-stripe.mjs, which Playwright starts on the
+      # host (42-fase27.5-analisis-pago-online.md). Throwaway values: the same as the fake's.
+      STRIPE_SECRET_KEY: sk_test_e2e
+      STRIPE_WEBHOOK_SECRET: whsec_e2e
+      TENNIS_PASS_STRIPE_API_BASE_URL: http://host.docker.internal:12111
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

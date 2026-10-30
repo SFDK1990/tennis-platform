@@ -1245,7 +1245,7 @@ export interface paths {
         };
         /**
          * Los tipos de bono del profesor y si hace falta bono para reservar
-         * @description Los lee cualquiera con sesion (Fase 27). Un alumno no ve los tipos retirados, que ya no se venden; el profesor los ve todos. required dice si el profesor ha encendido "sin bono no se reserva".
+         * @description Los lee cualquiera con sesion (Fase 27). Un alumno no ve los tipos retirados, que ya no se venden; el profesor los ve todos. required dice si el profesor ha encendido "sin bono no se reserva"; onlinePayment, si vende los bonos en la app (Fase 27.5).
          */
         get: {
             parameters: {
@@ -1444,8 +1444,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * Enciende o apaga "sin bono no se reserva"
-         * @description Apagado hasta que el profesor lo enciende (decision 2 de 41-fase27-analisis-bonos.md). Apagado, se reserva sin bono y la reserva no gasta ninguno.
+         * Enciende o apaga "sin bono no se reserva" y el pago online
+         * @description Los dos interruptores nacen apagados. required (decision 2 de 41-fase27-analisis-bonos.md): apagado, se reserva sin bono y la reserva no gasta ninguno. onlinePayment (decision 2 de 42-fase27.5-analisis-pago-online.md): apagado, el alumno no puede comprar bonos en la app. El que no se manda conserva su valor.
          */
         put: {
             parameters: {
@@ -1456,7 +1456,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["PassSettings"];
+                    "application/json": components["schemas"]["PassSettingsRequest"];
                 };
             };
             responses: {
@@ -1472,6 +1472,15 @@ export interface paths {
                 400: components["responses"]["ValidationError"];
                 401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
+                /** @description ONLINE_PAYMENT_UNAVAILABLE: el servidor no tiene las claves de la pasarela, asi que el pago online no se puede encender */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         post?: never;
@@ -1690,6 +1699,201 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/pass-purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * El alumno empieza a comprar un bono y recibe la pagina de pago
+         * @description Fase 27.5. El importe sale del tipo, no del navegador. La compra copia el tipo: lo que se cobra y el bono que sale no cambian aunque el profesor lo cambie despues. El bono no existe todavia: nace cuando la pasarela avisa de que el pago ha llegado. checkoutUrl es la pagina de Stripe a la que el frontend manda al alumno.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StartPurchaseRequest"];
+                };
+            };
+            responses: {
+                /** @description Compra empezada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassPurchase"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description AUTH_FORBIDDEN | EMAIL_NOT_VERIFIED | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PASS_TYPE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description ONLINE_PAYMENT_DISABLED: el profesor no vende bonos en la app | ONLINE_PAYMENT_UNAVAILABLE: el servidor no tiene las claves de la pasarela */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PASS_TYPE_RETIRED: el tipo ya no se vende | PRICE_TOO_LOW_TO_PAY_ONLINE: la pasarela no cobra menos de 0,50 euros */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PAYMENT_GATEWAY_UNAVAILABLE: la pasarela no ha contestado o se ha negado */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/pass-purchases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Una compra del alumno, para saber si el bono ya esta
+         * @description Al volver de la pagina de pago, el frontend pregunta aqui hasta que la compra esta PAID. La de otro alumno no existe para el.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassPurchase"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description PURCHASE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payments/stripe/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Los avisos de Stripe sobre los pagos de bonos
+         * @description Publico: Stripe no tiene sesion. Lo protege la firma de Stripe-Signature, que se comprueba con el secreto del servidor antes de leer nada, con cinco minutos de tolerancia. Un pago confirmado crea el bono una sola vez, y solo si se cobro lo que pedia la compra; los demas avisos se contestan sin hacer nada.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "Stripe-Signature"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Recibido */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description INVALID_WEBHOOK_SIGNATURE: sin firma, con una firma mala o caducada, o no es JSON */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3882,6 +4086,8 @@ export interface components {
             } | null;
             /** @description Los bonos del alumno, con su saldo (Fase 27). */
             passes: components["schemas"]["Pass"][];
+            /** @description Los bonos que el alumno ha comprado en la app, pagados o no (Fase 27.5). */
+            passPurchases: components["schemas"]["PassPurchase"][];
         };
         Level: {
             /** Format: uuid */
@@ -4429,6 +4635,10 @@ export interface components {
         PassTypeList: {
             /** @description Si el profesor ha encendido "sin bono no se reserva" */
             required: boolean;
+            /** @description Si el profesor vende los bonos en la app (Fase 27.5) */
+            onlinePayment: boolean;
+            /** @description Si el servidor tiene las claves de la pasarela; sin ellas no se puede encender onlinePayment */
+            onlinePaymentAvailable: boolean;
             passTypes: components["schemas"]["PassType"][];
         };
         CreatePassTypeRequest: {
@@ -4448,11 +4658,52 @@ export interface components {
             neverExpires?: boolean;
             retired?: boolean;
         };
+        /** @description Los dos opcionales; el que no se manda conserva su valor. */
+        PassSettingsRequest: {
+            required?: boolean;
+            onlinePayment?: boolean;
+        };
         PassSettings: {
             required: boolean;
+            onlinePayment: boolean;
+            onlinePaymentAvailable: boolean;
         };
-        /** @enum {string} */
-        PaymentMethod: "CASH" | "BIZUM" | "TRANSFER";
+        /**
+         * @description ONLINE lo pone la app cuando la pasarela confirma una compra (Fase 27.5); el profesor solo apunta CASH, BIZUM o TRANSFER.
+         * @enum {string}
+         */
+        PaymentMethod: "CASH" | "BIZUM" | "TRANSFER" | "ONLINE";
+        StartPurchaseRequest: {
+            /** Format: uuid */
+            passTypeId: string;
+        };
+        /**
+         * @description PENDING hasta que la pasarela avisa; PAID con su bono; EXPIRED si se abandono el pago.
+         * @enum {string}
+         */
+        PurchaseStatus: "PENDING" | "PAID" | "EXPIRED";
+        /** @description Una compra de bono en la app (Fase 27.5). Copia el tipo al empezar. checkoutUrl solo mientras esta PENDING; passId, el bono que salio, cuando esta PAID. */
+        PassPurchase: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            passTypeId: string;
+            name: string;
+            lessonType: components["schemas"]["LessonType"];
+            lessons: number;
+            priceCents: number;
+            validityMonths: number | null;
+            status: components["schemas"]["PurchaseStatus"];
+            checkoutUrl: string | null;
+            /** Format: uuid */
+            passId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            paidAt: string | null;
+        };
         /**
          * @description Se calcula al leer: USED_UP sin clases, EXPIRED pasado su ultimo dia, VOIDED anulado.
          * @enum {string}
@@ -4493,7 +4744,11 @@ export interface components {
             passTypeId: string;
             /** Format: date */
             paidOn: string;
-            paymentMethod: components["schemas"]["PaymentMethod"];
+            /**
+             * @description ONLINE no se apunta a mano; lo pone la app (Fase 27.5).
+             * @enum {string}
+             */
+            paymentMethod: "CASH" | "BIZUM" | "TRANSFER";
         };
         PlatformConfiguration: {
             studentLimit: number;

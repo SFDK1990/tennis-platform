@@ -199,7 +199,8 @@ export class Arrange {
 
   /**
    * A pass type of the test's own (Fase 27). Afterwards the passes recorded with it are voided,
-   * which the test leaves possible by giving its lessons back, and the type is deleted.
+   * which the test leaves possible by giving its lessons back, and the type is deleted. One that
+   * somebody bought in the app (Fase 27.5) keeps its purchase and cannot be deleted: it is retired.
    */
   async passType(lessons: number): Promise<{ id: string; name: string }> {
     const teacher = await this.teacher();
@@ -212,9 +213,19 @@ export class Arrange {
       for (const pass of passes.items.filter((candidate) => candidate.passTypeId === type.id)) {
         await teacher.POST("/teacher/passes/{id}/void", { params: { path: { id: pass.id } } });
       }
-      await teacher.DELETE("/teacher/pass-types/{id}", { params: { path: { id: type.id } } });
+      const deleted = await teacher.DELETE("/teacher/pass-types/{id}", { params: { path: { id: type.id } } });
+      if (deleted.error) {
+        await teacher.PATCH("/teacher/pass-types/{id}", { params: { path: { id: type.id } }, body: { retired: true } });
+      }
     });
     return { id: type.id, name };
+  }
+
+  /** Selling passes in the app (Fase 27.5), switched off again afterwards. */
+  async sellPassesOnline(): Promise<void> {
+    const teacher = await this.teacher();
+    ok(await teacher.PUT("/teacher/pass-settings", { body: { onlinePayment: true } }), "pass settings");
+    this.undo.push(() => teacher.PUT("/teacher/pass-settings", { body: { onlinePayment: false } }));
   }
 
   /** "No booking without a pass", switched off again afterwards: every other test books without one. */

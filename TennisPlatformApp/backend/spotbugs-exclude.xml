@@ -97,7 +97,7 @@
 
     <!-- The same false positive, on PassTypeRepository (Fase 27), scoped to the one field. -->
     <Match>
-        <Class name="~com\.tennisplatform\.pass\.application\.service\.(PassTypesService|PassesService)"/>
+        <Class name="~com\.tennisplatform\.pass\.application\.service\.(PassTypesService|PassesService|PassPurchasesService)"/>
         <Field name="types"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
