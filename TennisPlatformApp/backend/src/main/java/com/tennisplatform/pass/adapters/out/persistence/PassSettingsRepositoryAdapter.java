@@ -1,6 +1,7 @@
 package com.tennisplatform.pass.adapters.out.persistence;
 
 import com.tennisplatform.pass.application.port.out.PassSettingsRepository;
+import com.tennisplatform.pass.domain.PassSettings;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
@@ -15,12 +16,12 @@ class PassSettingsRepositoryAdapter implements PassSettingsRepository {
     }
 
     @Override
-    public boolean required(UUID teacherUserId) {
-        return jpa.findById(teacherUserId).map(PassSettingsEntity::required).orElse(false);
+    public PassSettings of(UUID teacherUserId) {
+        return jpa.findById(teacherUserId).map(PassSettingsEntity::toDomain).orElse(PassSettings.DEFAULTS);
     }
 
     @Override
-    public void save(UUID teacherUserId, boolean required) {
-        jpa.save(new PassSettingsEntity(teacherUserId, required));
+    public void save(UUID teacherUserId, PassSettings settings) {
+        jpa.save(new PassSettingsEntity(teacherUserId, settings));
     }
 }

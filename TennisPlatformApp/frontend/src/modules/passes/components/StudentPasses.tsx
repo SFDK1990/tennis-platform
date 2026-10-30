@@ -2,8 +2,8 @@
 
 import { type FormEvent } from "react";
 import {
-  describeType, formatEuros, KIND_PLURAL, PAYMENT_METHODS, usePassTypes, useRecordPass, useTeacherPasses, useVoidPass,
-  type Pass, type PaymentMethod,
+  describeType, formatEuros, KIND_PLURAL, PAYMENT_METHODS, RECORDED_PAYMENT_METHODS, usePassTypes, useRecordPass, useTeacherPasses, useVoidPass,
+  type Pass, type RecordedPaymentMethod,
 } from "@/modules/passes/api";
 import { ApiError } from "@/shared/api/errors";
 import { formatShortDay, todayIn } from "@/shared/time";
@@ -36,7 +36,7 @@ export function StudentPasses({ studentUserId, zone }: { studentUserId: string; 
     record.mutate({
       passTypeId: String(data.get("passTypeId")),
       paidOn: String(data.get("paidOn")),
-      paymentMethod: String(data.get("paymentMethod")) as PaymentMethod,
+      paymentMethod: String(data.get("paymentMethod")) as RecordedPaymentMethod,
     }, { onSuccess: () => form.reset() });
   }
 
@@ -66,7 +66,7 @@ export function StudentPasses({ studentUserId, zone }: { studentUserId: string; 
           <div className="flex flex-col gap-1">
             <label htmlFor="pass-method" className="text-sm font-semibold">Cómo</label>
             <select id="pass-method" name="paymentMethod" className={CONTROL_CLASS} defaultValue="CASH">
-              {Object.entries(PAYMENT_METHODS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              {Object.entries(RECORDED_PAYMENT_METHODS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </div>
           <div className="flex items-end">

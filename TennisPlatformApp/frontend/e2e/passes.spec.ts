@@ -43,3 +43,39 @@ test("el profesor apunta un bono, el alumno reserva con él y recupera la clase 
   await openFromMenu(page, "Mis reservas");
   await expect(page.getByRole("region", { name: "Tus bonos" })).toContainText("Te quedan 3 clases de grupo");
 });
+
+/**
+ * Fase 27.5: the student buys a pass in the app. Stripe is the suite's fake: its "Pagar" sends the
+ * signed notice through the frontend, and the pass appears when the backend has checked it.
+ */
+test("el alumno compra un bono en la app y lo ve en su saldo al volver del pago", async ({ page, arrange }) => {
+  const student = await arrange.student({ managed: true });
+  const type = await arrange.passType(3);
+  await arrange.sellPassesOnline();
+
+  await signIn(page, student.email, student.password);
+  await openFromMenu(page, "Mis reservas");
+  await page.getByRole("link", { name: "Comprar un bono" }).click();
+  await page.getByRole("button", { name: `Comprar ${type.name}` }).click();
+
+  await expect(page.getByRole("heading", { name: "Stripe de pruebas" })).toBeVisible();
+  await expect(page.getByText("30.00 EUR")).toBeVisible();
+  await page.getByRole("button", { name: "Pagar" }).click();
+
+  await expect(page.getByText(`Pago recibido: ya tienes tu bono «${type.name}»`)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Tus bonos" })).toContainText("Te quedan 3 clases de grupo");
+});
+
+test("el alumno vuelve del pago sin pagar y no se le cobra nada", async ({ page, arrange }) => {
+  const student = await arrange.student({ managed: true });
+  const type = await arrange.passType(3);
+  await arrange.sellPassesOnline();
+
+  await signIn(page, student.email, student.password);
+  await page.goto("/passes");
+  await page.getByRole("button", { name: `Comprar ${type.name}` }).click();
+  await page.getByRole("link", { name: "Volver sin pagar" }).click();
+
+  await expect(page.getByText("No se ha cobrado nada")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Tus bonos" })).toHaveCount(0);
+});

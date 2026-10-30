@@ -1,5 +1,6 @@
 package com.tennisplatform.pass.adapters.out.persistence;
 
+import com.tennisplatform.pass.domain.PassSettings;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -18,15 +19,19 @@ class PassSettingsEntity {
     @Column(nullable = false)
     private boolean required;
 
+    @Column(name = "online_payment", nullable = false)
+    private boolean onlinePayment;
+
     protected PassSettingsEntity() {
     }
 
-    PassSettingsEntity(UUID teacherUserId, boolean required) {
+    PassSettingsEntity(UUID teacherUserId, PassSettings settings) {
         this.teacherUserId = teacherUserId;
-        this.required = required;
+        this.required = settings.required();
+        this.onlinePayment = settings.onlinePayment();
     }
 
-    boolean required() {
-        return required;
+    PassSettings toDomain() {
+        return new PassSettings(required, onlinePayment);
     }
 }

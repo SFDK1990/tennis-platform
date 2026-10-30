@@ -226,7 +226,8 @@ La asistencia se modela separadamente como `PENDING`, `ATTENDED` o `NO_SHOW`.
 
 ## 16. Fuera del MVP
 
-- Pagos online (los bonos y las mensualidades se apuntan, no se cobran: §18).
+- Cobrar las mensualidades en la app: se apuntan (§18). Los bonos sí se pueden pagar online desde
+  la Fase 27.5.
 - Penalizaciones.
 - Notificaciones push. Los avisos por correo sí entran (§18).
 - Integración con Google Calendar o Apple Calendar.
@@ -273,6 +274,8 @@ análisis de fase las desarrolla; no las vuelve a preguntar.
 - **Mensajes de Marcos** a un grupo, un nivel o todos: por correo y en un tablón de la app.
 - **Bonos:** la clase se descuenta al reservar y se devuelve si se cancela a tiempo (más de
   24 horas); si no viene, se pierde. Sin saldo no se reserva. Cada tipo de bono tiene el precio
-  y la caducidad (o ninguna) que ponga Marcos.
+  y la caducidad (o ninguna) que ponga Marcos. Marcos lo apunta cuando se lo pagan en mano o, si
+  enciende el pago online, el alumno lo compra en la app con tarjeta o Bizum (Fase 27.5,
+  `42-fase27.5-analisis-pago-online.md`).
 - **Mensualidades:** por grupo fijo. El alumno se apunta al grupo, paga la cuota del mes y sus
   clases del grupo quedan reservadas.

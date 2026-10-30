@@ -47,6 +47,18 @@ public record Pass(UUID id, UUID teacherUserId, UUID studentUserId, UUID passTyp
     }
 
     /**
+     * The pass a purchase in the app became once the gateway confirmed the payment (Fase 27.5).
+     * It is built from what the purchase copied, so a type retired in the meantime still gives
+     * the pass that was paid for.
+     */
+    public static Pass boughtOnline(PassPurchase purchase, LocalDate paidOn, Instant now) {
+        LocalDate validUntil = purchase.validityMonths() == null ? null : paidOn.plusMonths(purchase.validityMonths());
+        return new Pass(null, purchase.teacherUserId(), purchase.studentUserId(), purchase.passTypeId(),
+                purchase.name(), purchase.lessonType(), purchase.lessons(), purchase.priceCents(), paidOn,
+                PaymentMethod.ONLINE, validUntil, now, null);
+    }
+
+    /**
      * Cancels a pass recorded by mistake. Only while no lesson has been booked with it: after
      * that, the lessons it paid for would be left paid by nothing.
      */

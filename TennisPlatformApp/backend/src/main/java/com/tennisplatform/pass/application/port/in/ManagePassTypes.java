@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The teacher's pass types and whether booking needs a pass (decisions 2 and 6). Anybody signed
- * in reads them; who may change them is decided at the web edge.
+ * The teacher's pass types and their switches: whether booking needs a pass (Fase 27, decisions
+ * 2 and 6) and whether passes are sold in the app (Fase 27.5). Anybody signed in reads them; who
+ * may change them is decided at the web edge.
  */
 public interface ManagePassTypes {
 
@@ -22,7 +23,14 @@ public interface ManagePassTypes {
     /** Whether the teacher has switched on "no booking without a pass". Off until they do. */
     boolean passesRequired();
 
-    boolean requirePasses(UUID teacherUserId, boolean required);
+    /** Both switches, and whether online payment can be switched on. */
+    PassSettingsView settings();
+
+    /**
+     * Changes the switches; a null keeps the current value. Switching on online payment without
+     * the gateway's keys raises {@code OnlinePaymentUnavailableException}.
+     */
+    PassSettingsView changeSettings(UUID teacherUserId, Boolean required, Boolean onlinePayment);
 
     record NewPassType(String name, String lessonType, int lessons, int priceCents, Integer validityMonths) {
     }

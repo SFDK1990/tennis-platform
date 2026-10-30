@@ -84,6 +84,29 @@ Se cambia en `.env` y se aplica con `docker compose -f compose.prod.yaml up -d`.
 - `DB_PASSWORD`: Postgres guarda la contraseña en su volumen, así que antes se cambia en la base:
   `docker compose -f compose.prod.yaml exec postgres psql -U tennis_platform -c "alter user tennis_platform password '...'"`.
 - `MAIL_PASSWORD`: se genera la nueva en el proveedor de correo y después se revoca la vieja.
+- `STRIPE_SECRET_KEY`: se rota en Developers > API keys de Stripe, que deja la vieja viva unas
+  horas. `STRIPE_WEBHOOK_SECRET`: «Roll secret» en el webhook; mientras tanto Stripe firma con las
+  dos y la app acepta cualquiera.
+
+## Cobrar los bonos con Stripe
+
+La app vende bonos con Stripe cuando Marcos enciende «Vender bonos en la app» en Bonos, y sólo
+puede encenderlo si el servidor tiene las dos claves (`42-fase27.5-analisis-pago-online.md`).
+
+- **Para probar** (gratis): una cuenta de Stripe en modo de pruebas. `STRIPE_SECRET_KEY` es la
+  `sk_test_...` de Developers > API keys. En local, `stripe listen --forward-to
+  localhost:8080/api/v1/payments/stripe/webhook` imprime el `STRIPE_WEBHOOK_SECRET`. Se paga con
+  la tarjeta `4242 4242 4242 4242`, cualquier fecha futura y cualquier CVC.
+- **Para cobrar de verdad** (cuando Marcos lo diga, con backup antes): Marcos abre su cuenta con
+  su DNI y su IBAN y activa Bizum en Settings > Payment methods. En Developers > Webhooks se crea
+  uno a `https://<DOMAIN>/api/v1/payments/stripe/webhook` con los eventos
+  `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+  `checkout.session.async_payment_failed` y `checkout.session.expired`. Su secreto y la
+  `sk_live_...` van al `.env` de la Pi, y se aplica con `docker compose -f compose.prod.yaml up -d`.
+- **Una devolución** se hace en el panel de Stripe. Después Marcos anula el bono en la ficha del
+  alumno, que sólo se puede si no se ha usado.
+- **Un pago sin bono** sale en el log como `Purchase ... was charged ... instead of ...`. No
+  debería pasar nunca: se mira en Stripe y se apunta el bono a mano.
 
 ## Bots y ataques
 

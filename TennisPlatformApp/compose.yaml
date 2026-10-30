@@ -57,6 +57,10 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # The E2E suite raises it: all of it comes from one IP (25-fase14-analisis-cobertura-e2e.md).
       TENNIS_IDENTITY_AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-20}
+      # Online payment of passes (Fase 27.5). Blank: it cannot be switched on. A test account's
+      # keys (sk_test_, whsec_) to try it with Stripe's test cards.
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
     ports:
       - "127.0.0.1:${SERVER_PORT:-8080}:8080"
     healthcheck:

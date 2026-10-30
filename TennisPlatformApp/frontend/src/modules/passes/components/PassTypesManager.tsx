@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import {
-  describeType, useCreatePassType, useDeletePassType, usePassTypes, useRequirePasses, useUpdatePassType,
+  describeType, useCreatePassType, useDeletePassType, usePassTypes, useRequirePasses, useSellOnline, useUpdatePassType,
   type LessonKind, type PassType,
 } from "@/modules/passes/api";
 import { ApiError } from "@/shared/api/errors";
@@ -12,16 +12,20 @@ import { CONTROL_CLASS, Field } from "@/shared/ui/Field";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
 /**
- * The teacher's pass types and the switch that makes them required (41-fase27, decisions 2 and
- * 6). A type somebody bought cannot be deleted, only retired: the message says so.
+ * The teacher's pass types and their two switches: the one that makes them required (41-fase27,
+ * decisions 2 and 6) and the one that sells them in the app (42-fase27.5, decision 2). A type
+ * somebody bought cannot be deleted, only retired: the message says so.
  */
 export function PassTypesManager() {
   const types = usePassTypes();
   const requirement = useRequirePasses();
+  const sellOnline = useSellOnline();
   const create = useCreatePassType();
   const remove = useDeletePassType();
   const inUse = remove.error instanceof ApiError && remove.error.code === "PASS_TYPE_IN_USE";
   const required = types.data?.required ?? false;
+  const online = types.data?.onlinePayment ?? false;
+  const onlineAvailable = types.data?.onlinePaymentAvailable ?? false;
 
   function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +55,28 @@ export function PassTypesManager() {
           Sin bono no se reserva
         </label>
         <ErrorNotice error={requirement.error} />
+      </section>
+
+      <section aria-labelledby="online-heading" className="flex flex-col gap-3 rounded-xl border border-line bg-paper p-5">
+        <h2 id="online-heading" className="font-display text-2xl font-semibold leading-none">Cobrar los bonos en la app</h2>
+        <p className="text-sm text-muted">
+          Encendido, tus alumnos compran cualquier tipo de bono que no esté retirado y lo pagan con tarjeta o Bizum en la
+          página de Stripe. El bono aparece solo, como pagado en la app, en cuanto Stripe confirma el pago. La comisión de
+          Stripe la pagas tú; las devoluciones se hacen desde su panel.
+        </p>
+        <label className="flex min-h-11 items-center gap-3 font-semibold">
+          <input type="checkbox" className="size-5 accent-court" checked={online}
+            disabled={!types.data || sellOnline.isPending || (!online && !onlineAvailable)}
+            onChange={(event) => sellOnline.mutate(event.target.checked)} />
+          Vender bonos en la app
+        </label>
+        {types.data && !onlineAvailable ? (
+          <p className="text-sm text-muted">
+            Para encenderlo, el servidor necesita las claves de tu cuenta de Stripe (STRIPE_SECRET_KEY y
+            STRIPE_WEBHOOK_SECRET).
+          </p>
+        ) : null}
+        <ErrorNotice error={sellOnline.error} />
       </section>
 
       <section aria-labelledby="types-heading" className="flex flex-col gap-4 rounded-xl border border-line bg-paper p-5">

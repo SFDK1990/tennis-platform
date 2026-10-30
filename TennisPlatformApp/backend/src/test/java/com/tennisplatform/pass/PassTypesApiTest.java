@@ -136,6 +136,43 @@ class PassTypesApiTest extends AbstractPassTest {
         assertThat(types(student.token())).containsEntry("required", false);
     }
 
+    /**
+     * Fase 27.5, decision 6: without Stripe's keys in the environment, which is how the suite
+     * runs, online payment cannot be switched on, and everybody can read why.
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void onlinePaymentCannotBeSwitchedOnWithoutTheGatewaysKeys() {
+        Student student = aStudentWhoMayBook();
+        assertThat(types(student.token())).containsEntry("onlinePayment", false)
+                .containsEntry("onlinePaymentAvailable", false);
+
+        ResponseEntity<Map> refused = rest.exchange("/api/v1/teacher/pass-settings", HttpMethod.PUT,
+                new HttpEntity<>(Map.of("onlinePayment", true), jsonBearer(teacherToken)), Map.class);
+
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(refused.getBody()).containsEntry("code", "ONLINE_PAYMENT_UNAVAILABLE");
+        assertThat(types(student.token())).containsEntry("onlinePayment", false);
+        ResponseEntity<Map> buy = rest.exchange("/api/v1/me/pass-purchases", HttpMethod.POST,
+                new HttpEntity<>(Map.of("passTypeId", aPassType("5 particulares", "INDIVIDUAL", 5, null)),
+                        jsonBearer(student.token())), Map.class);
+        assertThat(buy.getBody()).containsEntry("code", "ONLINE_PAYMENT_DISABLED");
+    }
+
+    /** A pass recorded by hand is never "paid online": only the gateway's notice says that. */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void theTeacherCannotRecordAPassAsPaidOnline() {
+        Student student = aStudentWhoMayBook();
+        UUID type = aPassType("10 de grupo", "GROUP", 10, 3);
+
+        ResponseEntity<Map> online = rest.exchange("/api/v1/teacher/students/" + student.id() + "/passes",
+                HttpMethod.POST, new HttpEntity<>(Map.of("passTypeId", type, "paidOn", today().toString(),
+                        "paymentMethod", "ONLINE"), jsonBearer(teacherToken)), Map.class);
+
+        assertThat(online.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
     @SuppressWarnings("rawtypes")
     private Map types(String token) {
         return rest.exchange("/api/v1/pass-types", HttpMethod.GET, new HttpEntity<>(bearer(token)), Map.class).getBody();

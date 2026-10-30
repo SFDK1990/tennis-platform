@@ -44,9 +44,11 @@ npm run e2e                   # Playwright contra el stack levantado (ver abajo)
 
 CI falla si algún test se salta. Sin Docker en marcha, los de integración se saltan.
 
-`npm run e2e` necesita el stack con el profesor y el admin del `.env` y el rate limiting subido:
-`AUTH_RATE_LIMIT_PER_MINUTE=1000 docker compose up -d --build`. Construye y arranca el
-frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de alumno `e2e-*`.
+`npm run e2e` necesita el stack con el profesor y el admin del `.env`, el rate limiting subido y
+las claves del Stripe falso: `docker compose -f compose.yaml -f compose.e2e.yaml up -d --build`.
+Construye y arranca el frontend en el puerto 3100 y el Stripe falso en el 12111. Cada test deshace
+lo que crea, salvo las cuentas de alumno `e2e-*` y los tipos de bono que alguien compró, que se
+retiran.
 
 ## Entorno de desarrollo
 
@@ -151,6 +153,11 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   `pass_id`. Cancelar por cualquier camino lo devuelve solo; un camino nuevo que *dé* plaza tiene
   que llamar a `ChargePasses.charge` dentro de su transacción (bloquea el saldo), como la reserva y
   la promoción de la lista de espera (Fase 27). Con el interruptor de Marcos apagado no pide nada.
+- **El bono pagado online nace con el aviso firmado de Stripe**, nunca con la vuelta del alumno a
+  la app (Fase 27.5). La firma se calcula sobre los bytes exactos del cuerpo: el webhook los lee
+  como `byte[]`, y un proxy que lo reescriba la rompe. Un aviso repetido no crea otro bono porque
+  `checkout_session_id` es único y la compra se bloquea; un importe distinto del de la compra no
+  crea ninguno. Ni el CI ni el E2E hablan con Stripe: `FakeStripe` y `e2e/support/fake-stripe.mjs`.
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
   `ContractConventionsTest`.

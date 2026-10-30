@@ -138,6 +138,8 @@ jobs:
       ADMIN_PASSWORD: e2e-admin-password
       # The whole suite comes from one IP (25-fase14-analisis-cobertura-e2e.md).
       AUTH_RATE_LIMIT_PER_MINUTE: 1000
+      # compose.e2e.yaml adds the fake Stripe's keys (Fase 27.5); every compose step uses both.
+      COMPOSE_FILE: compose.yaml:compose.e2e.yaml
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
