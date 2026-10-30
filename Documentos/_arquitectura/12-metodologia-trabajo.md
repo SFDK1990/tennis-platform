@@ -77,7 +77,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 25.5 | Foto del alumno | Completada | `39-fase25.5-analisis-foto-alumno.md`. El alumno la sube desde su perfil; Marcos la ve en la ficha y en sus listas (Daniel, 27/10/2026). Los alumnos de ejemplo llevan las fotos de `fotosMuppets`, fuera del repositorio |
 | 25.6 | Pistas | Completada | `40-fase25.6-analisis-pistas.md`. Las dos pistas de tenis de la escuela; cada clase dice en cuál es, y la web deja de hablar de una sola pista (Daniel, 27/10/2026) |
 | 26 | Familias | Descartada | Daniel la descartó el 30/10/2026: no le ve peso en la app |
-| 27 | Bonos | **Siguiente** | Tipos de bono de Marcos; el pago se apunta, no se cobra en la app |
+| 27 | Bonos | **Siguiente** | `41-fase27-analisis-bonos.md`. Tipos de bono de Marcos; el pago se apunta, no se cobra en la app |
 | 28 | Mensualidades | Pendiente | Cuota por grupo fijo y registro de quién ha pagado. Un alumno con la cuota vencida sigue activo, y Marcos ve un aviso de que se le pasó la fecha (Daniel, 27/10/2026) |
 | 29 | Progreso del alumno | Pendiente | Objetivos por nivel que Marcos marca como conseguidos |
 | 30 | PWA y accesibilidad | Pendiente | Instalable, sin conexión sin datos personales, axe sin fallos graves y WebKit en los flujos del alumno |
