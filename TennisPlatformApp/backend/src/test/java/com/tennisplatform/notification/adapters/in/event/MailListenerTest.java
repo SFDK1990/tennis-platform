@@ -2,6 +2,7 @@ package com.tennisplatform.notification.adapters.in.event;
 
 import com.tennisplatform.booking.application.port.in.BookingCancelled;
 import com.tennisplatform.booking.application.port.in.BookingConfirmed;
+import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 import com.tennisplatform.notification.application.port.in.NotifyBookings;
 import com.tennisplatform.notification.configuration.NotificationProperties;
 import org.junit.jupiter.api.AfterEach;
@@ -55,6 +56,10 @@ class MailListenerTest {
             @Override
             public void cancelled(BookingCancelled booking) {
             }
+
+            @Override
+            public void waitingPlaceLost(WaitingPlaceLost lost) {
+            }
         });
         MDC.put("correlationId", "request-42");
 
@@ -75,6 +80,10 @@ class MailListenerTest {
             public void cancelled(BookingCancelled booking) {
                 done.complete(null);
                 throw new IllegalStateException("no address for lucia@example.com");
+            }
+
+            @Override
+            public void waitingPlaceLost(WaitingPlaceLost lost) {
             }
         });
         UUID bookingId = UUID.randomUUID();

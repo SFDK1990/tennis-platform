@@ -271,8 +271,6 @@ análisis de fase las desarrolla; no las vuelve a preguntar.
 - **Niveles:** los define Marcos, empezando por iniciación, intermedio, avanzado y competición.
   El alumno ve todas las clases, pero sólo reserva las de su nivel o las abiertas a todos.
 - **Mensajes de Marcos** a un grupo, un nivel o todos: por correo y en un tablón de la app.
-- **Familias:** los hijos son perfiles dentro de la cuenta de un adulto, que reserva por ellos.
-  El niño no tiene email ni contraseña.
 - **Bonos:** la clase se descuenta al reservar y se devuelve si se cancela a tiempo (más de
   24 horas); si no viene, se pierde. Sin saldo no se reserva. Cada tipo de bono tiene el precio
   y la caducidad (o ninguna) que ponga Marcos.

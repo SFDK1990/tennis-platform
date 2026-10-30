@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { useManagedStudents, useManageStudent, useStopManaging, useStudentLookup } from "@/modules/student/api";
 import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
 import { Button } from "@/shared/ui/Button";
 import { Field } from "@/shared/ui/Field";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
 
-export function StudentsManager() {
+/** `flagFor`: what another module has to say next to a student, such as "Sin saldo" (Fase 27). */
+export function StudentsManager({ flagFor }: { flagFor?: (studentUserId: string) => ReactNode } = {}) {
   const [email, setEmail] = useState<string | null>(null);
   const lookup = useStudentLookup(email);
   const manage = useManageStudent();
@@ -69,6 +70,7 @@ export function StudentsManager() {
                     </Link>
                     <span className="block truncate text-sm text-muted">{student.email}</span>
                   </span>
+                  {flagFor?.(student.userId)}
                 </span>
                 {leaving === student.userId ? (
                   <span className="flex flex-wrap items-center gap-2">

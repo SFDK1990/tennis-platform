@@ -39,10 +39,11 @@ public class Booking {
     private final Instant lessonEndsAt;
     private final Instant bookedAt;
     private final Instant cancelledAt;
+    private final UUID passId;
 
     private Booking(UUID id, UUID lessonId, UUID teacherUserId, UUID studentUserId,
                     BookingStatus status, Attendance attendance, Instant lessonStartsAt,
-                    Instant lessonEndsAt, Instant bookedAt, Instant cancelledAt) {
+                    Instant lessonEndsAt, Instant bookedAt, Instant cancelledAt, UUID passId) {
         this.id = id;
         this.lessonId = lessonId;
         this.teacherUserId = teacherUserId;
@@ -53,22 +54,33 @@ public class Booking {
         this.lessonEndsAt = lessonEndsAt;
         this.bookedAt = bookedAt;
         this.cancelledAt = cancelledAt;
+        this.passId = passId;
     }
 
     /** A new, confirmed booking. Whether it may be made at all is the use case's decision. */
     public static Booking confirm(UUID lessonId, UUID teacherUserId, UUID studentUserId,
                                   Instant lessonStartsAt, Instant lessonEndsAt, Instant now) {
+        return confirm(lessonId, teacherUserId, studentUserId, lessonStartsAt, lessonEndsAt, now, null);
+    }
+
+    /**
+     * The same, paid with a pass (Fase 27), or with {@code passId} null while the teacher does not
+     * require one. The pass never changes afterwards: a lesson spent from it is a confirmed booking
+     * that points at it, and a cancelled one gives the lesson back to that same pass.
+     */
+    public static Booking confirm(UUID lessonId, UUID teacherUserId, UUID studentUserId,
+                                  Instant lessonStartsAt, Instant lessonEndsAt, Instant now, UUID passId) {
         return new Booking(null, lessonId, teacherUserId, studentUserId, BookingStatus.CONFIRMED,
-                Attendance.PENDING, lessonStartsAt, lessonEndsAt, now, null);
+                Attendance.PENDING, lessonStartsAt, lessonEndsAt, now, null, passId);
     }
 
     /** Rehydration from persistence. Stored values are not re-validated. */
     public static Booking rehydrate(UUID id, UUID lessonId, UUID teacherUserId, UUID studentUserId,
                                     BookingStatus status, Attendance attendance,
                                     Instant lessonStartsAt, Instant lessonEndsAt, Instant bookedAt,
-                                    Instant cancelledAt) {
+                                    Instant cancelledAt, UUID passId) {
         return new Booking(id, lessonId, teacherUserId, studentUserId, status, attendance,
-                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt);
+                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt, passId);
     }
 
     /**
@@ -115,7 +127,7 @@ public class Booking {
                     "Attendance can be recorded once the lesson has started");
         }
         return new Booking(id, lessonId, teacherUserId, studentUserId, status, marked,
-                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt);
+                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt, passId);
     }
 
     /**
@@ -134,7 +146,7 @@ public class Booking {
 
     private Booking cancelled(BookingStatus reason, Instant now) {
         return new Booking(id, lessonId, teacherUserId, studentUserId, reason, attendance,
-                lessonStartsAt, lessonEndsAt, bookedAt, now);
+                lessonStartsAt, lessonEndsAt, bookedAt, now, passId);
     }
 
     public boolean isConfirmed() {
@@ -179,5 +191,10 @@ public class Booking {
 
     public Instant cancelledAt() {
         return cancelledAt;
+    }
+
+    /** The pass the lesson was paid with, or null when booking did not need one. */
+    public UUID passId() {
+        return passId;
     }
 }

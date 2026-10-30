@@ -53,6 +53,10 @@ class BookingEntity {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
+    /** Fixed when the booking is made (Fase 27): cancelling gives the lesson back to this pass. */
+    @Column(name = "pass_id", updatable = false)
+    private UUID passId;
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
@@ -69,6 +73,7 @@ class BookingEntity {
         entity.lessonStartsAt = booking.lessonStartsAt();
         entity.lessonEndsAt = booking.lessonEndsAt();
         entity.bookedAt = booking.bookedAt();
+        entity.passId = booking.passId();
         entity.apply(booking);
         return entity;
     }
@@ -82,6 +87,6 @@ class BookingEntity {
 
     Booking toDomain() {
         return Booking.rehydrate(id, lessonId, teacherUserId, studentUserId, status, attendance,
-                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt);
+                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt, passId);
     }
 }

@@ -1,10 +1,13 @@
 package com.tennisplatform.booking.application.service;
 
+import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.application.port.out.WaitingListRepository;
 import com.tennisplatform.booking.domain.Booking;
 import com.tennisplatform.booking.domain.WaitingListEntry;
 import com.tennisplatform.lesson.application.port.in.LessonView;
+import com.tennisplatform.pass.application.port.in.ChargePasses;
+import com.tennisplatform.pass.application.port.in.ChargePasses.PassCharge;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,16 +36,21 @@ public class WaitingListPromotion {
     private final BookingRepository bookings;
     private final WaitingListRepository waiting;
     private final QueryManagedStudent managedStudents;
+    private final ChargePasses passes;
     private final Clock clock;
     private final BookingEvents events;
+    private final ApplicationEventPublisher publisher;
 
     public WaitingListPromotion(BookingRepository bookings, WaitingListRepository waiting,
-                                QueryManagedStudent managedStudents, Clock clock, ApplicationEventPublisher publisher) {
+                                QueryManagedStudent managedStudents, ChargePasses passes, Clock clock,
+                                ApplicationEventPublisher publisher) {
         this.bookings = bookings;
         this.waiting = waiting;
         this.managedStudents = managedStudents;
+        this.passes = passes;
         this.clock = clock;
         this.events = new BookingEvents(publisher);
+        this.publisher = publisher;
     }
 
     /**
@@ -67,8 +75,17 @@ public class WaitingListPromotion {
                         entry.studentUserId(), lesson.id());
                 continue;
             }
+            // Paying is asked last and only of whoever would get the seat: it locks their passes.
+            PassCharge charge = passes.charge(lesson.teacherUserId(), entry.studentUserId(), lesson.type(),
+                    lesson.startsAt());
+            if (charge.refused()) {
+                log.info("Waiting student {} skipped in lesson {}: no lessons left on their passes",
+                        entry.studentUserId(), lesson.id());
+                publisher.publishEvent(new WaitingPlaceLost(lesson.id(), lesson.teacherUserId(), entry.studentUserId()));
+                continue;
+            }
             Booking saved = bookings.save(Booking.confirm(lesson.id(), lesson.teacherUserId(),
-                    entry.studentUserId(), lesson.startsAt(), lesson.endsAt(), now));
+                    entry.studentUserId(), lesson.startsAt(), lesson.endsAt(), now, charge.passId()));
             log.info("Booking {} created in lesson {} for student {} from the waiting list",
                     saved.id(), lesson.id(), entry.studentUserId());
             events.confirmedFromWaitingList(saved);

@@ -33,7 +33,8 @@ Allowed dependencies, one-directional:
 | `student` | `identity`, `teacher`, `platform` |
 | `availability` | `teacher`, `identity` |
 | `lesson` | `teacher`, `availability`, `identity`, `platform` |
-| `booking` | `student`, `lesson`, `identity` |
+| `booking` | `student`, `lesson`, `identity`, `pass` |
+| `pass` | `teacher`, `student`, `identity` |
 | `administration` | `identity`, `teacher`, `student`, `platform` |
 | `notification` | `booking`, `lesson`, `teacher`, `student`, `identity`; nobody depends on it |
 | `calendar` | query ports only (`Get*`, `Find*`, `Query*`); it never writes |
@@ -45,7 +46,8 @@ Every module may also use `shared.domain`: technical primitives only (`DateRange
 Across modules, only `application/port/in` is visible, plus one exception: **a module may
 implement another module's `application/port/spi`, never call it**. That is how `lesson` and
 `student` get bookings counted and cancelled without depending on `booking`: they declare
-`LessonBookings` / `StudentBookings`, and `booking` implements them, inside the caller's
+`LessonBookings` / `StudentBookings`, and `booking` implements them (and `pass` counts the
+bookings of its passes through `PassBookings`), inside the caller's
 transaction.
 
 All of this is enforced by `ModuleBoundariesTest` (ArchUnit, runs in `mvn test`, cannot be

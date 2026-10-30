@@ -124,6 +124,23 @@ public class MailTexts {
                 calendar(CalendarInvite.Method.CANCEL, lesson, why));
     }
 
+    /**
+     * The student was first on the waiting list when a seat came free, but had no lesson left on
+     * their passes (Fase 27): the seat went to the next one, and they are off the list.
+     */
+    public Mail waitingPlaceLostToStudent(Lesson lesson, String to, String studentName) {
+        String body = greeting(studentName)
+                + "Se ha liberado una plaza en la clase " + lesson.kind() + " del " + lesson.day()
+                + ", de " + lesson.start() + " a " + lesson.end() + ", y te tocaba a ti, pero no te quedan"
+                + " clases en tu bono para ella. La plaza ha pasado al siguiente de la lista y ya no estás"
+                + " en ella.\n\n"
+                + "Cuando " + lesson.teacherName() + " te apunte un bono nuevo, podrás reservar en "
+                + frontendBaseUrl + "/calendar\n\n"
+                + signature();
+        return new Mail("waiting-place-lost-student", lesson.lessonId().toString(), to,
+                "Sin bono para la plaza: " + lesson.day() + ", " + lesson.start(), body, null);
+    }
+
     /** The lesson moved to another court (Fase 25.6): the time stays, so only the court is news. */
     public Mail courtChangedToStudent(Lesson lesson, String courtName, String to, String studentName) {
         String body = greeting(studentName)

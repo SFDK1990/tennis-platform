@@ -197,6 +197,33 @@ export class Arrange {
     return { id: level.id, name };
   }
 
+  /**
+   * A pass type of the test's own (Fase 27). Afterwards the passes recorded with it are voided,
+   * which the test leaves possible by giving its lessons back, and the type is deleted.
+   */
+  async passType(lessons: number): Promise<{ id: string; name: string }> {
+    const teacher = await this.teacher();
+    const name = `E2E ${Math.random().toString(36).slice(2, 8)}`;
+    const type = ok(await teacher.POST("/teacher/pass-types", {
+      body: { name, lessonType: "GROUP", lessons, priceCents: 3000, validityMonths: 3 },
+    }), "pass type");
+    this.undo.push(async () => {
+      const passes = ok(await teacher.GET("/teacher/passes", { params: { query: {} } }), "passes");
+      for (const pass of passes.items.filter((candidate) => candidate.passTypeId === type.id)) {
+        await teacher.POST("/teacher/passes/{id}/void", { params: { path: { id: pass.id } } });
+      }
+      await teacher.DELETE("/teacher/pass-types/{id}", { params: { path: { id: type.id } } });
+    });
+    return { id: type.id, name };
+  }
+
+  /** "No booking without a pass", switched off again afterwards: every other test books without one. */
+  async requirePasses(): Promise<void> {
+    const teacher = await this.teacher();
+    ok(await teacher.PUT("/teacher/pass-settings", { body: { required: true } }), "pass settings");
+    this.undo.push(() => teacher.PUT("/teacher/pass-settings", { body: { required: false } }));
+  }
+
   /** The test sends a message through the screens; afterwards it is taken off every board (Fase 24). */
   deleteMessageAfterwards(subject: string): void {
     this.undo.push(async () => {

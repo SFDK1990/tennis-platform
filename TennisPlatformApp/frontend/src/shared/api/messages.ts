@@ -48,12 +48,20 @@ const MESSAGES: Record<string, string> = {
   STUDENT_SCHEDULE_OVERLAP: "Ya tienes otra clase a esa hora.",
   BOOKING_NOT_FOUND: "Esa reserva ya no existe.",
   BOOKING_ALREADY_CANCELLED: "La reserva ya estaba cancelada.",
+  NO_PASS_BALANCE: "No te quedan clases de este tipo en tu bono. Pídele uno nuevo a tu profesor.",
   CANCELLATION_WINDOW_EXPIRED: "Faltan menos de 24 horas: ya no se puede cancelar. Habla con tu profesor.",
   ATTENDANCE_NOT_YET_OPEN: "La asistencia se marca cuando la clase ha empezado.",
 
   ADMIN_TARGET_NOT_ALLOWED: "Sólo se pueden activar o desactivar cuentas de alumnos.",
   USER_NOT_FOUND: "Esa cuenta ya no existe.",
   ACCOUNT_DELETED: "El alumno borró su cuenta: ya no se puede activar ni desactivar.",
+
+  PASS_TYPE_ALREADY_EXISTS: "Ya tienes un tipo de bono con ese nombre.",
+  PASS_TYPE_IN_USE: "Algún alumno tiene un bono de ese tipo. Retíralo en lugar de borrarlo.",
+  PASS_TYPE_NOT_FOUND: "Ese tipo de bono ya no existe.",
+  PASS_TYPE_RETIRED: "Ese tipo de bono está retirado: ya no se vende.",
+  PASS_NOT_FOUND: "Ese bono ya no existe.",
+  PASS_ALREADY_USED: "Ya se ha reservado alguna clase con este bono: no se puede anular.",
 
   PHOTO_INVALID: "La foto tiene que ser una imagen JPEG, PNG o WebP de menos de 1 MB.",
   PHOTO_NOT_FOUND: "No hay foto.",

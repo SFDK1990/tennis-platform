@@ -128,6 +128,12 @@ class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
+    public Map<UUID, Integer> countConfirmedByPass(Collection<UUID> passIds) {
+        return jpa.countConfirmedByPass(passIds).stream()
+                .collect(Collectors.toMap(row -> (UUID) row[0], row -> ((Long) row[1]).intValue()));
+    }
+
+    @Override
     public List<Booking> cancelConfirmedOfLesson(UUID lessonId, BookingStatus as, Instant at) {
         // Read first, then one update: the caller has already cancelled the lesson, and a booking
         // locks the lesson and refuses a cancelled one, so nothing can slip in between.

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { StudentHistory } from "@/modules/booking/components/StudentHistory";
+import { useTeacherPasses } from "@/modules/passes/api";
+import { StudentPasses } from "@/modules/passes/components/StudentPasses";
 import { useStudentDetail } from "@/modules/student/api";
 import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
 import { StudentRecordForm } from "@/modules/student/components/StudentRecordForm";
@@ -10,11 +12,13 @@ import { useTeacherZone } from "@/modules/teacher/api";
 import { Icon } from "@/shared/ui/Icon";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
-/** The student's record: who they are, their level and notes, and their bookings (Fase 23). */
+/** The student's record: who they are, their level and notes, their passes (Fase 27) and their bookings (Fase 23). */
 export default function StudentPage() {
   const { id } = useParams<{ id: string }>();
   const student = useStudentDetail(id);
   const zone = useTeacherZone();
+  const passes = useTeacherPasses(id).data?.items ?? [];
+  const passName = new Map(passes.map((pass) => [pass.id, pass.name]));
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
@@ -38,9 +42,13 @@ export default function StudentPage() {
             <h2 id="record-heading" className="font-display text-2xl font-semibold leading-none">Ficha</h2>
             <StudentRecordForm key={student.data.userId} student={student.data} />
           </section>
+          <section aria-labelledby="passes-heading" className="flex flex-col gap-3">
+            <h2 id="passes-heading" className="font-display text-2xl font-semibold">Bonos</h2>
+            <StudentPasses studentUserId={id} zone={zone} />
+          </section>
           <section aria-labelledby="history-heading" className="flex flex-col gap-3">
             <h2 id="history-heading" className="font-display text-2xl font-semibold">Historial</h2>
-            <StudentHistory studentUserId={id} zone={zone} />
+            <StudentHistory studentUserId={id} zone={zone} passNameOf={(passId) => passName.get(passId)} />
           </section>
         </>
       ) : (

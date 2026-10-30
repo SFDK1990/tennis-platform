@@ -2,6 +2,7 @@ package com.tennisplatform.notification.application.service;
 
 import com.tennisplatform.booking.application.port.in.BookingCancelled;
 import com.tennisplatform.booking.application.port.in.BookingConfirmed;
+import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.identity.application.port.in.UserSummary;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
@@ -83,6 +84,17 @@ public class BookingNotifications implements NotifyBookings {
             mailer.send(texts.cancellationToStudent(details, people.student().email(), people.studentName(),
                     byWhom, booking.reason()));
         }
+    }
+
+    @Override
+    public void waitingPlaceLost(WaitingPlaceLost lost) {
+        People people = people(lost.teacherUserId(), lost.studentUserId());
+        if (people.student() == null) {
+            return;
+        }
+        LessonView lesson = lessons.byId(lost.lessonId());
+        mailer.send(texts.waitingPlaceLostToStudent(details(null, lesson, people.teacher()),
+                people.student().email(), people.studentName()));
     }
 
     private MailTexts.Lesson details(UUID bookingId, LessonView lesson, TeacherProfileView teacher) {

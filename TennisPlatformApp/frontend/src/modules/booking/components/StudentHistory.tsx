@@ -18,8 +18,15 @@ const ATTENDANCE: Record<Booking["attendance"], string | null> = {
   NO_SHOW: "No vino",
 };
 
-/** The student's bookings with the teacher, newest first, with what happened in each (Fase 23). */
-export function StudentHistory({ studentUserId, zone }: { studentUserId: string; zone: string }) {
+/**
+ * The student's bookings with the teacher, newest first, with what happened in each (Fase 23) and
+ * the pass it was paid with, when there was one (Fase 27).
+ */
+export function StudentHistory({ studentUserId, zone, passNameOf }: {
+  studentUserId: string;
+  zone: string;
+  passNameOf?: (passId: string) => string | undefined;
+}) {
   const history = useStudentHistory(studentUserId);
 
   if (history.error) {
@@ -37,7 +44,12 @@ export function StudentHistory({ studentUserId, zone }: { studentUserId: string;
         const attendance = ATTENDANCE[booking.attendance];
         return (
           <li key={booking.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-            <span className="font-semibold first-letter:uppercase">{formatDateTime(booking.lesson.startsAt, zone)}</span>
+            <span className="flex flex-col">
+              <span className="font-semibold first-letter:uppercase">{formatDateTime(booking.lesson.startsAt, zone)}</span>
+              {booking.passId && passNameOf?.(booking.passId) ? (
+                <span className="text-sm text-muted">Con el bono {passNameOf(booking.passId)}</span>
+              ) : null}
+            </span>
             <Chip tone={attendance === "No vino" ? "warning" : attendance ? "success" : booking.status === "CONFIRMED" ? "court" : "neutral"}>
               {attendance ?? OUTCOME[booking.status]}
             </Chip>
