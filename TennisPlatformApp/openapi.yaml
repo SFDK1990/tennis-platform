@@ -19,6 +19,7 @@ tags:
   - name: calendar
   - name: lessons
   - name: bookings
+  - name: passes
   - name: messages
   - name: administration
 
@@ -643,6 +644,220 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /pass-types:
+    get:
+      tags: [passes]
+      summary: Los tipos de bono del profesor y si hace falta bono para reservar
+      description: >-
+        Los lee cualquiera con sesion (Fase 27). Un alumno no ve los tipos retirados, que ya no se
+        venden; el profesor los ve todos. required dice si el profesor ha encendido "sin bono no
+        se reserva".
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PassTypeList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /teacher/pass-types:
+    post:
+      tags: [passes]
+      summary: Crea un tipo de bono
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreatePassTypeRequest" }
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PassType" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "PASS_TYPE_ALREADY_EXISTS: ya hay un tipo de bono con ese nombre"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/pass-types/{id}:
+    patch:
+      tags: [passes]
+      summary: Cambia un tipo de bono, o lo retira
+      description: >-
+        Los bonos ya vendidos no cambian: copiaron las clases, el precio y la caducidad al
+        apuntarse. Un tipo retirado deja de venderse.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdatePassTypeRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PassType" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: PASS_TYPE_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "PASS_TYPE_ALREADY_EXISTS"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [passes]
+      summary: Borra un tipo de bono que no ha comprado nadie
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Borrado
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: PASS_TYPE_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "PASS_TYPE_IN_USE: algun alumno tiene uno; se puede retirar"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/pass-settings:
+    put:
+      tags: [passes]
+      summary: Enciende o apaga "sin bono no se reserva"
+      description: >-
+        Apagado hasta que el profesor lo enciende (decision 2 de 41-fase27-analisis-bonos.md).
+        Apagado, se reserva sin bono y la reserva no gasta ninguno.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PassSettings" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PassSettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/passes:
+    get:
+      tags: [passes]
+      summary: Los bonos de los alumnos del profesor, o de uno
+      parameters:
+        - name: studentUserId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK, los mas nuevos primero
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PassList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/students/{userId}/passes:
+    post:
+      tags: [passes]
+      summary: Apunta un bono que el alumno ha pagado
+      description: >-
+        La app no cobra: el profesor apunta que y como se pago. Las clases, el precio y la
+        caducidad salen del tipo; la caducidad cuenta desde el dia del pago.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecordPassRequest" }
+      responses:
+        "201":
+          description: Apuntado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pass" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: PASS_TYPE_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: "PASS_TYPE_RETIRED: el tipo ya no se vende"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/passes/{id}/void:
+    post:
+      tags: [passes]
+      summary: Anula un bono apuntado por error
+      description: Solo mientras no se haya reservado ninguna clase con el.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Anulado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pass" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: PASS_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "PASS_ALREADY_USED: ya se reservo alguna clase con el"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /me/passes:
+    get:
+      tags: [passes]
+      summary: Los bonos del alumno autenticado, con su saldo
+      responses:
+        "200":
+          description: OK, los mas nuevos primero
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PassList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /teacher/students/{userId}/manage:
     post:
       tags: [students]
@@ -988,7 +1203,10 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "422":
-          description: LESSON_ALREADY_STARTED | LEVEL_NOT_ALLOWED (la clase es de otro nivel)
+          description: >-
+            LESSON_ALREADY_STARTED | LEVEL_NOT_ALLOWED (la clase es de otro nivel) |
+            NO_PASS_BALANCE (el profesor pide bono y al alumno no le quedan clases de ese tipo en un
+            bono valido el dia de la clase)
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -1030,7 +1248,9 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
         "422":
-          description: LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas) | LEVEL_NOT_ALLOWED.
+          description: >-
+            LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas) |
+            LEVEL_NOT_ALLOWED | NO_PASS_BALANCE (se pregunta, pero no se gasta hasta que llega la plaza).
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -1948,7 +2168,7 @@ components:
 
     MyDataExport:
       type: object
-      required: [exportedAt, account, bookings, records, messages, photo]
+      required: [exportedAt, account, bookings, records, messages, photo, passes]
       properties:
         exportedAt: { type: string, format: date-time }
         account: { $ref: "#/components/schemas/MeResponse" }
@@ -1979,6 +2199,10 @@ components:
           properties:
             contentType: { type: string }
             base64: { type: string }
+        passes:
+          type: array
+          description: Los bonos del alumno, con su saldo (Fase 27).
+          items: { $ref: "#/components/schemas/Pass" }
 
     Level:
       type: object
@@ -2453,10 +2677,11 @@ components:
 
     Booking:
       type: object
-      required: [id, lessonId, studentUserId, status, attendance, bookedAt, cancelledAt, lesson]
+      required: [id, lessonId, studentUserId, status, attendance, bookedAt, cancelledAt, lesson, passId]
       description: >-
         lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia
         clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia.
+        passId es el bono con el que se pago (Fase 27), o null si no hacia falta.
       properties:
         id: { type: string, format: uuid }
         lessonId: { type: string, format: uuid }
@@ -2466,6 +2691,7 @@ components:
         bookedAt: { type: string, format: date-time }
         cancelledAt: { type: string, format: date-time, nullable: true }
         lesson: { $ref: "#/components/schemas/LessonSummary" }
+        passId: { type: string, format: uuid, nullable: true }
 
     LessonSummary:
       type: object
@@ -2620,7 +2846,7 @@ components:
 
     MonthSummary:
       type: object
-      required: [month, timezone, current, previous, levels]
+      required: [month, timezone, current, previous, levels, sales, previousSales]
       properties:
         month: { type: string, example: "2026-10" }
         timezone: { type: string, example: Europe/Madrid }
@@ -2638,6 +2864,124 @@ components:
               levelId: { type: string, format: uuid, nullable: true }
               current: { $ref: "#/components/schemas/MonthFigures" }
               previous: { $ref: "#/components/schemas/MonthFigures" }
+        sales: { $ref: "#/components/schemas/PassSales" }
+        previousSales: { $ref: "#/components/schemas/PassSales" }
+
+    PassSales:
+      type: object
+      description: >-
+        Los bonos vendidos en el mes, por el dia en que se pagaron y sin los anulados, y lo que
+        suman en centimos (Fase 27). Es lo unico de dinero que sabe la app.
+      required: [passesSold, totalCents]
+      properties:
+        passesSold: { type: integer }
+        totalCents: { type: integer, format: int64 }
+
+    PassType:
+      type: object
+      required: [id, name, lessonType, lessons, priceCents, validityMonths, retired]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, maxLength: 60 }
+        lessonType: { $ref: "#/components/schemas/LessonType" }
+        lessons: { type: integer, minimum: 1, maximum: 200 }
+        priceCents: { type: integer, minimum: 0 }
+        validityMonths:
+          type: integer
+          minimum: 1
+          maximum: 36
+          nullable: true
+          description: Meses desde el dia del pago; null si no caduca.
+        retired: { type: boolean }
+
+    PassTypeList:
+      type: object
+      required: [required, passTypes]
+      properties:
+        required: { type: boolean, description: 'Si el profesor ha encendido "sin bono no se reserva"' }
+        passTypes:
+          type: array
+          items: { $ref: "#/components/schemas/PassType" }
+
+    CreatePassTypeRequest:
+      type: object
+      required: [name, lessonType, lessons, priceCents]
+      properties:
+        name: { type: string, maxLength: 60 }
+        lessonType: { $ref: "#/components/schemas/LessonType" }
+        lessons: { type: integer, minimum: 1, maximum: 200 }
+        priceCents: { type: integer, minimum: 0 }
+        validityMonths: { type: integer, minimum: 1, maximum: 36, nullable: true }
+
+    UpdatePassTypeRequest:
+      type: object
+      description: Todos opcionales. neverExpires true quita la caducidad.
+      properties:
+        name: { type: string, maxLength: 60 }
+        lessonType: { $ref: "#/components/schemas/LessonType" }
+        lessons: { type: integer, minimum: 1, maximum: 200 }
+        priceCents: { type: integer, minimum: 0 }
+        validityMonths: { type: integer, minimum: 1, maximum: 36 }
+        neverExpires: { type: boolean }
+        retired: { type: boolean }
+
+    PassSettings:
+      type: object
+      required: [required]
+      properties:
+        required: { type: boolean }
+
+    PaymentMethod:
+      type: string
+      enum: [CASH, BIZUM, TRANSFER]
+
+    PassStatus:
+      type: string
+      description: >-
+        Se calcula al leer: USED_UP sin clases, EXPIRED pasado su ultimo dia, VOIDED anulado.
+      enum: [ACTIVE, USED_UP, EXPIRED, VOIDED]
+
+    Pass:
+      type: object
+      description: >-
+        Un bono de un alumno (Fase 27). used son sus reservas confirmadas, incluidas aquellas a las
+        que no vino: la clase se gasta al reservar. Una reserva cancelada devuelve la clase a este
+        bono, aunque ya haya caducado. validUntil es el ultimo dia en que paga una clase.
+      required: [id, studentUserId, passTypeId, name, lessonType, lessons, used, remaining, priceCents,
+                 paidOn, paymentMethod, validUntil, status, createdAt, voidedAt]
+      properties:
+        id: { type: string, format: uuid }
+        studentUserId: { type: string, format: uuid }
+        passTypeId: { type: string, format: uuid }
+        name: { type: string }
+        lessonType: { $ref: "#/components/schemas/LessonType" }
+        lessons: { type: integer }
+        used: { type: integer }
+        remaining: { type: integer }
+        priceCents: { type: integer }
+        paidOn: { type: string, format: date }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
+        validUntil: { type: string, format: date, nullable: true }
+        status: { $ref: "#/components/schemas/PassStatus" }
+        createdAt: { type: string, format: date-time }
+        voidedAt: { type: string, format: date-time, nullable: true }
+
+    PassList:
+      type: object
+      required: [required, items]
+      properties:
+        required: { type: boolean, description: 'Si el profesor ha encendido "sin bono no se reserva"' }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Pass" }
+
+    RecordPassRequest:
+      type: object
+      required: [passTypeId, paidOn, paymentMethod]
+      properties:
+        passTypeId: { type: string, format: uuid }
+        paidOn: { type: string, format: date }
+        paymentMethod: { $ref: "#/components/schemas/PaymentMethod" }
 
     PlatformConfiguration:
       type: object

@@ -1236,6 +1236,466 @@ export interface paths {
         };
         trace?: never;
     };
+    "/pass-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Los tipos de bono del profesor y si hace falta bono para reservar
+         * @description Los lee cualquiera con sesion (Fase 27). Un alumno no ve los tipos retirados, que ya no se venden; el profesor los ve todos. required dice si el profesor ha encendido "sin bono no se reserva".
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassTypeList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/pass-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Crea un tipo de bono */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreatePassTypeRequest"];
+                };
+            };
+            responses: {
+                /** @description Creado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassType"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description PASS_TYPE_ALREADY_EXISTS: ya hay un tipo de bono con ese nombre */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/pass-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borra un tipo de bono que no ha comprado nadie */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Borrado */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description PASS_TYPE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PASS_TYPE_IN_USE: algun alumno tiene uno; se puede retirar */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Cambia un tipo de bono, o lo retira
+         * @description Los bonos ya vendidos no cambian: copiaron las clases, el precio y la caducidad al apuntarse. Un tipo retirado deja de venderse.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdatePassTypeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassType"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description PASS_TYPE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PASS_TYPE_ALREADY_EXISTS */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/teacher/pass-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Enciende o apaga "sin bono no se reserva"
+         * @description Apagado hasta que el profesor lo enciende (decision 2 de 41-fase27-analisis-bonos.md). Apagado, se reserva sin bono y la reserva no gasta ninguno.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PassSettings"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassSettings"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/passes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Los bonos de los alumnos del profesor, o de uno */
+        get: {
+            parameters: {
+                query?: {
+                    studentUserId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK, los mas nuevos primero */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassList"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/students/{userId}/passes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apunta un bono que el alumno ha pagado
+         * @description La app no cobra: el profesor apunta que y como se pago. Las clases, el precio y la caducidad salen del tipo; la caducidad cuenta desde el dia del pago.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: components["parameters"]["UserId"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RecordPassRequest"];
+                };
+            };
+            responses: {
+                /** @description Apuntado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Pass"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PASS_TYPE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PASS_TYPE_RETIRED: el tipo ya no se vende */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/passes/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anula un bono apuntado por error
+         * @description Solo mientras no se haya reservado ninguna clase con el.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Anulado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Pass"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description PASS_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description PASS_ALREADY_USED: ya se reservo alguna clase con el */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/passes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Los bonos del alumno autenticado, con su saldo */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK, los mas nuevos primero */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PassList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teacher/students/{userId}/manage": {
         parameters: {
             query?: never;
@@ -1847,7 +2307,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
-                /** @description LESSON_ALREADY_STARTED | LEVEL_NOT_ALLOWED (la clase es de otro nivel) */
+                /** @description LESSON_ALREADY_STARTED | LEVEL_NOT_ALLOWED (la clase es de otro nivel) | NO_PASS_BALANCE (el profesor pide bono y al alumno no le quedan clases de ese tipo en un bono valido el dia de la clase) */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -1926,7 +2386,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["ProblemDetails"];
                     };
                 };
-                /** @description LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas) | LEVEL_NOT_ALLOWED. */
+                /** @description LESSON_ALREADY_STARTED | WAITING_LIST_CLOSED (empieza en menos de 24 horas) | LEVEL_NOT_ALLOWED | NO_PASS_BALANCE (se pregunta, pero no se gasta hasta que llega la plaza). */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -3420,6 +3880,8 @@ export interface components {
                 contentType: string;
                 base64: string;
             } | null;
+            /** @description Los bonos del alumno, con su saldo (Fase 27). */
+            passes: components["schemas"]["Pass"][];
         };
         Level: {
             /** Format: uuid */
@@ -3810,7 +4272,7 @@ export interface components {
              */
             courtId: string;
         };
-        /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. */
+        /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. passId es el bono con el que se pago (Fase 27), o null si no hacia falta. */
         Booking: {
             /** Format: uuid */
             id: string;
@@ -3825,6 +4287,8 @@ export interface components {
             /** Format: date-time */
             cancelledAt: string | null;
             lesson: components["schemas"]["LessonSummary"];
+            /** Format: uuid */
+            passId: string | null;
         };
         /** @description La clase tal como viaja dentro de una reserva o de una lista de espera, sin notes. */
         LessonSummary: {
@@ -3942,6 +4406,94 @@ export interface components {
                 current: components["schemas"]["MonthFigures"];
                 previous: components["schemas"]["MonthFigures"];
             }[];
+            sales: components["schemas"]["PassSales"];
+            previousSales: components["schemas"]["PassSales"];
+        };
+        /** @description Los bonos vendidos en el mes, por el dia en que se pagaron y sin los anulados, y lo que suman en centimos (Fase 27). Es lo unico de dinero que sabe la app. */
+        PassSales: {
+            passesSold: number;
+            /** Format: int64 */
+            totalCents: number;
+        };
+        PassType: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            lessonType: components["schemas"]["LessonType"];
+            lessons: number;
+            priceCents: number;
+            /** @description Meses desde el dia del pago; null si no caduca. */
+            validityMonths: number | null;
+            retired: boolean;
+        };
+        PassTypeList: {
+            /** @description Si el profesor ha encendido "sin bono no se reserva" */
+            required: boolean;
+            passTypes: components["schemas"]["PassType"][];
+        };
+        CreatePassTypeRequest: {
+            name: string;
+            lessonType: components["schemas"]["LessonType"];
+            lessons: number;
+            priceCents: number;
+            validityMonths?: number | null;
+        };
+        /** @description Todos opcionales. neverExpires true quita la caducidad. */
+        UpdatePassTypeRequest: {
+            name?: string;
+            lessonType?: components["schemas"]["LessonType"];
+            lessons?: number;
+            priceCents?: number;
+            validityMonths?: number;
+            neverExpires?: boolean;
+            retired?: boolean;
+        };
+        PassSettings: {
+            required: boolean;
+        };
+        /** @enum {string} */
+        PaymentMethod: "CASH" | "BIZUM" | "TRANSFER";
+        /**
+         * @description Se calcula al leer: USED_UP sin clases, EXPIRED pasado su ultimo dia, VOIDED anulado.
+         * @enum {string}
+         */
+        PassStatus: "ACTIVE" | "USED_UP" | "EXPIRED" | "VOIDED";
+        /** @description Un bono de un alumno (Fase 27). used son sus reservas confirmadas, incluidas aquellas a las que no vino: la clase se gasta al reservar. Una reserva cancelada devuelve la clase a este bono, aunque ya haya caducado. validUntil es el ultimo dia en que paga una clase. */
+        Pass: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            studentUserId: string;
+            /** Format: uuid */
+            passTypeId: string;
+            name: string;
+            lessonType: components["schemas"]["LessonType"];
+            lessons: number;
+            used: number;
+            remaining: number;
+            priceCents: number;
+            /** Format: date */
+            paidOn: string;
+            paymentMethod: components["schemas"]["PaymentMethod"];
+            /** Format: date */
+            validUntil: string | null;
+            status: components["schemas"]["PassStatus"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            voidedAt: string | null;
+        };
+        PassList: {
+            /** @description Si el profesor ha encendido "sin bono no se reserva" */
+            required: boolean;
+            items: components["schemas"]["Pass"][];
+        };
+        RecordPassRequest: {
+            /** Format: uuid */
+            passTypeId: string;
+            /** Format: date */
+            paidOn: string;
+            paymentMethod: components["schemas"]["PaymentMethod"];
         };
         PlatformConfiguration: {
             studentLimit: number;

@@ -10,12 +10,14 @@ import com.tennisplatform.booking.domain.LessonAlreadyStartedException;
 import com.tennisplatform.booking.domain.LessonNotBookableException;
 import com.tennisplatform.booking.domain.LessonNotFullException;
 import com.tennisplatform.booking.domain.LevelNotAllowedException;
+import com.tennisplatform.booking.domain.NoPassBalanceException;
 import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
 import com.tennisplatform.booking.domain.WaitingListClosedException;
 import com.tennisplatform.booking.domain.WaitingListEntry;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
+import com.tennisplatform.pass.application.port.in.ChargePasses;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import org.slf4j.Logger;
@@ -48,15 +50,18 @@ public class WaitingListService implements WaitingList {
     private final LockLesson lockLesson;
     private final GetLesson getLesson;
     private final QueryManagedStudent managedStudents;
+    private final ChargePasses passes;
     private final Clock clock;
 
     public WaitingListService(WaitingListRepository waiting, BookingRepository bookings, LockLesson lockLesson,
-                              GetLesson getLesson, QueryManagedStudent managedStudents, Clock clock) {
+                              GetLesson getLesson, QueryManagedStudent managedStudents, ChargePasses passes,
+                              Clock clock) {
         this.waiting = waiting;
         this.bookings = bookings;
         this.lockLesson = lockLesson;
         this.getLesson = getLesson;
         this.managedStudents = managedStudents;
+        this.passes = passes;
         this.clock = clock;
     }
 
@@ -94,6 +99,10 @@ public class WaitingListService implements WaitingList {
         }
         if (bookings.existsOverlappingConfirmed(studentUserId, lesson.startsAt(), lesson.endsAt())) {
             throw new StudentScheduleOverlapException("You already have a lesson at that time");
+        }
+        // Asked, not charged: the lesson is spent if and when the seat comes (decision 5).
+        if (!passes.canPay(lesson.teacherUserId(), studentUserId, lesson.type(), lesson.startsAt())) {
+            throw new NoPassBalanceException("You have no lessons left on a pass for this lesson");
         }
         WaitingListEntry saved = waiting.save(WaitingListEntry.join(lessonId, lesson.teacherUserId(), studentUserId, now));
         log.info("Student {} joined the waiting list of lesson {}", studentUserId, lessonId);

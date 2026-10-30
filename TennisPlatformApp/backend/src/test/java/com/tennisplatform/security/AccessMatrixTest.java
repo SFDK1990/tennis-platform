@@ -104,6 +104,19 @@ class AccessMatrixTest extends AbstractBookingTest {
         row("PATCH", "/teacher/levels/{levelId}", Map.of("name", "Otro"),        401, 403, 403, 403, ALLOWED, 403);
         row("DELETE", "/teacher/levels/{levelId}", none,                         401, 403, 403, 403, ALLOWED, 403);
 
+        // Passes (Fase 27): everybody reads the types, only the teacher sells; a student reads their own.
+        row("GET", "/pass-types", none,                                          401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        row("POST", "/teacher/pass-types", Map.of("name", "Nuevo", "lessonType", "GROUP", "lessons", 5, "priceCents", 6000),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("PATCH", "/teacher/pass-types/{passTypeId}", Map.of("name", "Otro"), 401, 403, 403, 403, ALLOWED, 403);
+        row("DELETE", "/teacher/pass-types/{passTypeId}", none,                  401, 403, 403, 403, ALLOWED, 403);
+        row("PUT", "/teacher/pass-settings", Map.of("required", false),          401, 403, 403, 403, ALLOWED, 403);
+        row("GET", "/teacher/passes", none,                                      401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/students/{studentId}/passes", Map.of("passTypeId", "{passTypeId}", "paidOn", day.toString(),
+                "paymentMethod", "CASH"),                                        401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/passes/{passId}/void", none,                       401, 403, 403, 403, ALLOWED, 403);
+        row("GET", "/me/passes", none,                                           401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+
         row("GET", "/teacher/availability?from=" + day + "&to=" + day, none,     401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("PUT", "/teacher/availability/weekly", Map.of("rules", List.of()),   401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/availability/exceptions", Map.of("date", day.toString(), "type", "BLOCK"),
@@ -232,6 +245,14 @@ class AccessMatrixTest extends AbstractBookingTest {
                 new HttpEntity<>(Map.of("date", LocalDate.now(ZoneId.of("Europe/Madrid")).plusDays(20).toString(),
                         "type", "BLOCK"), jsonBearer(teacherToken)), Map.class);
 
+        ResponseEntity<Map> passType = rest.exchange("/api/v1/teacher/pass-types", HttpMethod.POST,
+                new HttpEntity<>(Map.of("name", "Matriz", "lessonType", "GROUP", "lessons", 10, "priceCents", 12000),
+                        jsonBearer(teacherToken)), Map.class);
+        ResponseEntity<Map> pass = rest.exchange("/api/v1/teacher/students/" + student.id() + "/passes",
+                HttpMethod.POST, new HttpEntity<>(Map.of("passTypeId", passType.getBody().get("id"),
+                        "paidOn", LocalDate.now(ZoneId.of("Europe/Madrid")).toString(), "paymentMethod", "BIZUM"),
+                        jsonBearer(teacherToken)), Map.class);
+
         tokens = new LinkedHashMap<>();
         tokens.put(Who.ANONYMOUS, null);
         tokens.put(Who.UNVERIFIED, unverified.token());
@@ -240,16 +261,18 @@ class AccessMatrixTest extends AbstractBookingTest {
         tokens.put(Who.TEACHER, teacherToken);
         tokens.put(Who.ADMIN, tokenOf(admin.email(), PASSWORD));
 
-        ids = Map.of(
-                "studentId", student.id().toString(),
-                "studentEmail", student.email(),
-                "lessonId", lessonId.toString(),
-                "bookingId", (String) booked.getBody().get("id"),
-                "exceptionId", (String) exception.getBody().get("id"),
-                "levelId", (String) level.getBody().get("id"),
-                "messageId", UUID.randomUUID().toString(),
-                "courtId", (String) ((List<Map>) rest.exchange("/api/v1/courts", HttpMethod.GET,
-                        new HttpEntity<>(bearer(teacherToken)), Map.class).getBody().get("courts")).get(1).get("id"));
+        ids = Map.ofEntries(
+                Map.entry("studentId", student.id().toString()),
+                Map.entry("studentEmail", student.email()),
+                Map.entry("lessonId", lessonId.toString()),
+                Map.entry("bookingId", (String) booked.getBody().get("id")),
+                Map.entry("exceptionId", (String) exception.getBody().get("id")),
+                Map.entry("levelId", (String) level.getBody().get("id")),
+                Map.entry("messageId", UUID.randomUUID().toString()),
+                Map.entry("passTypeId", (String) passType.getBody().get("id")),
+                Map.entry("passId", (String) pass.getBody().get("id")),
+                Map.entry("courtId", (String) ((List<Map>) rest.exchange("/api/v1/courts", HttpMethod.GET,
+                        new HttpEntity<>(bearer(teacherToken)), Map.class).getBody().get("courts")).get(1).get("id")));
     }
 
     private ResponseEntity<String> call(Row row, Who who) {

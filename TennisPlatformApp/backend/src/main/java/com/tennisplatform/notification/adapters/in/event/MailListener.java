@@ -2,6 +2,7 @@ package com.tennisplatform.notification.adapters.in.event;
 
 import com.tennisplatform.booking.application.port.in.BookingCancelled;
 import com.tennisplatform.booking.application.port.in.BookingConfirmed;
+import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 import com.tennisplatform.lesson.application.port.in.LessonCourtChanged;
 import com.tennisplatform.notification.application.port.in.NotifyBookings;
 import com.tennisplatform.notification.application.port.in.NotifyCourtChanges;
@@ -61,6 +62,11 @@ class MailListener implements DisposableBean {
     @TransactionalEventListener
     void on(BookingCancelled booking) {
         submit("booking " + booking.bookingId() + " cancelled", () -> notify.cancelled(booking));
+    }
+
+    @TransactionalEventListener
+    void on(WaitingPlaceLost lost) {
+        submit("waiting place of lesson " + lost.lessonId() + " lost", () -> notify.waitingPlaceLost(lost));
     }
 
     @TransactionalEventListener

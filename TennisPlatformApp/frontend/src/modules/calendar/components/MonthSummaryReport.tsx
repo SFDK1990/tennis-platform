@@ -73,6 +73,9 @@ function Figures({ data }: { data: MonthSummary }) {
       <p className="border-t border-line-soft px-5 py-3 text-sm text-muted">
         {cancelled(current)} El mes anterior: {cancelled(previous).toLowerCase()}
       </p>
+      <p className="border-t border-line-soft px-5 py-3 text-sm text-muted">
+        {sold(data.sales)} El mes anterior: {sold(data.previousSales).toLowerCase()}
+      </p>
     </section>
   );
 }
@@ -151,4 +154,13 @@ function cancelled(figures: MonthFigures): string {
   return figures.cancelledAtShortNotice === 0
     ? `${total}.`
     : `${total}, ${figures.cancelledAtShortNotice} con menos de 24 horas.`;
+}
+
+/** The passes sold (Fase 27): the only money the app knows about, by the day they were paid. */
+function sold(sales: MonthSummary["sales"]): string {
+  if (sales.passesSold === 0) {
+    return "Ningún bono vendido.";
+  }
+  const total = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(sales.totalCents / 100);
+  return `${sales.passesSold} ${sales.passesSold === 1 ? "bono vendido" : "bonos vendidos"}, ${total}.`;
 }

@@ -13,12 +13,20 @@ public interface GetMonthSummary {
     /** {@code month} null means the current one; a month that has not started is refused. */
     MonthSummaryView forTeacher(UUID teacherUserId, YearMonth month);
 
+    /**
+     * {@code sales} and {@code previousSales} are the passes sold in each month (Fase 27), the
+     * only money the app knows about. They have no level: a pass is not for one.
+     */
     record MonthSummaryView(String month, String timezone, MonthFigures current, MonthFigures previous,
-                            List<LevelFigures> levels) {
+                            List<LevelFigures> levels, Sales sales, Sales previousSales) {
 
         public MonthSummaryView {
             levels = List.copyOf(levels);
         }
+    }
+
+    /** Passes sold by the day they were paid, voided ones left out, and what they add up to in cents. */
+    record Sales(int passesSold, long totalCents) {
     }
 
     /** {@code levelId} null is the lessons open to everybody. */

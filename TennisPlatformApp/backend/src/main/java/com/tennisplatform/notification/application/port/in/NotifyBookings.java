@@ -2,6 +2,7 @@ package com.tennisplatform.notification.application.port.in;
 
 import com.tennisplatform.booking.application.port.in.BookingCancelled;
 import com.tennisplatform.booking.application.port.in.BookingConfirmed;
+import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 
 /**
  * Tells the people a booking concerns what happened to it, by email (Fase 20, 01 section 18).
@@ -19,4 +20,7 @@ public interface NotifyBookings {
      * teacher's or an administrator's to the student, with a calendar cancellation.
      */
     void cancelled(BookingCancelled booking);
+
+    /** The student lost their turn on a waiting list for want of a pass (Fase 27), and is told why. */
+    void waitingPlaceLost(WaitingPlaceLost lost);
 }

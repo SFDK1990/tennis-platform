@@ -31,3 +31,5 @@ databaseChangeLog:
       file: db/changelog/changes/v13-student-photos.yaml
   - include:
       file: db/changelog/changes/v14-lesson-courts.yaml
+  - include:
+      file: db/changelog/changes/v15-passes.yaml

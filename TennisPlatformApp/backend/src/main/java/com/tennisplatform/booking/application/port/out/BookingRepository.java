@@ -40,6 +40,9 @@ public interface BookingRepository {
     /** Confirmed bookings per lesson; lessons with none are absent from the map. */
     Map<UUID, Integer> countConfirmed(Collection<UUID> lessonIds);
 
+    /** Confirmed bookings paid with each pass (Fase 27); passes with none are absent from the map. */
+    Map<UUID, Integer> countConfirmedByPass(Collection<UUID> passIds);
+
     /**
      * Cancels every confirmed booking of the lesson with the given status, in one statement, and
      * returns them as they were, so each student can be told (Fase 20).

@@ -1,0 +1,62 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v15-passes
+      author: tennis-platform
+      comment: >-
+        The teacher's pass types, the passes of each student and the pass each booking was paid
+        with (41-fase27-analisis-bonos.md). A pass copies the lessons, price and validity of its
+        type when it is recorded, so changing a type later does not rewrite what was sold. What is
+        left of a pass is not stored: it is its lessons minus its confirmed bookings, so every
+        cancellation gives the lesson back without anybody having to remember to. Requiring a pass
+        to book is off until the teacher switches it on (decision 2).
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE pass_types (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  name             VARCHAR(60) NOT NULL,
+                  lesson_type      VARCHAR(20) NOT NULL CONSTRAINT ck_pass_types_lesson_type
+                                       CHECK (lesson_type IN ('INDIVIDUAL', 'GROUP')),
+                  lessons          INT NOT NULL CONSTRAINT ck_pass_types_lessons CHECK (lessons BETWEEN 1 AND 200),
+                  price_cents      INT NOT NULL CONSTRAINT ck_pass_types_price CHECK (price_cents >= 0),
+                  validity_months  INT CONSTRAINT ck_pass_types_validity CHECK (validity_months BETWEEN 1 AND 36),
+                  retired          BOOLEAN NOT NULL DEFAULT FALSE,
+                  CONSTRAINT ux_pass_types_teacher_name UNIQUE (teacher_user_id, name)
+              );
+
+              CREATE TABLE passes (
+                  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+                  pass_type_id     UUID NOT NULL REFERENCES pass_types(id) ON DELETE RESTRICT,
+                  name             VARCHAR(60) NOT NULL,
+                  lesson_type      VARCHAR(20) NOT NULL CONSTRAINT ck_passes_lesson_type
+                                       CHECK (lesson_type IN ('INDIVIDUAL', 'GROUP')),
+                  lessons          INT NOT NULL CONSTRAINT ck_passes_lessons CHECK (lessons BETWEEN 1 AND 200),
+                  price_cents      INT NOT NULL CONSTRAINT ck_passes_price CHECK (price_cents >= 0),
+                  paid_on          DATE NOT NULL,
+                  payment_method   VARCHAR(20) NOT NULL CONSTRAINT ck_passes_payment_method
+                                       CHECK (payment_method IN ('CASH', 'BIZUM', 'TRANSFER')),
+                  valid_until      DATE,
+                  created_at       TIMESTAMPTZ NOT NULL,
+                  voided_at        TIMESTAMPTZ
+              );
+              CREATE INDEX ix_passes_student ON passes (student_user_id, lesson_type);
+
+              CREATE TABLE pass_settings (
+                  teacher_user_id  UUID PRIMARY KEY REFERENCES teacher_profiles(user_id),
+                  required         BOOLEAN NOT NULL
+              );
+
+              ALTER TABLE bookings ADD COLUMN pass_id UUID REFERENCES passes(id);
+              CREATE INDEX ix_bookings_pass ON bookings (pass_id) WHERE pass_id IS NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE bookings DROP COLUMN pass_id;
+              DROP TABLE pass_settings;
+              DROP TABLE passes;
+              DROP TABLE pass_types;

@@ -45,7 +45,7 @@ class ModuleBoundariesTest {
 
     private static final List<String> MODULES = List.of(
             "identity", "teacher", "student", "availability", "lesson", "booking",
-            "administration", "calendar", "platform", "notification", "shared");
+            "administration", "calendar", "platform", "notification", "pass", "shared");
 
     // --- A. The dependency graph -----------------------------------------------
 
@@ -121,9 +121,23 @@ class ModuleBoundariesTest {
      * seats and to cascade cancellations - but not at compile time: they declare the interface in
      * their own spi package and this module implements it. See {@link PublicPorts}.
      */
+    /**
+     * {@code pass} joined in Fase 27: booking a seat spends a lesson of a pass, so this module asks
+     * {@code pass} which one pays. {@code pass} learns how many lessons each pass has spent through
+     * an spi interface that this module implements.
+     */
     @ArchTest
-    static final ArchRule bookingDependsOnStudentLessonAndIdentity =
-            mayOnlyDependOn("booking", "student", "lesson", "identity");
+    static final ArchRule bookingDependsOnStudentLessonIdentityAndPass =
+            mayOnlyDependOn("booking", "student", "lesson", "identity", "pass");
+
+    /**
+     * {@code pass} (Fase 27) keeps the teacher's pass types and the students' passes. It reads the
+     * teacher's zone, because a pass ends on a day of the teacher's calendar, and asks
+     * {@code student} whether the teacher manages the student a pass is recorded for.
+     */
+    @ArchTest
+    static final ArchRule passDependsOnTeacherStudentAndIdentity =
+            mayOnlyDependOn("pass", "teacher", "student", "identity");
 
     /**
      * {@code notification} (Fase 20) hears what {@code booking} announces and reads the lesson,
@@ -236,6 +250,9 @@ class ModuleBoundariesTest {
 
     @ArchTest
     static final ArchRule platformCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("platform");
+
+    @ArchTest
+    static final ArchRule passCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("pass");
 
     @ArchTest
     static final ArchRule notificationCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("notification");

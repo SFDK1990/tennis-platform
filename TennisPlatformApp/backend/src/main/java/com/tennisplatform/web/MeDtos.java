@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import com.tennisplatform.booking.application.port.in.BookingView;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
+import com.tennisplatform.pass.application.port.in.PassView;
 
 import java.time.Instant;
 import java.util.List;
@@ -57,8 +58,10 @@ final class MeDtos {
      * {@code records} is what each teacher wrote about the student, private notes included: the
      * right of access covers what is kept about a person (36-fase23, decision 7).
      */
+    /** {@code passes}: the student's passes with what is left of them (Fase 27). */
     record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings,
-                        List<ExportedRecord> records, List<ReceivedMessageView> messages, ExportedPhoto photo) {
+                        List<ExportedRecord> records, List<ReceivedMessageView> messages, ExportedPhoto photo,
+                        List<PassView> passes) {
     }
 
     record ExportedRecord(String level, String goals, String privateNotes) {
@@ -69,12 +72,12 @@ final class MeDtos {
     }
 
     record ExportedBooking(UUID id, UUID lessonId, UUID studentUserId, String status, String attendance,
-                           Instant bookedAt, Instant cancelledAt, ExportedLesson lesson) {
+                           Instant bookedAt, Instant cancelledAt, ExportedLesson lesson, UUID passId) {
 
         static ExportedBooking from(BookingView booking) {
             return new ExportedBooking(booking.id(), booking.lessonId(), booking.studentUserId(), booking.status(),
                     booking.attendance(), booking.bookedAt(), booking.cancelledAt(),
-                    ExportedLesson.from(booking.lesson()));
+                    ExportedLesson.from(booking.lesson()), booking.passId());
         }
     }
 

@@ -6,6 +6,7 @@ import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.UserSummary;
 import com.tennisplatform.notification.application.port.in.GetMessages;
 import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
+import com.tennisplatform.pass.application.port.in.QueryPasses;
 import com.tennisplatform.student.application.port.in.GetStudentProfile;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentProfileUpdate;
@@ -69,13 +70,14 @@ class MeController {
     private final QueryLevels levels;
     private final GetMessages messages;
     private final StudentPhotos photos;
+    private final QueryPasses passes;
     private final Clock clock;
 
     MeController(GetCurrentUser getCurrentUser, GetStudentProfile studentProfiles,
                  UpdateStudentProfile updateStudentProfile, GetTeacherProfile teacherProfiles,
                  UpdateTeacherProfile updateTeacherProfile, GetBookings bookings,
                  QueryManagedStudent managedStudents, QueryLevels levels, GetMessages messages,
-                 StudentPhotos photos, Clock clock) {
+                 StudentPhotos photos, QueryPasses passes, Clock clock) {
         this.getCurrentUser = getCurrentUser;
         this.studentProfiles = studentProfiles;
         this.updateStudentProfile = updateStudentProfile;
@@ -86,6 +88,7 @@ class MeController {
         this.levels = levels;
         this.messages = messages;
         this.photos = photos;
+        this.passes = passes;
         this.clock = clock;
     }
 
@@ -117,7 +120,8 @@ class MeController {
         List<ReceivedMessageView> received = caller.isStudent() ? messages.allReceivedBy(caller.id()) : List.of();
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mis-datos.json\"")
-                .body(new MyDataExport(clock.instant(), me(caller), exported, records, received, photoOf(caller)));
+                .body(new MyDataExport(clock.instant(), me(caller), exported, records, received, photoOf(caller),
+                        caller.isStudent() ? passes.ofStudent(caller.id()) : List.of()));
     }
 
     /**

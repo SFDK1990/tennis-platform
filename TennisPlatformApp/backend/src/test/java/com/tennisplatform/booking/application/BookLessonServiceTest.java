@@ -14,6 +14,8 @@ import com.tennisplatform.booking.domain.StudentScheduleOverlapException;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.lesson.application.port.in.LockLesson;
+import com.tennisplatform.pass.application.port.in.ChargePasses;
+import com.tennisplatform.pass.application.port.in.ChargePasses.PassCharge;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +52,7 @@ class BookLessonServiceTest {
     private LockLesson lockLesson;
     private GetLesson getLesson;
     private QueryManagedStudent managedStudents;
+    private ChargePasses passes;
     private final List<Object> published = new ArrayList<>();
     private BookLessonService service;
 
@@ -64,7 +67,10 @@ class BookLessonServiceTest {
         when(bookings.save(any())).thenAnswer(call -> call.getArgument(0));
         when(getLesson.byId(LESSON_ID)).thenReturn(lesson("OPEN", STARTS, 1));
 
-        service = new BookLessonService(bookings, lockLesson, getLesson, managedStudents,
+        passes = mock(ChargePasses.class);
+        when(passes.charge(any(), any(), any(), any())).thenReturn(new PassCharge(false, null));
+
+        service = new BookLessonService(bookings, lockLesson, getLesson, managedStudents, passes,
                 Clock.fixed(NOW, ZoneOffset.UTC), published::add);
     }
 

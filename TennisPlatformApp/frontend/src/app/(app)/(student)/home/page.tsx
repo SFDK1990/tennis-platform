@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { StudentLessonActions } from "@/modules/booking/components/StudentLessonActions";
 import { useCalendar, type CalendarLesson } from "@/modules/calendar/api";
 import { LatestMessage } from "@/modules/messages/components/MessageBoard";
+import { MyPasses } from "@/modules/passes/components/MyPasses";
 import { LessonLine } from "@/modules/calendar/components/LessonLine";
 import { LESSON_TITLE, seatsLeft } from "@/modules/calendar/labels";
 import { studentHome } from "@/modules/calendar/select";
@@ -49,6 +50,7 @@ export default function StudentHomePage() {
       <FirstSteps me={me} managed={managed} teacher={teacher} />
       <ErrorNotice error={calendar.error} />
       {managed ? <LatestMessage zone={zone} now={now} /> : null}
+      {managed ? <MyPasses /> : null}
 
       {home && managed ? (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">

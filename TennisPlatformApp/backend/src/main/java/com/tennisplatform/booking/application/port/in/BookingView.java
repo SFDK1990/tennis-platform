@@ -16,11 +16,11 @@ import java.util.UUID;
  */
 public record BookingView(UUID id, UUID lessonId, UUID studentUserId, String status,
                           String attendance, Instant bookedAt, Instant cancelledAt,
-                          LessonView lesson) {
+                          LessonView lesson, UUID passId) {
 
     public static BookingView from(Booking booking, LessonView lesson) {
         return new BookingView(booking.id(), booking.lessonId(), booking.studentUserId(),
                 booking.status().name(), booking.attendance().name(), booking.bookedAt(),
-                booking.cancelledAt(), lesson);
+                booking.cancelledAt(), lesson, booking.passId());
     }
 }

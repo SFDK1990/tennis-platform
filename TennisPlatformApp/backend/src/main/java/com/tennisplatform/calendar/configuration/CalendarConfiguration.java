@@ -7,6 +7,7 @@ import com.tennisplatform.calendar.application.port.in.GetMonthSummary;
 import com.tennisplatform.calendar.application.service.GetCalendarService;
 import com.tennisplatform.calendar.application.service.GetMonthSummaryService;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
+import com.tennisplatform.pass.application.port.in.QueryPasses;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +27,7 @@ public class CalendarConfiguration {
 
     @Bean
     public GetMonthSummary getMonthSummary(GetTeacherProfile teacherProfiles, GetLesson lessons, GetBookings bookings,
-                                           Clock clock) {
-        return new GetMonthSummaryService(teacherProfiles, lessons, bookings, clock);
+                                           QueryPasses passes, Clock clock) {
+        return new GetMonthSummaryService(teacherProfiles, lessons, bookings, passes, clock);
     }
 }

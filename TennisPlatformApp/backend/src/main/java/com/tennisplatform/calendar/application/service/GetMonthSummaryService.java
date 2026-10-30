@@ -5,6 +5,8 @@ import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.calendar.application.port.in.GetMonthSummary;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
+import com.tennisplatform.pass.application.port.in.QueryPasses;
+import com.tennisplatform.pass.application.port.in.QueryPasses.PassSales;
 import com.tennisplatform.shared.domain.DateRange.InvalidDateRangeException;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
@@ -43,13 +45,15 @@ public class GetMonthSummaryService implements GetMonthSummary {
     private final GetTeacherProfile teacherProfiles;
     private final GetLesson lessons;
     private final GetBookings bookings;
+    private final QueryPasses passes;
     private final Clock clock;
 
     public GetMonthSummaryService(GetTeacherProfile teacherProfiles, GetLesson lessons, GetBookings bookings,
-                                  Clock clock) {
+                                  QueryPasses passes, Clock clock) {
         this.teacherProfiles = teacherProfiles;
         this.lessons = lessons;
         this.bookings = bookings;
+        this.passes = passes;
         this.clock = clock;
     }
 
@@ -82,7 +86,12 @@ public class GetMonthSummaryService implements GetMonthSummary {
         }
 
         return new MonthSummaryView(asked.toString(), zone.getId(), tally(thisMonth, seats), tally(monthBefore, seats),
-                byLevel);
+                byLevel, salesOf(teacherUserId, asked), salesOf(teacherUserId, asked.minusMonths(1)));
+    }
+
+    private Sales salesOf(UUID teacherUserId, YearMonth month) {
+        PassSales sold = passes.soldBetween(teacherUserId, month.atDay(1), month.plusMonths(1).atDay(1));
+        return new Sales(sold.count(), sold.totalCents());
     }
 
     /** The lessons that start within the month on the teacher's clock, and before now. */

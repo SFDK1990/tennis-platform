@@ -5,9 +5,12 @@ import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.calendar.application.port.in.GetMonthSummary.LevelFigures;
 import com.tennisplatform.calendar.application.port.in.GetMonthSummary.MonthFigures;
 import com.tennisplatform.calendar.application.port.in.GetMonthSummary.MonthSummaryView;
+import com.tennisplatform.calendar.application.port.in.GetMonthSummary.Sales;
 import com.tennisplatform.calendar.application.service.GetMonthSummaryService;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
+import com.tennisplatform.pass.application.port.in.QueryPasses;
+import com.tennisplatform.pass.application.port.in.QueryPasses.PassSales;
 import com.tennisplatform.shared.domain.DateRange.InvalidDateRangeException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.TeacherProfileView;
@@ -46,12 +49,15 @@ class GetMonthSummaryServiceTest {
     private GetLesson lessons;
     private GetBookings bookings;
     private GetTeacherProfile teachers;
+    private QueryPasses passes;
 
     @BeforeEach
     void setUp() {
         lessons = mock(GetLesson.class);
         bookings = mock(GetBookings.class);
         teachers = mock(GetTeacherProfile.class);
+        passes = mock(QueryPasses.class);
+        when(passes.soldBetween(any(), any(), any())).thenReturn(new PassSales(0, 0));
         when(teachers.byUserId(TEACHER)).thenReturn(Optional.of(
                 new TeacherProfileView(TEACHER, "Ana Serrano", null, "Europe/Madrid")));
         // Like the real one: every lesson that touches the dates, on the teacher's clock.
@@ -71,7 +77,7 @@ class GetMonthSummaryServiceTest {
     }
 
     private MonthSummaryView summary(YearMonth month) {
-        return new GetMonthSummaryService(teachers, lessons, bookings, Clock.fixed(NOW, ZoneOffset.UTC))
+        return new GetMonthSummaryService(teachers, lessons, bookings, passes, Clock.fixed(NOW, ZoneOffset.UTC))
                 .forTeacher(TEACHER, month);
     }
 
@@ -86,7 +92,7 @@ class GetMonthSummaryServiceTest {
 
     private void seat(UUID lesson, UUID student, String attendance) {
         confirmed.add(new BookingView(UUID.randomUUID(), lesson, student, "CONFIRMED", attendance,
-                NOW.minusSeconds(86_400 * 30L), null, null));
+                NOW.minusSeconds(86_400 * 30L), null, null, null));
     }
 
     @Test
@@ -128,5 +134,19 @@ class GetMonthSummaryServiceTest {
         assertThat(summary(null).month()).isEqualTo("2026-11");
         assertThat(summary(null).current()).isEqualTo(new MonthFigures(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
         assertThatThrownBy(() -> summary(YearMonth.parse("2026-12"))).isInstanceOf(InvalidDateRangeException.class);
+    }
+
+    /** Fase 27: the passes sold each month, by the day they were paid, which is all the money the app knows. */
+    @Test
+    void thePassesSoldInTheMonthAndTheMonthBeforeAreAddedUp() {
+        when(passes.soldBetween(TEACHER, LocalDate.parse("2026-11-01"), LocalDate.parse("2026-12-01")))
+                .thenReturn(new PassSales(2, 27_000));
+        when(passes.soldBetween(TEACHER, LocalDate.parse("2026-10-01"), LocalDate.parse("2026-11-01")))
+                .thenReturn(new PassSales(1, 12_000));
+
+        MonthSummaryView summary = summary(YearMonth.parse("2026-11"));
+
+        assertThat(summary.sales()).isEqualTo(new Sales(2, 27_000));
+        assertThat(summary.previousSales()).isEqualTo(new Sales(1, 12_000));
     }
 }
