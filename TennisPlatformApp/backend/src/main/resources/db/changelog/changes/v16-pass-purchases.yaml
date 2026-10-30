@@ -1,0 +1,53 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v16-pass-purchases
+      author: tennis-platform
+      comment: >-
+        Passes bought in the app and paid at the payment gateway (42-fase27.5-analisis-pago-online.md).
+        A purchase copies its type, like a recorded pass, so what is charged and what the pass gives
+        do not move if the teacher changes the type meanwhile. The gateway's reference is unique:
+        a repeated notice finds the purchase already paid and creates nothing. Selling in the app
+        is off until the teacher switches it on (decision 2). The new payment method ONLINE is set
+        by the app, never by the teacher.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE pass_settings ADD COLUMN online_payment BOOLEAN NOT NULL DEFAULT FALSE;
+
+              ALTER TABLE passes DROP CONSTRAINT ck_passes_payment_method;
+              ALTER TABLE passes ADD CONSTRAINT ck_passes_payment_method
+                  CHECK (payment_method IN ('CASH', 'BIZUM', 'TRANSFER', 'ONLINE'));
+
+              CREATE TABLE pass_purchases (
+                  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  teacher_user_id      UUID NOT NULL REFERENCES teacher_profiles(user_id),
+                  student_user_id      UUID NOT NULL REFERENCES student_profiles(user_id),
+                  pass_type_id         UUID NOT NULL REFERENCES pass_types(id) ON DELETE RESTRICT,
+                  name                 VARCHAR(60) NOT NULL,
+                  lesson_type          VARCHAR(20) NOT NULL CONSTRAINT ck_pass_purchases_lesson_type
+                                           CHECK (lesson_type IN ('INDIVIDUAL', 'GROUP')),
+                  lessons              INT NOT NULL CONSTRAINT ck_pass_purchases_lessons CHECK (lessons BETWEEN 1 AND 200),
+                  price_cents          INT NOT NULL CONSTRAINT ck_pass_purchases_price CHECK (price_cents >= 50),
+                  validity_months      INT CONSTRAINT ck_pass_purchases_validity CHECK (validity_months BETWEEN 1 AND 36),
+                  status               VARCHAR(20) NOT NULL CONSTRAINT ck_pass_purchases_status
+                                           CHECK (status IN ('PENDING', 'PAID', 'EXPIRED')),
+                  checkout_session_id  VARCHAR(255) CONSTRAINT ux_pass_purchases_checkout_session UNIQUE,
+                  checkout_url         VARCHAR(1024),
+                  pass_id              UUID CONSTRAINT ux_pass_purchases_pass UNIQUE REFERENCES passes(id),
+                  created_at           TIMESTAMPTZ NOT NULL,
+                  expires_at           TIMESTAMPTZ NOT NULL,
+                  paid_at              TIMESTAMPTZ,
+                  CONSTRAINT ck_pass_purchases_paid CHECK ((status = 'PAID') = (pass_id IS NOT NULL))
+              );
+              CREATE INDEX ix_pass_purchases_student ON pass_purchases (student_user_id);
+      rollback:
+        - sql:
+            sql: |
+              DROP TABLE pass_purchases;
+              DELETE FROM passes WHERE payment_method = 'ONLINE';
+              ALTER TABLE passes DROP CONSTRAINT ck_passes_payment_method;
+              ALTER TABLE passes ADD CONSTRAINT ck_passes_payment_method
+                  CHECK (payment_method IN ('CASH', 'BIZUM', 'TRANSFER'));
+              ALTER TABLE pass_settings DROP COLUMN online_payment;

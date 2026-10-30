@@ -1,11 +1,12 @@
 package com.tennisplatform.pass.application.port.out;
 
+import com.tennisplatform.pass.domain.PassSettings;
 import java.util.UUID;
 
-/** Whether the teacher requires a pass to book. A teacher who never said is not requiring one. */
+/** The teacher's switches. A teacher who never touched them has both off. */
 public interface PassSettingsRepository {
 
-    boolean required(UUID teacherUserId);
+    PassSettings of(UUID teacherUserId);
 
-    void save(UUID teacherUserId, boolean required);
+    void save(UUID teacherUserId, PassSettings settings);
 }

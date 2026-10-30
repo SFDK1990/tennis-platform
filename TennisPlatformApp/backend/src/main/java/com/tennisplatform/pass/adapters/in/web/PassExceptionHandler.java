@@ -2,6 +2,11 @@ package com.tennisplatform.pass.adapters.in.web;
 
 import com.tennisplatform.error.Problems;
 import com.tennisplatform.pass.domain.InvalidPassException;
+import com.tennisplatform.pass.domain.OnlinePaymentDisabledException;
+import com.tennisplatform.pass.domain.OnlinePaymentUnavailableException;
+import com.tennisplatform.pass.domain.PaymentGatewayException;
+import com.tennisplatform.pass.domain.PriceTooLowToPayOnlineException;
+import com.tennisplatform.pass.domain.PurchaseNotFoundException;
 import com.tennisplatform.pass.domain.PassAlreadyUsedException;
 import com.tennisplatform.pass.domain.PassNotFoundException;
 import com.tennisplatform.pass.domain.PassTypeAlreadyExistsException;
@@ -50,6 +55,40 @@ class PassExceptionHandler {
     ProblemDetail handleRetired(PassTypeRetiredException e) {
         return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Pass type retired", e.getMessage(),
                 "PASS_TYPE_RETIRED");
+    }
+
+    @ExceptionHandler(PurchaseNotFoundException.class)
+    ProblemDetail handlePurchaseNotFound(PurchaseNotFoundException e) {
+        return Problems.of(HttpStatus.NOT_FOUND, "Purchase not found", e.getMessage(), "PURCHASE_NOT_FOUND");
+    }
+
+    @ExceptionHandler(OnlinePaymentDisabledException.class)
+    ProblemDetail handleOnlinePaymentDisabled(OnlinePaymentDisabledException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Online payment switched off", e.getMessage(),
+                "ONLINE_PAYMENT_DISABLED");
+    }
+
+    @ExceptionHandler(OnlinePaymentUnavailableException.class)
+    ProblemDetail handleOnlinePaymentUnavailable(OnlinePaymentUnavailableException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Online payment unavailable", e.getMessage(),
+                "ONLINE_PAYMENT_UNAVAILABLE");
+    }
+
+    @ExceptionHandler(PriceTooLowToPayOnlineException.class)
+    ProblemDetail handlePriceTooLow(PriceTooLowToPayOnlineException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Price too low to pay online", e.getMessage(),
+                "PRICE_TOO_LOW_TO_PAY_ONLINE");
+    }
+
+    @ExceptionHandler(PaymentGatewayException.class)
+    ProblemDetail handleGateway(PaymentGatewayException e) {
+        return Problems.of(HttpStatus.SERVICE_UNAVAILABLE, "Payment gateway unavailable", e.getMessage(),
+                "PAYMENT_GATEWAY_UNAVAILABLE");
+    }
+
+    @ExceptionHandler(InvalidWebhookException.class)
+    ProblemDetail handleInvalidWebhook(InvalidWebhookException e) {
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid notice", e.getMessage(), "INVALID_WEBHOOK_SIGNATURE");
     }
 
     @ExceptionHandler(InvalidPassException.class)

@@ -1,10 +1,14 @@
 package com.tennisplatform.pass.application.service;
 
 import com.tennisplatform.pass.application.port.in.ManagePassTypes;
+import com.tennisplatform.pass.application.port.in.PassSettingsView;
 import com.tennisplatform.pass.application.port.in.PassTypeView;
 import com.tennisplatform.pass.application.port.out.PassSettingsRepository;
 import com.tennisplatform.pass.application.port.out.PassTypeRepository;
+import com.tennisplatform.pass.application.port.out.PaymentGateway;
+import com.tennisplatform.pass.domain.OnlinePaymentUnavailableException;
 import com.tennisplatform.pass.domain.PassLessonType;
+import com.tennisplatform.pass.domain.PassSettings;
 import com.tennisplatform.pass.domain.PassType;
 import com.tennisplatform.pass.domain.PassTypeNotFoundException;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
@@ -23,12 +27,14 @@ public class PassTypesService implements ManagePassTypes {
     private final PassTypeRepository types;
     private final PassSettingsRepository settings;
     private final GetTeacherProfile teacherProfile;
+    private final PaymentGateway gateway;
 
     public PassTypesService(PassTypeRepository types, PassSettingsRepository settings,
-                            GetTeacherProfile teacherProfile) {
+                            GetTeacherProfile teacherProfile, PaymentGateway gateway) {
         this.types = types;
         this.settings = settings;
         this.teacherProfile = teacherProfile;
+        this.gateway = gateway;
     }
 
     @Override
@@ -70,15 +76,35 @@ public class PassTypesService implements ManagePassTypes {
     @Override
     @Transactional(readOnly = true)
     public boolean passesRequired() {
-        return settings.required(teacherProfile.get().userId());
+        return settings.of(teacherProfile.get().userId()).required();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PassSettingsView settings() {
+        return view(settings.of(teacherProfile.get().userId()));
     }
 
     @Override
     @Transactional
-    public boolean requirePasses(UUID teacherUserId, boolean required) {
-        settings.save(teacherUserId, required);
-        log.info("Passes {} to book", required ? "required" : "not required");
-        return required;
+    public PassSettingsView changeSettings(UUID teacherUserId, Boolean required, Boolean onlinePayment) {
+        if (Boolean.TRUE.equals(onlinePayment) && !gateway.available()) {
+            throw new OnlinePaymentUnavailableException("The payment gateway has no keys in this server's environment");
+        }
+        PassSettings before = settings.of(teacherUserId);
+        PassSettings after = before.changed(required, onlinePayment);
+        settings.save(teacherUserId, after);
+        if (after.required() != before.required()) {
+            log.info("Passes {} to book", after.required() ? "required" : "not required");
+        }
+        if (after.onlinePayment() != before.onlinePayment()) {
+            log.info("Online payment of passes switched {}", after.onlinePayment() ? "on" : "off");
+        }
+        return view(after);
+    }
+
+    private PassSettingsView view(PassSettings current) {
+        return new PassSettingsView(current.required(), current.onlinePayment(), gateway.available());
     }
 
     /** Another teacher's type answers like one that does not exist. */

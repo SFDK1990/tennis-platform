@@ -116,7 +116,7 @@ public class PassesService implements ManagePasses, QueryPasses, ChargePasses {
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public PassCharge charge(UUID teacherUserId, UUID studentUserId, String lessonType, Instant lessonStartsAt) {
-        if (!settings.required(teacherUserId)) {
+        if (!settings.of(teacherUserId).required()) {
             return new PassCharge(false, null);
         }
         List<Pass> locked = passes.lockUsable(teacherUserId, studentUserId, PassLessonType.parse(lessonType));
@@ -126,7 +126,7 @@ public class PassesService implements ManagePasses, QueryPasses, ChargePasses {
     @Override
     @Transactional(readOnly = true)
     public boolean canPay(UUID teacherUserId, UUID studentUserId, String lessonType, Instant lessonStartsAt) {
-        if (!settings.required(teacherUserId)) {
+        if (!settings.of(teacherUserId).required()) {
             return true;
         }
         List<Pass> usable = passes.findUsable(teacherUserId, studentUserId, PassLessonType.parse(lessonType));

@@ -4,6 +4,7 @@ import com.tennisplatform.identity.application.port.in.AuthenticatedUser;
 import com.tennisplatform.pass.application.port.in.ManagePassTypes;
 import com.tennisplatform.pass.application.port.in.ManagePassTypes.NewPassType;
 import com.tennisplatform.pass.application.port.in.ManagePassTypes.PassTypeChange;
+import com.tennisplatform.pass.application.port.in.PassSettingsView;
 import com.tennisplatform.pass.application.port.in.PassTypeView;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
 import jakarta.validation.Valid;
@@ -45,7 +46,9 @@ class PassTypesController {
         List<PassTypeView> types = passTypes.ofTheTeacher().stream()
                 .filter(type -> caller.isTeacher() || !type.retired())
                 .toList();
-        return new PassTypesResponse(passTypes.passesRequired(), types);
+        PassSettingsView settings = passTypes.settings();
+        return new PassTypesResponse(settings.required(), settings.onlinePayment(), settings.onlinePaymentAvailable(),
+                types);
     }
 
     @PostMapping("/teacher/pass-types")
@@ -73,11 +76,12 @@ class PassTypesController {
         passTypes.delete(caller.id(), id);
     }
 
+    /** Each switch is optional: the one left out keeps its value. */
     @PutMapping("/teacher/pass-settings")
-    PassSettingsResponse settings(@AuthenticationPrincipal AuthenticatedUser caller,
-                                  @Valid @RequestBody PassSettingsRequest request) {
+    PassSettingsView settings(@AuthenticationPrincipal AuthenticatedUser caller,
+                              @RequestBody PassSettingsRequest request) {
         requireTeacher(caller);
-        return new PassSettingsResponse(passTypes.requirePasses(caller.id(), request.required()));
+        return passTypes.changeSettings(caller.id(), request.required(), request.onlinePayment());
     }
 
     private static void requireTeacher(AuthenticatedUser caller) {
@@ -86,7 +90,12 @@ class PassTypesController {
         }
     }
 
-    record PassTypesResponse(boolean required, List<PassTypeView> passTypes) {
+    /**
+     * {@code onlinePayment}: whether the teacher sells passes in the app; {@code onlinePaymentAvailable}:
+     * whether the server has the gateway's keys to do it (Fase 27.5).
+     */
+    record PassTypesResponse(boolean required, boolean onlinePayment, boolean onlinePaymentAvailable,
+                             List<PassTypeView> passTypes) {
     }
 
     record CreatePassTypeRequest(@NotNull String name, @NotNull String lessonType, @NotNull Integer lessons,
@@ -98,9 +107,6 @@ class PassTypesController {
                                  Integer validityMonths, Boolean neverExpires, Boolean retired) {
     }
 
-    record PassSettingsRequest(@NotNull Boolean required) {
-    }
-
-    record PassSettingsResponse(boolean required) {
+    record PassSettingsRequest(Boolean required, Boolean onlinePayment) {
     }
 }

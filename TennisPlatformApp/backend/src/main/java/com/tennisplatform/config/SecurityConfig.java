@@ -44,6 +44,12 @@ public class SecurityConfig {
         "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password"
     };
 
+    /**
+     * The payment gateway's notices (Fase 27.5). The gateway has no session; its signature,
+     * checked by the controller, is what authenticates it.
+     */
+    private static final String[] PUBLIC_WEBHOOK_PATHS = {"/api/v1/payments/stripe/webhook"};
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
                                            ProblemDetailAuthenticationEntryPoint entryPoint,
@@ -68,6 +74,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_PATHS).permitAll()
                 .requestMatchers(PUBLIC_AUTH_PATHS).permitAll()
+                .requestMatchers(HttpMethod.POST, PUBLIC_WEBHOOK_PATHS).permitAll()
                 // Request counts by route and error code say how the platform is being used.
                 .requestMatchers("/actuator/metrics", "/actuator/metrics/**").hasRole("ADMIN")
                 .anyRequest().authenticated())

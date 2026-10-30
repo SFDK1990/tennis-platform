@@ -116,6 +116,12 @@ class AccessMatrixTest extends AbstractBookingTest {
                 "paymentMethod", "CASH"),                                        401, 403, 403, 403, ALLOWED, 403);
         row("POST", "/teacher/passes/{passId}/void", none,                       401, 403, 403, 403, ALLOWED, 403);
         row("GET", "/me/passes", none,                                           401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+        // Buying in the app (Fase 27.5). Without Stripe's keys nobody has a purchase, so a read is a 404.
+        row("POST", "/me/pass-purchases", Map.of("passTypeId", "{passTypeId}"),  401, 403, ALLOWED, ALLOWED, 403, 403);
+        row("GET", "/me/pass-purchases/{purchaseId}", none,                      401, 404, 404, 404, 403, 403);
+        // Stripe has no session: the signature is what is checked, and nobody here has one.
+        row("POST", "/payments/stripe/webhook", Map.of("type", "checkout.session.completed"),
+                                                                                 400, 400, 400, 400, 400, 400);
 
         row("GET", "/teacher/availability?from=" + day + "&to=" + day, none,     401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
         row("PUT", "/teacher/availability/weekly", Map.of("rules", List.of()),   401, 403, 403, 403, ALLOWED, 403);
@@ -271,6 +277,7 @@ class AccessMatrixTest extends AbstractBookingTest {
                 Map.entry("messageId", UUID.randomUUID().toString()),
                 Map.entry("passTypeId", (String) passType.getBody().get("id")),
                 Map.entry("passId", (String) pass.getBody().get("id")),
+                Map.entry("purchaseId", UUID.randomUUID().toString()),
                 Map.entry("courtId", (String) ((List<Map>) rest.exchange("/api/v1/courts", HttpMethod.GET,
                         new HttpEntity<>(bearer(teacherToken)), Map.class).getBody().get("courts")).get(1).get("id")));
     }

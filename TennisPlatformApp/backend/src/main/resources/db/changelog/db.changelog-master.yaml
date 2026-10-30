@@ -33,3 +33,5 @@ databaseChangeLog:
       file: db/changelog/changes/v14-lesson-courts.yaml
   - include:
       file: db/changelog/changes/v15-passes.yaml
+  - include:
+      file: db/changelog/changes/v16-pass-purchases.yaml

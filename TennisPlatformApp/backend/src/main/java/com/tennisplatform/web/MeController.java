@@ -6,6 +6,7 @@ import com.tennisplatform.identity.application.port.in.GetCurrentUser;
 import com.tennisplatform.identity.application.port.in.UserSummary;
 import com.tennisplatform.notification.application.port.in.GetMessages;
 import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
+import com.tennisplatform.pass.application.port.in.BuyPasses;
 import com.tennisplatform.pass.application.port.in.QueryPasses;
 import com.tennisplatform.student.application.port.in.GetStudentProfile;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
@@ -71,13 +72,14 @@ class MeController {
     private final GetMessages messages;
     private final StudentPhotos photos;
     private final QueryPasses passes;
+    private final BuyPasses purchases;
     private final Clock clock;
 
     MeController(GetCurrentUser getCurrentUser, GetStudentProfile studentProfiles,
                  UpdateStudentProfile updateStudentProfile, GetTeacherProfile teacherProfiles,
                  UpdateTeacherProfile updateTeacherProfile, GetBookings bookings,
                  QueryManagedStudent managedStudents, QueryLevels levels, GetMessages messages,
-                 StudentPhotos photos, QueryPasses passes, Clock clock) {
+                 StudentPhotos photos, QueryPasses passes, BuyPasses purchases, Clock clock) {
         this.getCurrentUser = getCurrentUser;
         this.studentProfiles = studentProfiles;
         this.updateStudentProfile = updateStudentProfile;
@@ -89,6 +91,7 @@ class MeController {
         this.messages = messages;
         this.photos = photos;
         this.passes = passes;
+        this.purchases = purchases;
         this.clock = clock;
     }
 
@@ -121,7 +124,8 @@ class MeController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mis-datos.json\"")
                 .body(new MyDataExport(clock.instant(), me(caller), exported, records, received, photoOf(caller),
-                        caller.isStudent() ? passes.ofStudent(caller.id()) : List.of()));
+                        caller.isStudent() ? passes.ofStudent(caller.id()) : List.of(),
+                        caller.isStudent() ? purchases.allOf(caller.id()) : List.of()));
     }
 
     /**
