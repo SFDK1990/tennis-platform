@@ -219,11 +219,25 @@ Estados persistidos: `OPEN`, `CANCELLED`, `COMPLETED`.
 - `cancelled_at timestamptz NULL`
 - `cancelled_by uuid FK users NULL`
 - `cancellation_reason varchar(255) NULL`
+- `pass_id uuid NULL FK passes` (Fase 27): el bono que la pagó. Null si Marcos no pedía bono.
 - Timestamps.
 
 Estados de reserva: `CONFIRMED`, `CANCELLED_BY_STUDENT`, `CANCELLED_BY_TEACHER`.
 
 Estados de asistencia: `PENDING`, `ATTENDED`, `NO_SHOW`.
+
+### pass_types, passes y pass_settings (Fase 27)
+
+- `pass_types`: `id`, `teacher_user_id`, `name` (60, único por profesor), `lesson_type`
+  (`INDIVIDUAL` o `GROUP`), `lessons` (1 a 200), `price_cents`, `validity_months` (1 a 36, null sin
+  caducidad) y `retired`. No se borra mientras algún bono lo apunte (`ON DELETE RESTRICT`).
+- `passes`: `id`, `teacher_user_id`, `student_user_id`, `pass_type_id` y una copia del tipo al
+  venderse (`name`, `lesson_type`, `lessons`, `price_cents`); `paid_on`, `payment_method` (`CASH`,
+  `BIZUM`, `TRANSFER`), `valid_until` (null sin caducidad), `created_at` y `voided_at`. Sólo cambia
+  `voided_at`.
+- El saldo no se guarda: son las `lessons` del bono menos sus reservas `CONFIRMED`.
+- `pass_settings`: `teacher_user_id` (clave) y `required`, el interruptor de Marcos. Sin fila, no se
+  pide bono.
 
 ### student_photos (Fase 25.5)
 

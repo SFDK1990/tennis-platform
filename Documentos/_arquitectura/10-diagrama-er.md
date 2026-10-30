@@ -463,6 +463,46 @@ UPDATE lessons SET court_id = (SELECT id FROM courts WHERE position = 1);
 ALTER TABLE lessons ALTER COLUMN court_id SET NOT NULL;
 ```
 
+## Changelog 6c — bonos (Fase 27)
+
+`v15-passes.yaml`. Razonamiento en `41-fase27-analisis-bonos.md`.
+
+```sql
+CREATE TABLE pass_types (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    name             VARCHAR(60) NOT NULL,
+    lesson_type      VARCHAR(20) NOT NULL CHECK (lesson_type IN ('INDIVIDUAL', 'GROUP')),
+    lessons          INT NOT NULL CHECK (lessons BETWEEN 1 AND 200),
+    price_cents      INT NOT NULL CHECK (price_cents >= 0),
+    validity_months  INT CHECK (validity_months BETWEEN 1 AND 36),
+    retired          BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE (teacher_user_id, name)
+);
+CREATE TABLE passes (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+    pass_type_id     UUID NOT NULL REFERENCES pass_types(id) ON DELETE RESTRICT,
+    name             VARCHAR(60) NOT NULL,
+    lesson_type      VARCHAR(20) NOT NULL CHECK (lesson_type IN ('INDIVIDUAL', 'GROUP')),
+    lessons          INT NOT NULL CHECK (lessons BETWEEN 1 AND 200),
+    price_cents      INT NOT NULL CHECK (price_cents >= 0),
+    paid_on          DATE NOT NULL,
+    payment_method   VARCHAR(20) NOT NULL CHECK (payment_method IN ('CASH', 'BIZUM', 'TRANSFER')),
+    valid_until      DATE,
+    created_at       TIMESTAMPTZ NOT NULL,
+    voided_at        TIMESTAMPTZ
+);
+CREATE INDEX ix_passes_student ON passes (student_user_id, lesson_type);
+CREATE TABLE pass_settings (
+    teacher_user_id  UUID PRIMARY KEY REFERENCES teacher_profiles(user_id),
+    required         BOOLEAN NOT NULL
+);
+ALTER TABLE bookings ADD COLUMN pass_id UUID REFERENCES passes(id);
+CREATE INDEX ix_bookings_pass ON bookings (pass_id) WHERE pass_id IS NOT NULL;
+```
+
 ## Changelog 6b — lista de espera (Fase 21)
 
 `v9-booking-waiting-list.yaml`. Razonamiento en `34-fase21-analisis-lista-espera.md`.

@@ -237,6 +237,22 @@ Códigos añadidos en la Fase 23:
 `GET /teacher/summary` (Fase 25) responde `DATE_RANGE_INVALID` a un mes mal escrito o que aún no ha
 empezado.
 
+Códigos añadidos en la Fase 27:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `NO_PASS_BALANCE` | 422 | `POST /lessons/{id}/bookings`, `POST /lessons/{id}/waiting-list` | Marcos pide bono y al alumno no le queda saldo de ese tipo de clase para el día de la clase |
+| `PASS_TYPE_NOT_FOUND` | 404 | `PATCH` y `DELETE /teacher/pass-types/{id}`, `POST /teacher/students/{userId}/passes` | No es un tipo de bono del profesor |
+| `PASS_TYPE_ALREADY_EXISTS` | 409 | `POST /teacher/pass-types`, `PATCH /teacher/pass-types/{id}` | Ya hay un tipo de bono con ese nombre |
+| `PASS_TYPE_IN_USE` | 409 | `DELETE /teacher/pass-types/{id}` | Algún alumno tiene un bono de ese tipo: se retira, no se borra |
+| `PASS_TYPE_RETIRED` | 422 | `POST /teacher/students/{userId}/passes` | El tipo está retirado y ya no se vende |
+| `PASS_NOT_FOUND` | 404 | `POST /teacher/passes/{id}/void` | No es un bono del profesor |
+| `PASS_ALREADY_USED` | 409 | `POST /teacher/passes/{id}/void` | El bono ya pagó alguna clase: anularlo borraría lo gastado |
+
+Apuntar un bono a un alumno que el profesor no gestiona responde 403 `STUDENT_NOT_MANAGED`. Cada
+reserva dice con qué bono se pagó (`passId`, null si no se pidió bono), y el resumen del mes suma
+los bonos vendidos (`sales`, `previousSales`).
+
 Códigos añadidos en la Fase 25.6:
 
 | Código | HTTP | Endpoint típico | Motivo |
@@ -265,7 +281,7 @@ es del profesor, y `LESSON_NOT_IN_SERIES` si se pide el grupo de una clase cread
 
 ## Endpoints cubiertos
 
-38 operaciones, agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. La Fase 20, cancelar un día entero. En la Fase 13 se retiraron
+72 operaciones tras la Fase 27, que añadió nueve (`passes`), agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. La Fase 20, cancelar un día entero. En la Fase 13 se retiraron
 `PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
 `/calendar`).
 

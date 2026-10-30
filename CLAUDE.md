@@ -147,6 +147,10 @@ frontend en el puerto 3100. Cada test deshace lo que crea, salvo las cuentas de 
   anterior. Borrar la cuenta saca al alumno de todos por la spi `StudentMessages`.
 - **Una foto de alumno no se enlaza con `<img src>` a la API**: no llevaría el token. El frontend la
   pide con `api` y la pinta como data URL (`student_photos`, Fase 25.5).
+- **El saldo de un bono no se guarda**: son sus clases menos sus reservas `CONFIRMED` con ese
+  `pass_id`. Cancelar por cualquier camino lo devuelve solo; un camino nuevo que *dé* plaza tiene
+  que llamar a `ChargePasses.charge` dentro de su transacción (bloquea el saldo), como la reserva y
+  la promoción de la lista de espera (Fase 27). Con el interruptor de Marcos apagado no pide nada.
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
   `ContractConventionsTest`.

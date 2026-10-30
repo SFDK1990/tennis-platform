@@ -146,3 +146,45 @@ Todo va primero a `openapi.yaml`:
 7. E2E y documentación.
 
 ## Decisiones tomadas al implementar
+
+- **El saldo no se guarda: se cuenta.** Lo que queda de un bono son sus clases menos sus reservas
+  `CONFIRMED` que lo apuntan (`bookings.pass_id`). Así cualquier cancelación, por el camino que
+  sea, devuelve la clase sin que nadie tenga que acordarse, y un «no vino» sigue gastada porque la
+  asistencia va en su propia columna. Un camino nuevo que *dé* una plaza, en cambio, tiene que
+  preguntar a `ChargePasses`, igual que a `LevelRule`.
+- **El bono copia del tipo** el nombre, el tipo de clase, las clases, el precio y la caducidad al
+  apuntarse. Cambiar el tipo después no reescribe lo vendido; retirarlo sólo impide venderlo.
+- **La caducidad se cuenta desde el día del pago**, en meses, y el bono vale para las clases hasta
+  ese día incluido, en la zona horaria de Marcos. Lo que mira es el día de la clase, no el de la
+  reserva: un bono que caduca el 15 no paga una clase del 16 reservada el 10.
+- **El saldo se bloquea** con `SELECT ... FOR UPDATE` sobre los bonos del alumno y su tipo de clase,
+  dentro de la transacción de la reserva (`ChargePasses.charge` es `MANDATORY`).
+  `PassBalanceConcurrencyTest` falla si se lee sin cerrojo; se comprobó.
+- **El interruptor vive en el módulo `pass`** (`pass_settings`), no en `platform_configuration`:
+  es de Marcos, no de la plataforma. Se lee con `GET /pass-types` (`required`) y se cambia con
+  `PUT /teacher/pass-settings`.
+- **El contrato cambió un poco respecto al análisis**:
+  - los bonos se leen con `GET /teacher/passes`, con `studentUserId` opcional. Sin él devuelve los
+    de todos, que es lo que necesita la lista de alumnos para marcar quién está sin saldo o a punto
+    de caducar (14 días), en una petición;
+  - apuntar uno es `POST /teacher/students/{userId}/passes`, como estaba previsto;
+  - salen cuatro códigos más: `PASS_TYPE_NOT_FOUND`, `PASS_NOT_FOUND`, `PASS_TYPE_ALREADY_EXISTS` y
+    `PASS_TYPE_RETIRED`.
+- **Marcos tiene una pantalla «Bonos»** en el menú lateral, con los tipos, el interruptor y los
+  bonos de todos, y la lista de alumnos enlaza a ella. En «Horario» o en el perfil se perdía.
+- **La lista de espera salta a quien no tiene saldo** y le escribe (`waiting-place-lost-student`,
+  «Sin bono para la plaza»). Apuntarse ya lo pide, pero el saldo puede gastarse mientras espera.
+- **La exportación de datos del alumno** incluye sus bonos, y cada reserva, el bono con el que se
+  pagó.
+- **El resumen del mes** suma los bonos por el día del pago, no por el de alta.
+- **La cuarta mutación no se puede hacer.** «Devolver la clase al cancelar dentro de las 24 horas»
+  no tiene dónde ir: el alumno no puede cancelar dentro de las 24 horas (`CANCELLATION_WINDOW_EXPIRED`), y
+  cuando cancela Marcos la clase vuelve siempre. Las otras tres se vieron fallar:
+  - contar las canceladas por Marcos como gastadas rompe dos tests;
+  - quitar la caducidad rompe el del bono caducado;
+  - leer sin cerrojo rompe el de concurrencia.
+  Además, ignorar la falta de saldo en la promoción rompe el de la lista de espera.
+- **Un riesgo que queda documentado**: borrar o desactivar una cuenta bloquea sus clases una a una
+  y promueve a otros alumnos, lo que bloquea los bonos de esos alumnos. Si a la vez uno de ellos
+  reserva una de esas clases, PostgreSQL puede detectar un interbloqueo y abortar una de las dos,
+  que da un error y se reintenta. Es muy raro con un profesor y dos pistas, y no deja datos mal.
