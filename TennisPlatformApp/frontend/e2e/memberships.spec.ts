@@ -1,10 +1,11 @@
 import { expect, openFromMenu, signIn, test } from "./support/fixtures";
-import { TEACHER } from "./support/stack";
+import { todayIn } from "@/shared/time";
+import { TEACHER, ZONE } from "./support/stack";
 
 /**
  * Fase 28: the teacher makes a fixed group of a weekly series, the student joins it from "Mis
- * reservas" and gets a seat in every lesson with the month to pay, and the teacher records the
- * payment from the student's record.
+ * reservas" and gets a seat in every lesson, and the teacher records the month as paid. A month
+ * is listed once it has started, or picked by hand ahead of time: the board goes to the lesson's.
  */
 test("el profesor crea un grupo fijo, el alumno se apunta y el profesor apunta la mensualidad", async ({ page, arrange }) => {
   const student = await arrange.student({ managed: true });
@@ -34,15 +35,17 @@ test("el profesor crea un grupo fijo, el alumno se apunta y el profesor apunta l
   await group.getByRole("button", { name: "Apuntarme" }).click();
   await group.getByRole("button", { name: "Apuntarme" }).click();
   await expect(group.getByRole("button", { name: "Darme de baja" })).toBeVisible();
-  await expect(group).toContainText("Pendiente");
   expect(await arrange.confirmedBookingsOf(lessons[0])).toBe(1);
   expect(await arrange.confirmedBookingsOf(lessons[1])).toBe(1);
 
+  // The month of the first lesson: this one, or the next when the free day falls in it.
   await page.getByRole("button", { name: "Salir" }).click();
   await signIn(page, TEACHER.email, TEACHER.password);
-  await openFromMenu(page, "Alumnos");
-  await page.getByRole("link", { name: student.fullName }).click();
-  const month = page.getByRole("list", { name: "Mensualidades" }).getByTestId("fee-line").first();
+  await openFromMenu(page, "Mensualidades");
+  if (day.slice(0, 7) !== todayIn(ZONE).slice(0, 7)) {
+    await page.getByRole("button", { name: "Mes siguiente" }).click();
+  }
+  const month = page.getByTestId("fee-line").filter({ hasText: student.fullName }).filter({ hasText: name });
   await expect(month).toContainText("Pendiente");
   await month.getByRole("button", { name: "Apuntar pago" }).click();
   await month.getByLabel("Cómo").selectOption("BIZUM");
