@@ -35,3 +35,5 @@ databaseChangeLog:
       file: db/changelog/changes/v15-passes.yaml
   - include:
       file: db/changelog/changes/v16-pass-purchases.yaml
+  - include:
+      file: db/changelog/changes/v17-memberships.yaml

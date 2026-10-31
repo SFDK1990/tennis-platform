@@ -5,6 +5,8 @@ import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.calendar.application.port.in.GetMonthSummary;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
+import com.tennisplatform.membership.application.port.in.QueryFees;
+import com.tennisplatform.membership.application.port.in.QueryFees.FeeIncome;
 import com.tennisplatform.pass.application.port.in.QueryPasses;
 import com.tennisplatform.pass.application.port.in.QueryPasses.PassSales;
 import com.tennisplatform.shared.domain.DateRange.InvalidDateRangeException;
@@ -46,14 +48,16 @@ public class GetMonthSummaryService implements GetMonthSummary {
     private final GetLesson lessons;
     private final GetBookings bookings;
     private final QueryPasses passes;
+    private final QueryFees fees;
     private final Clock clock;
 
     public GetMonthSummaryService(GetTeacherProfile teacherProfiles, GetLesson lessons, GetBookings bookings,
-                                  QueryPasses passes, Clock clock) {
+                                  QueryPasses passes, QueryFees fees, Clock clock) {
         this.teacherProfiles = teacherProfiles;
         this.lessons = lessons;
         this.bookings = bookings;
         this.passes = passes;
+        this.fees = fees;
         this.clock = clock;
     }
 
@@ -86,7 +90,13 @@ public class GetMonthSummaryService implements GetMonthSummary {
         }
 
         return new MonthSummaryView(asked.toString(), zone.getId(), tally(thisMonth, seats), tally(monthBefore, seats),
-                byLevel, salesOf(teacherUserId, asked), salesOf(teacherUserId, asked.minusMonths(1)));
+                byLevel, salesOf(teacherUserId, asked), salesOf(teacherUserId, asked.minusMonths(1)),
+                feesOf(teacherUserId, asked), feesOf(teacherUserId, asked.minusMonths(1)));
+    }
+
+    private Fees feesOf(UUID teacherUserId, YearMonth month) {
+        FeeIncome collected = fees.collectedBetween(teacherUserId, month.atDay(1), month.plusMonths(1).atDay(1));
+        return new Fees(collected.count(), collected.totalCents());
     }
 
     private Sales salesOf(UUID teacherUserId, YearMonth month) {

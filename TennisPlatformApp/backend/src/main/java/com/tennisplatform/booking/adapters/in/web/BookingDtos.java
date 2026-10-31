@@ -19,12 +19,12 @@ final class BookingDtos {
 
     record BookingResponse(UUID id, UUID lessonId, UUID studentUserId, String status,
                            String attendance, Instant bookedAt, Instant cancelledAt,
-                           LessonSummary lesson, UUID passId) {
+                           LessonSummary lesson, UUID passId, UUID membershipId) {
 
         static BookingResponse from(BookingView booking) {
             return new BookingResponse(booking.id(), booking.lessonId(), booking.studentUserId(),
                     booking.status(), booking.attendance(), booking.bookedAt(), booking.cancelledAt(),
-                    LessonSummary.from(booking.lesson()), booking.passId());
+                    LessonSummary.from(booking.lesson()), booking.passId(), booking.membershipId());
         }
     }
 

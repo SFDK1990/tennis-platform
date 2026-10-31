@@ -5,6 +5,7 @@ import { LessonAttendance } from "@/modules/booking/components/LessonAttendance"
 import { useCalendar, type CalendarLesson } from "@/modules/calendar/api";
 import { LessonLine } from "@/modules/calendar/components/LessonLine";
 import { LESSON_TITLE } from "@/modules/calendar/labels";
+import { OverdueNotice } from "@/modules/memberships/components/OverdueNotice";
 import { teacherDay } from "@/modules/calendar/select";
 import { useStudentHasPhoto, useStudentNames } from "@/modules/student/api";
 import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
@@ -48,6 +49,7 @@ function Today({ zone }: { zone: string }) {
         <Link href="/teacher/summary" className={`${BUTTON_BASE} ${BUTTON_VARIANTS.quiet} lg:hidden`}>Resumen del mes</Link>
       </div>
 
+      <OverdueNotice />
       <ErrorNotice error={calendar.error} />
       {!day ? (
         <p className="text-muted">Cargando…</p>

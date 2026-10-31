@@ -45,7 +45,7 @@ class ModuleBoundariesTest {
 
     private static final List<String> MODULES = List.of(
             "identity", "teacher", "student", "availability", "lesson", "booking",
-            "administration", "calendar", "platform", "notification", "pass", "shared");
+            "administration", "calendar", "platform", "notification", "pass", "membership", "shared");
 
     // --- A. The dependency graph -----------------------------------------------
 
@@ -140,6 +140,17 @@ class ModuleBoundariesTest {
             mayOnlyDependOn("pass", "teacher", "student", "identity");
 
     /**
+     * {@code membership} (Fase 28) keeps the fixed groups and their monthly fees. A group is made
+     * of {@code lesson}'s weekly series, and its seats are {@code booking}'s bookings, which it asks
+     * for through an inbound port; {@code booking} learns whether a seat is the group's through an
+     * spi interface that this module implements, and so does {@code student} when a student goes.
+     * It reads the teacher's zone, because a month is the teacher's.
+     */
+    @ArchTest
+    static final ArchRule membershipDependsOnBookingLessonStudentTeacherAndIdentity =
+            mayOnlyDependOn("membership", "booking", "lesson", "student", "teacher", "identity");
+
+    /**
      * {@code notification} (Fase 20) hears what {@code booking} announces and reads the lesson,
      * the teacher, the student and their addresses to write the emails. Nobody depends on it:
      * the modules that announce do not know it exists.
@@ -151,7 +162,7 @@ class ModuleBoundariesTest {
      */
     @ArchTest
     static final ArchRule notificationDependsOnWhatItTellsAbout =
-            mayOnlyDependOn("notification", "booking", "lesson", "teacher", "student", "identity");
+            mayOnlyDependOn("notification", "booking", "lesson", "teacher", "student", "identity", "membership");
 
     /**
      * {@code platform} joined in Fase 12: the configuration the console changes has lived there
@@ -256,6 +267,9 @@ class ModuleBoundariesTest {
 
     @ArchTest
     static final ArchRule notificationCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("notification");
+
+    @ArchTest
+    static final ArchRule membershipCrossesOnlyThroughPorts = crossesOnlyThroughInboundPorts("membership");
 
     // --- D. calendar only reads -------------------------------------------------
 
