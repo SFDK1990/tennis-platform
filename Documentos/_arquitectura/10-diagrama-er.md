@@ -532,6 +532,69 @@ CREATE TABLE pass_purchases (
 CREATE INDEX ix_pass_purchases_student ON pass_purchases (student_user_id);
 ```
 
+## Changelog 6e — grupos fijos y mensualidades (Fase 28)
+
+`v17-memberships.yaml`, del módulo `membership`. Razonamiento en `43-fase28-analisis-mensualidades.md`.
+Una serie va a un grupo como mucho; un alta termina en `left_at`, que puede estar en el futuro (la
+baja libera desde el mes siguiente). `PENDING` y `OVERDUE` no se guardan: se calculan al leer.
+
+```sql
+CREATE TABLE fixed_groups (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_user_id    UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    name               VARCHAR(60) NOT NULL,
+    monthly_fee_cents  INT NOT NULL CONSTRAINT ck_fixed_groups_fee CHECK (monthly_fee_cents >= 0),
+    created_at         TIMESTAMPTZ NOT NULL,
+    CONSTRAINT ux_fixed_groups_teacher_name UNIQUE (teacher_user_id, name)
+);
+
+CREATE TABLE fixed_group_series (
+    series_id  UUID PRIMARY KEY,
+    group_id   UUID NOT NULL REFERENCES fixed_groups(id) ON DELETE CASCADE
+);
+CREATE INDEX ix_fixed_group_series_group ON fixed_group_series (group_id);
+
+CREATE TABLE group_memberships (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    group_id         UUID NOT NULL REFERENCES fixed_groups(id) ON DELETE RESTRICT,
+    teacher_user_id  UUID NOT NULL REFERENCES teacher_profiles(user_id),
+    student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+    joined_at        TIMESTAMPTZ NOT NULL,
+    left_at          TIMESTAMPTZ,
+    CONSTRAINT ck_group_memberships_period CHECK (left_at IS NULL OR left_at >= joined_at)
+);
+CREATE UNIQUE INDEX ux_group_memberships_open
+    ON group_memberships (group_id, student_user_id) WHERE left_at IS NULL;
+CREATE INDEX ix_group_memberships_student ON group_memberships (student_user_id);
+
+CREATE TABLE monthly_fees (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    membership_id   UUID NOT NULL REFERENCES group_memberships(id),
+    month           DATE NOT NULL CONSTRAINT ck_monthly_fees_month CHECK (EXTRACT(DAY FROM month) = 1),
+    status          VARCHAR(10) NOT NULL CONSTRAINT ck_monthly_fees_status
+                        CHECK (status IN ('PAID', 'WAIVED')),
+    amount_cents    INT NOT NULL CONSTRAINT ck_monthly_fees_amount CHECK (amount_cents >= 0),
+    paid_on         DATE,
+    payment_method  VARCHAR(20) CONSTRAINT ck_monthly_fees_payment_method
+                        CHECK (payment_method IN ('CASH', 'BIZUM', 'TRANSFER')),
+    recorded_at     TIMESTAMPTZ NOT NULL,
+    voided_at       TIMESTAMPTZ,
+    CONSTRAINT ck_monthly_fees_paid CHECK (
+        (status = 'PAID' AND paid_on IS NOT NULL AND payment_method IS NOT NULL)
+        OR (status = 'WAIVED' AND paid_on IS NULL AND payment_method IS NULL AND amount_cents = 0))
+);
+CREATE UNIQUE INDEX ux_monthly_fees_live
+    ON monthly_fees (membership_id, month) WHERE voided_at IS NULL;
+
+CREATE TABLE fee_settings (
+    teacher_user_id  UUID PRIMARY KEY REFERENCES teacher_profiles(user_id),
+    due_day          INT NOT NULL CONSTRAINT ck_fee_settings_due_day CHECK (due_day BETWEEN 1 AND 28)
+);
+
+ALTER TABLE bookings ADD COLUMN membership_id UUID REFERENCES group_memberships(id);
+CREATE INDEX ix_bookings_membership ON bookings (membership_id) WHERE membership_id IS NOT NULL;
+```
+
 ## Changelog 6b — lista de espera (Fase 21)
 
 `v9-booking-waiting-list.yaml`. Razonamiento en `34-fase21-analisis-lista-espera.md`.

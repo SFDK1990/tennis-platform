@@ -23,7 +23,7 @@ cobra en la app** (`01` §16).
 
 ## Decisiones propuestas
 
-### 1. Qué es un grupo fijo
+### 1. Qué es un grupo fijo — **A** (Daniel, 31/10/2026)
 
 - **A (te la recomiendo). Un grupo con nombre y cuota, al que Marcos engancha una o varias series.**
   Por ejemplo, «Martes y jueves 18:00, intermedio, 60 € al mes», con la serie de los martes y la de
@@ -34,21 +34,21 @@ cobra en la app** (`01` §16).
 
 A cuesta una tabla pequeña (grupo y sus series) y es como Marcos habla de sus grupos.
 
-### 2. Quién apunta al alumno al grupo
+### 2. Quién apunta al alumno al grupo — **A** (Daniel, 31/10/2026)
 
 - **A (te la recomiendo). Los dos.** El alumno se apunta desde el detalle de una clase del grupo
   («Apuntarme al grupo, 60 € al mes»), y Marcos puede apuntar a cualquiera desde la ficha. Al
   desplegar, los grupos ya existen en la pista: Marcos los pasa a la app sin pedir a nadie que entre.
 - **B. Sólo Marcos.** El alumno ve su grupo y sus cuotas, pero no se apunta él.
 
-### 3. Cuándo vence la cuota
+### 3. Cuándo vence la cuota — **A** (Daniel, 31/10/2026)
 
 - **A (te la recomiendo). Un día del mes que pone Marcos**, el mismo para todos los grupos (por
   defecto el 5). Pasado ese día sin pago apuntado, la cuota está vencida y Marcos ve el aviso.
 - **B. El día de la primera clase del mes** de cada grupo. Es más justo con quien empieza tarde, pero
   cada grupo vence un día distinto y el aviso es más difícil de seguir.
 
-### 4. Las plazas que sobran en una clase del grupo
+### 4. Las plazas que sobran en una clase del grupo — **A** (Daniel, 31/10/2026)
 
 - **A (te la recomiendo). Se reservan sueltas**, como hoy, con bono si el interruptor de la Fase 27
   está encendido, y entran en la lista de espera. Un grupo de seis con cuatro apuntados deja dos
@@ -58,7 +58,7 @@ A cuesta una tabla pequeña (grupo y sus series) y es como Marcos habla de sus g
 Con A, una reserva suelta en una clase futura ocupa una plaza que quien quiera apuntarse al grupo
 también necesita: apuntarse pide sitio en todas las clases que quedan (ver «Reglas»).
 
-### 5. Darse de baja
+### 5. Darse de baja — **A** (Daniel, 31/10/2026)
 
 - **A (te la recomiendo). La baja libera las clases desde el mes siguiente.** Las del mes en curso
   se quedan, porque ya están pagadas o se deben; si no va a alguna, la cancela como cualquier
@@ -191,3 +191,37 @@ exportación de datos del alumno incluye sus grupos y sus cuotas.
 5. Lo que ve Marcos: «Mensualidades», ficha, «Hoy», lista de alumnos y resumen.
 6. Frontend del alumno: apuntarse desde la clase y sus cuotas en «Mis reservas».
 7. E2E y documentación.
+
+## Decisiones tomadas al implementar
+
+- **Apuntarse crea, darse de baja borra**: `POST` y `DELETE` en `/me/groups/{id}/membership` y en
+  `/teacher/groups/{id}/members`, no `PUT`. Cada alta es una fila nueva de `group_memberships`, y
+  quien se fue y vuelve tiene otra; las cuotas de la primera siguen apuntando a la suya.
+- **`GET /teacher/groups`** se añade al contrato: Marcos ve quién está en cada grupo, y `GET
+  /groups` no lo dice a los alumnos. El día de vencimiento viaja en `GET /teacher/fees`
+  (`dueDay`), junto a las líneas que decide.
+- **El alumno se apunta desde «Mis reservas»**, no desde la clase. Las clases del calendario no
+  llevan su serie, y la tarjeta del grupo dice lo que hace falta para decidir: días, hora, cuota y
+  plazas. Marcos engancha la serie desde la página de una de sus clases, donde ve cuál es.
+- **Cambiar la cuota vale para los meses aún sin apuntar**, no «desde el mes que viene»: un mes
+  apuntado guarda su importe, y uno sin apuntar se lee con la cuota de hoy. Es lo mismo en la
+  práctica y no hace falta guardar la historia de precios.
+- **El mes vence el día fijado o el día en que se apuntó**, si se apuntó después en ese mes: quien
+  entra el 20 no aparece como moroso el mismo día.
+- **La baja deja `left_at` en el primer instante del mes siguiente**, en la zona de Marcos, y en
+  la misma transacción cancela las reservas del grupo desde ahí y da las plazas a la lista de
+  espera. Dejar de gestionar al alumno, desactivarlo o que borre su cuenta terminan el alta en ese
+  momento (spi `StudentMemberships`), después de cancelar sus reservas como ya se hacía.
+- **Una plaza del grupo la decide booking preguntando a `GroupSeats`** (spi que implementa
+  `membership`): reservar a mano o subir desde la lista de espera en una clase del grupo deja la
+  reserva del grupo y no pide bono. Así una clase cancelada y vuelta a reservar sigue siendo del
+  grupo.
+- **Las clases se bloquean en orden de id** al apuntar o enganchar una serie, para que dos altas a
+  la vez no se esperen la una a la otra en orden contrario.
+- **Códigos que no estaban en el análisis**: `GROUP_ALREADY_EXISTS` (409, el nombre se repite),
+  `SERIES_NOT_FOUND` (404) y `EMAIL_NOT_VERIFIED` (403, como al reservar). `GROUP_FULL` lleva
+  `fullLessons`, el inicio de cada clase llena.
+- **Un grupo sólo se borra si nadie se ha apuntado nunca**: sus cuotas lo apuntan. El E2E deja los
+  suyos, como los tipos de bono que alguien compró.
+- **`formatEuros` sube a `shared/money.ts`**: lo usan bonos y mensualidades, y un módulo del
+  frontend no importa otro.
