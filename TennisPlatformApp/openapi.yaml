@@ -20,6 +20,7 @@ tags:
   - name: lessons
   - name: bookings
   - name: passes
+  - name: memberships
   - name: messages
   - name: administration
 
@@ -971,6 +972,392 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /groups:
+    get:
+      tags: [memberships]
+      summary: Los grupos fijos de la escuela
+      description: >-
+        Los lee cualquiera con sesion (Fase 28). Sin quien esta apuntado: members viaja vacio y
+        memberCount dice cuantos son.
+      responses:
+        "200":
+          description: OK, por nombre
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FixedGroupList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /teacher/groups:
+    get:
+      tags: [memberships]
+      summary: Los grupos fijos del profesor, con sus apuntados
+      responses:
+        "200":
+          description: OK, por nombre
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FixedGroupList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [memberships]
+      summary: Crea un grupo fijo
+      description: >-
+        Un grupo es un nombre y una cuota al mes; sus clases son las de las series que se le
+        enganchan (decision 1 de 43-fase28-analisis-mensualidades.md).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateGroupRequest" }
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FixedGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "GROUP_ALREADY_EXISTS: ya hay un grupo con ese nombre"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/groups/{id}:
+    patch:
+      tags: [memberships]
+      summary: Cambia el nombre o la cuota de un grupo
+      description: >-
+        La cuota nueva es la que se propone al apuntar los meses que quedan; lo ya apuntado no
+        cambia.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateGroupRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FixedGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: GROUP_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "GROUP_ALREADY_EXISTS"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [memberships]
+      summary: Borra un grupo al que nunca se ha apuntado nadie
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Borrado; sus series quedan como estaban
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: GROUP_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "GROUP_IN_USE: alguien se ha apuntado alguna vez, y sus cuotas lo apuntan"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/groups/{id}/series:
+    post:
+      tags: [memberships]
+      summary: Engancha una serie semanal al grupo
+      description: >-
+        Cada apuntado recibe plaza en las clases de la serie que quedan, todas o ninguna: si alguna
+        no tiene sitio para todos, la serie no se engancha.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AttachSeriesRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FixedGroup" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: GROUP_NOT_FOUND | SERIES_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: >-
+            SERIES_ALREADY_IN_GROUP: la serie ya es de un grupo | GROUP_FULL: alguna clase no tiene
+            plaza para todos los apuntados (fullLessons dice cuales) | STUDENT_SCHEDULE_OVERLAP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: "LEVEL_NOT_ALLOWED: algun apuntado es de otro nivel que la serie"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/groups/{id}/members:
+    post:
+      tags: [memberships]
+      summary: Apunta a un alumno al grupo
+      description: >-
+        Como cuando se apunta el alumno, pero sin pedir el correo verificado: el profesor le
+        conoce (decision 2).
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AddMemberRequest" }
+      responses:
+        "201":
+          description: Apuntado, con plaza en cada clase que queda
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupMember" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: GROUP_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: ALREADY_IN_GROUP | GROUP_FULL | STUDENT_SCHEDULE_OVERLAP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LEVEL_NOT_ALLOWED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/groups/{id}/members/{userId}:
+    delete:
+      tags: [memberships]
+      summary: Da de baja a un alumno del grupo
+      description: >-
+        Sigue en sus clases hasta fin de mes; las del mes siguiente en adelante se liberan y pasan a
+        la lista de espera (decision 5).
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "204":
+          description: Dado de baja
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: "GROUP_NOT_FOUND | NOT_IN_GROUP: no esta, o ya se esta dando de baja"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /me/groups/{id}/membership:
+    post:
+      tags: [memberships]
+      summary: El alumno se apunta al grupo
+      description: >-
+        Reserva una plaza en cada clase del grupo que aun no ha empezado, todas o ninguna, sin
+        gastar bono: las paga la cuota. Pide lo mismo que reservar: alumno gestionado, correo
+        verificado y nivel.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "201":
+          description: Apuntado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Membership" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: STUDENT_FORBIDDEN | EMAIL_NOT_VERIFIED | STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: GROUP_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: ALREADY_IN_GROUP | GROUP_FULL | STUDENT_SCHEDULE_OVERLAP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: LEVEL_NOT_ALLOWED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [memberships]
+      summary: El alumno se da de baja del grupo
+      description: Sigue en sus clases hasta fin de mes; las siguientes se liberan (decision 5).
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Dado de baja
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: GROUP_NOT_FOUND | NOT_IN_GROUP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /me/memberships:
+    get:
+      tags: [memberships]
+      summary: Los grupos del alumno y sus cuotas
+      responses:
+        "200":
+          description: OK, los mas nuevos primero
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MembershipList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /teacher/fees:
+    get:
+      tags: [memberships]
+      summary: Como esta cada mes de cada apuntado
+      description: >-
+        Sin month, todos los meses hasta el actual y los apuntados por adelantado; con month, solo
+        ese. Un mes se debe si el grupo tiene en el alguna clase, no cancelada, de las del alumno.
+        OVERDUE se calcula al leer: pasado el dia de vencimiento, o el dia en que se apunto si fue
+        despues, sin nada apuntado.
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema: { type: string, example: "2026-11" }
+        - name: studentUserId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK, el mes mas reciente primero
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeeLineList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [memberships]
+      summary: Apunta un mes como pagado o como que no se cobra
+      description: >-
+        La app no cobra: el profesor apunta que y como se pago. Sin amountCents, un mes pagado
+        cuesta la cuota del grupo. WAIVED no lleva importe, dia ni forma de pago.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecordFeeRequest" }
+      responses:
+        "201":
+          description: Apuntado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Fee" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: NOT_IN_GROUP
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "FEE_ALREADY_PAID: ese mes ya tiene algo apuntado; se anula antes"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/fees/{id}/void:
+    post:
+      tags: [memberships]
+      summary: Anula un mes apuntado por error
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Anulado; el mes se puede volver a apuntar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Fee" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: FEE_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/fee-settings:
+    put:
+      tags: [memberships]
+      summary: Cambia el dia del mes en que vence la cuota
+      description: El mismo para todos los grupos (decision 3); nace en el 5.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FeeSettings" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FeeSettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /teacher/students/{userId}/manage:
     post:
@@ -2180,6 +2567,10 @@ components:
           description: Código de negocio, ver 11-contrato-api.md
           example: LESSON_FULL
         instance: { type: string }
+        fullLessons:
+          type: array
+          description: Solo en GROUP_FULL, cuando empieza cada clase sin plaza (Fase 28)
+          items: { type: string, format: date-time }
         errors:
           type: array
           description: Solo en VALIDATION_ERROR de un cuerpo, un elemento por campo rechazado
@@ -2282,7 +2673,7 @@ components:
 
     MyDataExport:
       type: object
-      required: [exportedAt, account, bookings, records, messages, photo, passes, passPurchases]
+      required: [exportedAt, account, bookings, records, messages, photo, passes, passPurchases, memberships]
       properties:
         exportedAt: { type: string, format: date-time }
         account: { $ref: "#/components/schemas/MeResponse" }
@@ -2321,6 +2712,10 @@ components:
           type: array
           description: Los bonos que el alumno ha comprado en la app, pagados o no (Fase 27.5).
           items: { $ref: "#/components/schemas/PassPurchase" }
+        memberships:
+          type: array
+          description: Los grupos fijos del alumno, con sus meses y lo que se apunto de ellos (Fase 28).
+          items: { $ref: "#/components/schemas/Membership" }
 
     Level:
       type: object
@@ -2795,11 +3190,12 @@ components:
 
     Booking:
       type: object
-      required: [id, lessonId, studentUserId, status, attendance, bookedAt, cancelledAt, lesson, passId]
+      required: [id, lessonId, studentUserId, status, attendance, bookedAt, cancelledAt, lesson, passId, membershipId]
       description: >-
         lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia
         clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia.
-        passId es el bono con el que se pago (Fase 27), o null si no hacia falta.
+        passId es el bono con el que se pago (Fase 27), o null si no hacia falta. membershipId es
+        el grupo fijo cuya cuota paga la plaza (Fase 28), o null si es una reserva suelta.
       properties:
         id: { type: string, format: uuid }
         lessonId: { type: string, format: uuid }
@@ -2810,6 +3206,7 @@ components:
         cancelledAt: { type: string, format: date-time, nullable: true }
         lesson: { $ref: "#/components/schemas/LessonSummary" }
         passId: { type: string, format: uuid, nullable: true }
+        membershipId: { type: string, format: uuid, nullable: true }
 
     LessonSummary:
       type: object
@@ -2964,7 +3361,7 @@ components:
 
     MonthSummary:
       type: object
-      required: [month, timezone, current, previous, levels, sales, previousSales]
+      required: [month, timezone, current, previous, levels, sales, previousSales, fees, previousFees]
       properties:
         month: { type: string, example: "2026-10" }
         timezone: { type: string, example: Europe/Madrid }
@@ -2984,6 +3381,8 @@ components:
               previous: { $ref: "#/components/schemas/MonthFigures" }
         sales: { $ref: "#/components/schemas/PassSales" }
         previousSales: { $ref: "#/components/schemas/PassSales" }
+        fees: { $ref: "#/components/schemas/FeeIncome" }
+        previousFees: { $ref: "#/components/schemas/FeeIncome" }
 
     PassSales:
       type: object
@@ -3152,6 +3551,203 @@ components:
           type: string
           description: ONLINE no se apunta a mano; lo pone la app (Fase 27.5).
           enum: [CASH, BIZUM, TRANSFER]
+
+    FixedGroup:
+      type: object
+      description: >-
+        Un grupo fijo (Fase 28), calculado de sus series al leer. levelId es el nivel de su proxima
+        clase; freeSeats, cuantos mas cabrian en todas las clases que quedan (null si no queda
+        ninguna). members solo lo rellena el profesor.
+      required: [id, name, monthlyFeeCents, series, levelId, freeSeats, memberCount, members]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, maxLength: 60 }
+        monthlyFeeCents: { type: integer, minimum: 0 }
+        series:
+          type: array
+          items: { $ref: "#/components/schemas/GroupSeries" }
+        levelId: { type: string, format: uuid, nullable: true }
+        freeSeats: { type: integer, nullable: true }
+        memberCount: { type: integer }
+        members:
+          type: array
+          items: { $ref: "#/components/schemas/GroupMember" }
+
+    GroupSeries:
+      type: object
+      description: Una serie del grupo, su proxima clase (null si ya no queda) y cuantas quedan.
+      required: [seriesId, lessonType, nextStartsAt, nextEndsAt, upcomingLessons]
+      properties:
+        seriesId: { type: string, format: uuid }
+        lessonType:
+          type: string
+          nullable: true
+          enum: [INDIVIDUAL, GROUP]
+        nextStartsAt: { type: string, format: date-time, nullable: true }
+        nextEndsAt: { type: string, format: date-time, nullable: true }
+        upcomingLessons: { type: integer }
+
+    GroupMember:
+      type: object
+      description: leftAt en el futuro es una baja que llega a fin de mes.
+      required: [membershipId, studentUserId, joinedAt, leftAt]
+      properties:
+        membershipId: { type: string, format: uuid }
+        studentUserId: { type: string, format: uuid }
+        joinedAt: { type: string, format: date-time }
+        leftAt: { type: string, format: date-time, nullable: true }
+
+    FixedGroupList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/FixedGroup" }
+
+    CreateGroupRequest:
+      type: object
+      required: [name, monthlyFeeCents]
+      properties:
+        name: { type: string, maxLength: 60 }
+        monthlyFeeCents: { type: integer, minimum: 0, maximum: 1000000 }
+
+    UpdateGroupRequest:
+      type: object
+      description: Los dos opcionales.
+      properties:
+        name: { type: string, maxLength: 60 }
+        monthlyFeeCents: { type: integer, minimum: 0, maximum: 1000000 }
+
+    AttachSeriesRequest:
+      type: object
+      required: [seriesId]
+      properties:
+        seriesId: { type: string, format: uuid }
+
+    AddMemberRequest:
+      type: object
+      required: [studentUserId]
+      properties:
+        studentUserId: { type: string, format: uuid }
+
+    FeeStatus:
+      type: string
+      description: PAID y WAIVED se apuntan; PENDING y OVERDUE se calculan al leer.
+      enum: [PAID, WAIVED, PENDING, OVERDUE]
+
+    Fee:
+      type: object
+      description: Lo que el profesor apunto de un mes. WAIVED es "no se cobra".
+      required: [id, membershipId, month, kind, amountCents, paidOn, paymentMethod, recordedAt, voidedAt]
+      properties:
+        id: { type: string, format: uuid }
+        membershipId: { type: string, format: uuid }
+        month: { type: string, example: "2026-11" }
+        kind: { type: string, enum: [PAID, WAIVED] }
+        amountCents: { type: integer }
+        paidOn: { type: string, format: date, nullable: true }
+        paymentMethod:
+          type: string
+          nullable: true
+          enum: [CASH, BIZUM, TRANSFER]
+        recordedAt: { type: string, format: date-time }
+        voidedAt: { type: string, format: date-time, nullable: true }
+
+    FeeLine:
+      type: object
+      description: >-
+        Un mes de un apuntado. dueOn es el ultimo dia para pagarlo; monthlyFeeCents, la cuota que
+        tiene hoy el grupo; fee, lo apuntado, o null.
+      required: [membershipId, groupId, groupName, studentUserId, month, dueOn, status, monthlyFeeCents, fee]
+      properties:
+        membershipId: { type: string, format: uuid }
+        groupId: { type: string, format: uuid }
+        groupName: { type: string }
+        studentUserId: { type: string, format: uuid }
+        month: { type: string, example: "2026-11" }
+        dueOn: { type: string, format: date }
+        status: { $ref: "#/components/schemas/FeeStatus" }
+        monthlyFeeCents: { type: integer }
+        fee:
+          type: object
+          nullable: true
+          description: >-
+            El Fee apuntado, repetido aqui en vez de referenciado: en OpenAPI 3.0 un nullable junto
+            a un $ref no tiene efecto.
+          required: [id, membershipId, month, kind, amountCents, paidOn, paymentMethod, recordedAt, voidedAt]
+          properties:
+            id: { type: string, format: uuid }
+            membershipId: { type: string, format: uuid }
+            month: { type: string }
+            kind: { type: string, enum: [PAID, WAIVED] }
+            amountCents: { type: integer }
+            paidOn: { type: string, format: date, nullable: true }
+            paymentMethod:
+              type: string
+              nullable: true
+              enum: [CASH, BIZUM, TRANSFER]
+            recordedAt: { type: string, format: date-time }
+            voidedAt: { type: string, format: date-time, nullable: true }
+
+    FeeLineList:
+      type: object
+      required: [dueDay, items]
+      properties:
+        dueDay: { type: integer, minimum: 1, maximum: 28 }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/FeeLine" }
+
+    RecordFeeRequest:
+      type: object
+      required: [membershipId, month, kind]
+      properties:
+        membershipId: { type: string, format: uuid }
+        month: { type: string, example: "2026-11" }
+        kind: { type: string, enum: [PAID, WAIVED] }
+        amountCents: { type: integer, minimum: 0, maximum: 1000000 }
+        paidOn: { type: string, format: date }
+        paymentMethod: { type: string, enum: [CASH, BIZUM, TRANSFER] }
+
+    FeeSettings:
+      type: object
+      required: [dueDay]
+      properties:
+        dueDay: { type: integer, minimum: 1, maximum: 28 }
+
+    Membership:
+      type: object
+      description: >-
+        El sitio de un alumno en un grupo, con sus meses hasta el actual y los apuntados por
+        adelantado. leftAt en el futuro es una baja que llega a fin de mes.
+      required: [id, group, joinedAt, leftAt, fees]
+      properties:
+        id: { type: string, format: uuid }
+        group: { $ref: "#/components/schemas/FixedGroup" }
+        joinedAt: { type: string, format: date-time }
+        leftAt: { type: string, format: date-time, nullable: true }
+        fees:
+          type: array
+          items: { $ref: "#/components/schemas/FeeLine" }
+
+    MembershipList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Membership" }
+
+    FeeIncome:
+      type: object
+      description: >-
+        Las cuotas cobradas en el mes, por el dia en que se pagaron y sin las anuladas, y lo que
+        suman en centimos (Fase 28).
+      required: [feesPaid, totalCents]
+      properties:
+        feesPaid: { type: integer }
+        totalCents: { type: integer, format: int64 }
 
     PlatformConfiguration:
       type: object

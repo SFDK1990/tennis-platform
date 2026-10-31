@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import com.tennisplatform.booking.application.port.in.BookingView;
 import com.tennisplatform.lesson.application.port.in.LessonView;
 import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
+import com.tennisplatform.membership.application.port.in.MembershipView;
 import com.tennisplatform.pass.application.port.in.PassView;
 import com.tennisplatform.pass.application.port.in.PurchaseView;
 
@@ -61,11 +62,13 @@ final class MeDtos {
      */
     /**
      * {@code passes}: the student's passes with what is left of them (Fase 27); {@code passPurchases},
-     * the ones they bought in the app, paid or not (Fase 27.5).
+     * the ones they bought in the app, paid or not (Fase 27.5); {@code memberships}, their fixed
+     * groups with the months owed and paid (Fase 28).
      */
     record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings,
                         List<ExportedRecord> records, List<ReceivedMessageView> messages, ExportedPhoto photo,
-                        List<PassView> passes, List<PurchaseView> passPurchases) {
+                        List<PassView> passes, List<PurchaseView> passPurchases,
+                        List<MembershipView> memberships) {
     }
 
     record ExportedRecord(String level, String goals, String privateNotes) {
@@ -76,12 +79,13 @@ final class MeDtos {
     }
 
     record ExportedBooking(UUID id, UUID lessonId, UUID studentUserId, String status, String attendance,
-                           Instant bookedAt, Instant cancelledAt, ExportedLesson lesson, UUID passId) {
+                           Instant bookedAt, Instant cancelledAt, ExportedLesson lesson, UUID passId,
+                           UUID membershipId) {
 
         static ExportedBooking from(BookingView booking) {
             return new ExportedBooking(booking.id(), booking.lessonId(), booking.studentUserId(), booking.status(),
                     booking.attendance(), booking.bookedAt(), booking.cancelledAt(),
-                    ExportedLesson.from(booking.lesson()), booking.passId());
+                    ExportedLesson.from(booking.lesson()), booking.passId(), booking.membershipId());
         }
     }
 

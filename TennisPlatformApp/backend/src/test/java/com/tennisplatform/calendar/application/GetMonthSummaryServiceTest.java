@@ -9,6 +9,7 @@ import com.tennisplatform.calendar.application.port.in.GetMonthSummary.Sales;
 import com.tennisplatform.calendar.application.service.GetMonthSummaryService;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
 import com.tennisplatform.lesson.application.port.in.LessonView;
+import com.tennisplatform.membership.application.port.in.QueryFees.FeeIncome;
 import com.tennisplatform.pass.application.port.in.QueryPasses;
 import com.tennisplatform.pass.application.port.in.QueryPasses.PassSales;
 import com.tennisplatform.shared.domain.DateRange.InvalidDateRangeException;
@@ -77,7 +78,8 @@ class GetMonthSummaryServiceTest {
     }
 
     private MonthSummaryView summary(YearMonth month) {
-        return new GetMonthSummaryService(teachers, lessons, bookings, passes, Clock.fixed(NOW, ZoneOffset.UTC))
+        return new GetMonthSummaryService(teachers, lessons, bookings, passes,
+                (teacher, from, until) -> new FeeIncome(0, 0), Clock.fixed(NOW, ZoneOffset.UTC))
                 .forTeacher(TEACHER, month);
     }
 
@@ -92,7 +94,7 @@ class GetMonthSummaryServiceTest {
 
     private void seat(UUID lesson, UUID student, String attendance) {
         confirmed.add(new BookingView(UUID.randomUUID(), lesson, student, "CONFIRMED", attendance,
-                NOW.minusSeconds(86_400 * 30L), null, null, null));
+                NOW.minusSeconds(86_400 * 30L), null, null, null, null));
     }
 
     @Test

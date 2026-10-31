@@ -6,6 +6,7 @@ import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentPhotoRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
+import com.tennisplatform.student.application.port.spi.StudentMemberships;
 import com.tennisplatform.student.application.port.spi.StudentMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,17 +30,20 @@ public class DeleteMyAccountService implements DeleteMyAccount {
     private final StudentProfileRepository profiles;
     private final StudentPhotoRepository photos;
     private final StudentBookings bookings;
+    private final StudentMemberships memberships;
     private final StudentMessages messages;
     private final Clock clock;
 
     public DeleteMyAccountService(CloseAccount accounts, ManagedStudentRepository relationships,
                                   StudentProfileRepository profiles, StudentPhotoRepository photos,
-                                  StudentBookings bookings, StudentMessages messages, Clock clock) {
+                                  StudentBookings bookings, StudentMemberships memberships,
+                                  StudentMessages messages, Clock clock) {
         this.accounts = accounts;
         this.relationships = relationships;
         this.profiles = profiles;
         this.photos = photos;
         this.bookings = bookings;
+        this.memberships = memberships;
         this.messages = messages;
         this.clock = clock;
     }
@@ -57,6 +61,7 @@ public class DeleteMyAccountService implements DeleteMyAccount {
                 relationships.save(relationship);
             });
             bookings.cancelUpcomingOfDeletedAccount(teacherUserId, studentUserId, now);
+            memberships.endAllWith(teacherUserId, studentUserId, now);
         }
         for (var relationship : relationships.findAllByStudent(studentUserId)) {
             relationship.clearRecord();

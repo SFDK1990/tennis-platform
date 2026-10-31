@@ -3,6 +3,7 @@ package com.tennisplatform.booking.application.service;
 import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.application.port.out.WaitingListRepository;
+import com.tennisplatform.booking.application.port.spi.GroupSeats;
 import com.tennisplatform.booking.domain.Booking;
 import com.tennisplatform.booking.domain.WaitingListEntry;
 import com.tennisplatform.lesson.application.port.in.LessonView;
@@ -37,17 +38,19 @@ public class WaitingListPromotion {
     private final WaitingListRepository waiting;
     private final QueryManagedStudent managedStudents;
     private final ChargePasses passes;
+    private final GroupSeats groupSeats;
     private final Clock clock;
     private final BookingEvents events;
     private final ApplicationEventPublisher publisher;
 
     public WaitingListPromotion(BookingRepository bookings, WaitingListRepository waiting,
-                                QueryManagedStudent managedStudents, ChargePasses passes, Clock clock,
-                                ApplicationEventPublisher publisher) {
+                                QueryManagedStudent managedStudents, ChargePasses passes, GroupSeats groupSeats,
+                                Clock clock, ApplicationEventPublisher publisher) {
         this.bookings = bookings;
         this.waiting = waiting;
         this.managedStudents = managedStudents;
         this.passes = passes;
+        this.groupSeats = groupSeats;
         this.clock = clock;
         this.events = new BookingEvents(publisher);
         this.publisher = publisher;
@@ -75,22 +78,41 @@ public class WaitingListPromotion {
                         entry.studentUserId(), lesson.id());
                 continue;
             }
-            // Paying is asked last and only of whoever would get the seat: it locks their passes.
-            PassCharge charge = passes.charge(lesson.teacherUserId(), entry.studentUserId(), lesson.type(),
-                    lesson.startsAt());
-            if (charge.refused()) {
+            Booking seat = seatFor(entry, lesson, now);
+            if (seat == null) {
                 log.info("Waiting student {} skipped in lesson {}: no lessons left on their passes",
                         entry.studentUserId(), lesson.id());
                 publisher.publishEvent(new WaitingPlaceLost(lesson.id(), lesson.teacherUserId(), entry.studentUserId()));
                 continue;
             }
-            Booking saved = bookings.save(Booking.confirm(lesson.id(), lesson.teacherUserId(),
-                    entry.studentUserId(), lesson.startsAt(), lesson.endsAt(), now, charge.passId()));
+            Booking saved = bookings.save(seat);
             log.info("Booking {} created in lesson {} for student {} from the waiting list",
                     saved.id(), lesson.id(), entry.studentUserId());
             events.confirmedFromWaitingList(saved);
             free--;
         }
+    }
+
+    /**
+     * The seat as the group's when the student is a member of the lesson's group (Fase 28), and
+     * otherwise paid with a pass; null when no pass can pay. Paying is asked last and only of
+     * whoever would get the seat: it locks their passes.
+     */
+    private Booking seatFor(WaitingListEntry entry, LessonView lesson, Instant now) {
+        if (lesson.seriesId() != null) {
+            var membership = groupSeats.membershipPaying(entry.studentUserId(), lesson.seriesId(), lesson.startsAt());
+            if (membership.isPresent()) {
+                return Booking.confirmForGroup(lesson.id(), lesson.teacherUserId(), entry.studentUserId(),
+                        lesson.startsAt(), lesson.endsAt(), now, membership.get());
+            }
+        }
+        PassCharge charge = passes.charge(lesson.teacherUserId(), entry.studentUserId(), lesson.type(),
+                lesson.startsAt());
+        if (charge.refused()) {
+            return null;
+        }
+        return Booking.confirm(lesson.id(), lesson.teacherUserId(), entry.studentUserId(), lesson.startsAt(),
+                lesson.endsAt(), now, charge.passId());
     }
 
     /**

@@ -57,6 +57,10 @@ class BookingEntity {
     @Column(name = "pass_id", updatable = false)
     private UUID passId;
 
+    /** Fixed when the booking is made (Fase 28): the group membership whose fee pays for the seat. */
+    @Column(name = "membership_id", updatable = false)
+    private UUID membershipId;
+
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
@@ -74,6 +78,7 @@ class BookingEntity {
         entity.lessonEndsAt = booking.lessonEndsAt();
         entity.bookedAt = booking.bookedAt();
         entity.passId = booking.passId();
+        entity.membershipId = booking.membershipId();
         entity.apply(booking);
         return entity;
     }
@@ -87,6 +92,6 @@ class BookingEntity {
 
     Booking toDomain() {
         return Booking.rehydrate(id, lessonId, teacherUserId, studentUserId, status, attendance,
-                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt, passId);
+                lessonStartsAt, lessonEndsAt, bookedAt, cancelledAt, passId, membershipId);
     }
 }

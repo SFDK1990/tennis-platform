@@ -1900,6 +1900,789 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Los grupos fijos de la escuela
+         * @description Los lee cualquiera con sesion (Fase 28). Sin quien esta apuntado: members viaja vacio y memberCount dice cuantos son.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK, por nombre */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FixedGroupList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Los grupos fijos del profesor, con sus apuntados */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK, por nombre */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FixedGroupList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        /**
+         * Crea un grupo fijo
+         * @description Un grupo es un nombre y una cuota al mes; sus clases son las de las series que se le enganchan (decision 1 de 43-fase28-analisis-mensualidades.md).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateGroupRequest"];
+                };
+            };
+            responses: {
+                /** @description Creado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FixedGroup"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description GROUP_ALREADY_EXISTS: ya hay un grupo con ese nombre */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borra un grupo al que nunca se ha apuntado nadie */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Borrado; sus series quedan como estaban */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description GROUP_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description GROUP_IN_USE: alguien se ha apuntado alguna vez, y sus cuotas lo apuntan */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Cambia el nombre o la cuota de un grupo
+         * @description La cuota nueva es la que se propone al apuntar los meses que quedan; lo ya apuntado no cambia.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateGroupRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FixedGroup"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description GROUP_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description GROUP_ALREADY_EXISTS */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/teacher/groups/{id}/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Engancha una serie semanal al grupo
+         * @description Cada apuntado recibe plaza en las clases de la serie que quedan, todas o ninguna: si alguna no tiene sitio para todos, la serie no se engancha.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AttachSeriesRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FixedGroup"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description GROUP_NOT_FOUND | SERIES_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description SERIES_ALREADY_IN_GROUP: la serie ya es de un grupo | GROUP_FULL: alguna clase no tiene plaza para todos los apuntados (fullLessons dice cuales) | STUDENT_SCHEDULE_OVERLAP */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LEVEL_NOT_ALLOWED: algun apuntado es de otro nivel que la serie */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/groups/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apunta a un alumno al grupo
+         * @description Como cuando se apunta el alumno, pero sin pedir el correo verificado: el profesor le conoce (decision 2).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddMemberRequest"];
+                };
+            };
+            responses: {
+                /** @description Apuntado, con plaza en cada clase que queda */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GroupMember"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description GROUP_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description ALREADY_IN_GROUP | GROUP_FULL | STUDENT_SCHEDULE_OVERLAP */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LEVEL_NOT_ALLOWED */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/groups/{id}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Da de baja a un alumno del grupo
+         * @description Sigue en sus clases hasta fin de mes; las del mes siguiente en adelante se liberan y pasan a la lista de espera (decision 5).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                    userId: components["parameters"]["UserId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Dado de baja */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description GROUP_NOT_FOUND | NOT_IN_GROUP: no esta, o ya se esta dando de baja */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/groups/{id}/membership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * El alumno se apunta al grupo
+         * @description Reserva una plaza en cada clase del grupo que aun no ha empezado, todas o ninguna, sin gastar bono: las paga la cuota. Pide lo mismo que reservar: alumno gestionado, correo verificado y nivel.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Apuntado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Membership"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description STUDENT_FORBIDDEN | EMAIL_NOT_VERIFIED | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description GROUP_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description ALREADY_IN_GROUP | GROUP_FULL | STUDENT_SCHEDULE_OVERLAP */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description LEVEL_NOT_ALLOWED */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        /**
+         * El alumno se da de baja del grupo
+         * @description Sigue en sus clases hasta fin de mes; las siguientes se liberan (decision 5).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Dado de baja */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description GROUP_NOT_FOUND | NOT_IN_GROUP */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Los grupos del alumno y sus cuotas */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK, los mas nuevos primero */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MembershipList"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/fees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Como esta cada mes de cada apuntado
+         * @description Sin month, todos los meses hasta el actual y los apuntados por adelantado; con month, solo ese. Un mes se debe si el grupo tiene en el alguna clase, no cancelada, de las del alumno. OVERDUE se calcula al leer: pasado el dia de vencimiento, o el dia en que se apunto si fue despues, sin nada apuntado.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    month?: string;
+                    studentUserId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK, el mes mas reciente primero */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeeLineList"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        /**
+         * Apunta un mes como pagado o como que no se cobra
+         * @description La app no cobra: el profesor apunta que y como se pago. Sin amountCents, un mes pagado cuesta la cuota del grupo. WAIVED no lleva importe, dia ni forma de pago.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RecordFeeRequest"];
+                };
+            };
+            responses: {
+                /** @description Apuntado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fee"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description NOT_IN_GROUP */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description FEE_ALREADY_PAID: ese mes ya tiene algo apuntado; se anula antes */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/fees/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Anula un mes apuntado por error */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Anulado; el mes se puede volver a apuntar */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Fee"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description FEE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/fee-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Cambia el dia del mes en que vence la cuota
+         * @description El mismo para todos los grupos (decision 3); nace en el 5.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FeeSettings"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FeeSettings"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/teacher/students/{userId}/manage": {
         parameters: {
             query?: never;
@@ -3996,6 +4779,8 @@ export interface components {
              */
             code?: string;
             instance?: string;
+            /** @description Solo en GROUP_FULL, cuando empieza cada clase sin plaza (Fase 28) */
+            fullLessons?: string[];
             /** @description Solo en VALIDATION_ERROR de un cuerpo, un elemento por campo rechazado */
             errors?: {
                 field: string;
@@ -4088,6 +4873,8 @@ export interface components {
             passes: components["schemas"]["Pass"][];
             /** @description Los bonos que el alumno ha comprado en la app, pagados o no (Fase 27.5). */
             passPurchases: components["schemas"]["PassPurchase"][];
+            /** @description Los grupos fijos del alumno, con sus meses y lo que se apunto de ellos (Fase 28). */
+            memberships: components["schemas"]["Membership"][];
         };
         Level: {
             /** Format: uuid */
@@ -4478,7 +5265,7 @@ export interface components {
              */
             courtId: string;
         };
-        /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. passId es el bono con el que se pago (Fase 27), o null si no hacia falta. */
+        /** @description lesson viaja sin notes para todos: las notas son del profesor y se leen en la propia clase, donde se decide quien las ve. Repetir esa regla aqui seria una segunda copia. passId es el bono con el que se pago (Fase 27), o null si no hacia falta. membershipId es el grupo fijo cuya cuota paga la plaza (Fase 28), o null si es una reserva suelta. */
         Booking: {
             /** Format: uuid */
             id: string;
@@ -4495,6 +5282,8 @@ export interface components {
             lesson: components["schemas"]["LessonSummary"];
             /** Format: uuid */
             passId: string | null;
+            /** Format: uuid */
+            membershipId: string | null;
         };
         /** @description La clase tal como viaja dentro de una reserva o de una lista de espera, sin notes. */
         LessonSummary: {
@@ -4614,6 +5403,8 @@ export interface components {
             }[];
             sales: components["schemas"]["PassSales"];
             previousSales: components["schemas"]["PassSales"];
+            fees: components["schemas"]["FeeIncome"];
+            previousFees: components["schemas"]["FeeIncome"];
         };
         /** @description Los bonos vendidos en el mes, por el dia en que se pagaron y sin los anulados, y lo que suman en centimos (Fase 27). Es lo unico de dinero que sabe la app. */
         PassSales: {
@@ -4749,6 +5540,162 @@ export interface components {
              * @enum {string}
              */
             paymentMethod: "CASH" | "BIZUM" | "TRANSFER";
+        };
+        /** @description Un grupo fijo (Fase 28), calculado de sus series al leer. levelId es el nivel de su proxima clase; freeSeats, cuantos mas cabrian en todas las clases que quedan (null si no queda ninguna). members solo lo rellena el profesor. */
+        FixedGroup: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            monthlyFeeCents: number;
+            series: components["schemas"]["GroupSeries"][];
+            /** Format: uuid */
+            levelId: string | null;
+            freeSeats: number | null;
+            memberCount: number;
+            members: components["schemas"]["GroupMember"][];
+        };
+        /** @description Una serie del grupo, su proxima clase (null si ya no queda) y cuantas quedan. */
+        GroupSeries: {
+            /** Format: uuid */
+            seriesId: string;
+            /** @enum {string|null} */
+            lessonType: "INDIVIDUAL" | "GROUP" | null;
+            /** Format: date-time */
+            nextStartsAt: string | null;
+            /** Format: date-time */
+            nextEndsAt: string | null;
+            upcomingLessons: number;
+        };
+        /** @description leftAt en el futuro es una baja que llega a fin de mes. */
+        GroupMember: {
+            /** Format: uuid */
+            membershipId: string;
+            /** Format: uuid */
+            studentUserId: string;
+            /** Format: date-time */
+            joinedAt: string;
+            /** Format: date-time */
+            leftAt: string | null;
+        };
+        FixedGroupList: {
+            items: components["schemas"]["FixedGroup"][];
+        };
+        CreateGroupRequest: {
+            name: string;
+            monthlyFeeCents: number;
+        };
+        /** @description Los dos opcionales. */
+        UpdateGroupRequest: {
+            name?: string;
+            monthlyFeeCents?: number;
+        };
+        AttachSeriesRequest: {
+            /** Format: uuid */
+            seriesId: string;
+        };
+        AddMemberRequest: {
+            /** Format: uuid */
+            studentUserId: string;
+        };
+        /**
+         * @description PAID y WAIVED se apuntan; PENDING y OVERDUE se calculan al leer.
+         * @enum {string}
+         */
+        FeeStatus: "PAID" | "WAIVED" | "PENDING" | "OVERDUE";
+        /** @description Lo que el profesor apunto de un mes. WAIVED es "no se cobra". */
+        Fee: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            membershipId: string;
+            /** @example 2026-11 */
+            month: string;
+            /** @enum {string} */
+            kind: "PAID" | "WAIVED";
+            amountCents: number;
+            /** Format: date */
+            paidOn: string | null;
+            /** @enum {string|null} */
+            paymentMethod: "CASH" | "BIZUM" | "TRANSFER" | null;
+            /** Format: date-time */
+            recordedAt: string;
+            /** Format: date-time */
+            voidedAt: string | null;
+        };
+        /** @description Un mes de un apuntado. dueOn es el ultimo dia para pagarlo; monthlyFeeCents, la cuota que tiene hoy el grupo; fee, lo apuntado, o null. */
+        FeeLine: {
+            /** Format: uuid */
+            membershipId: string;
+            /** Format: uuid */
+            groupId: string;
+            groupName: string;
+            /** Format: uuid */
+            studentUserId: string;
+            /** @example 2026-11 */
+            month: string;
+            /** Format: date */
+            dueOn: string;
+            status: components["schemas"]["FeeStatus"];
+            monthlyFeeCents: number;
+            /** @description El Fee apuntado, repetido aqui en vez de referenciado: en OpenAPI 3.0 un nullable junto a un $ref no tiene efecto. */
+            fee: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                membershipId: string;
+                month: string;
+                /** @enum {string} */
+                kind: "PAID" | "WAIVED";
+                amountCents: number;
+                /** Format: date */
+                paidOn: string | null;
+                /** @enum {string|null} */
+                paymentMethod: "CASH" | "BIZUM" | "TRANSFER" | null;
+                /** Format: date-time */
+                recordedAt: string;
+                /** Format: date-time */
+                voidedAt: string | null;
+            } | null;
+        };
+        FeeLineList: {
+            dueDay: number;
+            items: components["schemas"]["FeeLine"][];
+        };
+        RecordFeeRequest: {
+            /** Format: uuid */
+            membershipId: string;
+            /** @example 2026-11 */
+            month: string;
+            /** @enum {string} */
+            kind: "PAID" | "WAIVED";
+            amountCents?: number;
+            /** Format: date */
+            paidOn?: string;
+            /** @enum {string} */
+            paymentMethod?: "CASH" | "BIZUM" | "TRANSFER";
+        };
+        FeeSettings: {
+            dueDay: number;
+        };
+        /** @description El sitio de un alumno en un grupo, con sus meses hasta el actual y los apuntados por adelantado. leftAt en el futuro es una baja que llega a fin de mes. */
+        Membership: {
+            /** Format: uuid */
+            id: string;
+            group: components["schemas"]["FixedGroup"];
+            /** Format: date-time */
+            joinedAt: string;
+            /** Format: date-time */
+            leftAt: string | null;
+            fees: components["schemas"]["FeeLine"][];
+        };
+        MembershipList: {
+            items: components["schemas"]["Membership"][];
+        };
+        /** @description Las cuotas cobradas en el mes, por el dia en que se pagaron y sin las anuladas, y lo que suman en centimos (Fase 28). */
+        FeeIncome: {
+            feesPaid: number;
+            /** Format: int64 */
+            totalCents: number;
         };
         PlatformConfiguration: {
             studentLimit: number;

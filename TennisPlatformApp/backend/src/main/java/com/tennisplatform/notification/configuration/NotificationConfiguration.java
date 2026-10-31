@@ -3,8 +3,10 @@ package com.tennisplatform.notification.configuration;
 import com.tennisplatform.booking.application.port.in.GetBookings;
 import com.tennisplatform.identity.application.port.in.FindUserAccounts;
 import com.tennisplatform.lesson.application.port.in.GetLesson;
+import com.tennisplatform.membership.application.port.in.ManageGroups;
 import com.tennisplatform.notification.application.port.in.NotifyBookings;
 import com.tennisplatform.notification.application.port.in.NotifyCourtChanges;
+import com.tennisplatform.notification.application.port.in.NotifyMemberships;
 import com.tennisplatform.notification.application.port.in.NotifyMessages;
 import com.tennisplatform.notification.application.port.out.Mailer;
 import com.tennisplatform.notification.application.service.BookingNotifications;
@@ -12,6 +14,7 @@ import com.tennisplatform.notification.application.port.out.MessageRepository;
 import com.tennisplatform.notification.application.service.CourtChangeNotifications;
 import com.tennisplatform.notification.application.service.MailTexts;
 import com.tennisplatform.notification.application.service.MessageNotifications;
+import com.tennisplatform.notification.application.service.MembershipNotifications;
 import com.tennisplatform.notification.application.service.MessagesService;
 import com.tennisplatform.student.application.port.in.GetStudentProfile;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
@@ -63,5 +66,12 @@ public class NotificationConfiguration {
                                          FindUserAccounts accounts, GetStudentProfile students,
                                          GetTeacherProfile teachers) {
         return new MessageNotifications(mailer, texts, messages, accounts, students, teachers);
+    }
+
+    @Bean
+    public NotifyMemberships notifyMemberships(Mailer mailer, MailTexts texts, FindUserAccounts accounts,
+                                               GetStudentProfile students, GetTeacherProfile teachers,
+                                               ManageGroups groups) {
+        return new MembershipNotifications(mailer, texts, accounts, students, teachers, groups);
     }
 }

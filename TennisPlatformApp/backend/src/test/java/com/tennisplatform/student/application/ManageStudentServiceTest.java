@@ -7,6 +7,7 @@ import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
+import com.tennisplatform.student.application.port.spi.StudentMemberships;
 import com.tennisplatform.student.application.service.ManageStudentService;
 import com.tennisplatform.student.domain.ManagedStatus;
 import com.tennisplatform.student.domain.ManagedStudent;
@@ -47,6 +48,7 @@ class ManageStudentServiceTest {
     private FindUserAccounts accounts;
     private GetStudentLimit studentLimit;
     private StudentBookings bookings;
+    private StudentMemberships memberships;
     private ManageStudentService service;
 
     @BeforeEach
@@ -56,7 +58,8 @@ class ManageStudentServiceTest {
         accounts = mock(FindUserAccounts.class);
         studentLimit = mock(GetStudentLimit.class);
         bookings = mock(StudentBookings.class);
-        service = new ManageStudentService(relationships, profiles, accounts, studentLimit, bookings,
+        memberships = mock(StudentMemberships.class);
+        service = new ManageStudentService(relationships, profiles, accounts, studentLimit, bookings, memberships,
                 Clock.fixed(NOW, ZoneOffset.UTC));
 
         when(accounts.byIds(List.of(STUDENT_ID))).thenReturn(Map.of(STUDENT_ID,
