@@ -145,6 +145,11 @@ class ProgressApiTest extends AbstractBookingTest {
                 HttpMethod.PUT, new HttpEntity<>(bearer(stranger.token())), Map.class).getStatusCode())
                 .isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM student_objectives", Integer.class)).isZero();
+
+        Student letGo = aStudentWhoMayBook();
+        teacher(HttpMethod.DELETE, "/api/v1/teacher/students/" + letGo.id() + "/manage", null);
+        assertThat(mark(letGo, serve, null).getBody()).containsEntry("code", "STUDENT_NOT_MANAGED");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM student_objectives", Integer.class)).isZero();
     }
 
     @Test
