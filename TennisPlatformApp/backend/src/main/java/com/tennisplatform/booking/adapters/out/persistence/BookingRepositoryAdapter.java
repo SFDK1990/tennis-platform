@@ -128,6 +128,11 @@ class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
+    public List<Booking> findConfirmedOfMembershipFrom(UUID membershipId, Instant from) {
+        return jpa.findConfirmedOfMembershipFrom(membershipId, from).stream().map(BookingEntity::toDomain).toList();
+    }
+
+    @Override
     public Map<UUID, Integer> countConfirmedByPass(Collection<UUID> passIds) {
         return jpa.countConfirmedByPass(passIds).stream()
                 .collect(Collectors.toMap(row -> (UUID) row[0], row -> ((Long) row[1]).intValue()));

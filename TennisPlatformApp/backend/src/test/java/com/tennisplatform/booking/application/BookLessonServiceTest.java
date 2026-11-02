@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,7 +72,7 @@ class BookLessonServiceTest {
         when(passes.charge(any(), any(), any(), any())).thenReturn(new PassCharge(false, null));
 
         service = new BookLessonService(bookings, lockLesson, getLesson, managedStudents, passes,
-                Clock.fixed(NOW, ZoneOffset.UTC), published::add);
+                (student, series, startsAt) -> Optional.empty(), Clock.fixed(NOW, ZoneOffset.UTC), published::add);
     }
 
     @Test

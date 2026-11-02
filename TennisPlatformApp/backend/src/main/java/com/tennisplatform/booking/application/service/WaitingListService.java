@@ -3,6 +3,7 @@ package com.tennisplatform.booking.application.service;
 import com.tennisplatform.booking.application.port.in.WaitingList;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.application.port.out.WaitingListRepository;
+import com.tennisplatform.booking.application.port.spi.GroupSeats;
 import com.tennisplatform.booking.domain.AlreadyWaitingException;
 import com.tennisplatform.booking.domain.BookingAlreadyExistsException;
 import com.tennisplatform.booking.domain.EmailNotVerifiedException;
@@ -51,17 +52,19 @@ public class WaitingListService implements WaitingList {
     private final GetLesson getLesson;
     private final QueryManagedStudent managedStudents;
     private final ChargePasses passes;
+    private final GroupSeats groupSeats;
     private final Clock clock;
 
     public WaitingListService(WaitingListRepository waiting, BookingRepository bookings, LockLesson lockLesson,
                               GetLesson getLesson, QueryManagedStudent managedStudents, ChargePasses passes,
-                              Clock clock) {
+                              GroupSeats groupSeats, Clock clock) {
         this.waiting = waiting;
         this.bookings = bookings;
         this.lockLesson = lockLesson;
         this.getLesson = getLesson;
         this.managedStudents = managedStudents;
         this.passes = passes;
+        this.groupSeats = groupSeats;
         this.clock = clock;
     }
 
@@ -100,8 +103,10 @@ public class WaitingListService implements WaitingList {
         if (bookings.existsOverlappingConfirmed(studentUserId, lesson.startsAt(), lesson.endsAt())) {
             throw new StudentScheduleOverlapException("You already have a lesson at that time");
         }
-        // Asked, not charged: the lesson is spent if and when the seat comes (decision 5).
-        if (!passes.canPay(lesson.teacherUserId(), studentUserId, lesson.type(), lesson.startsAt())) {
+        // Asked, not charged: the lesson is spent if and when the seat comes (decision 5). A member of
+        // the lesson's group needs no pass: the fee pays for the seat (Fase 28).
+        if (!paidByGroup(lesson, studentUserId)
+                && !passes.canPay(lesson.teacherUserId(), studentUserId, lesson.type(), lesson.startsAt())) {
             throw new NoPassBalanceException("You have no lessons left on a pass for this lesson");
         }
         WaitingListEntry saved = waiting.save(WaitingListEntry.join(lessonId, lesson.teacherUserId(), studentUserId, now));
@@ -158,5 +163,10 @@ public class WaitingListService implements WaitingList {
                 .filter(i -> list.get(i).studentUserId().equals(studentUserId))
                 .findFirst()
                 .orElseThrow() + 1;
+    }
+
+    private boolean paidByGroup(LessonView lesson, UUID studentUserId) {
+        return lesson.seriesId() != null
+                && groupSeats.membershipPaying(studentUserId, lesson.seriesId(), lesson.startsAt()).isPresent();
     }
 }

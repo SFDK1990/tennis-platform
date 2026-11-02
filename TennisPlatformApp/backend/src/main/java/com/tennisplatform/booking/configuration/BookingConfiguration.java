@@ -3,16 +3,19 @@ package com.tennisplatform.booking.configuration;
 import com.tennisplatform.booking.application.port.in.BookLesson;
 import com.tennisplatform.booking.application.port.in.CancelBooking;
 import com.tennisplatform.booking.application.port.in.GetBookings;
+import com.tennisplatform.booking.application.port.in.GroupBookings;
 import com.tennisplatform.booking.application.port.in.MarkAttendance;
 import com.tennisplatform.booking.application.port.in.WaitingList;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
 import com.tennisplatform.booking.application.port.out.WaitingListRepository;
+import com.tennisplatform.booking.application.port.spi.GroupSeats;
 import com.tennisplatform.booking.application.service.BookLessonService;
 import com.tennisplatform.booking.application.service.BookingsOfLessons;
 import com.tennisplatform.booking.application.service.BookingsOfPasses;
 import com.tennisplatform.booking.application.service.BookingsOfStudents;
 import com.tennisplatform.booking.application.service.CancelBookingService;
 import com.tennisplatform.booking.application.service.GetBookingsService;
+import com.tennisplatform.booking.application.service.GroupBookingsService;
 import com.tennisplatform.booking.application.service.MarkAttendanceService;
 import com.tennisplatform.booking.application.service.WaitingListPromotion;
 import com.tennisplatform.booking.application.service.WaitingListService;
@@ -40,9 +43,10 @@ public class BookingConfiguration {
 
     @Bean
     public BookLesson bookLesson(BookingRepository bookings, LockLesson lockLesson, GetLesson getLesson,
-                                 QueryManagedStudent managedStudents, ChargePasses passes, Clock clock,
-                                 ApplicationEventPublisher publisher) {
-        return new BookLessonService(bookings, lockLesson, getLesson, managedStudents, passes, clock, publisher);
+                                 QueryManagedStudent managedStudents, ChargePasses passes, GroupSeats groupSeats,
+                                 Clock clock, ApplicationEventPublisher publisher) {
+        return new BookLessonService(bookings, lockLesson, getLesson, managedStudents, passes, groupSeats, clock,
+                publisher);
     }
 
     @Bean
@@ -55,15 +59,17 @@ public class BookingConfiguration {
     @Bean
     public WaitingList waitingList(WaitingListRepository waiting, BookingRepository bookings, LockLesson lockLesson,
                                    GetLesson getLesson, QueryManagedStudent managedStudents, ChargePasses passes,
-                                   Clock clock) {
-        return new WaitingListService(waiting, bookings, lockLesson, getLesson, managedStudents, passes, clock);
+                                   GroupSeats groupSeats, Clock clock) {
+        return new WaitingListService(waiting, bookings, lockLesson, getLesson, managedStudents, passes, groupSeats,
+                clock);
     }
 
     @Bean
     public WaitingListPromotion waitingListPromotion(BookingRepository bookings, WaitingListRepository waiting,
                                                      QueryManagedStudent managedStudents, ChargePasses passes,
-                                                     Clock clock, ApplicationEventPublisher publisher) {
-        return new WaitingListPromotion(bookings, waiting, managedStudents, passes, clock, publisher);
+                                                     GroupSeats groupSeats, Clock clock,
+                                                     ApplicationEventPublisher publisher) {
+        return new WaitingListPromotion(bookings, waiting, managedStudents, passes, groupSeats, clock, publisher);
     }
 
     @Bean
@@ -87,6 +93,13 @@ public class BookingConfiguration {
                                                  LockLesson lockLesson, WaitingListPromotion promotion,
                                                  ApplicationEventPublisher publisher) {
         return new BookingsOfStudents(bookings, waiting, lockLesson, promotion, publisher);
+    }
+
+    @Bean
+    public GroupBookings groupBookings(BookingRepository bookings, WaitingListRepository waiting, LockLesson lockLesson,
+                                       QueryManagedStudent managedStudents, WaitingListPromotion promotion,
+                                       Clock clock) {
+        return new GroupBookingsService(bookings, waiting, lockLesson, managedStudents, promotion, clock);
     }
 
     @Bean

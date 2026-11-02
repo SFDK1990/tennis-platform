@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { LessonAttendance } from "@/modules/booking/components/LessonAttendance";
 import { LessonWaitingList } from "@/modules/booking/components/LessonWaitingList";
 import { useLesson } from "@/modules/lesson/api";
+import { AttachToGroup } from "@/modules/memberships/components/AttachToGroup";
 import { LessonDetail } from "@/modules/lesson/components/LessonDetail";
 import { MessageComposer, type AudienceOption } from "@/modules/messages/components/MessageComposer";
 import { useStudentHasPhoto, useStudentNames } from "@/modules/student/api";
@@ -44,6 +45,9 @@ export default function LessonPage() {
             <LessonAttendance lessonId={id} started={started} nameOf={nameOf} faceOf={faceOf} />
           </section>
           {started ? null : <LessonWaitingList lessonId={id} nameOf={nameOf} />}
+          {lesson.data.seriesId && lesson.data.type === "GROUP" && lesson.data.status !== "CANCELLED" ? (
+            <AttachToGroup seriesId={lesson.data.seriesId} />
+          ) : null}
           {lesson.data.status === "CANCELLED" ? null : (
             <MessageComposer title="Escribir a los alumnos" options={audiencesOf(id, lesson.data.seriesId != null)} />
           )}

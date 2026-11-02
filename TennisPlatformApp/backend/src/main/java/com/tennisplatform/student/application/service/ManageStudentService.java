@@ -8,6 +8,7 @@ import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
+import com.tennisplatform.student.application.port.spi.StudentMemberships;
 import com.tennisplatform.student.domain.ManagedStudent;
 import com.tennisplatform.student.domain.StudentAlreadyManagedException;
 import com.tennisplatform.student.domain.StudentLimitReachedException;
@@ -40,17 +41,19 @@ public class ManageStudentService implements ManageStudent {
     private final FindUserAccounts accounts;
     private final GetStudentLimit studentLimit;
     private final StudentBookings bookings;
+    private final StudentMemberships memberships;
     private final Clock clock;
 
     public ManageStudentService(ManagedStudentRepository relationships,
                                 StudentProfileRepository profiles, FindUserAccounts accounts,
                                 GetStudentLimit studentLimit, StudentBookings bookings,
-                                Clock clock) {
+                                StudentMemberships memberships, Clock clock) {
         this.relationships = relationships;
         this.profiles = profiles;
         this.accounts = accounts;
         this.studentLimit = studentLimit;
         this.bookings = bookings;
+        this.memberships = memberships;
         this.clock = clock;
     }
 
@@ -87,6 +90,7 @@ public class ManageStudentService implements ManageStudent {
         relationship.deactivate(now);
         relationships.save(relationship);
         bookings.cancelUpcomingWith(teacherUserId, studentUserId, now);
+        memberships.endAllWith(teacherUserId, studentUserId, now);
         log.info("Student {} no longer managed, upcoming bookings cancelled", studentUserId);
     }
 
@@ -100,6 +104,7 @@ public class ManageStudentService implements ManageStudent {
                 relationships.save(relationship);
             });
             bookings.cancelUpcomingOfDisabledAccount(teacherUserId, studentUserId, now);
+            memberships.endAllWith(teacherUserId, studentUserId, now);
         }
     }
 

@@ -89,6 +89,6 @@ class MarkAttendanceServiceTest {
     private static Booking booking(UUID lessonId) {
         return Booking.rehydrate(UUID.randomUUID(), lessonId, TEACHER_ID, UUID.randomUUID(),
                 BookingStatus.CONFIRMED, Attendance.PENDING, STARTS, ENDS,
-                STARTS.minusSeconds(86_400), null, null);
+                STARTS.minusSeconds(86_400), null, null, null);
     }
 }

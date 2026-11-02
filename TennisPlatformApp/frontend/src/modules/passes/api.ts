@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/shared/api/client";
 import { unwrap } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
+import { formatEuros } from "@/shared/money";
 import { formatShortDay, type LocalDate } from "@/shared/time";
 
 export type PassType = components["schemas"]["PassType"];
@@ -25,11 +26,7 @@ export const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   ONLINE: "Pagado en la app",
 };
 
-/** "120 €", "12,50 €": the price is kept in cents, so no amount is ever a float. */
-export function formatEuros(cents: number): string {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", minimumFractionDigits: cents % 100 ? 2 : 0 })
-    .format(cents / 100);
-}
+export { formatEuros } from "@/shared/money";
 
 /** "10 clases de grupo, 3 meses", the way a type reads in a list or a select. */
 export function describeType(type: PassType): string {

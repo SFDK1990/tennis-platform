@@ -3,6 +3,7 @@ package com.tennisplatform.booking.application.service;
 import com.tennisplatform.booking.application.port.in.BookLesson;
 import com.tennisplatform.booking.application.port.in.BookingView;
 import com.tennisplatform.booking.application.port.out.BookingRepository;
+import com.tennisplatform.booking.application.port.spi.GroupSeats;
 import com.tennisplatform.booking.domain.Booking;
 import com.tennisplatform.booking.domain.BookingAlreadyExistsException;
 import com.tennisplatform.booking.domain.EmailNotVerifiedException;
@@ -48,17 +49,19 @@ public class BookLessonService implements BookLesson {
     private final GetLesson getLesson;
     private final QueryManagedStudent managedStudents;
     private final ChargePasses passes;
+    private final GroupSeats groupSeats;
     private final Clock clock;
     private final BookingEvents events;
 
     public BookLessonService(BookingRepository bookings, LockLesson lockLesson, GetLesson getLesson,
-                             QueryManagedStudent managedStudents, ChargePasses passes, Clock clock,
-                             ApplicationEventPublisher publisher) {
+                             QueryManagedStudent managedStudents, ChargePasses passes, GroupSeats groupSeats,
+                             Clock clock, ApplicationEventPublisher publisher) {
         this.bookings = bookings;
         this.lockLesson = lockLesson;
         this.getLesson = getLesson;
         this.managedStudents = managedStudents;
         this.passes = passes;
+        this.groupSeats = groupSeats;
         this.clock = clock;
         this.events = new BookingEvents(publisher);
     }
@@ -104,20 +107,34 @@ public class BookLessonService implements BookLesson {
             throw new StudentScheduleOverlapException("You already have a lesson at that time");
         }
 
-        // Last, because it locks the student's passes: every other reason to refuse is cheaper, and
-        // a student told "no lessons left" should not then learn the lesson was full anyway.
-        PassCharge charge = passes.charge(lesson.teacherUserId(), studentUserId, lesson.type(), lesson.startsAt());
-        if (charge.refused()) {
-            throw new NoPassBalanceException("You have no lessons left on a pass for this lesson");
-        }
-
-        Booking saved = bookings.save(Booking.confirm(lessonId, lesson.teacherUserId(), studentUserId,
-                lesson.startsAt(), lesson.endsAt(), now, charge.passId()));
+        Booking saved = bookings.save(seatFor(lesson, studentUserId, now));
         log.info("Booking {} created in lesson {} for student {}", saved.id(), lessonId, studentUserId);
         events.confirmed(saved);
 
         // Read again rather than adjusted by hand, so whether the lesson is now FULL is decided
         // in one place only - Lesson.statusAt - and the count includes the row just inserted.
         return BookingView.from(saved, getLesson.byId(lessonId));
+    }
+
+    /**
+     * A member of the group the lesson belongs to holds the seat as the group's, paid by the fee
+     * (Fase 28). Anybody else pays with a pass, which is asked last because it locks the student's
+     * passes: every other reason to refuse is cheaper, and a student told "no lessons left" should
+     * not then learn the lesson was full anyway.
+     */
+    private Booking seatFor(LessonView lesson, UUID studentUserId, Instant now) {
+        if (lesson.seriesId() != null) {
+            var membership = groupSeats.membershipPaying(studentUserId, lesson.seriesId(), lesson.startsAt());
+            if (membership.isPresent()) {
+                return Booking.confirmForGroup(lesson.id(), lesson.teacherUserId(), studentUserId, lesson.startsAt(),
+                        lesson.endsAt(), now, membership.get());
+            }
+        }
+        PassCharge charge = passes.charge(lesson.teacherUserId(), studentUserId, lesson.type(), lesson.startsAt());
+        if (charge.refused()) {
+            throw new NoPassBalanceException("You have no lessons left on a pass for this lesson");
+        }
+        return Booking.confirm(lesson.id(), lesson.teacherUserId(), studentUserId, lesson.startsAt(), lesson.endsAt(),
+                now, charge.passId());
     }
 }

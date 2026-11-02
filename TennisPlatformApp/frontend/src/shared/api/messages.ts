@@ -71,6 +71,18 @@ const MESSAGES: Record<string, string> = {
   PHOTO_NOT_FOUND: "No hay foto.",
   NO_RECIPIENTS: "No hay ningún alumno en ese destino: el mensaje no llegaría a nadie.",
   MESSAGE_NOT_FOUND: "Ese mensaje ya no existe.",
+
+  GROUP_NOT_FOUND: "Ese grupo ya no existe.",
+  GROUP_ALREADY_EXISTS: "Ya tienes un grupo con ese nombre.",
+  GROUP_IN_USE: "Alguien se ha apuntado alguna vez a este grupo y sus cuotas lo apuntan: no se puede borrar.",
+  GROUP_FULL: "Alguna clase del grupo ya no tiene plaza libre.",
+  ALREADY_IN_GROUP: "Ya está apuntado a este grupo.",
+  NOT_IN_GROUP: "No está apuntado a ese grupo, o ya se está dando de baja.",
+  SERIES_NOT_FOUND: "Esa serie ya no existe o no le quedan clases.",
+  SERIES_ALREADY_IN_GROUP: "Esa serie ya es de un grupo.",
+  LEVEL_NOT_ALLOWED: "La clase es de otro nivel.",
+  FEE_ALREADY_PAID: "Ese mes ya tiene algo apuntado. Anúlalo antes si fue un error.",
+  FEE_NOT_FOUND: "Ese pago ya no existe.",
 };
 
 /**

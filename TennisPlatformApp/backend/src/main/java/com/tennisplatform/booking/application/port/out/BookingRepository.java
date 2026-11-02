@@ -43,6 +43,9 @@ public interface BookingRepository {
     /** Confirmed bookings paid with each pass (Fase 27); passes with none are absent from the map. */
     Map<UUID, Integer> countConfirmedByPass(Collection<UUID> passIds);
 
+    /** The confirmed seats a group membership pays for in lessons that start at or after {@code from}. */
+    List<Booking> findConfirmedOfMembershipFrom(UUID membershipId, Instant from);
+
     /**
      * Cancels every confirmed booking of the lesson with the given status, in one statement, and
      * returns them as they were, so each student can be told (Fase 20).

@@ -47,8 +47,8 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
 `npm run e2e` necesita el stack con el profesor y el admin del `.env`, el rate limiting subido y
 las claves del Stripe falso: `docker compose -f compose.yaml -f compose.e2e.yaml up -d --build`.
 Construye y arranca el frontend en el puerto 3100 y el Stripe falso en el 12111. Cada test deshace
-lo que crea, salvo las cuentas de alumno `e2e-*` y los tipos de bono que alguien compró, que se
-retiran.
+lo que crea, salvo las cuentas de alumno `e2e-*`, los tipos de bono que alguien compró, que se
+retiran, y los grupos fijos a los que alguien se apuntó.
 
 ## Entorno de desarrollo
 
@@ -158,6 +158,12 @@ retiran.
   como `byte[]`, y un proxy que lo reescriba la rompe. Un aviso repetido no crea otro bono porque
   `checkout_session_id` es único y la compra se bloquea; un importe distinto del de la compra no
   crea ninguno. Ni el CI ni el E2E hablan con Stripe: `FakeStripe` y `e2e/support/fake-stripe.mjs`.
+- **Una plaza de grupo fijo no pide bono: la paga la cuota** (Fase 28). Es una reserva con
+  `membership_id`, y booking pregunta a la spi `GroupSeats` si la clase es de un grupo del alumno.
+  Un camino nuevo que dé plaza tiene que preguntarle también, como la reserva y la lista de espera;
+  uno que deje de gestionar a un alumno, terminar sus altas (`StudentMemberships`). La baja del
+  grupo vale desde el mes siguiente (`left_at` en el futuro), y `PENDING`/`OVERDUE` de una cuota se
+  derivan al leer, en la zona del profesor.
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
   `ContractConventionsTest`.

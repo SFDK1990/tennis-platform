@@ -8,6 +8,7 @@ import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentPhotoRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
 import com.tennisplatform.student.application.port.spi.StudentBookings;
+import com.tennisplatform.student.application.port.spi.StudentMemberships;
 import com.tennisplatform.student.application.port.spi.StudentMessages;
 import com.tennisplatform.student.application.service.GetManagedStudentsService;
 import com.tennisplatform.student.application.service.ManageStudentService;
@@ -47,9 +48,10 @@ public class StudentConfiguration {
     public ManageStudent manageStudent(ManagedStudentRepository relationships,
                                        StudentProfileRepository profiles,
                                        FindUserAccounts accounts, GetStudentLimit studentLimit,
-                                       StudentBookings bookings, Clock clock) {
+                                       StudentBookings bookings, StudentMemberships memberships,
+                                       Clock clock) {
         return new ManageStudentService(relationships, profiles, accounts, studentLimit, bookings,
-                clock);
+                memberships, clock);
     }
 
     /**
@@ -59,8 +61,10 @@ public class StudentConfiguration {
     @Bean
     public DeleteMyAccount deleteMyAccount(CloseAccount accounts, ManagedStudentRepository relationships,
                                            StudentProfileRepository profiles, StudentPhotoRepository photos,
-                                           StudentBookings bookings, StudentMessages messages, Clock clock) {
-        return new DeleteMyAccountService(accounts, relationships, profiles, photos, bookings, messages, clock);
+                                           StudentBookings bookings, StudentMemberships memberships,
+                                           StudentMessages messages, Clock clock) {
+        return new DeleteMyAccountService(accounts, relationships, profiles, photos, bookings, memberships,
+                messages, clock);
     }
 
     @Bean

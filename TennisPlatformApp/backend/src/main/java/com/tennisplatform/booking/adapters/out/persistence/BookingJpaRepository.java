@@ -76,6 +76,16 @@ interface BookingJpaRepository extends JpaRepository<BookingEntity, UUID>,
             """)
     List<BookingEntity> findConfirmedOfLesson(@Param("lessonId") UUID lessonId);
 
+    /** The seats a group membership pays for in lessons from {@code from} on (Fase 28). */
+    @Query("""
+            select b from BookingEntity b
+            where b.membershipId = :membershipId
+              and b.status = com.tennisplatform.booking.domain.BookingStatus.CONFIRMED
+              and b.lessonStartsAt >= :from
+            """)
+    List<BookingEntity> findConfirmedOfMembershipFrom(@Param("membershipId") UUID membershipId,
+                                                      @Param("from") Instant from);
+
     /** What {@link #cancelUpcoming} is about to cancel: the same condition. */
     @Query("""
             select b from BookingEntity b

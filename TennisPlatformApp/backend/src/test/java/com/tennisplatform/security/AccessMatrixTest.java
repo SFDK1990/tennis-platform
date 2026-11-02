@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -119,6 +120,28 @@ class AccessMatrixTest extends AbstractBookingTest {
         // Buying in the app (Fase 27.5). Without Stripe's keys nobody has a purchase, so a read is a 404.
         row("POST", "/me/pass-purchases", Map.of("passTypeId", "{passTypeId}"),  401, 403, ALLOWED, ALLOWED, 403, 403);
         row("GET", "/me/pass-purchases/{purchaseId}", none,                      401, 404, 404, 404, 403, 403);
+        // Fixed groups and their fees (Fase 28): everybody reads the groups, a student joins and leaves
+        // their own, the teacher manages the rest.
+        row("GET", "/groups", none,                                              401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
+        row("GET", "/teacher/groups", none,                                      401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/groups", Map.of("name", "Nuevo", "monthlyFeeCents", 6000),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("PATCH", "/teacher/groups/{groupId}", Map.of("name", "Otro"),        401, 403, 403, 403, ALLOWED, 403);
+        row("DELETE", "/teacher/groups/{groupId}", none,                         401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/groups/{groupId}/series", Map.of("seriesId", "{lessonId}"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/groups/{groupId}/members", Map.of("studentUserId", "{studentId}"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("DELETE", "/teacher/groups/{groupId}/members/{studentId}", none,     401, 403, 403, 403, ALLOWED, 403);
+        // Somebody else's membership answers as one that does not exist.
+        row("POST", "/me/groups/{groupId}/membership", none,                     401, 403, ALLOWED, ALLOWED, 403, 403);
+        row("DELETE", "/me/groups/{groupId}/membership", none,                   401, 404, ALLOWED, 404, 403, 403);
+        row("GET", "/me/memberships", none,                                      401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
+        row("GET", "/teacher/fees", none,                                        401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/fees", Map.of("membershipId", "{membershipId}", "month", "{month}", "kind", "WAIVED"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/fees/{feeId}/void", none,                          401, 403, 403, 403, ALLOWED, 403);
+        row("PUT", "/teacher/fee-settings", Map.of("dueDay", 5),                 401, 403, 403, 403, ALLOWED, 403);
         // Stripe has no session: the signature is what is checked, and nobody here has one.
         row("POST", "/payments/stripe/webhook", Map.of("type", "checkout.session.completed"),
                                                                                  400, 400, 400, 400, 400, 400);
@@ -259,6 +282,15 @@ class AccessMatrixTest extends AbstractBookingTest {
                         "paidOn", LocalDate.now(ZoneId.of("Europe/Madrid")).toString(), "paymentMethod", "BIZUM"),
                         jsonBearer(teacherToken)), Map.class);
 
+        ResponseEntity<Map> group = rest.exchange("/api/v1/teacher/groups", HttpMethod.POST,
+                new HttpEntity<>(Map.of("name", "Matriz", "monthlyFeeCents", 6000), jsonBearer(teacherToken)), Map.class);
+        ResponseEntity<Map> membership = rest.exchange("/api/v1/me/groups/" + group.getBody().get("id") + "/membership",
+                HttpMethod.POST, new HttpEntity<>(bearer(student.token())), Map.class);
+        String month = YearMonth.now(ZoneId.of("Europe/Madrid")).toString();
+        ResponseEntity<Map> fee = rest.exchange("/api/v1/teacher/fees", HttpMethod.POST,
+                new HttpEntity<>(Map.of("membershipId", membership.getBody().get("id"), "month", month, "kind", "WAIVED"),
+                        jsonBearer(teacherToken)), Map.class);
+
         tokens = new LinkedHashMap<>();
         tokens.put(Who.ANONYMOUS, null);
         tokens.put(Who.UNVERIFIED, unverified.token());
@@ -278,6 +310,10 @@ class AccessMatrixTest extends AbstractBookingTest {
                 Map.entry("passTypeId", (String) passType.getBody().get("id")),
                 Map.entry("passId", (String) pass.getBody().get("id")),
                 Map.entry("purchaseId", UUID.randomUUID().toString()),
+                Map.entry("groupId", (String) group.getBody().get("id")),
+                Map.entry("membershipId", (String) membership.getBody().get("id")),
+                Map.entry("month", YearMonth.now(ZoneId.of("Europe/Madrid")).plusMonths(1).toString()),
+                Map.entry("feeId", (String) fee.getBody().get("id")),
                 Map.entry("courtId", (String) ((List<Map>) rest.exchange("/api/v1/courts", HttpMethod.GET,
                         new HttpEntity<>(bearer(teacherToken)), Map.class).getBody().get("courts")).get(1).get("id")));
     }

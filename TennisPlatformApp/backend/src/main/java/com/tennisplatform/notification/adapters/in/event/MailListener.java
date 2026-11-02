@@ -4,8 +4,11 @@ import com.tennisplatform.booking.application.port.in.BookingCancelled;
 import com.tennisplatform.booking.application.port.in.BookingConfirmed;
 import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 import com.tennisplatform.lesson.application.port.in.LessonCourtChanged;
+import com.tennisplatform.membership.application.port.in.MembershipEnding;
+import com.tennisplatform.membership.application.port.in.MembershipStarted;
 import com.tennisplatform.notification.application.port.in.NotifyBookings;
 import com.tennisplatform.notification.application.port.in.NotifyCourtChanges;
+import com.tennisplatform.notification.application.port.in.NotifyMemberships;
 import com.tennisplatform.notification.application.port.in.NotifyMessages;
 import com.tennisplatform.notification.configuration.NotificationProperties;
 import com.tennisplatform.notification.domain.MessageSent;
@@ -44,13 +47,15 @@ class MailListener implements DisposableBean {
     private final NotifyBookings notify;
     private final NotifyMessages messages;
     private final NotifyCourtChanges courts;
+    private final NotifyMemberships memberships;
     private final Executor executor;
 
     MailListener(NotifyBookings notify, NotifyMessages messages, NotifyCourtChanges courts,
-                 NotificationProperties properties) {
+                 NotifyMemberships memberships, NotificationProperties properties) {
         this.notify = notify;
         this.messages = messages;
         this.courts = courts;
+        this.memberships = memberships;
         this.executor = properties.isSendInBackground() ? queue() : Runnable::run;
     }
 
@@ -72,6 +77,16 @@ class MailListener implements DisposableBean {
     @TransactionalEventListener
     void on(LessonCourtChanged change) {
         submit("court of lesson " + change.lessonId(), () -> courts.changed(change));
+    }
+
+    @TransactionalEventListener
+    void on(MembershipStarted membership) {
+        submit("membership " + membership.membershipId() + " started", () -> memberships.started(membership));
+    }
+
+    @TransactionalEventListener
+    void on(MembershipEnding membership) {
+        submit("membership " + membership.membershipId() + " ending", () -> memberships.ending(membership));
     }
 
     @TransactionalEventListener

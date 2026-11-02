@@ -36,6 +36,7 @@ const NAV: Record<Role, NavItem[]> = {
     { href: "/teacher/availability", label: "Horario", icon: "clock" },
     { href: "/teacher/messages", label: "Mensajes", icon: "mail" },
     { href: "/teacher/passes", label: "Bonos", icon: "ticket", sidebarOnly: true },
+    { href: "/teacher/fees", label: "Mensualidades", icon: "users", sidebarOnly: true },
     { href: "/teacher/summary", label: "Resumen", icon: "chart", sidebarOnly: true },
     { href: "/profile", label: "Perfil", icon: "user" },
   ],

@@ -246,6 +246,45 @@ export class Arrange {
     });
   }
 
+  /**
+   * A weekly series of group lessons (Fase 22) from `date`, outside the hours on purpose. Its
+   * lessons are cancelled afterwards, which also takes them from any group they were given to.
+   */
+  async weeklySeries({ date, time, weeks = 2, capacity = 4 }: { date: LocalDate; time: string; weeks?: number; capacity?: number }) {
+    const teacher = await this.teacher();
+    const first = new Date(zonedToInstant(date, time, ZONE));
+    const dates = Array.from({ length: weeks }, (_, week) => zonedToInstant(addDays(date, week * 7), time, ZONE));
+    const created = ok(await teacher.POST("/teacher/lessons/series", {
+      body: {
+        type: "GROUP", startsAt: first.toISOString(), endsAt: new Date(first.getTime() + 60 * 60_000).toISOString(),
+        capacity, weeks, dates, overrideAvailability: true,
+      },
+    }), "series");
+    for (const lesson of created.lessons) {
+      this.undo.push(async () => teacher.POST("/teacher/lessons/{id}/cancel", { params: { path: { id: lesson.id } } }));
+    }
+    return created.lessons.map((lesson) => lesson.id);
+  }
+
+  /**
+   * A fixed group the test creates through the screens (Fase 28). It is deleted afterwards; one
+   * somebody joined keeps its fees and cannot be, like a pass type somebody bought.
+   */
+  deleteGroupAfterwards(name: string): void {
+    this.undo.push(async () => {
+      const teacher = await this.teacher();
+      const groups = ok(await teacher.GET("/teacher/groups"), "groups");
+      for (const group of groups.items.filter((candidate) => candidate.name === name)) {
+        for (const member of group.members.filter((candidate) => candidate.leftAt === null)) {
+          await teacher.DELETE("/teacher/groups/{id}/members/{userId}", {
+            params: { path: { id: group.id, userId: member.studentUserId } },
+          });
+        }
+        await teacher.DELETE("/teacher/groups/{id}", { params: { path: { id: group.id } } });
+      }
+    });
+  }
+
   /** Seats taken in a lesson, read as the teacher sees them. */
   async confirmedBookingsOf(lessonId: string): Promise<number> {
     const teacher = await this.teacher();

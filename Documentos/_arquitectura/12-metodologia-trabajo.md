@@ -79,7 +79,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 26 | Familias | Descartada | Daniel la descartó el 30/10/2026: no le ve peso en la app |
 | 27 | Bonos | Completada | `41-fase27-analisis-bonos.md`. Tipos de bono de Marcos; el pago se apunta, no se cobra en la app |
 | 27.5 | Pago online | Completada | `42-fase27.5-analisis-pago-online.md`. El alumno compra su bono en la app y lo paga con tarjeta o Bizum en la página de Stripe; el bono nace con el aviso firmado de Stripe. Probado en modo de pruebas: cobrar de verdad es un despliegue con las claves de Marcos (Daniel, 30/10/2026) |
-| 28 | Mensualidades | Pendiente | Cuota por grupo fijo y registro de quién ha pagado. Un alumno con la cuota vencida sigue activo, y Marcos ve un aviso de que se le pasó la fecha (Daniel, 27/10/2026) |
+| 28 | Mensualidades | Completada | `43-fase28-analisis-mensualidades.md`. Grupos fijos de una o varias series semanales con su cuota al mes; el alumno se apunta o lo apunta Marcos, tiene plaza en todas las clases sin bono y la baja libera desde el mes siguiente. Marcos apunta cada mes como pagado o «no se cobra» y ve un aviso de las vencidas en «Hoy», la lista de alumnos y la ficha (Daniel, 31/10/2026) |
 | 29 | Progreso del alumno | Pendiente | Objetivos por nivel que Marcos marca como conseguidos |
 | 30 | PWA y accesibilidad | Pendiente | Instalable, sin conexión sin datos personales, axe sin fallos graves y WebKit en los flujos del alumno |
 | 18 | Revisión final de arquitectura | Pendiente | Informe con severidades; nada se aplica sin aprobación. Va la última |

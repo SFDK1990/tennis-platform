@@ -259,6 +259,25 @@ Apuntar un bono a un alumno que el profesor no gestiona responde 403 `STUDENT_NO
 reserva dice con qué bono se pagó (`passId`, null si no se pidió bono), y el resumen del mes suma
 los bonos vendidos (`sales`, `previousSales`).
 
+Códigos añadidos en la Fase 28:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `GROUP_NOT_FOUND` | 404 | `/teacher/groups/{id}…`, `/me/groups/{id}/membership` | No es un grupo fijo del profesor |
+| `GROUP_ALREADY_EXISTS` | 409 | `POST /teacher/groups`, `PATCH /teacher/groups/{id}` | Ya hay un grupo con ese nombre |
+| `GROUP_IN_USE` | 409 | `DELETE /teacher/groups/{id}` | Alguien se apuntó alguna vez y sus cuotas lo apuntan |
+| `GROUP_FULL` | 409 | `POST /me/groups/{id}/membership`, `POST /teacher/groups/{id}/members`, `POST /teacher/groups/{id}/series` | Alguna clase que queda no tiene plaza; `fullLessons` dice cuáles, y no se reserva ninguna |
+| `ALREADY_IN_GROUP` | 409 | `POST /me/groups/{id}/membership`, `POST /teacher/groups/{id}/members` | Ya está apuntado, aunque se vaya a fin de mes |
+| `NOT_IN_GROUP` | 404 | `DELETE …/membership`, `DELETE …/members/{userId}`, `POST /teacher/fees` | No está apuntado, o ya se está dando de baja |
+| `SERIES_NOT_FOUND` | 404 | `POST /teacher/groups/{id}/series` | No es una serie del profesor con clases por delante |
+| `SERIES_ALREADY_IN_GROUP` | 409 | `POST /teacher/groups/{id}/series` | La serie ya es de un grupo |
+| `FEE_ALREADY_PAID` | 409 | `POST /teacher/fees` | Ese mes ya tiene algo apuntado; se anula antes |
+| `FEE_NOT_FOUND` | 404 | `POST /teacher/fees/{id}/void` | No es una cuota del profesor, o ya estaba anulada |
+
+Apuntarse sin el email verificado responde 403 `EMAIL_NOT_VERIFIED`, y con otro nivel, 422
+`LEVEL_NOT_ALLOWED`, como al reservar. Cada reserva dice si la paga un grupo (`membershipId`), y el
+resumen del mes suma las cuotas cobradas (`fees`, `previousFees`).
+
 Códigos añadidos en la Fase 25.6:
 
 | Código | HTTP | Endpoint típico | Motivo |
@@ -287,7 +306,7 @@ es del profesor, y `LESSON_NOT_IN_SERIES` si se pide el grupo de una clase cread
 
 ## Endpoints cubiertos
 
-72 operaciones tras la Fase 27, que añadió nueve (`passes`), agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. La Fase 20, cancelar un día entero. En la Fase 13 se retiraron
+90 operaciones tras la Fase 28, que añadió quince (`memberships`); la Fase 27 añadió nueve (`passes`), agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. La Fase 20, cancelar un día entero. En la Fase 13 se retiraron
 `PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
 `/calendar`).
 

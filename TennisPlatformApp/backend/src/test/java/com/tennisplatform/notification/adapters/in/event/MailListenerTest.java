@@ -4,6 +4,7 @@ import com.tennisplatform.booking.application.port.in.BookingCancelled;
 import com.tennisplatform.booking.application.port.in.BookingConfirmed;
 import com.tennisplatform.booking.application.port.in.WaitingPlaceLost;
 import com.tennisplatform.notification.application.port.in.NotifyBookings;
+import com.tennisplatform.notification.application.port.in.NotifyMemberships;
 import com.tennisplatform.notification.configuration.NotificationProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.Mockito.mock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** The background queue, which the test profile replaces by the request's own thread. */
@@ -36,7 +38,7 @@ class MailListenerTest {
     private static MailListener inTheBackground(NotifyBookings notify) {
         NotificationProperties properties = new NotificationProperties();
         properties.setSendInBackground(true);
-        return new MailListener(notify, messageId -> { }, change -> { }, properties);
+        return new MailListener(notify, messageId -> { }, change -> { }, mock(NotifyMemberships.class), properties);
     }
 
     private static BookingConfirmed confirmed() {

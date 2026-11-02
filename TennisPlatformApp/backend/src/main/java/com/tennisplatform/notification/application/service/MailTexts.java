@@ -163,6 +163,65 @@ public class MailTexts {
         return new Mail("message-student", messageId.toString(), to, subject, body, null);
     }
 
+    /**
+     * A group the student was signed up to (Fase 28): one email for every lesson booked, with the
+     * first one and how to skip a day. {@code firstLesson} is null when no lesson is left yet.
+     */
+    public Mail joinedGroupToStudent(UUID membershipId, Group group, String to, String studentName, boolean byStudent) {
+        String who = byStudent ? "Te has apuntado" : group.teacherName() + " te ha apuntado";
+        String lessons = group.firstLesson() == null
+                ? "Aún no tiene clases por delante: cuando " + group.teacherName() + " las añada, tendrás plaza en ellas."
+                : "Tienes plaza en sus " + group.upcomingLessons() + " clases que quedan; la primera, el "
+                        + group.firstLesson().day() + " a las " + group.firstLesson().start() + ".";
+        String body = greeting(studentName)
+                + who + " al grupo «" + group.name() + "», de " + euros(group.monthlyFeeCents()) + " al mes.\n\n"
+                + lessons + "\n\n"
+                + "Si un día no puedes ir, cancela esa clase como cualquier reserva, con más de 24 horas. La cuota"
+                + " se paga a " + group.teacherName() + " cada mes.\n\n"
+                + "Tus clases y tus cuotas: " + frontendBaseUrl + "/bookings\n\n"
+                + signature();
+        return new Mail("group-joined-student", membershipId.toString(), to, "Apuntado al grupo " + group.name(),
+                body, null);
+    }
+
+    public Mail joinedGroupToTeacher(UUID membershipId, Group group, String to, String student) {
+        String body = "Hola:\n\n"
+                + student + " se ha apuntado al grupo «" + group.name() + "» y tiene plaza en sus clases.\n\n"
+                + "Sus cuotas: " + frontendBaseUrl + "/teacher/fees\n\n"
+                + signature();
+        return new Mail("group-joined-teacher", membershipId.toString(), to, "Nuevo en " + group.name(), body, null);
+    }
+
+    /** The student left: the teacher learns which day their seats are free from. */
+    public Mail leftGroupToTeacher(UUID membershipId, Group group, Instant leftAt, String to, String student) {
+        String body = "Hola:\n\n"
+                + student + " se ha dado de baja del grupo «" + group.name() + "». Sigue en sus clases hasta fin de"
+                + " mes; desde el " + DAY.format(leftAt.atZone(group.zone())) + " sus plazas quedan libres.\n\n"
+                + signature();
+        return new Mail("group-left-teacher", membershipId.toString(), to, "Baja en " + group.name(), body, null);
+    }
+
+    /** The teacher took the student out of the group. */
+    public Mail leftGroupToStudent(UUID membershipId, Group group, Instant leftAt, String to, String studentName) {
+        String body = greeting(studentName)
+                + group.teacherName() + " te ha dado de baja del grupo «" + group.name() + "». Sigues en sus clases"
+                + " hasta fin de mes; desde el " + DAY.format(leftAt.atZone(group.zone()))
+                + " ya no tienes plaza en ellas.\n\n"
+                + "Tus reservas: " + frontendBaseUrl + "/bookings\n\n"
+                + signature();
+        return new Mail("group-left-student", membershipId.toString(), to, "Baja del grupo " + group.name(), body,
+                null);
+    }
+
+    /** A fixed group as the emails describe it. */
+    public record Group(String name, int monthlyFeeCents, int upcomingLessons, Lesson firstLesson, ZoneId zone,
+                        String teacherName) {
+    }
+
+    private static String euros(int cents) {
+        return String.format(SPANISH, "%d,%02d €", cents / 100, cents % 100);
+    }
+
     private Mail.Calendar calendar(CalendarInvite.Method method, Lesson lesson, String reason) {
         String summary = "Clase de tenis con " + lesson.teacherName();
         String content = CalendarInvite.of(method, lesson.bookingId() + "@tennis-platform", lesson.startsAt(),

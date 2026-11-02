@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { StudentHistory } from "@/modules/booking/components/StudentHistory";
+import { StudentGroups } from "@/modules/memberships/components/StudentGroups";
 import { useTeacherPasses } from "@/modules/passes/api";
 import { StudentPasses } from "@/modules/passes/components/StudentPasses";
 import { useStudentDetail } from "@/modules/student/api";
@@ -12,7 +13,7 @@ import { useTeacherZone } from "@/modules/teacher/api";
 import { Icon } from "@/shared/ui/Icon";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
-/** The student's record: who they are, their level and notes, their passes (Fase 27) and their bookings (Fase 23). */
+/** The student's record: who they are, their level and notes, their passes (Fase 27), their groups and fees (Fase 28) and their bookings (Fase 23). */
 export default function StudentPage() {
   const { id } = useParams<{ id: string }>();
   const student = useStudentDetail(id);
@@ -45,6 +46,10 @@ export default function StudentPage() {
           <section aria-labelledby="passes-heading" className="flex flex-col gap-3">
             <h2 id="passes-heading" className="font-display text-2xl font-semibold">Bonos</h2>
             <StudentPasses studentUserId={id} zone={zone} />
+          </section>
+          <section aria-labelledby="groups-heading" className="flex flex-col gap-3">
+            <h2 id="groups-heading" className="font-display text-2xl font-semibold">Grupos fijos y mensualidades</h2>
+            <StudentGroups studentUserId={id} zone={zone} />
           </section>
           <section aria-labelledby="history-heading" className="flex flex-col gap-3">
             <h2 id="history-heading" className="font-display text-2xl font-semibold">Historial</h2>
