@@ -27,7 +27,7 @@
         <swagger-request-validator.version>2.46.1</swagger-request-validator.version>
         <spotless.version>3.10.4</spotless.version>
         <spotbugs.version>4.10.5.0</spotbugs.version>
-        <jacoco.version>0.8.15</jacoco.version>
+        <jacoco.version>0.8.16</jacoco.version>
     </properties>
 
     <dependencies>
