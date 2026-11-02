@@ -21,7 +21,7 @@ que el nivel lo decide Marcos: el progreso le ayuda a decidirlo, no lo cambia so
 
 ## Decisiones propuestas
 
-### 1. Si el alumno ve su progreso
+### 1. Si el alumno ve su progreso — **A** (Daniel, 02/11/2026)
 
 - **A (te la recomiendo). Sí.** En su perfil, «Mi progreso»: los objetivos de su nivel, los
   conseguidos con su fecha y una barra «4 de 7». Es lo que hace que el alumno quiera volver a la
@@ -30,19 +30,19 @@ que el nivel lo decide Marcos: el progreso le ayuda a decidirlo, no lo cambia so
 
 Las notas privadas siguen sin verse, y los objetivos de texto libre de la Fase 23 también.
 
-### 2. Qué estados tiene un objetivo para un alumno
+### 2. Qué estados tiene un objetivo para un alumno — **A** (Daniel, 02/11/2026)
 
 - **A (te la recomiendo). Dos: pendiente o conseguido**, con el día. Un clic en la ficha.
 - **B. Tres: pendiente, trabajándolo y conseguido.** Da más detalle, pero Marcos tiene que tocar
   cada objetivo dos veces y «trabajándolo» ya lo dicen los objetivos de texto libre.
 
-### 3. Qué pasa con lo conseguido cuando el alumno cambia de nivel
+### 3. Qué pasa con lo conseguido cuando el alumno cambia de nivel — **A** (Daniel, 02/11/2026)
 
 - **A (te la recomiendo). Se queda.** «Mi progreso» enseña el nivel actual y, debajo, los anteriores
   con lo que consiguió en cada uno. Si Marcos le baja de nivel, encuentra marcado lo que ya tenía.
 - **B. Se empieza de cero** en el nivel nuevo, y lo anterior sólo lo ve Marcos en la ficha.
 
-### 4. Los objetivos con que se empieza
+### 4. Los objetivos con que se empieza — **A** (Daniel, 02/11/2026)
 
 - **A (te la recomiendo). Ninguno: los escribe Marcos.** Es su método, y la pantalla de niveles,
   vacía, le guía a escribirlos (como las pantallas vacías de la Fase 15.5).
@@ -50,7 +50,7 @@ Las notas privadas siguen sin verse, y los objetivos de texto libre de la Fase 2
   golpes desde el fondo»), que el bootstrap crea y Marcos cambia. Se estrena antes, pero son objetivos
   que no ha escrito él.
 
-### 5. Si el alumno se entera de que ha conseguido uno
+### 5. Si el alumno se entera de que ha conseguido uno — **A** (Daniel, 02/11/2026)
 
 - **A (te la recomiendo). Un aviso en la app**, en el tablón de la Fase 24: «Marcos ha marcado
   "saque con segundo saque liftado" como conseguido». Sin correo.
@@ -163,3 +163,31 @@ mensajes.
 4. «Mi progreso» del alumno y el aviso.
 5. Borrado, exportación y `DeleteMyAccountTest`.
 6. E2E y documentación: `03`, `10-diagrama-er.md`, `11-contrato-api.md` y `CLAUDE.md`.
+
+## Decisiones tomadas al implementar
+
+- **Quitar un objetivo siempre lo retira**, lo haya conseguido alguien o no: `DELETE
+  /teacher/objectives/{id}` responde 204 en los dos casos. Para nadie se distingue un retirado que
+  nadie consiguió de uno borrado, y así no hace falta preguntar a `student` desde `teacher` ni
+  sortear la transacción que PostgreSQL aborta al chocar con la clave ajena. Lo que impide borrar
+  uno conseguido sigue siendo la base (`ON DELETE RESTRICT`), y un test lo comprueba.
+- **El título es único entre los objetivos en vigor del nivel** (índice parcial): uno retirado deja
+  su título libre.
+- **Los objetivos viajan dentro de los niveles** (`GET /levels`, que lee cualquiera con sesión): son
+  los mismos para todos los alumnos del nivel. Los retirados no salen ahí.
+- **El progreso de la ficha tiene su propia ruta**, `GET /teacher/students/{userId}/progress`, en
+  lugar de ir dentro de `StudentDetail`: lo pinta otra parte de la pantalla y se vuelve a pedir al
+  marcar. Lo lee el profesor mientras exista la relación, como la ficha; marcar exige gestionarlo.
+  Un alumno ajeno responde 403 `STUDENT_NOT_MANAGED`, como la ficha, y no 404.
+- **El cuerpo de `PUT …/objectives/{objectiveId}` es opcional**: sin él, el día es hoy en la zona
+  del profesor. Desmarcar uno sin marcar responde 204.
+- **El aviso es un mensaje con la audiencia `PROGRESS`** dirigido a un solo alumno: sale en su
+  tablón y en su exportación como los demás, se olvida al borrar la cuenta igual, no lleva correo y
+  no aparece entre los mensajes enviados de Marcos, que tampoco puede escribir uno con esa
+  audiencia. Lo escribe `notification` al oír `ObjectiveAchieved` tras el commit, en una
+  transacción propia, y sólo la primera vez que se marca.
+- **«Mi progreso» va en el perfil del alumno**: su nivel con la barra y, debajo, los anteriores en
+  que consiguió algo. La ficha enseña todos los niveles con objetivos, con una casilla por objetivo.
+  La lista de alumnos muestra «Nivel completado».
+- **Un nivel sin objetivos no está completado**: `completed` pide al menos uno.
+

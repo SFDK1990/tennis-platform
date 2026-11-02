@@ -595,6 +595,39 @@ ALTER TABLE bookings ADD COLUMN membership_id UUID REFERENCES group_memberships(
 CREATE INDEX ix_bookings_membership ON bookings (membership_id) WHERE membership_id IS NOT NULL;
 ```
 
+## Changelog 6f — objetivos y progreso (Fase 29)
+
+`v18-progress.yaml`: `level_objectives` es de `teacher`, junto a los niveles, y
+`student_objectives` de `student`, junto a la ficha. Razonamiento en
+`44-fase29-analisis-progreso.md`. Quitar un objetivo lo retira (`retired_at`); uno conseguido no se
+puede borrar porque `student_objectives` lo restringe, y por eso un nivel con objetivos conseguidos
+está en uso. El aviso al alumno es un mensaje con la audiencia `PROGRESS`.
+
+```sql
+CREATE TABLE level_objectives (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    level_id    UUID NOT NULL REFERENCES levels(id) ON DELETE CASCADE,
+    title       VARCHAR(120) NOT NULL,
+    position    INT NOT NULL,
+    retired_at  TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX ux_level_objectives_live_title ON level_objectives (level_id, title)
+    WHERE retired_at IS NULL;
+CREATE INDEX ix_level_objectives_level ON level_objectives (level_id, position);
+
+CREATE TABLE student_objectives (
+    student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+    objective_id     UUID NOT NULL REFERENCES level_objectives(id) ON DELETE RESTRICT,
+    achieved_on      DATE NOT NULL,
+    PRIMARY KEY (student_user_id, objective_id)
+);
+CREATE INDEX ix_student_objectives_objective ON student_objectives (objective_id);
+
+ALTER TABLE messages DROP CONSTRAINT ck_messages_audience;
+ALTER TABLE messages ADD CONSTRAINT ck_messages_audience
+    CHECK (audience IN ('ALL', 'LEVEL', 'LESSON', 'SERIES', 'PROGRESS'));
+```
+
 ## Changelog 6b — lista de espera (Fase 21)
 
 `v9-booking-waiting-list.yaml`. Razonamiento en `34-fase21-analisis-lista-espera.md`.
