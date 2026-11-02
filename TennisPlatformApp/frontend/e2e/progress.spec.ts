@@ -21,10 +21,11 @@ test("el profesor pone objetivos a un nivel, marca uno en la ficha y el alumno v
 
     await openFromMenu(page, "Alumnos");
     await page.getByRole("link", { name: student.fullName }).click();
-    const rally = page.getByRole("checkbox", { name: "Peloteo de diez golpes" });
+    const ofTheLevel = page.getByRole("group", { name: new RegExp(level.name) });
+    const rally = ofTheLevel.getByRole("checkbox", { name: "Peloteo de diez golpes" });
     await rally.check();
     await expect(rally).toBeChecked();
-    await expect(page.getByRole("group", { name: new RegExp(level.name) })).toContainText("1 de 2");
+    await expect(ofTheLevel).toContainText("1 de 2");
 
     await page.getByRole("button", { name: "Salir" }).click();
     await signIn(page, student.email, student.password);

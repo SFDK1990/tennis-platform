@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMarkObjective, useStudentProgress, useUnmarkObjective, type LevelProgress } from "@/modules/student/api";
 import { formatShortDay } from "@/shared/time";
 import { Chip } from "@/shared/ui/Chip";
@@ -14,6 +15,9 @@ export function ProgressRecord({ studentUserId, managed }: { studentUserId: stri
   const progress = useStudentProgress(studentUserId);
   const mark = useMarkObjective(studentUserId);
   const unmark = useUnmarkObjective(studentUserId);
+  // What the teacher just ticked shows at once; the record read again after the change replaces it.
+  const [ticked, setTicked] = useState<{ data: unknown; byId: Record<string, boolean> }>({ data: null, byId: {} });
+  const override = ticked.data === progress.data ? ticked.byId : {};
   const levels = progress.data?.levels ?? [];
   const current = levels.find((level) => level.current);
   const busy = mark.isPending || unmark.isPending;
@@ -45,8 +49,13 @@ export function ProgressRecord({ studentUserId, managed }: { studentUserId: stri
             {level.objectives.map((objective) => (
               <li key={objective.id}>
                 <label className="flex min-h-11 items-center gap-3">
-                  <input type="checkbox" className="size-5 accent-court" checked={objective.achievedOn !== null}
-                    onChange={(event) => (event.target.checked ? mark : unmark).mutate(objective.id)} />
+                  <input type="checkbox" className="size-5 accent-court"
+                    checked={override[objective.id] ?? objective.achievedOn !== null}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      setTicked({ data: progress.data, byId: { ...override, [objective.id]: checked } });
+                      (checked ? mark : unmark).mutate(objective.id);
+                    }} />
                   <span className="flex-1">{objective.title}</span>
                   {objective.achievedOn ? (
                     <span className="text-sm text-muted">{formatShortDay(objective.achievedOn)}</span>
