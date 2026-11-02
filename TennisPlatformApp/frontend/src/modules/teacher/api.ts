@@ -38,3 +38,26 @@ export function useDeleteLevel() {
     mutationFn: async (id: string) => unwrap(await api.DELETE("/teacher/levels/{id}", { params: { path: { id } } })),
   });
 }
+
+/** The objectives of each level (Fase 29), which travel inside the levels. */
+export function useAddObjective() {
+  return useMutation({
+    mutationFn: async ({ levelId, title }: { levelId: string; title: string }) =>
+      unwrap(await api.POST("/teacher/levels/{id}/objectives", { params: { path: { id: levelId } }, body: { title } })),
+  });
+}
+
+export function useUpdateObjective() {
+  return useMutation({
+    mutationFn: async ({ id, title, position }: { id: string; title?: string; position?: number }) =>
+      unwrap(await api.PATCH("/teacher/objectives/{id}", { params: { path: { id } }, body: { title, position } })),
+  });
+}
+
+/** Retires it: whoever achieved it keeps it. */
+export function useRetireObjective() {
+  return useMutation({
+    mutationFn: async (id: string) =>
+      unwrap(await api.DELETE("/teacher/objectives/{id}", { params: { path: { id } } })),
+  });
+}

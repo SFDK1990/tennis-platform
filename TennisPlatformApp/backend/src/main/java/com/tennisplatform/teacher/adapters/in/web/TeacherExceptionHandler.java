@@ -6,6 +6,9 @@ import com.tennisplatform.teacher.domain.InvalidTeacherProfileException;
 import com.tennisplatform.teacher.domain.LevelAlreadyExistsException;
 import com.tennisplatform.teacher.domain.LevelInUseException;
 import com.tennisplatform.teacher.domain.LevelNotFoundException;
+import com.tennisplatform.teacher.domain.InvalidObjectiveException;
+import com.tennisplatform.teacher.domain.ObjectiveAlreadyExistsException;
+import com.tennisplatform.teacher.domain.ObjectiveNotFoundException;
 import com.tennisplatform.teacher.domain.TeacherProfileNotFoundException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -55,6 +58,22 @@ class TeacherExceptionHandler {
     @ExceptionHandler(InvalidLevelException.class)
     ProblemDetail handleInvalidLevel(InvalidLevelException e) {
         return Problems.of(HttpStatus.BAD_REQUEST, "Invalid level", e.getMessage(), "VALIDATION_ERROR");
+    }
+
+    @ExceptionHandler(ObjectiveNotFoundException.class)
+    ProblemDetail handleObjectiveNotFound(ObjectiveNotFoundException e) {
+        return Problems.of(HttpStatus.NOT_FOUND, "Objective not found", e.getMessage(), "OBJECTIVE_NOT_FOUND");
+    }
+
+    @ExceptionHandler(ObjectiveAlreadyExistsException.class)
+    ProblemDetail handleObjectiveExists(ObjectiveAlreadyExistsException e) {
+        return Problems.of(HttpStatus.CONFLICT, "Objective already exists", e.getMessage(),
+                "OBJECTIVE_ALREADY_EXISTS");
+    }
+
+    @ExceptionHandler(InvalidObjectiveException.class)
+    ProblemDetail handleInvalidObjective(InvalidObjectiveException e) {
+        return Problems.of(HttpStatus.BAD_REQUEST, "Invalid objective", e.getMessage(), "VALIDATION_ERROR");
     }
 
     @ExceptionHandler(InvalidTeacherProfileException.class)

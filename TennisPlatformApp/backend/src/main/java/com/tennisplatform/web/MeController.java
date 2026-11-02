@@ -13,6 +13,7 @@ import com.tennisplatform.student.application.port.in.GetStudentProfile;
 import com.tennisplatform.student.application.port.in.QueryManagedStudent;
 import com.tennisplatform.student.application.port.in.StudentProfileUpdate;
 import com.tennisplatform.student.application.port.in.StudentPhotos;
+import com.tennisplatform.student.application.port.in.StudentProgress;
 import com.tennisplatform.student.application.port.in.StudentProfileView;
 import com.tennisplatform.student.application.port.in.UpdateStudentProfile;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
@@ -75,6 +76,7 @@ class MeController {
     private final QueryPasses passes;
     private final BuyPasses purchases;
     private final JoinGroups groups;
+    private final StudentProgress progress;
     private final Clock clock;
 
     MeController(GetCurrentUser getCurrentUser, GetStudentProfile studentProfiles,
@@ -82,7 +84,7 @@ class MeController {
                  UpdateTeacherProfile updateTeacherProfile, GetBookings bookings,
                  QueryManagedStudent managedStudents, QueryLevels levels, GetMessages messages,
                  StudentPhotos photos, QueryPasses passes, BuyPasses purchases, JoinGroups groups,
-                 Clock clock) {
+                 StudentProgress progress, Clock clock) {
         this.getCurrentUser = getCurrentUser;
         this.studentProfiles = studentProfiles;
         this.updateStudentProfile = updateStudentProfile;
@@ -96,6 +98,7 @@ class MeController {
         this.passes = passes;
         this.purchases = purchases;
         this.groups = groups;
+        this.progress = progress;
         this.clock = clock;
     }
 
@@ -130,7 +133,8 @@ class MeController {
                 .body(new MyDataExport(clock.instant(), me(caller), exported, records, received, photoOf(caller),
                         caller.isStudent() ? passes.ofStudent(caller.id()) : List.of(),
                         caller.isStudent() ? purchases.allOf(caller.id()) : List.of(),
-                        caller.isStudent() ? groups.ofStudent(caller.id()) : List.of()));
+                        caller.isStudent() ? groups.ofStudent(caller.id()) : List.of(),
+                        caller.isStudent() ? progress.ofStudent(caller.id()).levels() : List.of()));
     }
 
     /**

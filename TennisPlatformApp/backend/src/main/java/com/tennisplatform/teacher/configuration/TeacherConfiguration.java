@@ -3,6 +3,7 @@ package com.tennisplatform.teacher.configuration;
 import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.UpdateTeacherProfile;
 import com.tennisplatform.teacher.application.port.out.LevelRepository;
+import com.tennisplatform.teacher.application.port.out.ObjectiveRepository;
 import com.tennisplatform.teacher.application.port.out.TeacherProfileRepository;
 import com.tennisplatform.teacher.application.service.LevelsService;
 import com.tennisplatform.teacher.application.service.GetTeacherProfileService;
@@ -10,6 +11,8 @@ import com.tennisplatform.teacher.application.service.UpdateTeacherProfileServic
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Clock;
 
 /**
  * Wires the use cases by hand, like {@code IdentityConfiguration} does, so the application layer
@@ -26,8 +29,9 @@ public class TeacherConfiguration {
 
     /** One bean for both ports: the module manages the levels and answers questions about them. */
     @Bean
-    public LevelsService levelsService(LevelRepository levels, GetTeacherProfile teacherProfile) {
-        return new LevelsService(levels, teacherProfile);
+    public LevelsService levelsService(LevelRepository levels, ObjectiveRepository objectives,
+                                       GetTeacherProfile teacherProfile, Clock clock) {
+        return new LevelsService(levels, objectives, teacherProfile, clock);
     }
 
     @Bean

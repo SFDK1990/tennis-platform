@@ -74,6 +74,7 @@ final class Audiences {
             case LEVEL -> level(teacherUserId, levelId);
             case LESSON -> lesson(teacherUserId, lessonId);
             case SERIES -> series(teacherUserId, lessonId);
+            case PROGRESS -> throw new IllegalArgumentException("The teacher does not write progress notices");
         };
     }
 

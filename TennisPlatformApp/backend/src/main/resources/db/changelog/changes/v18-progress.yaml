@@ -1,0 +1,61 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: v18-progress
+      author: tennis-platform
+      comment: >-
+        The objectives of each level and the ones each student has achieved
+        (44-fase29-analisis-progreso.md). Removing an objective retires it (retired_at) instead of
+        deleting it, so whoever achieved it still sees it; the title is unique among the live
+        objectives of a level only. An achieved objective cannot be deleted: the foreign key from
+        student_objectives restricts it, which also makes a level with achieved objectives one in
+        use (deleting the level cascades to its objectives and stops there). An achievement is the
+        student, the objective and the day: deleting the account deletes the student's rows.
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              CREATE TABLE level_objectives (
+                  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  level_id    UUID NOT NULL REFERENCES levels(id) ON DELETE CASCADE,
+                  title       VARCHAR(120) NOT NULL,
+                  position    INT NOT NULL,
+                  retired_at  TIMESTAMPTZ
+              );
+              CREATE UNIQUE INDEX ux_level_objectives_live_title ON level_objectives (level_id, title)
+                  WHERE retired_at IS NULL;
+              CREATE INDEX ix_level_objectives_level ON level_objectives (level_id, position);
+
+              CREATE TABLE student_objectives (
+                  student_user_id  UUID NOT NULL REFERENCES student_profiles(user_id),
+                  objective_id     UUID NOT NULL REFERENCES level_objectives(id) ON DELETE RESTRICT,
+                  achieved_on      DATE NOT NULL,
+                  PRIMARY KEY (student_user_id, objective_id)
+              );
+              CREATE INDEX ix_student_objectives_objective ON student_objectives (objective_id);
+      rollback:
+        - sql:
+            sql: |
+              DROP TABLE student_objectives;
+              DROP TABLE level_objectives;
+
+  - changeSet:
+      id: v18-progress-notices
+      author: tennis-platform
+      comment: >-
+        The notice on a student's board when the teacher marks an objective as achieved is a message
+        to that one student with its own audience (Fase 29, decision 5).
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: |
+              ALTER TABLE messages DROP CONSTRAINT ck_messages_audience;
+              ALTER TABLE messages ADD CONSTRAINT ck_messages_audience
+                  CHECK (audience IN ('ALL', 'LEVEL', 'LESSON', 'SERIES', 'PROGRESS'));
+      rollback:
+        - sql:
+            sql: |
+              DELETE FROM messages WHERE audience = 'PROGRESS';
+              ALTER TABLE messages DROP CONSTRAINT ck_messages_audience;
+              ALTER TABLE messages ADD CONSTRAINT ck_messages_audience
+                  CHECK (audience IN ('ALL', 'LEVEL', 'LESSON', 'SERIES'));

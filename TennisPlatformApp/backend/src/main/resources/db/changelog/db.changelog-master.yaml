@@ -37,3 +37,5 @@ databaseChangeLog:
       file: db/changelog/changes/v16-pass-purchases.yaml
   - include:
       file: db/changelog/changes/v17-memberships.yaml
+  - include:
+      file: db/changelog/changes/v18-progress.yaml

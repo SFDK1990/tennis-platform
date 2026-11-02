@@ -10,6 +10,7 @@ import com.tennisplatform.student.application.port.in.ManageStudent;
 import com.tennisplatform.student.application.port.in.ManagedStudentDetailView;
 import com.tennisplatform.student.application.port.in.ManagedStudentView;
 import com.tennisplatform.student.application.port.in.StudentPhotos;
+import com.tennisplatform.student.application.port.in.StudentProgress;
 import com.tennisplatform.shared.domain.ResultPage;
 import com.tennisplatform.student.domain.StudentProfileNotFoundException;
 import com.tennisplatform.shared.domain.ForbiddenOperationException;
@@ -51,13 +52,15 @@ class TeacherStudentsController {
     private final ManageStudent manageStudent;
     private final UpdateStudentRecord records;
     private final StudentPhotos photos;
+    private final StudentProgress progress;
 
     TeacherStudentsController(GetManagedStudents managedStudents, ManageStudent manageStudent,
-                              UpdateStudentRecord records, StudentPhotos photos) {
+                              UpdateStudentRecord records, StudentPhotos photos, StudentProgress progress) {
         this.managedStudents = managedStudents;
         this.manageStudent = manageStudent;
         this.records = records;
         this.photos = photos;
+        this.progress = progress;
     }
 
     /** The students this teacher manages. {@code query} narrows that set, and only that set. */
@@ -69,8 +72,9 @@ class TeacherStudentsController {
         requireTeacher(caller);
         ResultPage<ManagedStudentView> found = managedStudents.list(caller.id(), query, Math.max(page, 0),
                 Math.clamp(size, 1, MAX_PAGE_SIZE));
-        return StudentSummaryPageResponse.from(found,
-                photos.withPhoto(found.items().stream().map(ManagedStudentView::userId).toList()));
+        List<UUID> ids = found.items().stream().map(ManagedStudentView::userId).toList();
+        return StudentSummaryPageResponse.from(found, photos.withPhoto(ids),
+                progress.withLevelCompleted(caller.id(), ids));
     }
 
     /**
@@ -114,7 +118,8 @@ class TeacherStudentsController {
                                   @PathVariable UUID userId) {
         requireTeacher(caller);
         ManagedStudentView managed = manageStudent.manage(caller.id(), userId);
-        return StudentSummaryResponse.from(managed, photos.withPhoto(List.of(managed.userId())));
+        return StudentSummaryResponse.from(managed, photos.withPhoto(List.of(managed.userId())),
+                progress.withLevelCompleted(caller.id(), List.of(managed.userId())));
     }
 
     @DeleteMapping("/{userId}/manage")

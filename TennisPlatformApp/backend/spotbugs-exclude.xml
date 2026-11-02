@@ -83,8 +83,15 @@
 
     <!-- The same false positive, on MessageRepository (Fase 24), scoped to the one field. -->
     <Match>
-        <Class name="~com\.tennisplatform\.notification\.application\.service\.(MessagesService|MessageNotifications)"/>
+        <Class name="~com\.tennisplatform\.notification\.application\.service\.(MessagesService|MessageNotifications|ProgressNotifications)"/>
         <Field name="messages"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- The same false positive, on AchievementRepository (Fase 29), scoped to the one field. -->
+    <Match>
+        <Class name="~com\.tennisplatform\.student\.application\.service\.(DeleteMyAccountService|StudentProgressService)"/>
+        <Field name="achievements"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 

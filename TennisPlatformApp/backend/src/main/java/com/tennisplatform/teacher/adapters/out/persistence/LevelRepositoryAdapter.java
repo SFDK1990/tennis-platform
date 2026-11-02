@@ -55,7 +55,7 @@ class LevelRepositoryAdapter implements LevelRepository {
             jpa.flush();
         } catch (DataIntegrityViolationException e) {
             if (sqlState(e, FOREIGN_KEY_VIOLATION)) {
-                throw new LevelInUseException("A student or a lesson still has this level");
+                throw new LevelInUseException("A student, a lesson or an achieved objective still has this level");
             }
             throw e;
         }

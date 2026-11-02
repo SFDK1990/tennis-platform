@@ -5,6 +5,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { useManagedStudents, useManageStudent, useStopManaging, useStudentLookup } from "@/modules/student/api";
 import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
 import { Button } from "@/shared/ui/Button";
+import { Chip } from "@/shared/ui/Chip";
 import { Field } from "@/shared/ui/Field";
 import { ErrorNotice, Notice } from "@/shared/ui/Notice";
 
@@ -70,6 +71,7 @@ export function StudentsManager({ flagFor }: { flagFor?: (studentUserId: string)
                     </Link>
                     <span className="block truncate text-sm text-muted">{student.email}</span>
                   </span>
+                  {student.levelCompleted ? <Chip tone="success">Nivel completado</Chip> : null}
                   {flagFor?.(student.userId)}
                 </span>
                 {leaving === student.userId ? (

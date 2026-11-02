@@ -10,6 +10,8 @@ import com.tennisplatform.notification.application.port.in.NotifyBookings;
 import com.tennisplatform.notification.application.port.in.NotifyCourtChanges;
 import com.tennisplatform.notification.application.port.in.NotifyMemberships;
 import com.tennisplatform.notification.application.port.in.NotifyMessages;
+import com.tennisplatform.notification.application.port.in.NotifyProgress;
+import com.tennisplatform.student.application.port.in.ObjectiveAchieved;
 import com.tennisplatform.notification.configuration.NotificationProperties;
 import com.tennisplatform.notification.domain.MessageSent;
 import org.slf4j.Logger;
@@ -48,14 +50,16 @@ class MailListener implements DisposableBean {
     private final NotifyMessages messages;
     private final NotifyCourtChanges courts;
     private final NotifyMemberships memberships;
+    private final NotifyProgress progress;
     private final Executor executor;
 
     MailListener(NotifyBookings notify, NotifyMessages messages, NotifyCourtChanges courts,
-                 NotifyMemberships memberships, NotificationProperties properties) {
+                 NotifyMemberships memberships, NotifyProgress progress, NotificationProperties properties) {
         this.notify = notify;
         this.messages = messages;
         this.courts = courts;
         this.memberships = memberships;
+        this.progress = progress;
         this.executor = properties.isSendInBackground() ? queue() : Runnable::run;
     }
 
@@ -87,6 +91,11 @@ class MailListener implements DisposableBean {
     @TransactionalEventListener
     void on(MembershipEnding membership) {
         submit("membership " + membership.membershipId() + " ending", () -> memberships.ending(membership));
+    }
+
+    @TransactionalEventListener
+    void on(ObjectiveAchieved achievement) {
+        submit("objective " + achievement.objectiveId() + " achieved", () -> progress.achieved(achievement));
     }
 
     @TransactionalEventListener

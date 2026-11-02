@@ -22,21 +22,25 @@ final class StudentDtos {
      * is what makes it impossible to leak them in a listing by mistake
      * (02-arquitectura.md).
      */
+    /** {@code levelCompleted}: every objective of their level is achieved (Fase 29). */
     record StudentSummaryResponse(UUID userId, String fullName, String email,
-                                  String managedStatus, Instant managedAt, boolean hasPhoto) {
+                                  String managedStatus, Instant managedAt, boolean hasPhoto,
+                                  boolean levelCompleted) {
 
-        static StudentSummaryResponse from(ManagedStudentView view, Set<UUID> withPhoto) {
+        static StudentSummaryResponse from(ManagedStudentView view, Set<UUID> withPhoto, Set<UUID> completed) {
             return new StudentSummaryResponse(view.userId(), view.fullName(), view.email(),
-                    view.managedStatus(), view.managedAt(), withPhoto.contains(view.userId()));
+                    view.managedStatus(), view.managedAt(), withPhoto.contains(view.userId()),
+                    completed.contains(view.userId()));
         }
     }
 
     record StudentSummaryPageResponse(List<StudentSummaryResponse> items, int page, int size,
                                       long totalItems) {
 
-        static StudentSummaryPageResponse from(ResultPage<ManagedStudentView> page, Set<UUID> withPhoto) {
+        static StudentSummaryPageResponse from(ResultPage<ManagedStudentView> page, Set<UUID> withPhoto,
+                                               Set<UUID> completed) {
             return new StudentSummaryPageResponse(
-                    page.items().stream().map(view -> StudentSummaryResponse.from(view, withPhoto)).toList(),
+                    page.items().stream().map(view -> StudentSummaryResponse.from(view, withPhoto, completed)).toList(),
                     page.page(), page.size(), page.totalItems());
         }
     }

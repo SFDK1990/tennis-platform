@@ -563,6 +563,104 @@ paths:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
 
+  /teacher/students/{userId}/progress:
+    get:
+      tags: [students]
+      summary: El progreso del alumno en todos los niveles (Fase 29)
+      description: Para el profesor que lo gestiona o lo gestiono, como la ficha.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProgress" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/students/{userId}/objectives/{objectiveId}:
+    put:
+      tags: [students]
+      summary: Marca un objetivo como conseguido
+      description: >-
+        De cualquier nivel, no solo del actual. La primera vez deja un aviso en el tablon del alumno,
+        sin correo; marcarlo otra vez solo cambia el dia.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/ObjectiveId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarkObjectiveRequest" }
+      responses:
+        "200":
+          description: El progreso del alumno
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProgress" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: "OBJECTIVE_NOT_FOUND: no es un objetivo en vigor de sus niveles"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "422":
+          description: "ACHIEVED_ON_IN_FUTURE"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [students]
+      summary: Desmarca un objetivo
+      description: No deja rastro; desmarcar uno sin marcar no hace nada.
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/ObjectiveId"
+      responses:
+        "204":
+          description: Desmarcado
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "404":
+          description: OBJECTIVE_NOT_FOUND
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /me/progress:
+    get:
+      tags: [students]
+      summary: «Mi progreso» del alumno (Fase 29)
+      description: >-
+        Su nivel y los anteriores en que consiguio algo. Sin nivel o sin profesor, la lista sale
+        vacia o sin nivel actual.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentProgress" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /levels:
     get:
       tags: [teacher]
@@ -640,7 +738,85 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409":
-          description: "LEVEL_IN_USE: algun alumno o alguna clase lo tiene"
+          description: "LEVEL_IN_USE: algun alumno o alguna clase lo tiene, o algun alumno consiguio uno de sus objetivos"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/levels/{id}/objectives:
+    post:
+      tags: [teacher]
+      summary: Anade un objetivo al final de la lista del nivel (Fase 29)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateObjectiveRequest" }
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LevelObjective" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "OBJECTIVE_ALREADY_EXISTS: el nivel ya tiene un objetivo con ese titulo"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+
+  /teacher/objectives/{id}:
+    patch:
+      tags: [teacher]
+      summary: Renombra un objetivo o lo mueve de puesto dentro de su nivel
+      description: Renombrarlo cambia lo que ven todos, tambien quien ya lo consiguio.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateObjectiveRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LevelObjective" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: "OBJECTIVE_NOT_FOUND"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+        "409":
+          description: "OBJECTIVE_ALREADY_EXISTS"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+    delete:
+      tags: [teacher]
+      summary: Retira un objetivo de la lista del nivel
+      description: >-
+        Se retira, no se borra: deja de salir como pendiente para nadie, y quien lo consiguio lo sigue
+        viendo conseguido.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Retirado
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: "OBJECTIVE_NOT_FOUND"
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/ProblemDetails" }
@@ -2504,6 +2680,11 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    ObjectiveId:
+      name: objectiveId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     Page:
       name: page
       in: query
@@ -2673,7 +2854,7 @@ components:
 
     MyDataExport:
       type: object
-      required: [exportedAt, account, bookings, records, messages, photo, passes, passPurchases, memberships]
+      required: [exportedAt, account, bookings, records, messages, photo, passes, passPurchases, memberships, progress]
       properties:
         exportedAt: { type: string, format: date-time }
         account: { $ref: "#/components/schemas/MeResponse" }
@@ -2716,14 +2897,82 @@ components:
           type: array
           description: Los grupos fijos del alumno, con sus meses y lo que se apunto de ellos (Fase 28).
           items: { $ref: "#/components/schemas/Membership" }
+        progress:
+          type: array
+          description: Los objetivos de sus niveles y los que ha conseguido, como en «Mi progreso» (Fase 29).
+          items: { $ref: "#/components/schemas/LevelProgress" }
 
     Level:
       type: object
-      required: [id, name, position]
+      required: [id, name, position, objectives]
       properties:
         id: { type: string, format: uuid }
         name: { type: string, maxLength: 60 }
         position: { type: integer, minimum: 1 }
+        objectives:
+          type: array
+          description: Sus objetivos en vigor, en su orden (Fase 29). Los retirados no salen.
+          items: { $ref: "#/components/schemas/LevelObjective" }
+
+    LevelObjective:
+      type: object
+      required: [id, title, position]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, maxLength: 120 }
+        position: { type: integer, minimum: 1 }
+
+    CreateObjectiveRequest:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, maxLength: 120 }
+
+    UpdateObjectiveRequest:
+      type: object
+      properties:
+        title: { type: string, maxLength: 120 }
+        position: { type: integer, minimum: 1 }
+
+    MarkObjectiveRequest:
+      type: object
+      properties:
+        achievedOn:
+          type: string
+          format: date
+          description: El dia en que lo consiguio; si falta, hoy en la zona del profesor. No puede ser futuro.
+
+    StudentProgress:
+      type: object
+      required: [levels]
+      description: >-
+        El progreso del alumno nivel a nivel, en el orden del profesor (Fase 29). La ficha trae todos
+        los niveles; el alumno ve el suyo y aquellos en que consiguio algo.
+      properties:
+        levels:
+          type: array
+          items: { $ref: "#/components/schemas/LevelProgress" }
+
+    LevelProgress:
+      type: object
+      required: [levelId, levelName, current, completed, objectives]
+      properties:
+        levelId: { type: string, format: uuid }
+        levelName: { type: string }
+        current: { type: boolean, description: Si es el nivel del alumno ahora }
+        completed: { type: boolean, description: Si el nivel tiene objetivos y el alumno los ha conseguido todos }
+        objectives:
+          type: array
+          description: Los objetivos en vigor y, detras, los retirados que el alumno consiguio
+          items: { $ref: "#/components/schemas/ObjectiveProgress" }
+
+    ObjectiveProgress:
+      type: object
+      required: [id, title, achievedOn]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        achievedOn: { type: string, format: date, nullable: true, description: null mientras esta pendiente }
 
     LevelList:
       type: object
@@ -2883,7 +3132,7 @@ components:
 
     StudentSummary:
       type: object
-      required: [userId, fullName, email, managedStatus, managedAt, hasPhoto]
+      required: [userId, fullName, email, managedStatus, managedAt, hasPhoto, levelCompleted]
       properties:
         userId: { type: string, format: uuid }
         fullName: { type: string }
@@ -2891,6 +3140,7 @@ components:
         managedStatus: { $ref: "#/components/schemas/ManagedStatus" }
         managedAt: { type: string, format: date-time, nullable: true }
         hasPhoto: { type: boolean, description: "Si el profesor puede pedir su foto (Fase 25.5)" }
+        levelCompleted: { type: boolean, description: "Si ha conseguido todos los objetivos de su nivel (Fase 29)" }
 
     StudentLookup:
       type: object

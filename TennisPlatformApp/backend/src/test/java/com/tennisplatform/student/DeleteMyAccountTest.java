@@ -97,6 +97,25 @@ class DeleteMyAccountTest extends AbstractBookingTest {
         }
     }
 
+    /** Mutation: not deleting the achieved objectives with the account fails here (Fase 29). */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void theObjectivesTheStudentAchievedAreDeleted() {
+        ResponseEntity<Map> level = rest.exchange("/api/v1/teacher/levels", HttpMethod.POST,
+                new HttpEntity<>(Map.of("name", "Borrado"), jsonBearer(teacherToken)), Map.class);
+        ResponseEntity<Map> objective = rest.exchange("/api/v1/teacher/levels/" + level.getBody().get("id")
+                + "/objectives", HttpMethod.POST, new HttpEntity<>(Map.of("title", "Saque"), jsonBearer(teacherToken)),
+                Map.class);
+        assertThat(rest.exchange("/api/v1/teacher/students/" + student.id() + "/objectives/"
+                + objective.getBody().get("id"), HttpMethod.PUT, new HttpEntity<>(bearer(teacherToken)), Map.class)
+                .getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        delete(student.token(), PASSWORD);
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM student_objectives WHERE student_user_id = ?",
+                Integer.class, student.id())).isZero();
+    }
+
     @Test
     void theAddressIsFreeToRegisterAgain() {
         delete(student.token(), PASSWORD);

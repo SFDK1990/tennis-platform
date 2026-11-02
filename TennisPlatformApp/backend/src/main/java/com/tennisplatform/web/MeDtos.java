@@ -8,6 +8,7 @@ import com.tennisplatform.notification.application.port.in.ReceivedMessageView;
 import com.tennisplatform.membership.application.port.in.MembershipView;
 import com.tennisplatform.pass.application.port.in.PassView;
 import com.tennisplatform.pass.application.port.in.PurchaseView;
+import com.tennisplatform.student.application.port.in.StudentProgressView.LevelProgress;
 
 import java.time.Instant;
 import java.util.List;
@@ -63,12 +64,13 @@ final class MeDtos {
     /**
      * {@code passes}: the student's passes with what is left of them (Fase 27); {@code passPurchases},
      * the ones they bought in the app, paid or not (Fase 27.5); {@code memberships}, their fixed
-     * groups with the months owed and paid (Fase 28).
+     * groups with the months owed and paid (Fase 28); {@code progress}, the objectives of their
+     * levels and the ones they achieved (Fase 29).
      */
     record MyDataExport(Instant exportedAt, MeResponse account, List<ExportedBooking> bookings,
                         List<ExportedRecord> records, List<ReceivedMessageView> messages, ExportedPhoto photo,
                         List<PassView> passes, List<PurchaseView> passPurchases,
-                        List<MembershipView> memberships) {
+                        List<MembershipView> memberships, List<LevelProgress> progress) {
     }
 
     record ExportedRecord(String level, String goals, String privateNotes) {

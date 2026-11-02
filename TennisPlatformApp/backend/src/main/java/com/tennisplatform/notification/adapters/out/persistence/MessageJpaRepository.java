@@ -1,5 +1,6 @@
 package com.tennisplatform.notification.adapters.out.persistence;
 
+import com.tennisplatform.notification.domain.MessageAudience;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +11,10 @@ import java.util.UUID;
 
 interface MessageJpaRepository extends JpaRepository<MessageEntity, UUID> {
 
-    Page<MessageEntity> findAllByTeacherUserIdOrderBySentAtDescIdDesc(UUID teacherUserId, Pageable pageable);
+    /** What the teacher wrote: the progress notices the app writes for them are not among it (Fase 29). */
+    Page<MessageEntity> findAllByTeacherUserIdAndAudienceNotOrderBySentAtDescIdDesc(UUID teacherUserId,
+                                                                                  MessageAudience audience,
+                                                                                  Pageable pageable);
 
     @Query(value = """
             select m from MessageEntity m

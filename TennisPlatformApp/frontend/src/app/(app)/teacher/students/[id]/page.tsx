@@ -8,12 +8,13 @@ import { useTeacherPasses } from "@/modules/passes/api";
 import { StudentPasses } from "@/modules/passes/components/StudentPasses";
 import { useStudentDetail } from "@/modules/student/api";
 import { StudentAvatar } from "@/modules/student/components/StudentAvatar";
+import { ProgressRecord } from "@/modules/student/components/ProgressRecord";
 import { StudentRecordForm } from "@/modules/student/components/StudentRecordForm";
 import { useTeacherZone } from "@/modules/teacher/api";
 import { Icon } from "@/shared/ui/Icon";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
-/** The student's record: who they are, their level and notes, their passes (Fase 27), their groups and fees (Fase 28) and their bookings (Fase 23). */
+/** The student's record: who they are, their level and notes, their progress (Fase 29), their passes (Fase 27), their groups and fees (Fase 28) and their bookings (Fase 23). */
 export default function StudentPage() {
   const { id } = useParams<{ id: string }>();
   const student = useStudentDetail(id);
@@ -42,6 +43,10 @@ export default function StudentPage() {
           <section aria-labelledby="record-heading" className="flex flex-col gap-4 rounded-xl border border-line bg-paper p-5">
             <h2 id="record-heading" className="font-display text-2xl font-semibold leading-none">Ficha</h2>
             <StudentRecordForm key={student.data.userId} student={student.data} />
+          </section>
+          <section aria-labelledby="progress-heading" className="flex flex-col gap-3">
+            <h2 id="progress-heading" className="font-display text-2xl font-semibold">Progreso</h2>
+            <ProgressRecord studentUserId={id} managed={student.data.managedStatus === "MANAGED"} />
           </section>
           <section aria-labelledby="passes-heading" className="flex flex-col gap-3">
             <h2 id="passes-heading" className="font-display text-2xl font-semibold">Bonos</h2>

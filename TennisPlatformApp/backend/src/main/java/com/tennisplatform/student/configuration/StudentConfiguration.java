@@ -20,7 +20,12 @@ import com.tennisplatform.student.application.port.in.GetManagedStudents;
 import com.tennisplatform.student.application.port.in.UpdateStudentRecord;
 import com.tennisplatform.student.application.service.DeleteMyAccountService;
 import com.tennisplatform.student.application.service.StudentRecordService;
+import com.tennisplatform.student.application.port.in.StudentProgress;
+import com.tennisplatform.student.application.port.out.AchievementRepository;
+import com.tennisplatform.student.application.service.StudentProgressService;
+import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.QueryLevels;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -62,9 +67,17 @@ public class StudentConfiguration {
     public DeleteMyAccount deleteMyAccount(CloseAccount accounts, ManagedStudentRepository relationships,
                                            StudentProfileRepository profiles, StudentPhotoRepository photos,
                                            StudentBookings bookings, StudentMemberships memberships,
-                                           StudentMessages messages, Clock clock) {
+                                           StudentMessages messages, AchievementRepository achievements,
+                                           Clock clock) {
         return new DeleteMyAccountService(accounts, relationships, profiles, photos, bookings, memberships,
-                messages, clock);
+                messages, achievements, clock);
+    }
+
+    @Bean
+    public StudentProgress studentProgress(ManagedStudentRepository relationships, AchievementRepository achievements,
+                                           QueryLevels levels, GetTeacherProfile teachers,
+                                           ApplicationEventPublisher events, Clock clock) {
+        return new StudentProgressService(relationships, achievements, levels, teachers, events, clock);
     }
 
     @Bean

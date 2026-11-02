@@ -38,7 +38,8 @@ class MailListenerTest {
     private static MailListener inTheBackground(NotifyBookings notify) {
         NotificationProperties properties = new NotificationProperties();
         properties.setSendInBackground(true);
-        return new MailListener(notify, messageId -> { }, change -> { }, mock(NotifyMemberships.class), properties);
+        return new MailListener(notify, messageId -> { }, change -> { }, mock(NotifyMemberships.class),
+                achievement -> { }, properties);
     }
 
     private static BookingConfirmed confirmed() {

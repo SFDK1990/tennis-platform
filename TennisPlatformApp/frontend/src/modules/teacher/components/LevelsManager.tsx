@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useCreateLevel, useDeleteLevel, useUpdateLevel } from "@/modules/teacher/api";
+import { LevelObjectives } from "@/modules/teacher/components/LevelObjectives";
 import { ApiError } from "@/shared/api/errors";
 import { useLevels, type Level } from "@/shared/levels";
 import { Button } from "@/shared/ui/Button";
@@ -10,8 +11,9 @@ import { Icon } from "@/shared/ui/Icon";
 import { ErrorNotice } from "@/shared/ui/Notice";
 
 /**
- * The teacher's levels, in order (36-fase23, decision 1). A level a student or a lesson still has
- * cannot be deleted: the message says so instead of a generic error.
+ * The teacher's levels, in order (36-fase23, decision 1), each with its objectives (Fase 29). A
+ * level a student or a lesson still has, or with an objective somebody achieved, cannot be
+ * deleted: the message says so instead of a generic error.
  */
 export function LevelsManager() {
   const levels = useLevels();
@@ -31,7 +33,8 @@ export function LevelsManager() {
       <div className="flex flex-col gap-1">
         <h2 id="levels-heading" className="font-display text-2xl font-semibold leading-none">Niveles</h2>
         <p className="text-sm text-muted">
-          Un alumno reserva las clases de su nivel y las abiertas a todos. El orden es de menos a más.
+          Un alumno reserva las clases de su nivel y las abiertas a todos. El orden es de menos a más. Los
+          objetivos de cada nivel los marcas como conseguidos en la ficha del alumno, y él los ve en su perfil.
         </p>
       </div>
       <ErrorNotice error={levels.error} />
@@ -43,7 +46,8 @@ export function LevelsManager() {
       </ol>
       {inUse ? (
         <p role="alert" className="text-sm text-fault">
-          Ese nivel lo tiene algún alumno o alguna clase. Cámbialos de nivel antes de borrarlo.
+          Ese nivel lo tiene algún alumno o alguna clase, o alguien consiguió uno de sus objetivos. Cámbialos de nivel
+          antes de borrarlo.
         </p>
       ) : <ErrorNotice error={remove.error} />}
       <form onSubmit={add} className="flex flex-wrap items-end gap-3">
@@ -88,6 +92,7 @@ function LevelRow({ level, first, last, deleting, onDelete }: LevelRowProps) {
       </Button>
       <Button variant="danger" pending={deleting} onClick={onDelete}>Borrar</Button>
       {update.error ? <span className="w-full"><ErrorNotice error={update.error} /></span> : null}
+      <LevelObjectives level={level} />
     </li>
   );
 }
