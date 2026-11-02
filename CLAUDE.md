@@ -121,7 +121,8 @@ tablón del alumno.
 - **La cobertura del backend es una puerta** (`jacoco:check`). Tras borrar clases, medir con
   `mvn clean verify`: los `.class` viejos de `target/` cuentan como código sin cubrir.
 - **Los E2E corren sobre el reloj real.** Lo que depende de la hora (24 horas, clase empezada) lo
-  prueba el backend con `Clock` fijo; el test de asistencia crea una clase que empieza a los 15 s.
+  prueba el backend con `Clock` fijo; el test de asistencia crea una clase que empieza a los 15 s
+  y, pasadas las 23:30 del profesor, espera al día siguiente: la clase cruzaría la medianoche.
 - **Los tipos del frontend se generan de `openapi.yaml`** y se versionan. Tocar el contrato sin
   `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
 - **El frontend lleva una CSP con nonce** (`src/proxy.ts`), y por eso todas las páginas se
