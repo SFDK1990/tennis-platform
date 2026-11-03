@@ -1,5 +1,5 @@
 import { expectEmail, linkSentTo } from "./support/mailbox";
-import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { dayInCalendar, expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { addDays, todayIn, zonedToInstant } from "@/shared/time";
 import { STUDENT_PASSWORD, TEACHER, uniqueEmail, ZONE } from "./support/stack";
 
@@ -121,7 +121,7 @@ test("un alumno cambia su contraseña desde el perfil y entra con la nueva", asy
   await page.getByRole("button", { name: "Cambiar contraseña" }).click();
   await expect(page.getByText("Contraseña cambiada.")).toBeVisible();
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, student.email, newPassword);
 });
 

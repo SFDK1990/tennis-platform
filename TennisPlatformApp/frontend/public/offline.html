@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1e3f" />
+    <title>Sin conexión · Oasis Papagayo</title>
+    <!-- Static and without scripts: the service worker serves it with no network, and the CSP
+         nonce of a page changes on every request (45-fase30-analisis-pwa-accesibilidad.md). -->
+    <link rel="stylesheet" href="/offline.css" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <main>
+      <img src="/icon.svg" alt="" width="72" height="72" />
+      <h1>Sin conexión</h1>
+      <p>No hay internet en este momento. Tus clases y tus reservas siguen como estaban: para verlas, reservar o cancelar hace falta conexión.</p>
+      <!-- An empty href reloads the address the student was going to. -->
+      <a href="">Reintentar</a>
+    </main>
+  </body>
+</html>

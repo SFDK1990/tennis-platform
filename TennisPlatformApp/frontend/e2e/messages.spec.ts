@@ -1,5 +1,5 @@
 import { expectEmail } from "./support/mailbox";
-import { expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
 /** Fase 24: the teacher writes to a level, and its student reads it on the board and by email. */
@@ -20,7 +20,7 @@ test("el profesor escribe a un nivel y el alumno lo lee en sus avisos y en su co
   await expect(page.getByRole("heading", { name: subject })).toBeVisible();
   await expectEmail(student.email, subject);
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, student.email, student.password);
   await expect(page.getByRole("heading", { name: "Último aviso" })).toBeVisible();
   await openFromMenu(page, "Avisos");

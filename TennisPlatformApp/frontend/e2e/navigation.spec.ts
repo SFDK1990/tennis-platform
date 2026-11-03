@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
 // The narrowest phone the design is drawn for (27-fase15.5, decision 3).
@@ -27,6 +27,5 @@ test("en el móvil, el profesor se mueve con la barra de abajo y sale desde su p
   await signIn(page, TEACHER.email, TEACHER.password);
   await expectTabBar(page, ["Hoy", "Agenda", "Alumnos", "Horario", "Mensajes", "Perfil"]);
   await openFromMenu(page, "Perfil");
-  await page.getByRole("button", { name: "Salir" }).click();
-  await expect(page).toHaveURL(/\/login/);
+  await signOut(page);
 });

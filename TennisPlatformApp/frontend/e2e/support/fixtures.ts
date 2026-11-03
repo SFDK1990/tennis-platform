@@ -23,6 +23,15 @@ export async function signIn(page: Page, email: string, password: string): Promi
 }
 
 /**
+ * Signs out and waits for the login page: the app goes there by itself, and a navigation started
+ * before it arrives is interrupted in WebKit.
+ */
+export async function signOut(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Salir" }).click();
+  await expect(page).toHaveURL(/\/login/);
+}
+
+/**
  * Follows a menu link and waits until the menu marks it as the current page: a locator
  * evaluated before that would still be looking at the previous screen.
  */

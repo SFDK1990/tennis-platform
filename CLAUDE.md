@@ -46,7 +46,8 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
 
 `npm run e2e` necesita el stack con el profesor y el admin del `.env`, el rate limiting subido y
 las claves del Stripe falso: `docker compose -f compose.yaml -f compose.e2e.yaml up -d --build`.
-Construye y arranca el frontend en el puerto 3100 y el Stripe falso en el 12111. Cada test deshace
+Construye y arranca el frontend en el puerto 3100 y el Stripe falso en el 12111. Los flujos del
+alumno corren también en WebKit (un iPhone): `npx playwright install chromium webkit`. Cada test deshace
 lo que crea, salvo las cuentas de alumno `e2e-*`, los tipos de bono que alguien compró, que se
 retiran, los grupos fijos a los que alguien se apuntó y el aviso de un objetivo conseguido en el
 tablón del alumno.
@@ -171,6 +172,10 @@ tablón del alumno.
   nivel con objetivos conseguidos da `LEVEL_IN_USE`. El aviso al alumno es un mensaje con audiencia
   `PROGRESS`: no lleva correo y no sale entre los enviados de Marcos. Se escribe tras el commit en una
   transacción nueva (`REQUIRES_NEW`): en el hilo de la petición la anterior sigue ligada y no escribe.
+- **El service worker (`public/sw.js`) sólo guarda lo que es igual para todos** (Fase 30):
+  `/_next/static`, los iconos y la página sin conexión. Una página o algo de `/api` en su caché
+  dejaría datos personales en el móvil; un test unitario y un E2E fallan. Cambiar
+  `offline.html`, su CSS o los iconos pide subir su `VERSION`, o el móvil seguirá con los viejos.
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
   `ContractConventionsTest`.

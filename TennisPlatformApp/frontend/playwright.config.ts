@@ -9,6 +9,9 @@ if (existsSync("../.env")) {
 
 const PORT = 3100;
 
+/** The flows run on a phone: the student's (`*student.spec.ts`) and the navigation. */
+const PHONE = /(student|navigation)\.spec\.ts/;
+
 /**
  * The end-to-end flows of 25-fase14-analisis-cobertura-e2e.md, against the real stack: the
  * backend, Postgres and Mailpit in Docker, and this frontend built and started here.
@@ -32,9 +35,11 @@ export default defineConfig({
   },
   projects: [
     // Students use it on their phone (a PWA); the teacher and the admin at a desk. The phone
-    // navigation is checked for both.
-    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /(student|navigation)\.spec\.ts/ },
-    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /(student|navigation)\.spec\.ts/ },
+    // navigation is checked for both. The student's flows run on an Android phone and on an
+    // iPhone, Safari's engine (45-fase30-analisis-pwa-accesibilidad.md, rule 10).
+    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: PHONE },
+    { name: "mobile-webkit", use: { ...devices["iPhone 15"] }, testMatch: PHONE },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: PHONE },
   ],
   webServer: [
     {

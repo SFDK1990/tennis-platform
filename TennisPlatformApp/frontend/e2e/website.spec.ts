@@ -1,7 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
-import type { Page } from "@playwright/test";
 import { recommendClass, trialHref } from "@/app/(web)/_parts/school";
-import { expect, signIn, test } from "./support/fixtures";
+import { seriousViolations } from "./support/axe";
+import { expect, signIn, signOut, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
 /** The public website of 31-fase31-analisis-web-publica.md. */
@@ -38,7 +37,7 @@ test("con sesión, la web lleva a cada uno a su inicio", async ({ page, arrange 
   await page.getByRole("link", { name: "Mi cuenta" }).click();
   await expect(page).toHaveURL(/\/home$/);
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, TEACHER.email, TEACHER.password);
   await page.goto("/");
   await page.getByRole("link", { name: "Mi cuenta" }).click();
@@ -158,11 +157,4 @@ for (const colorScheme of ["light", "dark"] as const) {
       });
     });
   }
-}
-
-async function seriousViolations(page: Page): Promise<string[]> {
-  const results = await new AxeBuilder({ page }).analyze();
-  return results.violations
-    .filter((violation) => violation.impact === "serious" || violation.impact === "critical")
-    .map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }

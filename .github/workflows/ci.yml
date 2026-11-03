@@ -183,11 +183,11 @@ jobs:
           cache: npm
           cache-dependency-path: TennisPlatformApp/frontend/package-lock.json
 
-      - name: Install the frontend and Chromium
+      - name: Install the frontend, Chromium and WebKit
         working-directory: TennisPlatformApp/frontend
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
 
       # Playwright builds and starts the frontend itself (playwright.config.ts), no retries.
       - name: End-to-end flows

@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
 import { connection } from "next/server";
+import { BRAND_NAVY } from "@/app/brand";
 import { Providers } from "@/app/providers";
 import { siteUrl } from "@/app/site-url";
 import "./globals.css";
@@ -17,6 +18,13 @@ export const metadata: Metadata = {
   metadataBase: siteUrl(),
   title: "Oasis Papagayo",
   description: "Escuela de tenis Oasis Papagayo: reservas, horario y asistencia de las clases con Marcos.",
+  // iPhone reads neither the manifest's name nor its icons; app/apple-icon.png is the icon.
+  // "default": a light bar over the light frame, with the page below it and not under it.
+  appleWebApp: { title: "Oasis", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: BRAND_NAVY,
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

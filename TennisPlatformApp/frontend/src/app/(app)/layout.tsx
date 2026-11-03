@@ -69,7 +69,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <div className="flex min-h-screen flex-col lg:pl-64">
               <header className="flex items-center px-5 pb-1 pt-4 lg:hidden">
                 {/* The role's home: "/" is now the public website (31-fase31, decision 2). */}
-                <Link href={homeFor(me.role)} className="flex items-center gap-2.5" aria-label="Inicio">
+                <Link href={homeFor(me.role)} className="flex items-center gap-2.5">
                   <Logo className="h-9 w-9" label="" />
                   <span className="font-display text-xl font-semibold">Oasis Papagayo</span>
                 </Link>
