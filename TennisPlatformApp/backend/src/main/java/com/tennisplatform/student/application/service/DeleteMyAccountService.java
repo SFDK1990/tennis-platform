@@ -2,6 +2,7 @@ package com.tennisplatform.student.application.service;
 
 import com.tennisplatform.identity.application.port.in.CloseAccount;
 import com.tennisplatform.student.application.port.in.DeleteMyAccount;
+import com.tennisplatform.student.application.port.out.AchievementRepository;
 import com.tennisplatform.student.application.port.out.ManagedStudentRepository;
 import com.tennisplatform.student.application.port.out.StudentPhotoRepository;
 import com.tennisplatform.student.application.port.out.StudentProfileRepository;
@@ -32,12 +33,13 @@ public class DeleteMyAccountService implements DeleteMyAccount {
     private final StudentBookings bookings;
     private final StudentMemberships memberships;
     private final StudentMessages messages;
+    private final AchievementRepository achievements;
     private final Clock clock;
 
     public DeleteMyAccountService(CloseAccount accounts, ManagedStudentRepository relationships,
                                   StudentProfileRepository profiles, StudentPhotoRepository photos,
                                   StudentBookings bookings, StudentMemberships memberships,
-                                  StudentMessages messages, Clock clock) {
+                                  StudentMessages messages, AchievementRepository achievements, Clock clock) {
         this.accounts = accounts;
         this.relationships = relationships;
         this.profiles = profiles;
@@ -45,6 +47,7 @@ public class DeleteMyAccountService implements DeleteMyAccount {
         this.bookings = bookings;
         this.memberships = memberships;
         this.messages = messages;
+        this.achievements = achievements;
         this.clock = clock;
     }
 
@@ -73,7 +76,8 @@ public class DeleteMyAccountService implements DeleteMyAccount {
         });
         photos.delete(studentUserId);
         messages.forgetRecipient(studentUserId);
+        achievements.deleteAllOf(studentUserId);
         log.info("Account {} deleted by its student: upcoming bookings cancelled, profile and photo emptied, "
-                + "messages forgotten", studentUserId);
+                + "messages and achieved objectives forgotten", studentUserId);
     }
 }

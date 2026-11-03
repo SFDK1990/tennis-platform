@@ -1,5 +1,5 @@
 import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
-import { addDays, zonedToInstant } from "@/shared/time";
+import { addDays, todayIn, zonedToInstant } from "@/shared/time";
 import { expectEmail } from "./support/mailbox";
 import { TEACHER, ZONE } from "./support/stack";
 
@@ -63,6 +63,13 @@ test("el profesor abre horas, añade a un alumno y crea una clase; al cancelarla
 });
 
 test("el profesor pasa lista desde Hoy en cuanto la clase empieza", async ({ page, arrange }) => {
+  // A half-hour lesson starting after 23:30 would cross midnight, which the teacher cannot
+  // create: from then on, the test waits for the new day.
+  const midnight = Date.parse(zonedToInstant(addDays(todayIn(ZONE), 1), "00:00", ZONE));
+  const wait = Date.now() + 15_000 + 30 * 60_000 > midnight ? midnight - Date.now() + 1_000 : 0;
+  test.setTimeout(test.info().timeout + wait);
+  await page.waitForTimeout(wait);
+
   const student = await arrange.student({ managed: true });
   // Attendance opens when the lesson starts, and the stack runs on the real clock: the lesson
   // starts a few seconds from now.

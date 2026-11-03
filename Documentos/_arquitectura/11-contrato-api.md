@@ -259,6 +259,19 @@ Apuntar un bono a un alumno que el profesor no gestiona responde 403 `STUDENT_NO
 reserva dice con qué bono se pagó (`passId`, null si no se pidió bono), y el resumen del mes suma
 los bonos vendidos (`sales`, `previousSales`).
 
+Códigos añadidos en la Fase 29:
+
+| Código | HTTP | Endpoint típico | Motivo |
+|---|---|---|---|
+| `OBJECTIVE_NOT_FOUND` | 404 | `PATCH`/`DELETE /teacher/objectives/{id}`, `PUT`/`DELETE /teacher/students/{userId}/objectives/{objectiveId}` | No es un objetivo en vigor de los niveles del profesor (para desmarcar basta con que sea suyo) |
+| `OBJECTIVE_ALREADY_EXISTS` | 409 | `POST /teacher/levels/{id}/objectives`, `PATCH /teacher/objectives/{id}` | El nivel ya tiene un objetivo en vigor con ese título |
+| `ACHIEVED_ON_IN_FUTURE` | 422 | `PUT /teacher/students/{userId}/objectives/{objectiveId}` | El día pasa de hoy en la zona del profesor |
+
+Marcar o leer el progreso de un alumno que el profesor no gestiona responde 403
+`STUDENT_NOT_MANAGED`, como la ficha. Un nivel con un objetivo conseguido responde 409
+`LEVEL_IN_USE` al borrarlo. Cada nivel trae sus objetivos en vigor (`objectives`), y la lista de
+alumnos dice quién ha completado el suyo (`levelCompleted`).
+
 Códigos añadidos en la Fase 28:
 
 | Código | HTTP | Endpoint típico | Motivo |
@@ -306,7 +319,7 @@ es del profesor, y `LESSON_NOT_IN_SERIES` si se pide el grupo de una clase cread
 
 ## Endpoints cubiertos
 
-90 operaciones tras la Fase 28, que añadió quince (`memberships`); la Fase 27 añadió nueve (`passes`), agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. La Fase 20, cancelar un día entero. En la Fase 13 se retiraron
+97 operaciones tras la Fase 29, que añadió siete (objetivos y progreso); la Fase 28 añadió quince (`memberships`) y la Fase 27 añadió nueve (`passes`), agrupadas por las etiquetas del spec. La Fase 19 añadió cinco: cambiar la contraseña, exportar y borrar la cuenta, editar una clase y la cancelación del admin. La Fase 20, cancelar un día entero. En la Fase 13 se retiraron
 `PATCH /teacher/profile` (duplicaba `PATCH /me`) y `GET /teacher/lessons` (lo sustituyó
 `/calendar`).
 

@@ -48,7 +48,8 @@ CI falla si algún test se salta. Sin Docker en marcha, los de integración se s
 las claves del Stripe falso: `docker compose -f compose.yaml -f compose.e2e.yaml up -d --build`.
 Construye y arranca el frontend en el puerto 3100 y el Stripe falso en el 12111. Cada test deshace
 lo que crea, salvo las cuentas de alumno `e2e-*`, los tipos de bono que alguien compró, que se
-retiran, y los grupos fijos a los que alguien se apuntó.
+retiran, los grupos fijos a los que alguien se apuntó y el aviso de un objetivo conseguido en el
+tablón del alumno.
 
 ## Entorno de desarrollo
 
@@ -120,7 +121,8 @@ retiran, y los grupos fijos a los que alguien se apuntó.
 - **La cobertura del backend es una puerta** (`jacoco:check`). Tras borrar clases, medir con
   `mvn clean verify`: los `.class` viejos de `target/` cuentan como código sin cubrir.
 - **Los E2E corren sobre el reloj real.** Lo que depende de la hora (24 horas, clase empezada) lo
-  prueba el backend con `Clock` fijo; el test de asistencia crea una clase que empieza a los 15 s.
+  prueba el backend con `Clock` fijo; el test de asistencia crea una clase que empieza a los 15 s
+  y, pasadas las 23:30 del profesor, espera al día siguiente: la clase cruzaría la medianoche.
 - **Los tipos del frontend se generan de `openapi.yaml`** y se versionan. Tocar el contrato sin
   `npm run api:types` rompe el CI; editar `schema.d.ts` a mano, también.
 - **El frontend lleva una CSP con nonce** (`src/proxy.ts`), y por eso todas las páginas se
@@ -164,6 +166,11 @@ retiran, y los grupos fijos a los que alguien se apuntó.
   uno que deje de gestionar a un alumno, terminar sus altas (`StudentMemberships`). La baja del
   grupo vale desde el mes siguiente (`left_at` en el futuro), y `PENDING`/`OVERDUE` de una cuota se
   derivan al leer, en la zona del profesor.
+- **Un objetivo de un nivel no se borra, se retira** (`retired_at`, Fase 29): quien lo consiguió lo
+  sigue viendo. La base impide borrar uno conseguido (`student_objectives` lo restringe), y por eso un
+  nivel con objetivos conseguidos da `LEVEL_IN_USE`. El aviso al alumno es un mensaje con audiencia
+  `PROGRESS`: no lleva correo y no sale entre los enviados de Marcos. Se escribe tras el commit en una
+  transacción nueva (`REQUIRES_NEW`): en el hilo de la petición la anterior sigue ligada y no escribe.
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
   `ContractConventionsTest`.

@@ -104,6 +104,17 @@ class AccessMatrixTest extends AbstractBookingTest {
         row("POST", "/teacher/levels", Map.of("name", "Nuevo"),                  401, 403, 403, 403, ALLOWED, 403);
         row("PATCH", "/teacher/levels/{levelId}", Map.of("name", "Otro"),        401, 403, 403, 403, ALLOWED, 403);
         row("DELETE", "/teacher/levels/{levelId}", none,                         401, 403, 403, 403, ALLOWED, 403);
+        row("POST", "/teacher/levels/{levelId}/objectives", Map.of("title", "Nuevo"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("PATCH", "/teacher/objectives/{objectiveId}", Map.of("title", "Otro"),
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("DELETE", "/teacher/objectives/{objectiveId}", none,                 401, 403, 403, 403, ALLOWED, 403);
+        row("GET", "/teacher/students/{studentId}/progress", none,               401, 403, 403, 403, ALLOWED, 403);
+        row("PUT", "/teacher/students/{studentId}/objectives/{objectiveId}", none,
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("DELETE", "/teacher/students/{studentId}/objectives/{objectiveId}", none,
+                                                                                 401, 403, 403, 403, ALLOWED, 403);
+        row("GET", "/me/progress", none,                                         401, ALLOWED, ALLOWED, ALLOWED, 403, 403);
 
         // Passes (Fase 27): everybody reads the types, only the teacher sells; a student reads their own.
         row("GET", "/pass-types", none,                                          401, ALLOWED, ALLOWED, ALLOWED, ALLOWED, ALLOWED);
@@ -270,6 +281,9 @@ class AccessMatrixTest extends AbstractBookingTest {
         rest.exchange("/api/v1/me/photo", HttpMethod.PUT, new HttpEntity<>(TINY_PNG, photo), Void.class);
         ResponseEntity<Map> level = rest.exchange("/api/v1/teacher/levels", HttpMethod.POST,
                 new HttpEntity<>(Map.of("name", "Matriz"), jsonBearer(teacherToken)), Map.class);
+        ResponseEntity<Map> objective = rest.exchange("/api/v1/teacher/levels/" + level.getBody().get("id")
+                + "/objectives", HttpMethod.POST, new HttpEntity<>(Map.of("title", "Matriz"), jsonBearer(teacherToken)),
+                Map.class);
         ResponseEntity<Map> exception = rest.exchange("/api/v1/teacher/availability/exceptions", HttpMethod.POST,
                 new HttpEntity<>(Map.of("date", LocalDate.now(ZoneId.of("Europe/Madrid")).plusDays(20).toString(),
                         "type", "BLOCK"), jsonBearer(teacherToken)), Map.class);
@@ -306,6 +320,7 @@ class AccessMatrixTest extends AbstractBookingTest {
                 Map.entry("bookingId", (String) booked.getBody().get("id")),
                 Map.entry("exceptionId", (String) exception.getBody().get("id")),
                 Map.entry("levelId", (String) level.getBody().get("id")),
+                Map.entry("objectiveId", (String) objective.getBody().get("id")),
                 Map.entry("messageId", UUID.randomUUID().toString()),
                 Map.entry("passTypeId", (String) passType.getBody().get("id")),
                 Map.entry("passId", (String) pass.getBody().get("id")),

@@ -235,6 +235,24 @@ export class Arrange {
     this.undo.push(() => teacher.PUT("/teacher/pass-settings", { body: { required: false } }));
   }
 
+  /**
+   * The objectives the teacher marks for the student through the screens are unmarked afterwards
+   * (Fase 29), so the level they belong to can be deleted. The notice on the student's board stays.
+   */
+  clearProgressAfterwards(student: Student): void {
+    this.undo.push(async () => {
+      const teacher = await this.teacher();
+      const path = { params: { path: { userId: student.userId } } };
+      const progress = ok(await teacher.GET("/teacher/students/{userId}/progress", path), "progress");
+      for (const objective of progress.levels.flatMap((level) => level.objectives)) {
+        if (objective.achievedOn) {
+          await teacher.DELETE("/teacher/students/{userId}/objectives/{objectiveId}",
+            { params: { path: { userId: student.userId, objectiveId: objective.id } } });
+        }
+      }
+    });
+  }
+
   /** The test sends a message through the screens; afterwards it is taken off every board (Fase 24). */
   deleteMessageAfterwards(subject: string): void {
     this.undo.push(async () => {

@@ -112,3 +112,39 @@ export function useRemovePhoto() {
     mutationFn: async () => unwrap(await api.DELETE("/me/photo")),
   });
 }
+
+export type StudentProgress = components["schemas"]["StudentProgress"];
+export type LevelProgress = components["schemas"]["LevelProgress"];
+
+/** The student's progress through every level, for their record (Fase 29). */
+export function useStudentProgress(userId: string) {
+  return useQuery({
+    queryKey: ["students", userId, "progress"],
+    queryFn: async () => unwrap(await api.GET("/teacher/students/{userId}/progress", { params: { path: { userId } } })),
+  });
+}
+
+/** Marks it as achieved today, in the teacher's zone; the student gets a notice on their board. */
+export function useMarkObjective(userId: string) {
+  return useMutation({
+    mutationFn: async (objectiveId: string) =>
+      unwrap(await api.PUT("/teacher/students/{userId}/objectives/{objectiveId}",
+        { params: { path: { userId, objectiveId } } })),
+  });
+}
+
+export function useUnmarkObjective(userId: string) {
+  return useMutation({
+    mutationFn: async (objectiveId: string) =>
+      unwrap(await api.DELETE("/teacher/students/{userId}/objectives/{objectiveId}",
+        { params: { path: { userId, objectiveId } } })),
+  });
+}
+
+/** «Mi progreso»: the student's level and those where they achieved something. */
+export function useMyProgress() {
+  return useQuery({
+    queryKey: ["me", "progress"],
+    queryFn: async () => unwrap(await api.GET("/me/progress")),
+  });
+}

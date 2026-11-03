@@ -22,6 +22,8 @@ import com.tennisplatform.teacher.application.port.in.GetTeacherProfile;
 import com.tennisplatform.teacher.application.port.in.QueryLevels;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.tennisplatform.notification.application.port.in.NotifyProgress;
+import com.tennisplatform.notification.application.service.ProgressNotifications;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -73,5 +75,11 @@ public class NotificationConfiguration {
                                                GetStudentProfile students, GetTeacherProfile teachers,
                                                ManageGroups groups) {
         return new MembershipNotifications(mailer, texts, accounts, students, teachers, groups);
+    }
+
+    @Bean
+    public NotifyProgress notifyProgress(MessageRepository messages, QueryLevels levels, GetTeacherProfile teachers,
+                                         Clock clock) {
+        return new ProgressNotifications(messages, levels, teachers, clock);
     }
 }

@@ -4,6 +4,7 @@ import { useMe } from "@/modules/identity/api";
 import { ChangePasswordForm, DeleteMyAccount, DownloadMyData } from "@/modules/identity/components/AccountSettings";
 import { ProfileForm } from "@/modules/identity/components/ProfileForm";
 import { SignOutButton } from "@/modules/identity/components/SignOutButton";
+import { MyProgress } from "@/modules/student/components/MyProgress";
 import { PhotoPicker } from "@/modules/student/components/PhotoPicker";
 import { LevelsManager } from "@/modules/teacher/components/LevelsManager";
 import { useLevelName } from "@/shared/levels";
@@ -27,6 +28,7 @@ export default function ProfilePage() {
               </p>
             ) : null}
           </section>
+          {me.role === "STUDENT" ? <MyProgress /> : null}
           {me.role === "TEACHER" ? <LevelsManager /> : null}
           <ChangePasswordForm email={me.email} />
           <DownloadMyData />

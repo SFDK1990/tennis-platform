@@ -1053,6 +1053,218 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/teacher/students/{userId}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * El progreso del alumno en todos los niveles (Fase 29)
+         * @description Para el profesor que lo gestiona o lo gestiono, como la ficha.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: components["parameters"]["UserId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentProgress"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/students/{userId}/objectives/{objectiveId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Marca un objetivo como conseguido
+         * @description De cualquier nivel, no solo del actual. La primera vez deja un aviso en el tablon del alumno, sin correo; marcarlo otra vez solo cambia el dia.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: components["parameters"]["UserId"];
+                    objectiveId: components["parameters"]["ObjectiveId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MarkObjectiveRequest"];
+                };
+            };
+            responses: {
+                /** @description El progreso del alumno */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentProgress"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description OBJECTIVE_NOT_FOUND: no es un objetivo en vigor de sus niveles */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description ACHIEVED_ON_IN_FUTURE */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Desmarca un objetivo
+         * @description No deja rastro; desmarcar uno sin marcar no hace nada.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: components["parameters"]["UserId"];
+                    objectiveId: components["parameters"]["ObjectiveId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Desmarcado */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                /** @description TEACHER_FORBIDDEN | STUDENT_NOT_MANAGED */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description OBJECTIVE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * «Mi progreso» del alumno (Fase 29)
+         * @description Su nivel y los anteriores en que consiguio algo. Sin nivel o sin profesor, la lista sale vacia o sin nivel actual.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StudentProgress"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/levels": {
         parameters: {
             query?: never;
@@ -1178,7 +1390,7 @@ export interface paths {
                 401: components["responses"]["Unauthorized"];
                 403: components["responses"]["Forbidden"];
                 404: components["responses"]["NotFound"];
-                /** @description LEVEL_IN_USE: algun alumno o alguna clase lo tiene */
+                /** @description LEVEL_IN_USE: algun alumno o alguna clase lo tiene, o algun alumno consiguio uno de sus objetivos */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -1224,6 +1436,162 @@ export interface paths {
                 403: components["responses"]["Forbidden"];
                 404: components["responses"]["NotFound"];
                 /** @description LEVEL_ALREADY_EXISTS */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/teacher/levels/{id}/objectives": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Anade un objetivo al final de la lista del nivel (Fase 29) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateObjectiveRequest"];
+                };
+            };
+            responses: {
+                /** @description Creado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LevelObjective"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                /** @description OBJECTIVE_ALREADY_EXISTS: el nivel ya tiene un objetivo con ese titulo */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/teacher/objectives/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Retira un objetivo de la lista del nivel
+         * @description Se retira, no se borra: deja de salir como pendiente para nadie, y quien lo consiguio lo sigue viendo conseguido.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Retirado */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description OBJECTIVE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Renombra un objetivo o lo mueve de puesto dentro de su nivel
+         * @description Renombrarlo cambia lo que ven todos, tambien quien ya lo consiguio.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateObjectiveRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LevelObjective"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                /** @description OBJECTIVE_NOT_FOUND */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description OBJECTIVE_ALREADY_EXISTS */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -4875,12 +5243,61 @@ export interface components {
             passPurchases: components["schemas"]["PassPurchase"][];
             /** @description Los grupos fijos del alumno, con sus meses y lo que se apunto de ellos (Fase 28). */
             memberships: components["schemas"]["Membership"][];
+            /** @description Los objetivos de sus niveles y los que ha conseguido, como en «Mi progreso» (Fase 29). */
+            progress: components["schemas"]["LevelProgress"][];
         };
         Level: {
             /** Format: uuid */
             id: string;
             name: string;
             position: number;
+            /** @description Sus objetivos en vigor, en su orden (Fase 29). Los retirados no salen. */
+            objectives: components["schemas"]["LevelObjective"][];
+        };
+        LevelObjective: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            position: number;
+        };
+        CreateObjectiveRequest: {
+            title: string;
+        };
+        UpdateObjectiveRequest: {
+            title?: string;
+            position?: number;
+        };
+        MarkObjectiveRequest: {
+            /**
+             * Format: date
+             * @description El dia en que lo consiguio; si falta, hoy en la zona del profesor. No puede ser futuro.
+             */
+            achievedOn?: string;
+        };
+        /** @description El progreso del alumno nivel a nivel, en el orden del profesor (Fase 29). La ficha trae todos los niveles; el alumno ve el suyo y aquellos en que consiguio algo. */
+        StudentProgress: {
+            levels: components["schemas"]["LevelProgress"][];
+        };
+        LevelProgress: {
+            /** Format: uuid */
+            levelId: string;
+            levelName: string;
+            /** @description Si es el nivel del alumno ahora */
+            current: boolean;
+            /** @description Si el nivel tiene objetivos y el alumno los ha conseguido todos */
+            completed: boolean;
+            /** @description Los objetivos en vigor y, detras, los retirados que el alumno consiguio */
+            objectives: components["schemas"]["ObjectiveProgress"][];
+        };
+        ObjectiveProgress: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /**
+             * Format: date
+             * @description null mientras esta pendiente
+             */
+            achievedOn: string | null;
         };
         LevelList: {
             levels: components["schemas"]["Level"][];
@@ -5013,6 +5430,8 @@ export interface components {
             managedAt: string | null;
             /** @description Si el profesor puede pedir su foto (Fase 25.5) */
             hasPhoto: boolean;
+            /** @description Si ha conseguido todos los objetivos de su nivel (Fase 29) */
+            levelCompleted: boolean;
         };
         /** @description Lo mínimo para confirmar a quién se va a asociar. Sin teléfono, DNI ni dirección. */
         StudentLookup: {
@@ -5792,6 +6211,7 @@ export interface components {
     parameters: {
         Id: string;
         UserId: string;
+        ObjectiveId: string;
         Page: number;
         Size: number;
     };

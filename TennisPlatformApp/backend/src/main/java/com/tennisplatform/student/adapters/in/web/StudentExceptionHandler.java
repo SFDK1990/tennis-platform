@@ -1,7 +1,9 @@
 package com.tennisplatform.student.adapters.in.web;
 
 import com.tennisplatform.error.Problems;
+import com.tennisplatform.student.domain.AchievedOnInFutureException;
 import com.tennisplatform.student.domain.InvalidStudentProfileException;
+import com.tennisplatform.student.domain.UnknownObjectiveException;
 import com.tennisplatform.student.domain.StudentAlreadyInactiveException;
 import com.tennisplatform.student.domain.StudentAlreadyManagedException;
 import com.tennisplatform.student.domain.StudentLimitReachedException;
@@ -78,6 +80,17 @@ class StudentExceptionHandler {
     ProblemDetail handleIncompleteProfile(StudentProfileIncompleteException e) {
         return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Student profile incomplete",
                 e.getMessage(), "STUDENT_PROFILE_INCOMPLETE");
+    }
+
+    @ExceptionHandler(UnknownObjectiveException.class)
+    ProblemDetail handleUnknownObjective(UnknownObjectiveException e) {
+        return Problems.of(HttpStatus.NOT_FOUND, "Objective not found", e.getMessage(), "OBJECTIVE_NOT_FOUND");
+    }
+
+    @ExceptionHandler(AchievedOnInFutureException.class)
+    ProblemDetail handleAchievedInFuture(AchievedOnInFutureException e) {
+        return Problems.of(HttpStatus.UNPROCESSABLE_CONTENT, "Achieved in the future", e.getMessage(),
+                "ACHIEVED_ON_IN_FUTURE");
     }
 
     @ExceptionHandler(InvalidStudentProfileException.class)

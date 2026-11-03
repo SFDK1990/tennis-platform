@@ -2,6 +2,7 @@ package com.tennisplatform.notification.adapters.out.persistence;
 
 import com.tennisplatform.notification.application.port.out.MessageRepository;
 import com.tennisplatform.notification.domain.Message;
+import com.tennisplatform.notification.domain.MessageAudience;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -42,7 +43,8 @@ class MessageRepositoryAdapter implements MessageRepository {
 
     @Override
     public Slice findSentBy(UUID teacherUserId, int page, int size) {
-        return slice(messages.findAllByTeacherUserIdOrderBySentAtDescIdDesc(teacherUserId, PageRequest.of(page, size)));
+        return slice(messages.findAllByTeacherUserIdAndAudienceNotOrderBySentAtDescIdDesc(teacherUserId,
+                MessageAudience.PROGRESS, PageRequest.of(page, size)));
     }
 
     @Override
