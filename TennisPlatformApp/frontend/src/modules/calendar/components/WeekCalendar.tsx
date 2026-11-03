@@ -35,7 +35,7 @@ export function WeekCalendar({ calendar, from, renderActions, emptyDay = "Sin cl
         return (
           <li key={day} className="border-t border-line py-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-display text-xl font-semibold first-letter:uppercase">{formatDay(day)}</h3>
+              <h2 className="font-display text-xl font-semibold first-letter:uppercase">{formatDay(day)}</h2>
               {hours.length > 0 ? (
                 <p className="text-sm text-muted">
                   Disponible {hours.map((h) => `${formatTime(h.startsAt, zone)}–${formatTime(h.endsAt, zone)}`).join(", ")}

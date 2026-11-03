@@ -1,6 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
-import type { Page } from "@playwright/test";
 import { recommendClass, trialHref } from "@/app/(web)/_parts/school";
+import { seriousViolations } from "./support/axe";
 import { expect, signIn, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
@@ -158,11 +157,4 @@ for (const colorScheme of ["light", "dark"] as const) {
       });
     });
   }
-}
-
-async function seriousViolations(page: Page): Promise<string[]> {
-  const results = await new AxeBuilder({ page }).analyze();
-  return results.violations
-    .filter((violation) => violation.impact === "serious" || violation.impact === "critical")
-    .map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }

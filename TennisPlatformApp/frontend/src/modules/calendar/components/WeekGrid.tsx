@@ -8,11 +8,13 @@ import { addDays, dateIn, formatDay, formatShortWeekday, formatTime, minutesIn, 
 
 const SHORT_TITLE: Record<CalendarLesson["type"], string> = { INDIVIDUAL: "Individual", GROUP: "Grupo" };
 
+// Faded with colours, not with opacity: a translucent block lets the hatch through and its text
+// falls below AA contrast (45-fase30, found by axe).
 const LOOK: Record<CalendarLesson["status"], string> = {
   OPEN: "",
   FULL: "",
   CANCELLED: "!border-line !bg-line-soft !text-muted line-through",
-  COMPLETED: "opacity-70",
+  COMPLETED: "!border-[1.5px] !border-line !bg-paper !text-muted",
 };
 
 interface WeekGridProps {
@@ -65,7 +67,7 @@ export function WeekGrid({ calendar, from, now, hrefFor }: WeekGridProps) {
               return (
                 <li key={day}
                   className="relative border-l border-line bg-[repeating-linear-gradient(135deg,var(--color-ground)_0_6px,var(--color-line-soft)_6px_12px)]">
-                  <h3 className="sr-only">{formatDay(day)}</h3>
+                  <h2 className="sr-only">{formatDay(day)}</h2>
                   <div aria-hidden className="absolute inset-0 grid auto-rows-[12px]">
                     {hoursOpen.map((interval) => {
                       const { start, span } = rowsOf(interval, zone, first);
@@ -83,7 +85,7 @@ export function WeekGrid({ calendar, from, now, hrefFor }: WeekGridProps) {
                       const { start, span } = rowsOf(lesson, zone, first);
                       return (
                         // A cancelled lesson stays visible but goes under the live ones it may overlap.
-                        <li key={lesson.id} className={`${rowClass(start, span)} col-start-1 p-0.5 ${lesson.status === "CANCELLED" ? "z-0 opacity-70" : "z-10"}`}>
+                        <li key={lesson.id} className={`${rowClass(start, span)} col-start-1 p-0.5 ${lesson.status === "CANCELLED" ? "z-0" : "z-10"}`}>
                           <Link href={hrefFor(lesson)}
                             className={`flex h-full flex-col overflow-hidden rounded-md px-2 py-1 text-xs leading-tight hover:ring-2 hover:ring-navy ${
                               lesson.type === "GROUP" ? "bg-court text-white" : "border-[1.5px] border-court bg-paper text-ink"
