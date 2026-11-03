@@ -6,6 +6,10 @@ services:
     environment:
       # The whole suite comes from one IP.
       TENNIS_IDENTITY_AUTH_RATE_LIMIT_PER_MINUTE: 1000
+      # The suite runs over plain http. Chromium keeps a Secure cookie on localhost anyway;
+      # WebKit drops it, and the student's flows on the iPhone would lose their session on every
+      # reload (45-fase30-analisis-pwa-accesibilidad.md). Never in compose.prod.yaml.
+      TENNIS_IDENTITY_COOKIESECURE: "false"
       # Stripe is played by frontend/e2e/support/fake-stripe.mjs, which Playwright starts on the
       # host (42-fase27.5-analisis-pago-online.md). Throwaway values: the same as the fake's.
       STRIPE_SECRET_KEY: sk_test_e2e

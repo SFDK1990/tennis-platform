@@ -14,10 +14,13 @@ export async function seriousViolations(page: Page): Promise<string[]> {
 
 /**
  * Opens a screen of the app, waits until it has its heading and nothing left loading, and checks
- * it with axe: a screen still saying «Cargando…» would pass without its content being looked at.
+ * it with axe: a screen still saying «Cargando…» would pass without its content being looked at,
+ * and so would /login after a lost session.
  */
 export async function expectAccessible(page: Page, path: string): Promise<void> {
   await page.goto(path);
+  // A lost session lands on /login, whose heading would pass for the screen's.
+  await expect(page).toHaveURL((url) => url.pathname === path);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByText("Cargando…")).toHaveCount(0);
   expect(await seriousViolations(page), path).toEqual([]);

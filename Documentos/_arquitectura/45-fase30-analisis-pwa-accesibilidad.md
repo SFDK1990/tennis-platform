@@ -169,3 +169,10 @@ teclado → WebKit en local y en CI → instalación a mano en Android e iPhone 
   oculto. No encontró nada; no se versiona, porque axe y los E2E ya cubren lo que podría romperse.
 - **WebKit no se pudo correr en la sesión** (la descarga del navegador está bloqueada): sus
   resultados son los del CI.
+- **El E2E levanta el backend con la cookie de refresco sin `Secure`** (`compose.e2e.yaml`). Pasó lo
+  que decía el riesgo: en el primer CI con WebKit, el iPhone perdía la sesión en cada recarga y
+  cuatro flujos del alumno fallaban. Chromium guarda la cookie `Secure` en `localhost` y WebKit no.
+  El perfil `prod` sigue con `Secure`.
+- **El axe de una pantalla comprueba antes que sigue en esa pantalla**: con la sesión perdida, WebKit
+  acababa en `/login` y axe miraba el login, así que el test del alumno pasaba sin mirar sus
+  pantallas.
