@@ -30,6 +30,13 @@ http://{$DOMAIN} {
 	# The largest thing anybody uploads is the photo, 1 MB at most (StudentPhoto). Without a cap
 	# Next forwards up to 10 MB of anything to the backend, and holds the connection while it
 	# does: a cheap way to wear down the Pi (46-fase18-analisis-revision-seguridad.md, finding 2).
+	# Declared too big: refused with 413 before anything is read. Without this, how the cut
+	# showed depended on the Caddy version: 2.11.4 on the Pi answered 502.
+	@tooLarge expression `{http.request.header.Content-Length} != "" && int({http.request.header.Content-Length}) > 2097152`
+	respond @tooLarge "Request body too large" 413 {
+		close
+	}
+	# And a body that does not say its size (chunked) is cut at the same 2 MB.
 	request_body {
 		max_size 2MB
 	}
