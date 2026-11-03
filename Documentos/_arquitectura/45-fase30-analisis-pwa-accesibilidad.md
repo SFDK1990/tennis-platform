@@ -24,7 +24,7 @@ fases más de pantallas.
 
 ## Decisiones propuestas
 
-### 1. Modo oscuro de la app
+### 1. Modo oscuro de la app — **A** (Daniel, 03/11/2026)
 
 - **A (te la recomiendo). Fuera de esta fase.** Es repasar el color de todas las pantallas de los
   tres roles, y nada del criterio de salida lo pide. Con la PWA, el fondo y la barra del sistema
@@ -32,7 +32,7 @@ fases más de pantallas.
   su propia maqueta.
 - **B. Dentro.** La fase dobla su tamaño, y axe tendría que correr en los dos temas en toda la app.
 
-### 2. Cómo se le explica al alumno que puede instalarla
+### 2. Cómo se le explica al alumno que puede instalarla — **A** (Daniel, 03/11/2026)
 
 Android (Chrome) ofrece instalarla solo. En iPhone hay que ir a «Compartir → Añadir a pantalla de
 inicio», y Safari no avisa.
@@ -136,3 +136,36 @@ Ninguno: la fase es sólo frontend y CI. `openapi.yaml` no cambia.
 
 Manifest e iconos → página sin conexión y worker → CSP → axe en la app y arreglos → recorrido con
 teclado → WebKit en local y en CI → instalación a mano en Android e iPhone → cierre.
+
+## Decisiones tomadas al implementar
+
+- **Los iconos se generan una vez desde `icon.svg`** con Chromium y se versionan: `public/icons/`
+  (192, 512 y 512 *maskable*, la marca al 80 % sobre el azul para la zona segura) y
+  `src/app/apple-icon.png` (180), que Next enlaza como `apple-touch-icon`.
+- **El worker se registra en `Providers`, no sólo en el layout de la app**: el alumno llega
+  primero a `/login`, y desde ahí ya queda la página sin conexión. En la web no cambia nada,
+  porque las páginas siguen yendo por red.
+- **`sw.js` lleva un `VERSION` a mano**: lo de `/_next/static` lleva hash, y sólo cambiar
+  `offline.html`, su CSS o los iconos pide subirlo. `/sw.js` sale con `Cache-Control: no-cache`.
+- **La barra de estado de iPhone es `default`** (clara, con la página debajo): el marco de la app es
+  claro, y con `black-translucent` la cabecera quedaría bajo la hora.
+- **El aviso de instalación sólo sale en Android y en iPhone/iPad** (un iPad dice ser un Mac, y se
+  le reconoce por la pantalla táctil). En un ordenador no sale.
+- **Lo que axe encontró, arreglado** (todo `serious`, salvo lo último):
+  - *label-content-name-mismatch*: el logo de la cabecera del móvil se llamaba «Inicio» y decía
+    «Oasis Papagayo». Ahora se llama como lo que dice.
+  - *color-contrast*: las clases canceladas y terminadas de la agenda se apagaban con `opacity-70`,
+    y el rayado se veía a través del texto. Ahora se apagan con colores (gris sobre gris claro, o
+    gris sobre blanco) que pasan AA.
+  - *heading-order* (`moderate`): los días de la semana eran `h3` justo bajo el `h1`. Ahora `h2`.
+    Ningún `moderate` queda abierto.
+- **La comprobación de axe espera a que la pantalla no diga «Cargando…»**, para que mire el
+  contenido y no el esqueleto (`e2e/support/axe.ts`, que ahora usa también la web).
+- **Las pruebas de sin conexión y de caché corren en Chromium**: son del worker, no de un
+  navegador; en WebKit corren los flujos del alumno, su axe y el aviso de instalación.
+- **El recorrido con teclado se hizo con un script de Playwright, no a mano** (sin `playwright-cli`
+  en la sesión): el alumno entra y reserva sólo con el teclado, y en las 19 pantallas de los tres
+  roles, a 390 y a 1440 px, cada elemento que recibe el foco se ve con su contorno y ninguno está
+  oculto. No encontró nada; no se versiona, porque axe y los E2E ya cubren lo que podría romperse.
+- **WebKit no se pudo correr en la sesión** (la descarga del navegador está bloqueada): sus
+  resultados son los del CI.

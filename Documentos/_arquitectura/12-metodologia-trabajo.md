@@ -81,7 +81,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 27.5 | Pago online | Completada | `42-fase27.5-analisis-pago-online.md`. El alumno compra su bono en la app y lo paga con tarjeta o Bizum en la página de Stripe; el bono nace con el aviso firmado de Stripe. Probado en modo de pruebas: cobrar de verdad es un despliegue con las claves de Marcos (Daniel, 30/10/2026) |
 | 28 | Mensualidades | Completada | `43-fase28-analisis-mensualidades.md`. Grupos fijos de una o varias series semanales con su cuota al mes; el alumno se apunta o lo apunta Marcos, tiene plaza en todas las clases sin bono y la baja libera desde el mes siguiente. Marcos apunta cada mes como pagado o «no se cobra» y ve un aviso de las vencidas en «Hoy», la lista de alumnos y la ficha (Daniel, 31/10/2026) |
 | 29 | Progreso del alumno | Completada | `44-fase29-analisis-progreso.md`. Objetivos por nivel que Marcos escribe y marca como conseguidos en la ficha; el alumno ve «Mi progreso» en su perfil y un aviso en su tablón, sin correo. Lo conseguido se conserva al cambiar de nivel, y un objetivo quitado se retira (Daniel, 02/11/2026) |
-| 30 | PWA y accesibilidad | Pendiente | Instalable, sin conexión sin datos personales, axe sin fallos graves y WebKit en los flujos del alumno |
+| 30 | PWA y accesibilidad | Completada | `45-fase30-analisis-pwa-accesibilidad.md`. Instalable, sin conexión sin datos personales, axe sin fallos graves y WebKit en los flujos del alumno. El modo oscuro de la app queda para después (Daniel, 03/11/2026) |
 | 18 | Revisión final de arquitectura | Pendiente | Informe con severidades; nada se aplica sin aprobación. Va la última |
 
 Las reglas de producto de las fases 19–29 ya decididas (salvo Familias, descartada) están en `01-analisis-funcional.md` §18.
