@@ -248,6 +248,7 @@ jobs:
           DB_NAME=tennis_platform
           DB_USER=tennis_platform
           DB_PASSWORD=ci-database-password
+          DB_APP_PASSWORD=ci-app-database-password
           JWT_SECRET=ci-only-jwt-secret-that-is-long-enough-for-hs256-signing
           MAIL_HOST=localhost
           MAIL_PORT=587
@@ -283,6 +284,17 @@ jobs:
           check /actuator/health 404
           docker compose -f compose.prod.yaml exec -T backend \
             wget -qO- http://localhost:8080/actuator/health/liveness
+
+      # The backend migrated and runs as its own role, which owns its tables and is no superuser
+      # (46-fase18, finding 3): a "t" here means it is connecting as the image's superuser again.
+      - name: The backend's database role is not a superuser
+        run: |
+          result=$(docker compose -f compose.prod.yaml exec -T postgres psql -U tennis_platform -d tennis_platform -At -c "
+            select r.rolsuper, count(t.*) from pg_roles r
+            left join pg_tables t on t.tableowner = r.rolname and t.schemaname = 'public'
+            where r.rolname = 'tennis_app' group by r.rolsuper")
+          echo "superuser|tables: $result"
+          [ "${result%%|*}" = "f" ] && [ "${result##*|}" -gt 0 ]
 
       - name: Dump logs when something went wrong
         if: failure()

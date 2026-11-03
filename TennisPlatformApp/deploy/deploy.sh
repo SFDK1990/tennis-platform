@@ -17,6 +17,11 @@ git fetch --tags --prune origin
 # it put an old version back. A tag has no origin/ copy and falls through to itself.
 git checkout --detach "origin/$REF" 2>/dev/null || git checkout --detach "$REF"
 
+# The database first, and the backend's own role on it before the backend starts: on a volume
+# from before Fase 18 that role does not exist yet (46-fase18, finding 3).
+docker compose -f compose.prod.yaml up -d --wait postgres
+deploy/app-role.sh
+
 docker compose -f compose.prod.yaml up -d --build --remove-orphans
 docker image prune -f >/dev/null
 docker compose -f compose.prod.yaml ps

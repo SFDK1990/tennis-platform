@@ -1,0 +1,29 @@
+-- The role the backend connects with (46-fase18-analisis-revision-seguridad.md, finding 3).
+-- DB_USER, the one the image creates, is a superuser: it can read files of the container and do
+-- anything to any database. The backend only needs to own its own database, so it gets a role
+-- that does exactly that. Liquibase still migrates, because that role owns every table, and
+-- pgcrypto and btree_gist are trusted extensions that a database owner may create.
+--
+-- Idempotent: it runs when the volume is created (10-app-role.sh), on every deploy and after a
+-- restore, and each time it leaves the same state. Variables: app_user, app_password.
+\set ON_ERROR_STOP on
+
+SELECT format('CREATE ROLE %I LOGIN', :'app_user')
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'app_user') \gexec
+
+SELECT format('ALTER ROLE %I WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L',
+              :'app_user', :'app_password') \gexec
+
+SELECT format('ALTER DATABASE %I OWNER TO %I', current_database(), :'app_user') \gexec
+
+-- Tables first: changing a table's owner takes its own sequences along, which cannot be moved
+-- on their own. Whatever the superuser created before (a database from before this role, or a
+-- restored dump) ends up the backend's.
+SELECT format('ALTER TABLE %I.%I OWNER TO %I', schemaname, tablename, :'app_user')
+FROM pg_tables WHERE schemaname = 'public' AND tableowner <> :'app_user' \gexec
+
+SELECT format('ALTER VIEW %I.%I OWNER TO %I', schemaname, viewname, :'app_user')
+FROM pg_views WHERE schemaname = 'public' AND viewowner <> :'app_user' \gexec
+
+SELECT format('ALTER SEQUENCE %I.%I OWNER TO %I', schemaname, sequencename, :'app_user')
+FROM pg_sequences WHERE schemaname = 'public' AND sequenceowner <> :'app_user' \gexec
