@@ -17,11 +17,21 @@ git fetch --tags --prune origin
 # it put an old version back. A tag has no origin/ copy and falls through to itself.
 git checkout --detach "origin/$REF" 2>/dev/null || git checkout --detach "$REF"
 
+# Images before anything stops. The ones we do not build (postgres, caddy) were only ever pulled
+# once, and the base images of the ones we build stayed in the cache: their security fixes never
+# reached the Pi (46-fase18, found when deploying v0.29.0).
+docker compose -f compose.prod.yaml pull --ignore-buildable
+docker compose -f compose.prod.yaml build --pull
+
 # The database first, and the backend's own role on it before the backend starts: on a volume
 # from before Fase 18 that role does not exist yet (46-fase18, finding 3).
 docker compose -f compose.prod.yaml up -d --wait postgres
 deploy/app-role.sh
 
-docker compose -f compose.prod.yaml up -d --build --remove-orphans
+docker compose -f compose.prod.yaml up -d --remove-orphans
+# The Caddyfile is mounted as a file, and a checkout replaces the file: a running Caddy keeps
+# reading the old one, and compose does not recreate it for a change it cannot see. Recreating
+# costs a second without connections.
+docker compose -f compose.prod.yaml up -d --no-deps --force-recreate caddy
 docker image prune -f >/dev/null
 docker compose -f compose.prod.yaml ps

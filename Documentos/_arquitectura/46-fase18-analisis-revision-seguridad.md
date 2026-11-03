@@ -225,3 +225,25 @@ Daniel aprobó todos el 03/11/2026. Cada uno, con su test o prueba y comprobado 
 8. **Credenciales del historial (hallazgo 7)**: queda pendiente de que Daniel confirme que no se
    reutilizaron. No se reescribe la historia.
 
+9. **Lo que enseñó el despliegue de `v0.29.0` en la Pi** (03/11/2026):
+   - `deploy.sh` no recreaba Caddy, y Caddy seguía leyendo el `Caddyfile` viejo: el tope de 2 MB
+     no se aplicó hasta recrearlo a mano. Ahora `deploy.sh` lo recrea siempre (un segundo).
+   - Tampoco actualizaba nunca las imágenes que no construimos (`postgres`, `caddy`) ni las bases
+     de las que sí: sus parches de seguridad no llegaban a la Pi. Ahora hace `pull` y
+     `build --pull` antes de parar nada.
+   - El Caddy de la Pi (2.11.4) cortaba los cuerpos grandes con un 502, no con un 413. Una
+     petición que declara más de 2 MB en `Content-Length` se rechaza ahora con 413 antes de leerla,
+     sea cual sea la versión; `request_body` queda para las que no lo declaran.
+10. **Escáneres en el CI** (Daniel, 03/11/2026), en un job propio, `security-scan`: Gitleaks
+    sobre todo el historial, Semgrep con las reglas de Java, TypeScript, React y Dockerfile, y
+    Trivy sobre los ficheros (secretos y configuración). Los tres bloquean el build.
+    - Cada uno va en un contenedor fijado por digest, con el repositorio en sólo lectura y un job
+      sin token ni secretos. Gitleaks corre sin red. Actualizar uno es cambiar su digest a mano.
+    - Primera pasada: 0 secretos en 243 commits, 0 hallazgos de Semgrep con 141 reglas y 0 de
+      Trivy. Comprobado rompiéndolo: una clave `sk_live_` plantada en un commit hace fallar a
+      Gitleaks.
+    - CodeQL queda fuera porque el plan Free no lo da en repositorios privados. OSV-Scanner y
+      TruffleHog repiten lo que ya hay. Las skills de terceros no se instalan: son instrucciones
+      que seguiría el agente con acceso al código y a las claves.
+    - Las reglas de Semgrep vienen de su registro y cambian con el tiempo: una regla nueva puede
+      romper un PR que no tocó nada. Si pasa, se mira el hallazgo; no se quita el escáner.
