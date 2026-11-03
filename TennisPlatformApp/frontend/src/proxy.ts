@@ -18,6 +18,10 @@ export function proxy(request: NextRequest) {
     "img-src 'self' blob: data:",
     "font-src 'self'",
     "connect-src 'self'",
+    // The service worker and the manifest (45-fase30). With 'strict-dynamic' the 'self' of
+    // script-src does not count, and the browser would refuse the worker without a word.
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -36,8 +40,9 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      // Pages only: /api is the backend's, and static files carry no script to protect.
-      source: "/((?!api|_next/static|_next/image|icon.svg).*)",
+      // Pages only: /api is the backend's, and static files carry no script to protect. The
+      // offline page keeps its CSP: it is a page, with no script that would need the nonce.
+      source: "/((?!api|_next/static|_next/image|icon.svg|icons/|apple-icon|manifest.webmanifest|sw.js).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

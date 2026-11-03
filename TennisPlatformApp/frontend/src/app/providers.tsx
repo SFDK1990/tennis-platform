@@ -2,6 +2,7 @@
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
+import { registerServiceWorker } from "@/app/service-worker";
 import { createQueryClient } from "@/shared/api/query";
 import { restoreSession } from "@/shared/api/session";
 
@@ -10,6 +11,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   // Once per page load; restoreSession ignores a second call, which Strict Mode makes.
   useEffect(restoreSession, []);
+  useEffect(registerServiceWorker, []);
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
