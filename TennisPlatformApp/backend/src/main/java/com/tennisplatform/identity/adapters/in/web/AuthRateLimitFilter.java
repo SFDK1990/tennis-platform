@@ -67,10 +67,21 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         this.trustedProxies = properties.getTrustedProxies().stream().map(IpAddressMatcher::new).toList();
     }
 
+    /**
+     * Decides on the path the container routes by: decoded and normalised, the same one Tomcat
+     * maps this filter with and MVC picks the controller with. The raw request URI is not that
+     * path: {@code /api/v1/%61uth/login} reached the login while not starting with the prefix,
+     * and so skipped the count entirely (46-fase18-analisis-revision-seguridad.md, finding 1).
+     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        return !uri.startsWith(PROTECTED_PREFIX) && !uri.equals(CHANGE_PASSWORD) && !uri.equals(DELETE_ACCOUNT);
+        String path = routedPath(request);
+        return !path.startsWith(PROTECTED_PREFIX) && !path.equals(CHANGE_PASSWORD) && !path.equals(DELETE_ACCOUNT);
+    }
+
+    private static String routedPath(HttpServletRequest request) {
+        String pathInfo = request.getPathInfo();
+        return request.getServletPath() + (pathInfo == null ? "" : pathInfo);
     }
 
     @Override

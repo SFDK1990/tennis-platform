@@ -14,6 +14,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
 
@@ -118,6 +119,30 @@ class AuthRateLimitTest extends AbstractIntegrationTest {
 
         assertThat(rest.postForEntity("/api/v1/me/password", guess, String.class).getStatusCode())
                 .isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    /**
+     * A percent-encoded letter still reaches the same endpoint, so it must spend the same
+     * allowance. It used to be counted nowhere (46-fase18-analisis-revision-seguridad.md).
+     */
+    @Test
+    void anEncodedLetterInThePathDoesNotEscapeTheCount() {
+        for (int i = 0; i < 3; i++) {
+            assertThat(attemptFrom("203.0.113.60", i).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        }
+
+        assertThat(encodedAttemptFrom("203.0.113.60", "/api/v1/%61uth/forgot-password").getStatusCode())
+                .isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(encodedAttemptFrom("203.0.113.60", "/api/v1/auth/forgot-p%61ssword").getStatusCode())
+                .isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    /** Sent as written: a String URL would have its {@code %} encoded again into {@code %25}. */
+    private ResponseEntity<String> encodedAttemptFrom(String forwardedFor, String rawPath) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Forwarded-For", forwardedFor);
+        return rest.postForEntity(URI.create(rest.getRootUri() + rawPath),
+                new HttpEntity<>(Map.of("email", "someone@example.com"), headers), String.class);
     }
 
     private ResponseEntity<String> attempt(int index) {
