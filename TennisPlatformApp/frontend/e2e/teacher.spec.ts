@@ -1,4 +1,4 @@
-import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { dayInCalendar, expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { addDays, todayIn, zonedToInstant } from "@/shared/time";
 import { expectEmail } from "./support/mailbox";
 import { TEACHER, ZONE } from "./support/stack";
@@ -90,7 +90,7 @@ test("el profesor pasa lista desde Hoy en cuanto la clase empieza", async ({ pag
   await page.getByRole("button", { name: "Guardar asistencia" }).click();
   await expect(page.getByText("Asistencia guardada.")).toBeVisible();
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, student.email, student.password);
   await openFromMenu(page, "Mis reservas");
   await expect(page.getByText("Asististe")).toBeVisible();

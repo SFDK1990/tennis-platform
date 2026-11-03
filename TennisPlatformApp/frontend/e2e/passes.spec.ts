@@ -1,4 +1,4 @@
-import { dayInCalendar, expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { dayInCalendar, expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
 /**
@@ -23,7 +23,7 @@ test("el profesor apunta un bono, el alumno reserva con él y recupera la clase 
   await expect(pass).toContainText("Quedan 3 de 3 clases de grupo");
   await expect(pass).toContainText("Activo");
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, student.email, student.password);
   await openFromMenu(page, "Clases");
   const lesson = (await dayInCalendar(page, day)).getByRole("listitem").filter({ hasText: "10:00" });

@@ -1,4 +1,4 @@
-import { expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
 /** Fase 29: the teacher writes the objectives of a level and marks one; the student sees it. */
@@ -27,7 +27,7 @@ test("el profesor pone objetivos a un nivel, marca uno en la ficha y el alumno v
     await expect(rally).toBeChecked();
     await expect(ofTheLevel).toContainText("1 de 2");
 
-    await page.getByRole("button", { name: "Salir" }).click();
+    await signOut(page);
     await signIn(page, student.email, student.password);
     await openFromMenu(page, "Perfil");
     const progress = page.getByRole("region", { name: "Mi progreso" });

@@ -1,4 +1,4 @@
-import { expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { ADMIN, TEACHER } from "./support/stack";
 
 test("con el límite de alumnos alcanzado, el profesor no puede añadir otro", async ({ page, arrange }) => {
@@ -17,7 +17,7 @@ test("con el límite de alumnos alcanzado, el profesor no puede añadir otro", a
     // A limit cannot be zero, so with nobody managed yet the limit is filled with one student.
     await arrange.manage(await arrange.student());
   }
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, TEACHER.email, TEACHER.password);
   await openFromMenu(page, "Alumnos");
   await page.getByLabel("Email del alumno").fill(student.email);
@@ -39,8 +39,7 @@ test("un alumno desactivado por el admin ya no puede entrar", async ({ page, arr
   await row.getByRole("button", { name: "Sí, desactivar" }).click();
   await expect(row).toContainText("Alumno, desactivada");
 
-  await page.getByRole("button", { name: "Salir" }).click();
-  await expect(page).toHaveURL(/\/login/);
+  await signOut(page);
   await page.getByLabel("Email").fill(student.email);
   await page.getByLabel("Contraseña").fill(student.password);
   await page.getByRole("button", { name: "Entrar" }).click();
@@ -60,7 +59,7 @@ test("el admin cancela una clase y el alumno la ve cancelada por administración
   await page.getByRole("button", { name: "Sí, cancelar la clase" }).click();
   await expect(page.getByText(/Cancelada, con/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, student.email, student.password);
   await openFromMenu(page, "Mis reservas");
   await expect(page.getByRole("listitem").filter({ hasText: "13:00" })).toContainText("Cancelada por administración");

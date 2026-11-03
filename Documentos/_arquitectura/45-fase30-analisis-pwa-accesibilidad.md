@@ -176,3 +176,6 @@ teclado → WebKit en local y en CI → instalación a mano en Android e iPhone 
 - **El axe de una pantalla comprueba antes que sigue en esa pantalla**: con la sesión perdida, WebKit
   acababa en `/login` y axe miraba el login, así que el test del alumno pasaba sin mirar sus
   pantallas.
+- **Salir y volver a entrar espera a la página de login** (`signOut` en `e2e/support/fixtures.ts`).
+  La app va sola a `/login` al salir. Si el test navega antes de que llegue, Chromium lo deja pasar
+  y WebKit corta la navegación. Lo usan todos los tests que salen.

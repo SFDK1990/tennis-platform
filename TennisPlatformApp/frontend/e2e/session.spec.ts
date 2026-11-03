@@ -1,5 +1,5 @@
 import { linkSentTo } from "./support/mailbox";
-import { expect, signIn, test } from "./support/fixtures";
+import { expect, signIn, signOut, test } from "./support/fixtures";
 import { TEACHER } from "./support/stack";
 
 /** The access token lives only in memory: after a reload, only the refresh cookie brings it back. */
@@ -10,8 +10,7 @@ test("la sesión sobrevive a una recarga y termina al salir", async ({ page, arr
   await page.reload();
   await expect(page.getByRole("heading", { name: /^Hola/ })).toBeVisible();
 
-  await page.getByRole("button", { name: "Salir" }).click();
-  await expect(page).toHaveURL(/\/login/);
+  await signOut(page);
   await page.goto("/calendar");
   await expect(page).toHaveURL(/\/login/);
 });
@@ -30,7 +29,7 @@ test("cada rol se queda en sus pantallas", async ({ page, arrange }) => {
   await page.goto("/admin/users");
   await expect(page).toHaveURL(/\/home$/);
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, TEACHER.email, TEACHER.password);
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/teacher$/);

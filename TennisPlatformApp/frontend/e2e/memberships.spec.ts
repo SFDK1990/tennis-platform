@@ -1,4 +1,4 @@
-import { expect, openFromMenu, signIn, test } from "./support/fixtures";
+import { expect, openFromMenu, signIn, signOut, test } from "./support/fixtures";
 import { todayIn } from "@/shared/time";
 import { TEACHER, ZONE } from "./support/stack";
 
@@ -28,7 +28,7 @@ test("el profesor crea un grupo fijo, el alumno se apunta y el profesor apunta l
   await attach.getByRole("button", { name: "Añadir" }).click();
   await expect(attach).toContainText(`Esta serie es del grupo ${name}`);
 
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, student.email, student.password);
   await openFromMenu(page, "Mis reservas");
   const group = page.getByRole("article", { name });
@@ -39,7 +39,7 @@ test("el profesor crea un grupo fijo, el alumno se apunta y el profesor apunta l
   expect(await arrange.confirmedBookingsOf(lessons[1])).toBe(1);
 
   // The month of the first lesson: this one, or the next when the free day falls in it.
-  await page.getByRole("button", { name: "Salir" }).click();
+  await signOut(page);
   await signIn(page, TEACHER.email, TEACHER.password);
   await openFromMenu(page, "Mensualidades");
   if (day.slice(0, 7) !== todayIn(ZONE).slice(0, 7)) {
