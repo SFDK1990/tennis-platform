@@ -229,9 +229,11 @@ jobs:
         if: always()
         run: docker compose down -v
 
-  # Phase 18 (46-fase18-analisis-revision-seguridad.md). Each tool runs as a pinned container
-  # with the repository mounted read-only and no token or secret in the job: a tool that ever
-  # shipped a bad release could read the code, which is all it is for, and nothing else.
+  # Phase 18 (46-fase18-analisis-revision-seguridad.md). Each tool runs as a container pinned by
+  # digest, with the repository mounted read-only and no token or secret in the job: a tool that
+  # ever shipped a tampered release could read the code, which is all it is for, and nothing
+  # else. Gitleaks has no network at all; Semgrep needs it for its rules, Trivy for its checks.
+  # A new version is a deliberate change of the digest here, never a moved tag.
   security-scan:
     name: Secrets, code patterns and configuration
     runs-on: ubuntu-latest
@@ -243,30 +245,25 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Pull the scanners and show their digests
-        run: |
-          for image in ghcr.io/gitleaks/gitleaks:v8.28.0 semgrep/semgrep:1.183.0 aquasec/trivy:0.74.0; do
-            docker pull --quiet "$image"
-            docker image inspect --format '{{index .RepoDigests 0}}' "$image"
-          done
-
       - name: No secret in any commit (gitleaks)
         run: >-
           docker run --rm --network none -v "$PWD:/repo:ro"
           -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/repo
-          ghcr.io/gitleaks/gitleaks:v8.28.0 git --no-banner --redact --exit-code 1 /repo
+          ghcr.io/gitleaks/gitleaks:v8.28.0@sha256:cdbb7c955abce02001a9f6c9f602fb195b7fadc1e812065883f695d1eeaba854 git --no-banner --redact --exit-code 1 /repo
 
       - name: Code patterns (semgrep)
         run: >-
-          docker run --rm -v "$PWD:/src:ro" -w /src semgrep/semgrep:1.183.0
-          semgrep scan --metrics=off --config p/java --config p/typescript --config p/react
+          docker run --rm -v "$PWD:/src:ro" -w /src
+          semgrep/semgrep:1.183.0@sha256:2e45517a85e13a9cca14a2a00df6bb48affd66b8ebfae1b0991cd57578362fb0
+          semgrep scan --error --metrics=off --config p/java --config p/typescript --config p/react
           --config p/dockerfile --exclude '*.d.ts' TennisPlatformApp
 
       - name: Secrets and misconfiguration in the files (trivy)
         run: >-
-          docker run --rm -v "$PWD:/src:ro" aquasec/trivy:0.74.0
-          fs --quiet --scanners secret,misconfig --skip-dirs /src/TennisPlatformApp/frontend/node_modules
-          /src
+          docker run --rm -v "$PWD:/src:ro"
+          aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969
+          fs --quiet --offline-scan --scanners secret,misconfig --severity HIGH,CRITICAL --exit-code 1
+          --skip-dirs /src/TennisPlatformApp/frontend/node_modules /src
 
   production-stack:
     name: Production composition starts behind Caddy
