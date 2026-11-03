@@ -7,6 +7,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -53,12 +54,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
                                            ProblemDetailAuthenticationEntryPoint entryPoint,
-                                           ProblemDetailAccessDeniedHandler accessDeniedHandler) throws Exception {
+                                           ProblemDetailAccessDeniedHandler accessDeniedHandler,
+                                           @Value("${tennis.identity.cookie-secure:true}") boolean cookieSecure)
+            throws Exception {
         http
             // CSRF only where a cookie alone can authenticate the request. Everything else is
             // authorized by a bearer token, which a cross-site form cannot attach.
             .csrf(csrf -> {
-                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                csrf.csrfTokenRepository(csrfCookie(cookieSecure))
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                     .requireCsrfProtectionMatcher(new OrRequestMatcher(
                             PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/v1/auth/refresh"),
@@ -77,6 +80,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, PUBLIC_WEBHOOK_PATHS).permitAll()
                 // Request counts by route and error code say how the platform is being used.
                 .requestMatchers("/actuator/metrics", "/actuator/metrics/**").hasRole("ADMIN")
+                // A second barrier: each admin endpoint checks the role itself, and the access
+                // matrix proves it, but a new one that forgot would only be caught by that test.
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .exceptionHandling(handling -> handling
                 .authenticationEntryPoint(entryPoint)
@@ -84,6 +90,17 @@ public class SecurityConfig {
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterAfter(new CsrfCookieFilter(), JwtAuthenticationFilter.class);
         return http.build();
+    }
+
+    /**
+     * Readable by script on purpose (the client echoes it back), but with no reason to travel
+     * over plain http or to another site: the same Secure switch as the refresh cookie, and
+     * SameSite=Strict like it (46-fase18-analisis-revision-seguridad.md, finding 5).
+     */
+    private static CookieCsrfTokenRepository csrfCookie(boolean secure) {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieCustomizer(cookie -> cookie.secure(secure).sameSite("Strict"));
+        return repository;
     }
 
     /**

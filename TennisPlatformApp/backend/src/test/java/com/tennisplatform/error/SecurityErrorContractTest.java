@@ -69,4 +69,25 @@ class SecurityErrorContractTest extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody()).containsEntry("code", "AUTH_CSRF_TOKEN_INVALID");
     }
+
+    /**
+     * The admin routes are closed to any other role before a controller is reached: a route
+     * with no controller at all still answers 403 to a student, where outside /admin it is a
+     * 404 (46-fase18-analisis-revision-seguridad.md, finding 6).
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void anAdminRouteIsForbiddenToAnyOtherRoleEvenWithoutAControllerCheck() {
+        HttpHeaders student = new HttpHeaders();
+        student.setBearerAuth(tokenOfANewStudent("a-valid-password"));
+
+        ResponseEntity<Map> admin = rest.exchange("/api/v1/admin/anything", HttpMethod.GET,
+                new HttpEntity<>(student), Map.class);
+        ResponseEntity<Map> elsewhere = rest.exchange("/api/v1/anything", HttpMethod.GET,
+                new HttpEntity<>(student), Map.class);
+
+        assertThat(admin.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(admin.getBody()).containsEntry("code", "AUTH_FORBIDDEN");
+        assertThat(elsewhere.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }

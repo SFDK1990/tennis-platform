@@ -20,6 +20,9 @@ spring:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
+      # Without it, a man in the middle who strips STARTTLS gets the SMTP password and every
+      # reset link in clear (46-fase18-analisis-revision-seguridad.md, finding 4).
+      mail.smtp.starttls.required: true
 
 tennis:
   identity:
