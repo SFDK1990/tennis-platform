@@ -40,5 +40,9 @@ compose exec -T postgres psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d postgres \
 compose exec -T postgres psql -v ON_ERROR_STOP=1 --single-transaction --quiet \
   -U "$DB_USER" -d "$DB_NAME" < "$sql" > /dev/null
 
+# The dump carries no owners: what it created belongs to the superuser, and the backend's role
+# would not be able to read it. Only in production; the development stack has no such role.
+[[ "$COMPOSE_FILE" == compose.prod.yaml ]] && deploy/app-role.sh
+
 [[ -n "$backend_running" ]] && compose start backend
 echo "Restored $FILE into $DB_NAME"

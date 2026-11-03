@@ -40,8 +40,13 @@ public final class ContractValidation implements ClientHttpRequestInterceptor {
     private static final String SPEC = Path.of("..", "openapi.yaml").toAbsolutePath().toUri().toString();
     private static final String API = "/api/v1";
 
-    /** Called on purpose to show that an unknown route is closed too; it cannot be in the spec. */
-    private static final Set<String> OUTSIDE_THE_CONTRACT = Set.of("/api/v1/anything");
+    /**
+     * Called on purpose, and none can be in the spec: an unknown route, to show it is closed
+     * too; an admin route with no controller, to show the role barrier stands without one; and
+     * auth routes with a percent-encoded letter, to show they still spend the rate limit.
+     */
+    private static final Set<String> OUTSIDE_THE_CONTRACT = Set.of("/api/v1/anything", "/api/v1/admin/anything",
+            "/api/v1/%61uth/forgot-password", "/api/v1/auth/forgot-p%61ssword");
 
     /**
      * Protocol errors: a method the route does not have, a body or an Accept it does not speak.

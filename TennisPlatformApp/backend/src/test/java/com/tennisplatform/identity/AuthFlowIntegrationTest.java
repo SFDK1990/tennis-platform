@@ -176,6 +176,8 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         String email = uniqueEmail();
         register(email);
 
+        // A fresh browser: one that already holds the cookie is not sent it again.
+        jar = new CookieJar();
         ResponseEntity<Map> login = login(email);
 
         assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -267,6 +269,27 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(jar.has("XSRF-TOKEN")).isTrue();
         assertThat(jar.has("refresh_token")).isTrue();
+    }
+
+    /**
+     * Script must read the CSRF cookie, so it cannot be HttpOnly; but like the refresh cookie it
+     * has no business over plain http or on another site's requests (46-fase18, finding 5).
+     */
+    @Test
+    @SuppressWarnings("rawtypes")
+    void theCsrfCookieIsSecureAndStrictLikeTheRefreshOne() {
+        String email = uniqueEmail();
+        register(email);
+
+        // A fresh browser: one that already holds the cookie is not sent it again.
+        jar = new CookieJar();
+        ResponseEntity<Map> login = login(email);
+
+        assertThat(login.getHeaders().get(HttpHeaders.SET_COOKIE))
+                .filteredOn(cookie -> cookie.startsWith("XSRF-TOKEN="))
+                .singleElement()
+                .satisfies(cookie -> assertThat(cookie).contains("Secure").contains("SameSite=Strict")
+                        .doesNotContain("HttpOnly"));
     }
 
     /** A student whose link expired asks for another, and the new one works (Fase 11). */

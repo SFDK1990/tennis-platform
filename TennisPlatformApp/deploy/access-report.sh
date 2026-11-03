@@ -47,15 +47,25 @@ for line in open(caddy_path, encoding="utf-8", errors="replace"):
     if BOT.search(agent) or agent == "(sin navegador)":
         agents[agent[:90]] += 1
 
-# The backend's own line per API request: "POST /api/v1/auth/login 401 AUTH_BAD_CREDENTIALS 12 ms".
+# The backend's own line per API request: "POST /api/v1/auth/login 401 AUTH_INVALID_CREDENTIALS 12 ms".
 api = collections.Counter()
-request_line = re.compile(r"(GET|POST|PUT|PATCH|DELETE) (/api/\S+) (401|403|429) (\S+)")
+# Wrong passwords and throttled clients per day: a burst stands out here before anywhere else
+# (46-fase18-analisis-revision-seguridad.md, finding 8).
+GUESSING = ("AUTH_INVALID_CREDENTIALS", "CURRENT_PASSWORD_INCORRECT", "AUTH_RATE_LIMITED")
+GUESSING_ALERT = 50
+per_day = collections.Counter()
+request_line = re.compile(r"(GET|POST|PUT|PATCH|DELETE) (/api/\S+) (401|403|422|429) (\S+)")
+day_of = re.compile(r'"@timestamp":"(\d{4}-\d{2}-\d{2})')
 for line in open(backend_path, encoding="utf-8", errors="replace"):
     match = request_line.search(line)
     if match:
         method, path, status, code = match.groups()
         path = re.sub(r"[0-9a-f]{8}-[0-9a-f-]{27}", "{id}", path)
-        api[f"{status} {code} {method} {path}"] += 1
+        if status != "422":
+            api[f"{status} {code} {method} {path}"] += 1
+        day = day_of.search(line)
+        if code in GUESSING and day:
+            per_day[f"{day.group(1)} {code}"] += 1
 
 def section(title, counter, limit=15):
     print(f"\n{title}")
@@ -71,4 +81,11 @@ section("Rutas que no existen (aquí salen los escaneos: wp-login, .env, phpmyad
 section("Rechazadas por Caddy o la app (401, 403, 429)", denied)
 section("Intentos contra la API (contraseñas probadas, límite de intentos)", api)
 section("Bots y herramientas que se identifican", agents)
+
+print("\nContraseñas fallidas y clientes frenados, por día")
+if not per_day:
+    print("  (nada)")
+for key in sorted(per_day):
+    flag = "  <- revisar" if per_day[key] >= GUESSING_ALERT else ""
+    print(f"  {per_day[key]:6}  {key}{flag}")
 PY
