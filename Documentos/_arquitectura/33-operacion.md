@@ -76,13 +76,30 @@ El volcado es SQL plano, sin dueños: vale en otra arquitectura y en un Postgres
 
 Con el mismo `JWT_SECRET`, las sesiones abiertas siguen valiendo.
 
+## El rol de la base sin superusuario (Fase 18)
+
+Desde la Fase 18 el backend no entra con `DB_USER`, que es superusuario, sino con su propio rol
+(`DB_APP_USER`, por defecto `tennis_app`), dueño de su base y de nada más
+(`46-fase18-analisis-revision-seguridad.md`, hallazgo 3). En la Pi, **una vez y antes del primer
+despliegue que lo traiga**:
+
+1. Añadir al `.env` `DB_APP_USER=tennis_app` y `DB_APP_PASSWORD=` con
+   `openssl rand -base64 32 | tr -d '/+='` (distinta de `DB_PASSWORD`).
+2. `deploy/deploy.sh <tag>` como siempre. Arranca primero la base y ejecuta
+   `deploy/app-role.sh`, que crea el rol y le pasa las tablas, y después el resto.
+
+`deploy.sh` y `restore.sh` lo vuelven a ejecutar cada vez; no cambia nada si ya está hecho.
+
 ## Rotar un secreto
 
 Se cambia en `.env` y se aplica con `docker compose -f compose.prod.yaml up -d`.
 
 - `JWT_SECRET`: todos vuelven a iniciar sesión.
-- `DB_PASSWORD`: Postgres guarda la contraseña en su volumen, así que antes se cambia en la base:
+- `DB_PASSWORD` (el superusuario, que sólo usan los backups y las restauraciones): Postgres guarda
+  la contraseña en su volumen, así que antes se cambia en la base:
   `docker compose -f compose.prod.yaml exec postgres psql -U tennis_platform -c "alter user tennis_platform password '...'"`.
+- `DB_APP_PASSWORD` (el rol con el que entra el backend, sin superusuario): se cambia en `.env`,
+  se ejecuta `deploy/app-role.sh`, que la pone en la base, y después `up -d`.
 - `MAIL_PASSWORD`: se genera la nueva en el proveedor de correo y después se revoca la vieja.
 - `STRIPE_SECRET_KEY`: se rota en Developers > API keys de Stripe, que deja la vieja viva unas
   horas. `STRIPE_WEBHOOK_SECRET`: «Roll secret» en el webhook; mientras tanto Stripe firma con las

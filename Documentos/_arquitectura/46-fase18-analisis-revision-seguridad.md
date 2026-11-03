@@ -175,8 +175,7 @@ Revisado contra la lista de Daniel y sin cambios que proponer:
 
 ## Decisiones propuestas
 
-Se aplican, en esta misma rama, los arreglos que Daniel apruebe; cada uno con su test o prueba y
-comprobado rompiéndolo:
+Daniel aprobó todos el 03/11/2026. Cada uno, con su test o prueba y comprobado rompiéndolo:
 
 1. Arreglar el límite de intentos (hallazgo 1). **Recomendado ya.**
 2. Límite de 2 MB en Caddy (hallazgo 2). **Recomendado ya.**
@@ -185,3 +184,44 @@ comprobado rompiéndolo:
 4. Rol sin superusuario en PostgreSQL (hallazgo 3): necesita un paso manual en la Pi; se puede
    dejar para el siguiente despliegue.
 5. Contar los fallos de login en el informe semanal (hallazgo 8): opcional.
+
+## Decisiones tomadas al implementar
+
+1. **El filtro mira `getServletPath()` + `getPathInfo()`**, la ruta decodificada y normalizada con
+   la que Tomcat ya lo mapeaba, en vez de decodificar por su cuenta: así no puede haber dos
+   opiniones sobre qué ruta es. `AuthRateLimitTest` agota el cubo y prueba `/api/v1/%61uth/…` y
+   `…/forgot-p%61ssword`: los dos dan 429. Con `getRequestURI()` el test falla. Repetido a mano a
+   través de Caddy y Next: `%61uth` y `l%6Fgin` dan 429; `%41uth` (`Auth`) no llega al login.
+2. **El tope de 2 MB va en Caddy**, la entrada, y no en el backend: así un cuerpo grande no llega
+   a ocupar Next. Comprobado: 3 MB (con `Content-Length` y en *chunked*) da 413 al instante; 1,5 MB
+   pasa.
+3. **El rol propio es `tennis_app`, y `DB_USER` sigue siendo el superusuario** para backups,
+   restauraciones y `psql` a mano. El superusuario inicial de la imagen no puede dejar de serlo,
+   así que no bastaba con quitárselo.
+   - Un solo script (`deploy/postgres-init/app-role.psql`), idempotente, crea el rol y le pasa
+     la base y sus tablas. Lo ejecutan la imagen al crear el volumen, `deploy.sh` en cada
+     despliegue (antes de arrancar el backend) y `restore.sh` tras restaurar, porque el dump no
+     lleva dueños.
+   - Probado en las dos situaciones: sobre una base con datos creada por el superusuario (31
+     tablas pasan a `tennis_app`; el login sigue funcionando) y sobre un volumen nuevo (Liquibase
+     migra entero como `tennis_app`, con `pgcrypto` y `btree_gist`, que son extensiones de
+     confianza). Como `tennis_app`, `COPY … FROM '/etc/passwd'` se rechaza; como superusuario lee
+     el fichero.
+   - El CI arranca la composición de producción y falla si el rol del backend es superusuario o
+     no es dueño de las tablas.
+   - En la Pi hace falta añadir `DB_APP_PASSWORD` al `.env` antes del primer despliegue
+     (`33-operacion.md`). Sin él, `compose` se niega a arrancar y dice qué falta.
+4. **`starttls.required`**: con Mailpit, que no cifra, el backend ahora se niega a enviar
+   («STARTTLS is required but host does not support STARTTLS»). Brevo sí lo ofrece en el 587.
+5. **Cookie `XSRF-TOKEN`** con el mismo interruptor `cookie-secure` que la de sesión y
+   `SameSite=Strict`. Un test de `AuthFlowIntegrationTest` lo comprueba y falla sin el cambio.
+6. **Barrera de `/admin`**: un test pide `/api/v1/admin/anything`, que no tiene controlador, con
+   un alumno. Da 403 `AUTH_FORBIDDEN`, y fuera de `/admin` la misma petición da 404. Sin la línea
+   en `SecurityConfig`, el test falla.
+7. **Informe semanal**: una sección nueva cuenta por día las contraseñas fallidas (login y
+   contraseña actual) y los 429, y marca «revisar» a partir de 50 en un día. La sección de
+   intentos ya existía. Su comentario citaba un código que no existe (`AUTH_BAD_CREDENTIALS`);
+   ahora cita el real.
+8. **Credenciales del historial (hallazgo 7)**: queda pendiente de que Daniel confirme que no se
+   reutilizaron. No se reescribe la historia.
+

@@ -178,4 +178,9 @@ tablón del alumno.
   `offline.html`, su CSS o los iconos pide subir su `VERSION`, o el móvil seguirá con los viejos.
 - **El rate limiting cubre también `POST /me/password` y `POST /me/deletion`**, que comprueban una
   contraseña. Una ruta nueva que lo haga tiene que entrar en `AuthRateLimitFilter` y en
-  `ContractConventionsTest`.
+  `ContractConventionsTest`. El filtro decide por la ruta decodificada (`getServletPath()`): con
+  `getRequestURI()`, `/api/v1/%61uth/login` llegaba al login sin contar (Fase 18).
+- **En producción el backend no entra con `DB_USER`, que es superusuario, sino con `DB_APP_USER`**
+  (`tennis_app`), dueño de su base y nada más (Fase 18). Lo crea `deploy/postgres-init/app-role.psql`,
+  que ejecutan el volumen nuevo, `deploy.sh` y `restore.sh`. Una migración que necesite superusuario
+  falla en producción, no en los tests.
