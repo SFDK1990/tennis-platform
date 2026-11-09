@@ -61,9 +61,9 @@ export function MessageComposer({ options, title = "Escribir un mensaje" }: { op
             <div className="flex flex-wrap gap-2">
               {options.map((option) => (
                 <label key={option.key}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border-[1.5px] border-line px-3.5 has-checked:border-court has-checked:bg-court-tint has-checked:font-semibold has-checked:text-court">
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border-[1.5px] border-line px-3.5 has-checked:border-link has-checked:bg-court-tint has-checked:font-semibold has-checked:text-link">
                   <input type="radio" name="audience" value={option.key} checked={option.key === selected?.key}
-                    onChange={() => setChosen(option.key)} className="accent-court" />
+                    onChange={() => setChosen(option.key)} className="accent-link" />
                   {option.label}
                 </label>
               ))}

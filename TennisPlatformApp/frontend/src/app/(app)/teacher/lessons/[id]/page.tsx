@@ -35,7 +35,7 @@ export default function LessonPage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Link href="/teacher/calendar" className="flex min-h-11 items-center gap-1 self-start font-semibold text-court"><Icon name="chevronLeft" />Volver a la agenda</Link>
+      <Link href="/teacher/calendar" className="flex min-h-11 items-center gap-1 self-start font-semibold text-link"><Icon name="chevronLeft" />Volver a la agenda</Link>
       <ErrorNotice error={lesson.error} />
       {lesson.data && zone ? (
         <>

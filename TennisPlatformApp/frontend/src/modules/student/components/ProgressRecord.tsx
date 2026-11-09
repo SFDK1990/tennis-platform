@@ -49,7 +49,7 @@ export function ProgressRecord({ studentUserId, managed }: { studentUserId: stri
             {level.objectives.map((objective) => (
               <li key={objective.id}>
                 <label className="flex min-h-11 items-center gap-3">
-                  <input type="checkbox" className="size-5 accent-court"
+                  <input type="checkbox" className="size-5 accent-link"
                     checked={override[objective.id] ?? objective.achievedOn !== null}
                     onChange={(event) => {
                       const checked = event.target.checked;

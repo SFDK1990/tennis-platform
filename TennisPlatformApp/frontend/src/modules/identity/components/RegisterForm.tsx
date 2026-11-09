@@ -25,7 +25,7 @@ export function RegisterForm() {
           Te hemos enviado un correo con un enlace para verificar tu email. Mientras tanto ya puedes entrar
           y completar tu perfil.
         </Notice>
-        <Link href="/login" className="text-court underline">Ir a entrar</Link>
+        <Link href="/login" className="text-link underline">Ir a entrar</Link>
       </div>
     );
   }
@@ -41,10 +41,10 @@ export function RegisterForm() {
       {/* It informs, it does not ask: the data is needed to give the classes (31-fase31, decisions 15-16). */}
       <p className="text-sm text-muted">
         Las cuentas son para mayores de 14 años. Qué hacemos con tus datos lo explica
-        la <Link href="/privacidad" className="text-court underline">política de privacidad</Link>.
+        la <Link href="/privacidad" className="text-link underline">política de privacidad</Link>.
       </p>
       <p className="text-sm">
-        ¿Ya tienes cuenta? <Link href="/login" className="text-court underline">Entra</Link>
+        ¿Ya tienes cuenta? <Link href="/login" className="text-link underline">Entra</Link>
       </p>
     </form>
   );

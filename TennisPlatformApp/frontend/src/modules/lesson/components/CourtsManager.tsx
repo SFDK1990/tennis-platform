@@ -31,7 +31,7 @@ function CourtRow({ court }: { court: Court }) {
     <li className="flex flex-wrap items-center gap-2 px-3 py-2">
       <label className="sr-only" htmlFor={`court-${court.id}`}>Nombre de la pista {court.position}</label>
       <input id={`court-${court.id}`} value={name} maxLength={60} onChange={(event) => setName(event.target.value)}
-        className="min-h-11 min-w-40 flex-1 rounded-lg border border-transparent bg-transparent px-2 font-semibold hover:border-line focus:border-court" />
+        className="min-h-11 min-w-40 flex-1 rounded-lg border border-transparent bg-transparent px-2 font-semibold hover:border-line focus:border-link" />
       {changed ? (
         <Button variant="quiet" pending={rename.isPending} onClick={() => rename.mutate({ id: court.id, name: name.trim() })}>
           Guardar

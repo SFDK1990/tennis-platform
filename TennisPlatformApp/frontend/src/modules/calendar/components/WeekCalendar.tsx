@@ -90,7 +90,7 @@ function Seats({ capacity, taken, muted }: { capacity: number; taken: number; mu
           <span
             key={seat}
             className={`size-3 rounded-full border ${
-              seat < taken ? "border-navy bg-navy" : muted ? "border-line bg-paper" : "border-court bg-court-tint"
+              seat < taken ? "border-navy bg-navy" : muted ? "border-line bg-paper" : "border-link bg-court-tint"
             }`}
           />
         ))}

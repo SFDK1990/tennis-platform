@@ -56,7 +56,7 @@ function SentRow({ message, zone }: { message: SentMessage; zone: string }) {
       </div>
       <p className="text-sm text-muted">Para {lowerFirst(message.audienceLabel)}: {reached}</p>
       <details className="group">
-        <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-court">
+        <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-link">
           <span className="group-open:hidden">Leer el mensaje</span>
           <span className="hidden group-open:inline">Ocultar el mensaje</span>
         </summary>

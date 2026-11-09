@@ -51,7 +51,7 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
     return (
       <div className="flex flex-col gap-4">
         <Notice tone="success">Contraseña cambiada. Hemos cerrado tus otras sesiones.</Notice>
-        <Link href="/login" className="text-court underline">Entrar</Link>
+        <Link href="/login" className="text-link underline">Entrar</Link>
       </div>
     );
   }

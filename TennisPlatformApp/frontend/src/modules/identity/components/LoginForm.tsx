@@ -26,8 +26,8 @@ export function LoginForm({ onSignedIn }: { onSignedIn: (role: Role) => void }) 
       <ErrorNotice error={login.error} />
       <Button type="submit" pending={login.isPending}>Entrar</Button>
       <p className="flex justify-between text-sm">
-        <Link href="/register" className="text-court underline">Crear una cuenta</Link>
-        <Link href="/forgot-password" className="text-court underline">He olvidado la contraseña</Link>
+        <Link href="/register" className="text-link underline">Crear una cuenta</Link>
+        <Link href="/forgot-password" className="text-link underline">He olvidado la contraseña</Link>
       </p>
     </form>
   );

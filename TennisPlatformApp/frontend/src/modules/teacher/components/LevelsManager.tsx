@@ -76,7 +76,7 @@ function LevelRow({ level, first, last, deleting, onDelete }: LevelRowProps) {
     <li className="flex flex-wrap items-center gap-2 px-3 py-2">
       <label className="sr-only" htmlFor={`level-${level.id}`}>Nombre del nivel {level.position}</label>
       <input id={`level-${level.id}`} value={name} maxLength={60} onChange={(event) => setName(event.target.value)}
-        className="min-h-11 min-w-40 flex-1 rounded-lg border border-transparent bg-transparent px-2 font-semibold hover:border-line focus:border-court" />
+        className="min-h-11 min-w-40 flex-1 rounded-lg border border-transparent bg-transparent px-2 font-semibold hover:border-line focus:border-link" />
       {renamed ? (
         <Button variant="quiet" pending={update.isPending} onClick={() => update.mutate({ id: level.id, name: name.trim() })}>
           Guardar

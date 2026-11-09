@@ -50,7 +50,7 @@ function LevelBlock({ level, headline = false }: { level: LevelProgress; headlin
       </div>
       {headline ? (
         <progress value={achieved} max={total} aria-label={`${achieved} de ${total} objetivos conseguidos`}
-          className="h-2 w-full overflow-hidden rounded-full accent-court" />
+          className="h-2 w-full overflow-hidden rounded-full accent-link" />
       ) : null}
       {level.completed && headline ? (
         <p className="text-sm font-semibold text-surround-ink">¡Has conseguido todos los objetivos de tu nivel!</p>

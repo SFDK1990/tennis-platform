@@ -69,7 +69,7 @@ export default function StudentHomePage() {
             <section aria-labelledby="open-lessons" className="flex flex-col gap-3">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 id="open-lessons" className="font-display text-2xl font-semibold">Con plazas estos días</h2>
-                <Link href="/calendar" className="text-sm font-semibold text-court">Ver todas</Link>
+                <Link href="/calendar" className="text-sm font-semibold text-link">Ver todas</Link>
               </div>
               <ul className="flex flex-col gap-2">
                 {home.open.map((lesson) => (
@@ -162,7 +162,7 @@ function Step({ number, done, title, action, last, children }: {
           <span className="sr-only">Hecho:</span>
         </span>
       ) : (
-        <span className="flex size-8 items-center justify-center rounded-full border-2 border-court font-display text-lg font-bold text-court">
+        <span className="flex size-8 items-center justify-center rounded-full border-2 border-link font-display text-lg font-bold text-link">
           {number}
         </span>
       )}

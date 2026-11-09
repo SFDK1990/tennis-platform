@@ -6,7 +6,7 @@ export default function ForgotPasswordPage() {
     <>
       <h1 className="mb-5 font-display text-3xl font-semibold leading-none">Recuperar la contraseña</h1>
       <ForgotPasswordForm />
-      <Link href="/login" className="mt-4 inline-block text-sm text-court underline">Volver a entrar</Link>
+      <Link href="/login" className="mt-4 inline-block text-sm text-link underline">Volver a entrar</Link>
     </>
   );
 }

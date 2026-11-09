@@ -66,7 +66,7 @@ export function StudentsManager({ flagFor }: { flagFor?: (studentUserId: string)
                 <span className="flex min-w-0 items-center gap-3">
                   <StudentAvatar userId={student.userId} name={student.fullName} hasPhoto={student.hasPhoto} />
                   <span className="min-w-0">
-                    <Link href={`/teacher/students/${student.userId}`} className="block font-semibold text-court underline-offset-4 hover:underline">
+                    <Link href={`/teacher/students/${student.userId}`} className="block font-semibold text-link underline-offset-4 hover:underline">
                       {student.fullName}
                     </Link>
                     <span className="block truncate text-sm text-muted">{student.email}</span>

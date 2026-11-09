@@ -21,7 +21,7 @@ export default function AdminLessonPage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Link href="/admin/lessons" className="flex min-h-11 items-center gap-1 self-start font-semibold text-court"><Icon name="chevronLeft" />Volver a las clases</Link>
+      <Link href="/admin/lessons" className="flex min-h-11 items-center gap-1 self-start font-semibold text-link"><Icon name="chevronLeft" />Volver a las clases</Link>
       <ErrorNotice error={lesson.error} />
       {lesson.data && zone ? (
         <>
