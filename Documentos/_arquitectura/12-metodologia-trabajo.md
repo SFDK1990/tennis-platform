@@ -83,6 +83,7 @@ pueda explicar. Kafka y la IA quedan fuera del MVP.
 | 29 | Progreso del alumno | Completada | `44-fase29-analisis-progreso.md`. Objetivos por nivel que Marcos escribe y marca como conseguidos en la ficha; el alumno ve «Mi progreso» en su perfil y un aviso en su tablón, sin correo. Lo conseguido se conserva al cambiar de nivel, y un objetivo quitado se retira (Daniel, 02/11/2026) |
 | 30 | PWA y accesibilidad | Completada | `45-fase30-analisis-pwa-accesibilidad.md`. Instalable, sin conexión sin datos personales, axe sin fallos graves y WebKit en los flujos del alumno. El modo oscuro de la app queda para después (Daniel, 03/11/2026) |
 | 18 | Revisión final de arquitectura | Completada | `46-fase18-analisis-revision-seguridad.md`. Informe con severidades, revisado como un atacante; Daniel aprobó todos los arreglos (03/11/2026) |
+| 32 | Modo oscuro de la app | Completada | `47-fase32-analisis-modo-oscuro.md`. Todas las pantallas de los tres roles en claro y en oscuro; sigue al sistema y se fija en el Perfil con la misma cookie que la web; axe en los dos temas y un test de contraste de la paleta (Daniel, 09/11/2026) |
 
 Las reglas de producto de las fases 19–29 ya decididas (salvo Familias, descartada) están en `01-analisis-funcional.md` §18.
 Aparcado hasta que Daniel diga: reservar la clase de prueba desde la web, idiomas, facturas,

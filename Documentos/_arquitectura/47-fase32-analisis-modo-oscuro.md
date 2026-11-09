@@ -4,7 +4,8 @@ Criterio de salida propuesto (`12-metodologia-trabajo.md`): todas las pantallas 
 claro y en oscuro, con la misma elección que la web, y axe sin fallos graves en los dos temas.
 
 La Fase 30 lo dejó fuera (decisión 1, Daniel, 03/11/2026) para hacerlo con su propia maqueta. La
-maqueta acompaña a este análisis y usa exactamente los colores que se proponen aquí.
+maqueta acompaña a este análisis y usa exactamente los colores que se proponen aquí; Daniel la
+validó con las tres decisiones el 09/11/2026.
 
 ## Punto de partida
 
@@ -33,7 +34,7 @@ maqueta acompaña a este análisis y usa exactamente los colores que se proponen
 
 ## Decisiones propuestas
 
-### 1. Quién elige el tema
+### 1. Quién elige el tema — **A** (Daniel, 09/11/2026)
 
 - **A (te la recomiendo). Sigue al sistema, y se puede fijar en el Perfil.** Un apartado
   «Apariencia» con tres opciones: «Como el móvil», «Claro» y «Oscuro». Es la misma cookie que la
@@ -43,18 +44,18 @@ maqueta acompaña a este análisis y usa exactamente los colores que se proponen
 - **C. Un botón en el marco de la app**, como en la web: en la cabecera del móvil y en el lateral.
   Más a mano, pero es un control que se toca una vez y ocupa sitio en todas las pantallas.
 
-### 2. Las superficies de la marca en oscuro
+### 2. Las superficies de la marca en oscuro — **A** (Daniel, 09/11/2026)
 
 Son la tarjeta de la próxima clase (alumno y «Hoy»), el botón principal, los bloques de grupo de la
 agenda, el día de hoy en la agenda y «Tienes plaza».
 
-- **A (te la recomiendo). Siguen en azul pista con texto blanco**, un punto más vivo (`#2e6dcc`)
+- **A (te la recomiendo). Siguen en azul pista con texto blanco**, un punto más vivo (`#2864c0`)
   para que se separen de la página. La tarjeta de la pista sigue siendo el único gesto fuerte de la
-  pantalla, igual que en claro, y el texto blanco pasa AA (5,0:1).
+  pantalla, igual que en claro, y el texto blanco pasa AA.
 - **B. Azul claro con texto navy**, como hacen muchas apps en oscuro. Separa más del fondo, pero la
   tarjeta de la pista se vuelve pálida y deja de parecerse a la de la web.
 
-### 3. El lateral del profesor y del admin en oscuro
+### 3. El lateral del profesor y del admin en oscuro — **A** (Daniel, 09/11/2026)
 
 - **A (te la recomiendo). Un navy más hondo que la página** (`#06112a`, el de las bandas de la web)
   con una línea a la derecha. El marco se sigue distinguiendo del contenido, como en claro.
@@ -69,7 +70,7 @@ agenda, el día de hoy en la agenda y «Tienes plaza».
 
    | Hoy | Queda | Papel | Claro | Oscuro |
    |---|---|---|---|---|
-   | `court` como fondo | `court` | fondo con texto blanco | `#1f5fb8` | `#2e6dcc` |
+   | `court` como fondo | `court` | fondo con texto blanco | `#1f5fb8` | `#2864c0` |
    | `court-deep` | `court-deep` | ese fondo al pasar por encima | `#174a91` | `#2558a8` |
    | `court` como texto, borde, acento | `link` (nuevo) | texto, borde, casillas sobre la superficie | `#1f5fb8` | `#8fb3e6` |
    | `navy` como fondo | `navy` | relleno sólido: avatar, plaza ocupada, «Faltó» | `#0b1e3f` | `#3a5687` |
@@ -96,8 +97,8 @@ agenda, el día de hoy en la agenda y «Tienes plaza».
    | `fault-tint` / `fault` (texto) | `#f7dcd6` / `#b42318` | `#4a1d19` / `#ff9b8c` |
    | `ball` | `#e4f03c` | `#e4f03c` |
 
-   Todos los pares de texto pasan AA en los dos temas; el más justo en oscuro es el blanco sobre
-   `court` (5,0:1). La tabla completa de contrastes está en la maqueta.
+   Todos los pares de texto pasan AA en los dos temas; el más justo en oscuro es el blanco al 85 %
+   sobre `court` (4,6:1). La tabla completa de contrastes está en la maqueta.
 3. **Variables redefinidas, no `light-dark()`.** `@theme` define el claro; un bloque para
    `[data-theme="dark"]` y otro para `prefers-color-scheme: dark` sin `data-theme="light"` lo
    sobrescriben. `light-dark()` llegó a Safari en iOS 17.5: en un iPhone anterior, la declaración se
@@ -168,3 +169,28 @@ navegador, como en la web, no en la cuenta: no es un dato que el servidor necesi
 Tokens y bloque oscuro en `globals.css` → tema en `<html>` desde la cookie → separar los tokens de
 dos papeles → logo → Perfil «Apariencia» → página sin conexión → axe en los dos temas y arreglos →
 test de contraste → capturas → cierre.
+
+## Decisiones tomadas al implementar
+
+- **El azul de la pista en oscuro es `#2864c0`, no el `#2e6dcc` que se propuso.** axe lo encontró en
+  la primera pasada en oscuro: las segundas líneas de la tarjeta de la próxima clase van en blanco al
+  85-90 %, y sobre `#2e6dcc` se quedaban en 4,1:1. Con `#2864c0` dan 4,6:1, y el blanco entero 5,7:1.
+  Sigue un punto más vivo que el del claro, y la maqueta ya lo lleva. El test de la paleta comprueba ahora también ese blanco
+  translúcido.
+- **El tema vive en `<html>` para la web y la app**: el layout raíz lo pinta desde la cookie, y la
+  web dejó de ponerlo en su `div`. El botón de la web y «Apariencia» usan las mismas funciones
+  (`src/shared/theme.ts`, que sale de la web porque ya no es sólo suyo). `color-scheme` va en
+  `:root`, así que los `--site-*` con `light-dark()` lo heredan sin cambiar.
+- **Los tokens oscuros van en `@layer theme`**, la capa donde Tailwind escribe los de `@theme`: así
+  ninguna utilidad pierde contra ellos por estar fuera de capa.
+- **La web usaba `navy` como texto sobre el amarillo** (botón de la clase de prueba, «¿Qué clase es
+  para mí?») y en el mapa. Pasa a `brand`, que es navy en los dos temas, y la web no cambia.
+- **«Apariencia» sale en el Perfil de los tres roles**, debajo de lo propio de cada uno. Hasta que
+  el navegador dice qué hay elegido, no marca ninguna opción: el servidor no pinta la página del
+  Perfil con la cookie.
+- **La política de privacidad nombra la cookie** también para la app.
+- **El rayado de la agenda en oscuro contrasta más que en claro** (1,4:1 contra 1,1:1): es el mismo
+  `line-soft`, que en oscuro tiene que separarse de las líneas de la rejilla. Se dejó así, como en la
+  maqueta.
+- **WebKit no se pudo correr en la sesión** (la descarga del navegador está bloqueada): sus
+  resultados son los del CI. Los 63 E2E de Chromium pasan contra el stack local.
