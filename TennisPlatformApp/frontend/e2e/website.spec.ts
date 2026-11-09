@@ -73,7 +73,8 @@ test.describe("con el sistema en oscuro", () => {
   /** Criterion 3. */
   test("la web sigue al sistema hasta que el visitante elige, y recuerda su elección", async ({ page }) => {
     await page.goto("/");
-    const site = page.locator("[data-site]");
+    // The theme sits on <html>, shared with the app (47-fase32, rule 4).
+    const site = page.locator("html");
     await expect(site).not.toHaveAttribute("data-theme");
     await expect(page.getByRole("button", { name: "Cambiar a modo claro" })).toBeVisible();
 
@@ -101,7 +102,7 @@ test("ni la web ni el registro chocan con la CSP", async ({ page }) => {
   await page.goto("/");
   // The theme button only works once React has hydrated, which a blocked script would prevent.
   await page.getByRole("button", { name: /Cambiar a modo/ }).click();
-  await expect(page.locator("[data-site]")).toHaveAttribute("data-theme", /light|dark/);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", /light|dark/);
 
   await page.goto("/register");
   await expect(page.getByRole("button", { name: "Crear cuenta" })).toBeVisible();

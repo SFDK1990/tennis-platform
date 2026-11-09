@@ -24,7 +24,7 @@ export default function StudentPage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Link href="/teacher/students" className="flex min-h-11 items-center gap-1 self-start font-semibold text-court">
+      <Link href="/teacher/students" className="flex min-h-11 items-center gap-1 self-start font-semibold text-link">
         <Icon name="chevronLeft" />Volver a alumnos
       </Link>
       <ErrorNotice error={student.error} />

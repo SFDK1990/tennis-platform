@@ -97,7 +97,7 @@ function isCurrent(item: NavItem, pathname: string): boolean {
 
 function Sidebar({ me, items, current }: { me: Me; items: NavItem[]; current?: string }) {
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-navy px-3.5 py-6 text-white lg:flex">
+    <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-frame-edge bg-frame px-3.5 py-6 text-white lg:flex">
       <Link href={homeFor(me.role)} className="mb-7 flex items-center gap-3 px-2.5">
         <Logo className="h-10 w-10" onDark label="" />
         <span className="font-display text-xl font-semibold leading-none">Oasis<br />Papagayo</span>
@@ -135,7 +135,7 @@ function TabBar({ items, current }: { items: NavItem[]; current?: string }) {
       className="fixed inset-x-0 bottom-0 z-10 flex border-t border-line bg-paper px-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] lg:hidden">
       {items.filter((item) => !item.sidebarOnly).map((item) => (
         <Link key={item.href} href={item.href} aria-current={item.href === current ? "page" : undefined}
-          className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold text-muted aria-[current=page]:text-court">
+          className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-semibold text-muted aria-[current=page]:text-link">
           <Icon name={item.icon} className="size-6" />
           {item.label}
         </Link>

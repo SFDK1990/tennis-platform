@@ -19,7 +19,7 @@ export function MyPasses() {
     return null;
   }
   const buyLink = online && !onBuyPage
-    ? <Link href="/passes" className="font-semibold text-court underline">Comprar un bono</Link>
+    ? <Link href="/passes" className="font-semibold text-link underline">Comprar un bono</Link>
     : null;
   const balances = balancesOf(passes.items);
   if (balances.length === 0) {

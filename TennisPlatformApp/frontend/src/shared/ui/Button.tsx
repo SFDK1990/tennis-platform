@@ -8,14 +8,14 @@ export const BUTTON_BASE =
 
 export const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-court text-white hover:bg-court-deep",
-  secondary: "border-[1.5px] border-navy bg-paper text-navy hover:bg-court-tint",
-  quiet: "border border-line bg-paper text-ink hover:border-court",
-  danger: "border border-fault/40 bg-paper text-fault hover:bg-fault hover:text-white",
+  secondary: "border-[1.5px] border-ink bg-paper text-ink hover:bg-court-tint",
+  quiet: "border border-line bg-paper text-ink hover:border-link",
+  danger: "border border-fault/40 bg-paper text-fault hover:bg-fault-fill hover:text-white",
   // On the court-blue cards, where the page's own buttons would disappear.
-  onCourt: "bg-paper text-court hover:bg-court-tint",
+  onCourt: "bg-paper text-link hover:bg-court-tint",
   outlineOnCourt: "border-[1.5px] border-white/85 text-white hover:bg-white/10",
   // A way out that should be seen without competing with the screen's own action: "Ir a la web".
-  tint: "bg-court-tint text-court hover:bg-court hover:text-white",
+  tint: "bg-court-tint text-link hover:bg-court hover:text-white",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

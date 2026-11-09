@@ -43,7 +43,7 @@ export function LevelObjectives({ level }: { level: Level }) {
       <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor={`objective-new-${level.id}`}>Nuevo objetivo de {level.name}</label>
         <input id={`objective-new-${level.id}`} name="title" maxLength={120} placeholder="Nuevo objetivo"
-          className="min-h-11 min-w-48 flex-1 rounded-lg border border-line bg-paper px-3 text-sm focus:border-court" />
+          className="min-h-11 min-w-48 flex-1 rounded-lg border border-line bg-paper px-3 text-sm focus:border-link" />
         <Button type="submit" variant="quiet" pending={add.isPending}>Añadir objetivo</Button>
       </form>
       <ErrorNotice error={add.error} />
@@ -68,7 +68,7 @@ function ObjectiveRow({ objective, first, last, retiring, onRetire }: ObjectiveR
     <li className="flex flex-wrap items-center gap-1">
       <label className="sr-only" htmlFor={`objective-${objective.id}`}>Objetivo {objective.position}</label>
       <input id={`objective-${objective.id}`} value={title} maxLength={120} onChange={(event) => setTitle(event.target.value)}
-        className="min-h-11 min-w-40 flex-1 rounded-lg border border-transparent bg-transparent px-2 text-sm hover:border-line focus:border-court" />
+        className="min-h-11 min-w-40 flex-1 rounded-lg border border-transparent bg-transparent px-2 text-sm hover:border-line focus:border-link" />
       {renamed ? (
         <Button variant="quiet" pending={update.isPending}
           onClick={() => update.mutate({ id: objective.id, title: title.trim() })}>

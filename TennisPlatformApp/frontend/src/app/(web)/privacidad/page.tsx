@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDocument, OwnerDetails } from "@/app/(web)/_parts/LegalDocument";
 import { school } from "@/app/(web)/_parts/school";
-import { THEME_COOKIE } from "@/app/(web)/_parts/theme";
+import { THEME_COOKIE } from "@/shared/theme";
 
 export const metadata: Metadata = {
   title: `Política de privacidad de ${school.name}`,
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
       <ul>
         <li><code>refresh_token</code>: mantiene tu sesión abierta. Dura 14 días y sólo la lee el servidor.</li>
         <li><code>XSRF-TOKEN</code>: impide que otra web haga cosas en tu nombre. Se borra al cerrar el navegador.</li>
-        <li><code>{THEME_COOKIE}</code>: recuerda si elegiste el modo claro o el oscuro en la web. Dura un año.</li>
+        <li><code>{THEME_COOKIE}</code>: recuerda si elegiste el modo claro o el oscuro, en la web o en tu perfil de la app. Dura un año.</li>
       </ul>
       <p>Ninguna sirve para seguirte ni para mostrarte publicidad.</p>
 

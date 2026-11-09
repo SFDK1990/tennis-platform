@@ -1,9 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { THEME_COOKIE } from "./theme";
-
-const ONE_YEAR = 60 * 60 * 24 * 365;
+import { chooseTheme, themeInForce } from "@/shared/theme";
 
 /**
  * Switches the website between light and dark (31-fase31, decision 8). Which icon and label
@@ -12,19 +10,8 @@ const ONE_YEAR = 60 * 60 * 24 * 365;
  */
 export function ThemeToggle() {
   function toggle(event: MouseEvent<HTMLButtonElement>) {
-    const site = event.currentTarget.closest<HTMLElement>("[data-site]");
-    if (!site) {
-      return;
-    }
-    const dark = site.dataset.theme
-      ? site.dataset.theme === "dark"
-      : matchMedia("(prefers-color-scheme: dark)").matches;
-    const next = dark ? "light" : "dark";
-    spreadFrom(event.currentTarget, () => {
-      site.dataset.theme = next;
-    });
-    const secure = location.protocol === "https:" ? "; Secure" : "";
-    document.cookie = `${THEME_COOKIE}=${next}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax${secure}`;
+    const next = themeInForce() === "dark" ? "light" : "dark";
+    spreadFrom(event.currentTarget, () => chooseTheme(next));
   }
 
   return (

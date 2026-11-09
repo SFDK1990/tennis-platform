@@ -17,7 +17,7 @@ export default function StudentsPage() {
     <>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="font-display text-4xl font-semibold leading-none">Alumnos</h1>
-        <Link href="/teacher/passes" className="font-semibold text-court">Tipos de bono</Link>
+        <Link href="/teacher/passes" className="font-semibold text-link">Tipos de bono</Link>
       </div>
       <StudentsManager flagFor={(studentUserId) => (
         <>

@@ -87,8 +87,8 @@ export function WeekGrid({ calendar, from, now, hrefFor }: WeekGridProps) {
                         // A cancelled lesson stays visible but goes under the live ones it may overlap.
                         <li key={lesson.id} className={`${rowClass(start, span)} col-start-1 p-0.5 ${lesson.status === "CANCELLED" ? "z-0" : "z-10"}`}>
                           <Link href={hrefFor(lesson)}
-                            className={`flex h-full flex-col overflow-hidden rounded-md px-2 py-1 text-xs leading-tight hover:ring-2 hover:ring-navy ${
-                              lesson.type === "GROUP" ? "bg-court text-white" : "border-[1.5px] border-court bg-paper text-ink"
+                            className={`flex h-full flex-col overflow-hidden rounded-md px-2 py-1 text-xs leading-tight hover:ring-2 hover:ring-ink ${
+                              lesson.type === "GROUP" ? "bg-court text-white" : "border-[1.5px] border-link bg-paper text-ink"
                             } ${LOOK[lesson.status]}`}>
                             <span className="font-semibold">
                               {formatTime(lesson.startsAt, zone)} {SHORT_TITLE[lesson.type]}

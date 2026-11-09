@@ -41,7 +41,7 @@ export function LessonLine({ lesson, zone, withDay = false, href, actions }: Les
   return (
     <li>
       {href ? (
-        <Link href={href} className={`${frame} hover:border-court`}>{body}</Link>
+        <Link href={href} className={`${frame} hover:border-link`}>{body}</Link>
       ) : (
         <div className={`${frame} flex-wrap`}>
           {body}

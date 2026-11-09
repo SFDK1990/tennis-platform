@@ -19,7 +19,7 @@ export function AccountNotices({ me }: { me: Me }) {
     <div className="flex flex-col gap-3">
       {noProfile ? (
         <Notice>
-          Completa <Link href="/profile" className="text-court underline">tu perfil</Link>: tu profesor lo necesita
+          Completa <Link href="/profile" className="text-link underline">tu perfil</Link>: tu profesor lo necesita
           para añadirte a sus alumnos.
         </Notice>
       ) : null}

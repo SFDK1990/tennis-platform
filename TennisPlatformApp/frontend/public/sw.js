@@ -7,7 +7,7 @@
  * Bump VERSION when offline.html, offline.css or the icons change: the new worker then fills a
  * new cache and deletes the old one. /_next/static needs no bump, its file names carry a hash.
  */
-const VERSION = "1";
+const VERSION = "2";
 const CACHE = `oasis-static-${VERSION}`;
 const OFFLINE_PAGE = "/offline.html";
 const PRECACHE = [OFFLINE_PAGE, "/offline.css", "/icon.svg"];

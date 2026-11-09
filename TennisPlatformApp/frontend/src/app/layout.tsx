@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed } from "next/font/google";
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { BRAND_NAVY } from "@/app/brand";
 import { Providers } from "@/app/providers";
 import { siteUrl } from "@/app/site-url";
+import { chosenTheme, THEME_COOKIE } from "@/shared/theme";
 import "./globals.css";
 
 const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -30,8 +32,12 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Rendered per request: the CSP nonce (src/proxy.ts) only exists once a request does.
   await connection();
+  // The theme is decided here, on the server, from the visitor's cookie: the page arrives in
+  // its colours, with no script before hydration (the nonce CSP would have to let it through)
+  // and no flash of the other theme (47-fase32, rule 4). Without a choice, CSS follows the system.
+  const theme = chosenTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
-    <html lang="es" className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}>
+    <html lang="es" data-theme={theme} className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}>
       {/* Extensions such as ColorZilla add attributes to <body> before React hydrates. This
           silences that one element's attributes, not its content. */}
       <body className="min-h-full" suppressHydrationWarning>

@@ -1,6 +1,26 @@
-/* The offline page, on the palette of globals.css (27-fase15.5): navy text on the court's ground. */
+/*
+ * The offline page, on the palette of globals.css (27-fase15.5): navy text on the court's ground.
+ * Static, so it cannot read the theme cookie; it follows the system (47-fase32, rule 8).
+ */
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
+  --ground: #eef2f7;
+  --ink: #0b1e3f;
+  --muted: #4e5d78;
+  --court: #1f5fb8;
+  --court-deep: #174a91;
+  --link: #1f5fb8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #0a1730;
+    --ink: #eef2f7;
+    --muted: #a9b8d0;
+    --court: #2864c0;
+    --court-deep: #2558a8;
+    --link: #8fb3e6;
+  }
 }
 
 body {
@@ -8,8 +28,8 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: #eef2f7;
-  color: #0b1e3f;
+  background: var(--ground);
+  color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -27,7 +47,7 @@ h1 {
 
 p {
   margin: 0 0 1.75rem;
-  color: #4e5d78;
+  color: var(--muted);
   font-size: 1.0625rem;
   line-height: 1.5;
 }
@@ -39,17 +59,17 @@ a {
   min-height: 44px;
   padding: 0 1.5rem;
   border-radius: 0.75rem;
-  background: #1f5fb8;
+  background: var(--court);
   color: #ffffff;
   font-weight: 600;
   text-decoration: none;
 }
 
 a:hover {
-  background: #174a91;
+  background: var(--court-deep);
 }
 
 a:focus-visible {
-  outline: 2px solid #1f5fb8;
+  outline: 2px solid var(--link);
   outline-offset: 2px;
 }

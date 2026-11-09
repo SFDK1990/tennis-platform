@@ -32,7 +32,7 @@ export function AgendaWeek({ zone, hrefFor }: { zone: string; hrefFor: (lesson: 
               calendar={calendar.data}
               from={from}
               renderActions={(lesson) => (
-                <Link href={hrefFor(lesson)} className="rounded-lg border border-line px-3 py-2 text-sm font-semibold hover:border-court">
+                <Link href={hrefFor(lesson)} className="rounded-lg border border-line px-3 py-2 text-sm font-semibold hover:border-link">
                   Ver clase
                 </Link>
               )}
@@ -54,7 +54,7 @@ function Legend() {
   return (
     <p className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
       <span className="flex items-center gap-2"><i className="size-3.5 rounded-sm bg-court" />Grupo</span>
-      <span className="flex items-center gap-2"><i className="size-3.5 rounded-sm border-[1.5px] border-court bg-paper" />Individual</span>
+      <span className="flex items-center gap-2"><i className="size-3.5 rounded-sm border-[1.5px] border-link bg-paper" />Individual</span>
       <span className="flex items-center gap-2"><i className="size-3.5 rounded-sm bg-paper ring-1 ring-line" />Disponible</span>
       <span className="flex items-center gap-2">
         <i className="size-3.5 rounded-sm bg-[repeating-linear-gradient(135deg,var(--color-ground)_0_3px,var(--color-line)_3px_6px)]" />

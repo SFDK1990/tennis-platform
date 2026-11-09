@@ -52,7 +52,7 @@ export function MessageBoard({ zone, teacher }: { zone: string; teacher: string 
 
 function MessageCard({ message, zone, clamp = false }: { message: ReceivedMessage; zone: string; clamp?: boolean }) {
   return (
-    <article className="flex flex-col gap-2 rounded-xl border border-line border-l-4 border-l-court bg-paper px-5 py-4">
+    <article className="flex flex-col gap-2 rounded-xl border border-line border-l-4 border-l-link bg-paper px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="font-display text-xl font-semibold">{message.subject}</h2>
         <p className="text-sm text-muted first-letter:uppercase">{formatDateTime(message.sentAt, zone)}</p>
@@ -72,7 +72,7 @@ export function LatestMessage({ zone, now }: { zone: string; now: number }) {
     <section aria-labelledby="latest-message" className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="latest-message" className="font-display text-2xl font-semibold">Último aviso</h2>
-        <Link href="/messages" className="text-sm font-semibold text-court">Ver todos</Link>
+        <Link href="/messages" className="text-sm font-semibold text-link">Ver todos</Link>
       </div>
       <MessageCard message={latest} zone={zone} clamp />
     </section>

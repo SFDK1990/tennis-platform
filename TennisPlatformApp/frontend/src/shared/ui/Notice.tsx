@@ -5,7 +5,7 @@ import { messageFor } from "@/shared/api/messages";
 type Tone = "info" | "success" | "error";
 
 const TONES: Record<Tone, string> = {
-  info: "border-court/30 bg-court-tint/60",
+  info: "border-link/30 bg-court-tint/60",
   success: "border-surround/40 bg-surround-tint/60 text-surround-ink",
   error: "border-fault/40 bg-fault-tint/60 text-fault",
 };

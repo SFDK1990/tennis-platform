@@ -184,3 +184,9 @@ tablón del alumno.
   (`tennis_app`), dueño de su base y nada más (Fase 18). Lo crea `deploy/postgres-init/app-role.psql`,
   que ejecutan el volumen nuevo, `deploy.sh` y `restore.sh`. Una migración que necesite superusuario
   falla en producción, no en los tests.
+- **Cada color de la app tiene un solo papel, y el tema oscuro redefine los tokens** (Fase 32):
+  `court` es fondo con texto blanco y `link` texto o borde sobre la superficie; `navy` relleno,
+  `frame` el lateral y `brand` el logo. Un `text-court` o un `text-navy` nuevo se ve en claro y
+  desaparece en oscuro. El tema lo pinta el layout raíz en `<html>` desde la cookie `theme`, la
+  misma que la web; los dos bloques oscuros de `globals.css` tienen que decir lo mismo, y
+  `palette.test.ts` lo comprueba con el contraste de cada par.

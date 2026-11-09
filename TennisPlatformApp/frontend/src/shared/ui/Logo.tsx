@@ -1,7 +1,8 @@
 /**
  * The Oasis Papagayo mark (31-fase31, decision 1): a tennis ball with a parrot's beak, eye and
- * blue crest. It keeps its own colours wherever it goes; on navy the beak gets a light edge, or
- * its tip disappears into the background.
+ * blue crest. It keeps its own colours wherever it goes (`brand` is navy in both themes); on navy
+ * the beak gets a light edge, or its tip disappears into the background. The dark theme lights
+ * that edge by itself (`logo-edge`, 47-fase32); `onDark` is for the frame, navy in both.
  *
  * Pass an empty `label` when the name is written next to it, so it is not read out twice.
  */
@@ -25,10 +26,10 @@ export function Logo({
         d="M86 46c18-4 32 10 28 30-4-7-10-10-18-10 3 5 2 11-4 14-4-8-8-24-6-34z"
         strokeWidth="3"
         strokeLinejoin="round"
-        className={onDark ? "fill-navy stroke-white" : "fill-navy"}
+        className={onDark ? "fill-brand stroke-white" : "fill-brand stroke-logo-edge"}
       />
       <circle cx="74" cy="52" r="7.5" className="fill-white" />
-      <circle cx="76" cy="52" r="3.8" className="fill-navy" />
+      <circle cx="76" cy="52" r="3.8" className="fill-brand" />
     </svg>
   );
 }

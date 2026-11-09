@@ -60,7 +60,7 @@ export function CourtMap() {
         {/* The court. */}
         <g transform="translate(368 214)">
           <circle r="22" className="fill-ball opacity-30" />
-          <path d="M0 0c-9-12-14-20-14-27a14 14 0 0 1 28 0c0 7-5 15-14 27z" className="fill-navy stroke-white stroke-2" />
+          <path d="M0 0c-9-12-14-20-14-27a14 14 0 0 1 28 0c0 7-5 15-14 27z" className="fill-brand stroke-white stroke-2" />
           <circle cy="-27" r="5" className="fill-ball" />
         </g>
         <text x="368" y="252" textAnchor="middle" className="fill-(--site-map-text) text-[13px] font-semibold">

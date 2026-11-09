@@ -50,7 +50,7 @@ export function PassTypesManager() {
           hayas apuntado los bonos de tus alumnos: hasta entonces se reserva como siempre.
         </p>
         <label className="flex min-h-11 items-center gap-3 font-semibold">
-          <input type="checkbox" className="size-5 accent-court" checked={required} disabled={!types.data || requirement.isPending}
+          <input type="checkbox" className="size-5 accent-link" checked={required} disabled={!types.data || requirement.isPending}
             onChange={(event) => requirement.mutate(event.target.checked)} />
           Sin bono no se reserva
         </label>
@@ -65,7 +65,7 @@ export function PassTypesManager() {
           Stripe la pagas tú; las devoluciones se hacen desde su panel.
         </p>
         <label className="flex min-h-11 items-center gap-3 font-semibold">
-          <input type="checkbox" className="size-5 accent-court" checked={online}
+          <input type="checkbox" className="size-5 accent-link" checked={online}
             disabled={!types.data || sellOnline.isPending || (!online && !onlineAvailable)}
             onChange={(event) => sellOnline.mutate(event.target.checked)} />
           Vender bonos en la app
@@ -136,7 +136,7 @@ function PassTypeRow({ type, deleting, onDelete }: { type: PassType; deleting: b
       <div className="flex min-w-48 flex-1 flex-col">
         <label className="sr-only" htmlFor={`pass-type-${type.id}`}>Nombre del tipo de bono</label>
         <input id={`pass-type-${type.id}`} value={name} maxLength={60} onChange={(event) => setName(event.target.value)}
-          className="min-h-11 rounded-lg border border-transparent bg-transparent px-2 font-semibold hover:border-line focus:border-court" />
+          className="min-h-11 rounded-lg border border-transparent bg-transparent px-2 font-semibold hover:border-line focus:border-link" />
         <span className="px-2 text-sm text-muted">{describeType(type)}</span>
       </div>
       {type.retired ? <Chip>Retirado</Chip> : null}

@@ -9,6 +9,7 @@ import { MyProgress } from "@/modules/student/components/MyProgress";
 import { PhotoPicker } from "@/modules/student/components/PhotoPicker";
 import { LevelsManager } from "@/modules/teacher/components/LevelsManager";
 import { useLevelName } from "@/shared/levels";
+import { AppearancePicker } from "@/shared/ui/AppearancePicker";
 
 export default function ProfilePage() {
   const me = useMe().data;
@@ -32,6 +33,7 @@ export default function ProfilePage() {
           {me.role === "STUDENT" ? <MyProgress /> : null}
           {me.role === "STUDENT" ? <InstallApp /> : null}
           {me.role === "TEACHER" ? <LevelsManager /> : null}
+          <AppearancePicker />
           <ChangePasswordForm email={me.email} />
           <DownloadMyData />
           {/* The teacher and the administrator are created by the bootstrap and stay. */}
@@ -39,7 +41,7 @@ export default function ProfilePage() {
         </>
       ) : null}
       {/* On a desk the sidebar has it; on a phone the tab bar has no room, so it lives here. */}
-      <SignOutButton className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper px-4 font-semibold text-ink hover:border-court lg:hidden" />
+      <SignOutButton className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper px-4 font-semibold text-ink hover:border-link lg:hidden" />
     </div>
   );
 }

@@ -41,7 +41,7 @@ export function ClassFinder() {
             </p>
             <a
               href={trialHref(undefined, suggestion.message)}
-              className="mt-2 inline-flex min-h-13 items-center justify-center gap-2.5 self-start rounded-lg bg-ball px-6 text-[17px] font-semibold text-navy hover:bg-(--site-text) hover:text-(--site-bg)"
+              className="mt-2 inline-flex min-h-13 items-center justify-center gap-2.5 self-start rounded-lg bg-ball px-6 text-[17px] font-semibold text-brand hover:bg-(--site-text) hover:text-(--site-bg)"
             >
               Pedir la prueba de {suggestion.lesson.name.toLowerCase()}
             </a>
